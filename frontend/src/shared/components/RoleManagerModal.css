@@ -249,3 +249,37 @@
 .role-modal-create-btn:active {
   background: #3d68bc;
 }
+
+.role-modal-llm-toggle {
+  width: 100%;
+  background: none;
+  border: 1px dashed #2c313a;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #7a818c;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.role-modal-llm-toggle:hover {
+  border-color: #4d78cc;
+  color: #9da5b4;
+}
+
+.role-modal-llm-config {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #13151a;
+  border: 1px solid #2c313a;
+  border-radius: 6px;
+}
+
+.role-modal-llm-hint {
+  color: #444a56;
+  font-size: 11px;
+  text-align: center;
+}
