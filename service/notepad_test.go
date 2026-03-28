@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"testing"
 
 	"gorm.io/driver/sqlite"
@@ -166,6 +167,9 @@ func TestGetNote_NotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for nonexistent note, got nil")
 	}
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
 }
 
 func TestUpdateNote(t *testing.T) {
@@ -263,6 +267,9 @@ func TestUpdateNote_NotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for nonexistent note, got nil")
 	}
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
 }
 
 func TestDeleteNote(t *testing.T) {
@@ -289,6 +296,9 @@ func TestDeleteNote_NotFound(t *testing.T) {
 	err := svc.DeleteNote("nonexistent-id")
 	if err == nil {
 		t.Fatal("expected error for deleting nonexistent note, got nil")
+	}
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }
 
@@ -343,5 +353,8 @@ func TestReorderNotes_NotFound(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected error for reordering nonexistent note, got nil")
+	}
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 }

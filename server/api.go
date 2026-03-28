@@ -10,7 +10,6 @@ import (
 	"ttyweb/backend"
 	"ttyweb/db"
 	"ttyweb/pkg/validate"
-	"ttyweb/service"
 )
 
 // apiResponse is a standard envelope for API responses.
@@ -29,12 +28,10 @@ func (server *Server) sessionManager() backend.SessionManager {
 	return backend.NoSessionManager{}
 }
 
-
 // noteService returns the NoteService for notepad CRUD operations.
 func (server *Server) noteService() *service.NoteService {
 	return server.noteSvc
 }
-
 // setupAPIHandlers registers REST API routes on the given mux.
 func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	apiPrefix := pathPrefix + "api/"

@@ -15,7 +15,6 @@ import (
 func init() {
 	db.RegisterModel(&NotePad{})
 }
-
 // ErrNotFound is returned when a note cannot be found by ID.
 var ErrNotFound = errors.New("note not found")
 
@@ -202,13 +201,4 @@ func (s *NoteService) ReorderNotes(reorders []NoteReorder) error {
 		}
 		return nil
 	})
-}
-
-// generateID creates a random 16-byte hex ID using crypto/rand.
-func generateID() (string, error) {
-	buf := make([]byte, 16)
-	if _, err := rand.Read(buf); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(buf), nil
 }
