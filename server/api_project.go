@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -110,7 +111,7 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 
 		project, err := projectService().UpdateProject(id, body)
 		if err != nil {
-			if err == service.ErrProjectNotFound {
+			if errors.Is(err, service.ErrProjectNotFound) {
 				writeAPIError(w, http.StatusNotFound, "project not found")
 				return
 			}
@@ -122,7 +123,7 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 	case http.MethodDelete:
 		err := projectService().DeleteProject(id)
 		if err != nil {
-			if err == service.ErrProjectNotFound {
+			if errors.Is(err, service.ErrProjectNotFound) {
 				writeAPIError(w, http.StatusNotFound, "project not found")
 				return
 			}
@@ -150,7 +151,7 @@ func (server *Server) handleProjectSync(w http.ResponseWriter, r *http.Request, 
 
 	project, err := projectService().SyncProject(id)
 	if err != nil {
-		if err == service.ErrProjectNotFound {
+		if errors.Is(err, service.ErrProjectNotFound) {
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
 		}

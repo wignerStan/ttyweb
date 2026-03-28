@@ -3,6 +3,7 @@ package service
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -36,10 +37,10 @@ func (Project) TableName() string {
 
 // Common errors returned by ProjectService methods.
 var (
-	ErrProjectNotFound     = errors.New("project not found")
-	ErrInvalidProjectPath  = errors.New("invalid project path: must be an absolute path to a directory containing .git")
-	ErrProjectNameRequired = errors.New("project name is required")
-	ErrProjectPathRequired = errors.New("project path is required")
+	ErrProjectNotFound      = errors.New("project not found")
+	ErrInvalidProjectPath   = errors.New("invalid project path: must be an absolute path to a directory containing .git")
+	ErrProjectNameRequired  = errors.New("project name is required")
+	ErrProjectPathRequired  = errors.New("project path is required")
 	ErrProjectAlreadyExists = errors.New("a project with this path already exists")
 )
 
@@ -212,57 +213,56 @@ func (s *ProjectService) SyncProject(id string) (*Project, error) {
 	return s.UpdateProject(id, updates)
 }
 
-// validateGitRepo checks that path is an absolute path to an existing directory
-// containing a .git entry (file or directory).
+// validateGitRepo checks that path is an existing directory containing a .git entry.
+// Callers must ensure path is already absolute (e.g. via filepath.Abs).
 func validateGitRepo(path string) error {
-	if !filepath.IsAbs(path) {
+	if !isExistingDir(path) || !fileExists(filepath.Join(path, ".git")) {
 		return ErrInvalidProjectPath
 	}
-
-	info, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return ErrInvalidProjectPath
-		}
-		return fmt.Errorf("%w: %v", ErrInvalidProjectPath, err)
-	}
-	if !info.IsDir() {
-		return ErrInvalidProjectPath
-	}
-
-	gitEntry := filepath.Join(path, ".git")
-	if _, err := os.Stat(gitEntry); err != nil {
-		if os.IsNotExist(err) {
-			return ErrInvalidProjectPath
-		}
-		return fmt.Errorf("%w: %v", ErrInvalidProjectPath, err)
-	}
-
 	return nil
+}
+
+// isExistingDir reports whether path is an existing directory.
+func isExistingDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+// fileExists reports whether path exists (file, directory, or symlink).
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// runGitCommand executes a git command in repoPath and returns its trimmed stdout.
+func runGitCommand(repoPath string, args ...string) (string, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
 
 // gitRemoteURL returns the fetch URL of the origin remote, or an empty string.
 func gitRemoteURL(repoPath string) (string, error) {
-	cmd := exec.Command("git", "remote", "get-url", "origin")
-	cmd.Dir = repoPath
-	out, err := cmd.Output()
+	out, err := runGitCommand(repoPath, "remote", "get-url", "origin")
 	if err != nil {
 		// No remote configured is not an error.
 		return "", nil
 	}
-	return strings.TrimSpace(string(out)), nil
+	return out, nil
 }
 
 // gitDefaultBranch returns the default branch name (HEAD symbolic ref).
 func gitDefaultBranch(repoPath string) (string, error) {
-	cmd := exec.Command("git", "symbolic-ref", "--short", "HEAD")
-	cmd.Dir = repoPath
-	out, err := cmd.Output()
+	out, err := runGitCommand(repoPath, "symbolic-ref", "--short", "HEAD")
 	if err != nil {
 		// Detached HEAD or no commits; fall back to "main".
 		return "main", nil
 	}
-	return strings.TrimSpace(string(out)), nil
+	return out, nil
 }
 
 // generateID creates a random 16-character hex string using crypto/rand.
@@ -271,5 +271,5 @@ func generateID() (string, error) {
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%x", b), nil
+	return hex.EncodeToString(b), nil
 }
