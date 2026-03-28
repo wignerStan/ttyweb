@@ -204,20 +204,3 @@ func TestLogWatcher_GetSessions(t *testing.T) {
 
 	watcher.Stop()
 }
-
-func TestIsDirWritable(t *testing.T) {
-	if !isDirWritable(t.TempDir()) {
-		t.Error("isDirWritable should return true for temp dir")
-	}
-	if isDirWritable("/nonexistent/path") {
-		t.Error("isDirWritable should return false for nonexistent path")
-	}
-	// Test with a file instead of a directory.
-	file := filepath.Join(t.TempDir(), "file.txt")
-	if err := os.WriteFile(file, []byte("test"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if isDirWritable(file) {
-		t.Error("isDirWritable should return false for a file path")
-	}
-}

@@ -67,7 +67,7 @@ func DetectAssistant(command string) (AssistantType, bool) {
 
 	for _, rule := range detectionRules {
 		for _, pattern := range rule.patterns {
-			if strings.Contains(normalized, strings.ToLower(pattern)) {
+			if strings.Contains(normalized, pattern) {
 				return rule.assistantType, true
 			}
 		}
