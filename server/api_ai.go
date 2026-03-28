@@ -2,11 +2,23 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
+
+	"ttyweb/ai"
 )
 
-// handleAICommand handles POST requests to send an AI command.
-// This is a stub that returns an empty response since there is no LLM backend.
+// aiRequest represents the JSON body for the AI command endpoint.
+type aiRequest struct {
+	Role   string `json:"role"`
+	Prompt string `json:"prompt"`
+}
+
+// handleAICommand handles POST /api/ai/command.
+// It calls an OpenAI-compatible LLM API to generate a terminal command
+// based on the user prompt and the selected AI role.
 func (server *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -15,23 +27,82 @@ func (server *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body struct {
-		Command string `json:"command"`
-		RoleID  int    `json:"role_id"`
-		PaneKey string `json:"pane_key"`
-	}
+	var body aiRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if body.Command == "" {
-		writeAPIError(w, http.StatusBadRequest, "command is required")
+	if body.Prompt == "" {
+		writeAPIError(w, http.StatusBadRequest, "prompt is required")
 		return
 	}
 
-	// No LLM backend is available. Return an empty success response.
+	// Look up the role. Default to "cli-expert" if not specified.
+	roleID := body.Role
+	if roleID == "" {
+		roleID = "cli-expert"
+	}
+	role := ai.GetRoleDefault(roleID)
+	systemPrompt := role.SystemPrompt + "\n\n" + role.Suffix
+
+	// Resolve LLM configuration.
+	// Priority: 1) env vars, 2) request headers, 3) query params.
+	apiKey := os.Getenv("LLM_API_KEY")
+	apiURL := os.Getenv("LLM_API_URL")
+	model := os.Getenv("LLM_MODEL")
+
+	if apiKey == "" {
+		apiKey = r.Header.Get("X-LLM-Api-Key")
+	}
+	if apiURL == "" {
+		apiURL = r.Header.Get("X-LLM-Api-URL")
+	}
+	if model == "" {
+		model = r.Header.Get("X-LLM-Model")
+	}
+
+	if apiKey == "" {
+		apiKey = r.URL.Query().Get("api_key")
+	}
+	if apiURL == "" {
+		apiURL = r.URL.Query().Get("api_url")
+	}
+	if model == "" {
+		model = r.URL.Query().Get("model")
+	}
+
+	// Apply defaults if still not set.
+	if apiURL == "" {
+		apiURL = "https://api.openai.com"
+	}
+	if model == "" {
+		model = "gpt-4"
+	}
+
+	// If no API key is available, return a graceful error.
+	if apiKey == "" {
+		writeAPISuccess(w, map[string]interface{}{
+			"command":     "",
+			"explanation": "No LLM API key configured. Set LLM_API_KEY environment variable or pass X-LLM-Api-Key header.",
+		})
+		return
+	}
+
+	// Create client and call the API.
+	client := ai.NewClient(apiKey, apiURL, model)
+	content, err := client.ChatCompletion(r.Context(), systemPrompt, body.Prompt)
+	if err != nil {
+		log.Printf("[AI] request failed: %v", err)
+		writeAPIError(w, http.StatusInternalServerError, fmt.Sprintf("AI request failed: %s", err.Error()))
+		return
+	}
+
+	// Extract the command from the response.
+	command := ai.ExtractCommand(content)
+	explanation := fmt.Sprintf("[%s] %s", role.ID, model)
+
 	writeAPISuccess(w, map[string]interface{}{
-		"response": "",
-		"message":  "no LLM backend configured",
+		"command":     command,
+		"explanation": explanation,
 	})
 }
