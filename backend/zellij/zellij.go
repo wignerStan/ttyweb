@@ -1,0 +1,132 @@
+package zellij
+
+import (
+	"os"
+	"os/exec"
+	"syscall"
+	"time"
+
+	"github.com/creack/pty"
+	"github.com/pkg/errors"
+)
+
+// ZellijSlave is a zellij session attached via PTY.
+// It implements server.Slave interface from ttyweb/server.
+type ZellijSlave struct {
+	pty         *os.File
+	cmd         *exec.Cmd
+	session     string
+	closeSignal syscall.Signal
+	closeTimeout time.Duration
+	ptyClosed   chan struct{}
+}
+
+// Option configures ZellijSlave behavior.
+type Option func(*ZellijSlave)
+
+// WithCloseSignal sets the signal sent on close.
+func WithCloseSignal(sig syscall.Signal) Option {
+	return func(s *ZellijSlave) {
+		s.closeSignal = sig
+	}
+}
+
+// WithCloseTimeout sets how long to wait before SIGKILL.
+func WithCloseTimeout(d time.Duration) Option {
+	return func(s *ZellijSlave) {
+		s.closeTimeout = d
+	}
+}
+
+// NewZellijSlave creates a PTY attached to a zellij session.
+// If session is empty, creates a new session.
+func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
+	args := []string{"zellij"}
+	if session == "" {
+		args = append(args, "new-session", "-s", "ttyweb")
+	} else {
+		args = append(args, "attach", session)
+	}
+
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
+
+	ptyFile, err := pty.Start(cmd)
+	if err != nil {
+		return nil, errors.Wrapf(err, "zellij pty start failed: %v", args)
+	}
+	ptyClosed := make(chan struct{})
+
+	slave := &ZellijSlave{
+		session:      session,
+		closeSignal:  syscall.SIGHUP,
+		closeTimeout: 10 * time.Second,
+		cmd:          cmd,
+		pty:          ptyFile,
+		ptyClosed:    ptyClosed,
+	}
+
+	for _, opt := range options {
+		opt(slave)
+	}
+
+	go func() {
+		defer func() {
+			slave.pty.Close()
+			close(slave.ptyClosed)
+		}()
+		slave.cmd.Wait()
+	}()
+
+	return slave, nil
+}
+
+func (s *ZellijSlave) Read(p []byte) (n int, err error) {
+	return s.pty.Read(p)
+}
+
+func (s *ZellijSlave) Write(p []byte) (n int, err error) {
+	return s.pty.Write(p)
+}
+
+func (s *ZellijSlave) WindowTitleVariables() map[string]interface{} {
+	vars := map[string]interface{}{
+		"command": "zellij",
+	}
+	if s.session != "" {
+		vars["session"] = s.session
+	}
+	vars["pid"] = s.cmd.Process.Pid
+	return vars
+}
+
+func (s *ZellijSlave) ResizeTerminal(width int, height int) error {
+	ws := pty.Winsize{
+		Rows: uint16(height),
+		Cols: uint16(width),
+		X:    0,
+		Y:    0,
+	}
+	return pty.Setsize(s.pty, &ws)
+}
+
+func (s *ZellijSlave) Close() error {
+	if s.cmd != nil && s.cmd.Process != nil {
+		s.cmd.Process.Signal(s.closeSignal)
+	}
+	for {
+		select {
+		case <-s.ptyClosed:
+			return nil
+		case <-s.closeTimeoutC():
+			s.cmd.Process.Signal(syscall.SIGKILL)
+		}
+	}
+}
+
+func (s *ZellijSlave) closeTimeoutC() <-chan time.Time {
+	if s.closeTimeout >= 0 {
+		return time.After(s.closeTimeout)
+	}
+	return make(chan time.Time)
+}
