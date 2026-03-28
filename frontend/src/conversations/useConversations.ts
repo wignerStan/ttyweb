@@ -18,7 +18,8 @@ export function useConversations(projectPath: string | null) {
     try {
       const params = new URLSearchParams()
       if (projectPath) params.set('project', projectPath)
-      const url = `/api/ai/sessions${params.toString() ? `?${params.toString()}` : ''}`
+      const qs = params.toString()
+      const url = `/api/ai/sessions${qs ? `?${qs}` : ''}`
       const res = await fetch(url, { headers: authHeaders() })
       const json: ApiResponse<AISession[]> = await res.json()
       if (json.success) {
@@ -40,73 +41,52 @@ export function useConversations(projectPath: string | null) {
   return { sessions, loading, error, refetch: fetchSessions }
 }
 
+async function fetchMessages(
+  sessionId: string,
+  endpoint: 'conversation' | 'refresh'
+): Promise<{ data: ConversationMessage[]; error: string }> {
+  const res = await fetch(
+    `/api/ai/sessions/${encodeURIComponent(sessionId)}/${endpoint}`,
+    { headers: authHeaders() }
+  )
+  const json: ApiResponse<ConversationMessage[]> = await res.json()
+  if (json.success) {
+    return { data: json.data, error: '' }
+  }
+  return { data: [], error: json.error ?? `Failed to ${endpoint} conversation` }
+}
+
 export function useConversation(sessionId: string | null) {
   const [messages, setMessages] = useState<ConversationMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [session, setSession] = useState<AISession | null>(null)
 
-  const fetchConversation = useCallback(async () => {
+  const load = useCallback(async (endpoint: 'conversation' | 'refresh') => {
     if (!sessionId) return
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(
-        `/api/ai/sessions/${encodeURIComponent(sessionId)}/conversation`,
-        { headers: authHeaders() }
-      )
-      const json: ApiResponse<ConversationMessage[]> = await res.json()
-      if (json.success) {
-        setMessages(json.data)
-      } else {
-        setError(json.error ?? 'Failed to fetch conversation')
-      }
+      const result = await fetchMessages(sessionId, endpoint)
+      setMessages(result.data)
+      setError(result.error)
     } catch {
       setError('Failed to connect to server')
     } finally {
       setLoading(false)
     }
   }, [sessionId])
-
-  const refreshConversation = useCallback(async () => {
-    if (!sessionId) return
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch(
-        `/api/ai/sessions/${encodeURIComponent(sessionId)}/refresh`,
-        { headers: authHeaders() }
-      )
-      const json: ApiResponse<ConversationMessage[]> = await res.json()
-      if (json.success) {
-        setMessages(json.data)
-      } else {
-        setError(json.error ?? 'Failed to refresh conversation')
-      }
-    } catch {
-      setError('Failed to connect to server')
-    } finally {
-      setLoading(false)
-    }
-  }, [sessionId])
-
-  const setSessionInfo = useCallback((s: AISession | null) => {
-    setSession(s)
-  }, [])
 
   useEffect(() => {
     setMessages([])
     setError('')
-    fetchConversation()
-  }, [fetchConversation])
+    load('conversation')
+  }, [load])
 
   return {
     messages,
     loading,
     error,
-    session,
-    setSessionInfo,
-    refetch: fetchConversation,
-    refresh: refreshConversation,
+    refetch: () => load('conversation'),
+    refresh: () => load('refresh'),
   }
 }

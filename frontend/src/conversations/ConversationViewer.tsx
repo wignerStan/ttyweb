@@ -12,10 +12,6 @@ interface ConversationViewerProps {
 export function ConversationViewer({ sessionId, sessionInfo, onBack }: ConversationViewerProps) {
   const { messages, loading, error, refresh } = useConversation(sessionId)
 
-  const handleRefresh = () => {
-    refresh()
-  }
-
   if (!sessionId) {
     return (
       <div className="conv-viewer-container">
@@ -43,7 +39,7 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
         )}
         <button
           className={`conv-viewer-header-btn${loading ? ' conv-viewer-header-btn--disabled' : ''}`}
-          onClick={handleRefresh}
+          onClick={refresh}
           disabled={loading}
           title="Refresh conversation"
         >
@@ -54,7 +50,7 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
       {error && (
         <div className="conv-viewer-error">
           <span>{error}</span>
-          <button className="conv-viewer-header-btn" onClick={handleRefresh}>Retry</button>
+          <button className="conv-viewer-header-btn" onClick={refresh}>Retry</button>
         </div>
       )}
 

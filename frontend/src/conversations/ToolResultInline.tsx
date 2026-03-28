@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import type { ToolUseBlock, ToolResultBlock } from './types'
 
 interface ToolResultInlineProps {
@@ -9,7 +9,6 @@ interface ToolResultInlineProps {
 function formatToolInput(input: Record<string, unknown>): string {
   const entries = Object.entries(input)
   if (entries.length === 0) return ''
-  // Show a compact summary of the input
   const parts: string[] = []
   for (const [key, value] of entries) {
     if (key === 'command' && typeof value === 'string') {
@@ -29,27 +28,36 @@ function formatToolInput(input: Record<string, unknown>): string {
 
 export function ToolResultInline({ toolUse, toolResult }: ToolResultInlineProps) {
   const [expanded, setExpanded] = useState(false)
-  const [output, setOutput] = useState<string | null>(null)
 
   const inputSummary = formatToolInput(toolUse.input)
-  const hasOutput = toolResult !== undefined && toolResult.output !== undefined && toolResult.output !== ''
+  const output = toolResult?.output
+  const hasOutput = output !== undefined && output !== ''
 
-  const handleToggle = useCallback(() => {
-    if (!hasOutput) return
-    if (!expanded && output === null && toolResult?.output) {
-      setOutput(toolResult.output)
-    }
-    setExpanded((prev) => !prev)
-  }, [expanded, hasOutput, output, toolResult?.output])
+  if (!hasOutput) {
+    return (
+      <div className="conv-tool-result">
+        <div className="conv-tool-result-header">
+          <span className="conv-tool-result-name">{toolUse.name}</span>
+          {inputSummary && <span className="conv-tool-result-input">{inputSummary}</span>}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`conv-tool-result${expanded ? ' conv-tool-result--expanded' : ''}`}>
-      <div className="conv-tool-result-header" onClick={handleToggle} role="button" tabIndex={0} aria-expanded={expanded}>
-        {hasOutput && <span className="conv-tool-result-chevron">&#9654;</span>}
+      <div
+        className="conv-tool-result-header"
+        onClick={() => setExpanded((prev) => !prev)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+      >
+        <span className="conv-tool-result-chevron">&#9654;</span>
         <span className="conv-tool-result-name">{toolUse.name}</span>
         {inputSummary && <span className="conv-tool-result-input">{inputSummary}</span>}
       </div>
-      {expanded && hasOutput && output !== null && (
+      {expanded && (
         <div className="conv-tool-result-output">{output}</div>
       )}
     </div>

@@ -1,10 +1,9 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useConversations } from './useConversations'
 import type { AISession } from './types'
 import './conversations.css'
 
 interface ConversationListProps {
-  projectPath: string | null
   selectedSessionId: string | null
   onSelectSession: (session: AISession) => void
 }
@@ -48,19 +47,11 @@ const TYPE_ORDER: Record<string, number> = {
 }
 
 export function ConversationList({
-  projectPath,
   selectedSessionId,
   onSelectSession,
 }: ConversationListProps) {
   const [filterText, setFilterText] = useState('')
-  const { sessions, loading, error, refetch } = useConversations(projectPath)
-
-  const handleFilterChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFilterText(e.target.value)
-    },
-    []
-  )
+  const { sessions, loading, error, refetch } = useConversations(null)
 
   const filteredSessions = useMemo(() => {
     const lower = filterText.toLowerCase()
@@ -92,7 +83,7 @@ export function ConversationList({
             type="text"
             placeholder="Filter by title, model..."
             value={filterText}
-            onChange={handleFilterChange}
+            onChange={(e) => setFilterText(e.target.value)}
           />
           <button
             className="conv-viewer-header-btn"

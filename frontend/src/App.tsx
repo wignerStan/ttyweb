@@ -31,8 +31,6 @@ function DesktopLayout() {
   const [imperialStudyOpen, setImperialStudyOpen] = useState(true);
   const [activeView, setActiveView] = useState<AppView>('terminal');
   const [selectedSession, setSelectedSession] = useState<AISession | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [projectFilter] = useState<string | null>(null);
 
   const openNotepad = useCallback(() => {
     setTabs((prev) => {
@@ -70,16 +68,6 @@ function DesktopLayout() {
   }, [openTab]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
-
-  const handleSelectSession = useCallback((session: AISession) => {
-    setSelectedSession(session);
-    setSelectedSessionId(session.id);
-  }, []);
-
-  const handleBackToList = useCallback(() => {
-    setSelectedSession(null);
-    setSelectedSessionId(null);
-  }, []);
 
   return (
     <div style={styles.container}>
@@ -176,16 +164,15 @@ function DesktopLayout() {
             <div style={styles.conversationsLayout}>
               <div style={styles.conversationsListPane}>
                 <ConversationList
-                  projectPath={projectFilter}
-                  selectedSessionId={selectedSessionId}
-                  onSelectSession={handleSelectSession}
+                  selectedSessionId={selectedSession?.id ?? null}
+                  onSelectSession={setSelectedSession}
                 />
               </div>
               <div style={styles.conversationsViewerPane}>
                 <ConversationViewer
-                  sessionId={selectedSessionId}
+                  sessionId={selectedSession?.id ?? null}
                   sessionInfo={selectedSession}
-                  onBack={handleBackToList}
+                  onBack={() => setSelectedSession(null)}
                 />
               </div>
             </div>
