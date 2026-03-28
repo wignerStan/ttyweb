@@ -130,9 +130,8 @@ func (c *Client) ChatCompletion(ctx context.Context, systemPrompt, userPrompt st
 
 // ExtractCommand pulls a command from an LLM response.
 // If the response contains a markdown code fence (```...```), the content
-// inside the fence is returned. Otherwise, the full text is returned.
+// inside the fence is returned. Otherwise, the trimmed text is returned.
 func ExtractCommand(content string) string {
-	// Try to match the first code fence block.
 	content = strings.TrimSpace(content)
 
 	fenceStart := strings.Index(content, "```")
@@ -144,16 +143,16 @@ func ExtractCommand(content string) string {
 	afterFence := content[fenceStart+3:]
 	nlIdx := strings.Index(afterFence, "\n")
 	if nlIdx == -1 {
-		return content
+		// Opening fence without a newline (e.g. "```text") — return as-is.
+		return strings.TrimSpace(afterFence)
 	}
-	codeStart := nlIdx + 1
 
+	codeStart := nlIdx + 1
 	fenceEnd := strings.Index(afterFence[codeStart:], "```")
 	if fenceEnd == -1 {
-		// No closing fence — return everything after the opening fence.
-		return strings.TrimSpace(afterFence[nlIdx+1:])
+		// No closing fence — return everything after the opening line.
+		return strings.TrimSpace(afterFence[codeStart:])
 	}
 
-	code := afterFence[codeStart : codeStart+fenceEnd]
-	return strings.TrimSpace(code)
+	return strings.TrimSpace(afterFence[codeStart : codeStart+fenceEnd])
 }

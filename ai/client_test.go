@@ -195,6 +195,15 @@ func TestExtractCommand_CodeFenceNoLanguage(t *testing.T) {
 	}
 }
 
+func TestExtractCommand_CodeFenceNoNewline(t *testing.T) {
+	// Opening fence without a newline (no code body) returns content after fence.
+	input := "```text"
+	result := ExtractCommand(input)
+	if result != "text" {
+		t.Errorf("expected 'text', got %q", result)
+	}
+}
+
 func TestExtractCommand_CodeFenceMultiLine(t *testing.T) {
 	input := "```\nfind . -name '*.go' -exec grep -l 'TODO' {} +\n&& echo 'Done'\n```"
 	result := ExtractCommand(input)

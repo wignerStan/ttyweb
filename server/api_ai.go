@@ -10,11 +10,34 @@ import (
 	"ttyweb/ai"
 )
 
-// aiRequest represents the JSON body for the AI command endpoint.
-type aiRequest struct {
+// aiCommandRequest represents the JSON body for the AI command endpoint.
+type aiCommandRequest struct {
 	Role   string `json:"role"`
 	Prompt string `json:"prompt"`
 }
+
+// aiCommandResponse represents the JSON response for the AI command endpoint.
+type aiCommandResponse struct {
+	Command     string `json:"command"`
+	Explanation string `json:"explanation"`
+}
+
+// resolveConfig returns the first non-empty value from the given sources.
+func resolveConfig(envKey, headerName, queryParam string, r *http.Request) string {
+	if v := os.Getenv(envKey); v != "" {
+		return v
+	}
+	if v := r.Header.Get(headerName); v != "" {
+		return v
+	}
+	return r.URL.Query().Get(queryParam)
+}
+
+// defaultAPIURL is the fallback API URL when none is configured.
+const defaultAPIURL = "https://api.openai.com"
+
+// defaultModel is the fallback model when none is configured.
+const defaultModel = "gpt-4"
 
 // handleAICommand handles POST /api/ai/command.
 // It calls an OpenAI-compatible LLM API to generate a terminal command
@@ -27,7 +50,7 @@ func (server *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body aiRequest
+	var body aiCommandRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -37,58 +60,29 @@ func (server *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Look up the role. Default to "cli-expert" if not specified.
-	roleID := body.Role
-	if roleID == "" {
-		roleID = "cli-expert"
-	}
-	role := ai.GetRoleDefault(roleID)
+	role := ai.GetRoleDefault(body.Role)
 	systemPrompt := role.SystemPrompt + "\n\n" + role.Suffix
 
-	// Resolve LLM configuration.
-	// Priority: 1) env vars, 2) request headers, 3) query params.
-	apiKey := os.Getenv("LLM_API_KEY")
-	apiURL := os.Getenv("LLM_API_URL")
-	model := os.Getenv("LLM_MODEL")
+	// Resolve LLM configuration. Priority: env vars > request headers > query params.
+	apiKey := resolveConfig("LLM_API_KEY", "X-LLM-Api-Key", "api_key", r)
+	apiURL := resolveConfig("LLM_API_URL", "X-LLM-Api-URL", "api_url", r)
+	model := resolveConfig("LLM_MODEL", "X-LLM-Model", "model", r)
 
-	if apiKey == "" {
-		apiKey = r.Header.Get("X-LLM-Api-Key")
-	}
 	if apiURL == "" {
-		apiURL = r.Header.Get("X-LLM-Api-URL")
+		apiURL = defaultAPIURL
 	}
 	if model == "" {
-		model = r.Header.Get("X-LLM-Model")
+		model = defaultModel
 	}
 
 	if apiKey == "" {
-		apiKey = r.URL.Query().Get("api_key")
-	}
-	if apiURL == "" {
-		apiURL = r.URL.Query().Get("api_url")
-	}
-	if model == "" {
-		model = r.URL.Query().Get("model")
-	}
-
-	// Apply defaults if still not set.
-	if apiURL == "" {
-		apiURL = "https://api.openai.com"
-	}
-	if model == "" {
-		model = "gpt-4"
-	}
-
-	// If no API key is available, return a graceful error.
-	if apiKey == "" {
-		writeAPISuccess(w, map[string]interface{}{
-			"command":     "",
-			"explanation": "No LLM API key configured. Set LLM_API_KEY environment variable or pass X-LLM-Api-Key header.",
+		writeAPISuccess(w, aiCommandResponse{
+			Command:     "",
+			Explanation: "No LLM API key configured. Set LLM_API_KEY environment variable or pass X-LLM-Api-Key header.",
 		})
 		return
 	}
 
-	// Create client and call the API.
 	client := ai.NewClient(apiKey, apiURL, model)
 	content, err := client.ChatCompletion(r.Context(), systemPrompt, body.Prompt)
 	if err != nil {
@@ -97,12 +91,8 @@ func (server *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract the command from the response.
-	command := ai.ExtractCommand(content)
-	explanation := fmt.Sprintf("[%s] %s", role.ID, model)
-
-	writeAPISuccess(w, map[string]interface{}{
-		"command":     command,
-		"explanation": explanation,
+	writeAPISuccess(w, aiCommandResponse{
+		Command:     ai.ExtractCommand(content),
+		Explanation: fmt.Sprintf("[%s] %s", role.ID, model),
 	})
 }

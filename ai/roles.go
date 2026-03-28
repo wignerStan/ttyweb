@@ -127,8 +127,9 @@ var (
 )
 
 func initRolesIndex() {
-	rolesIndex = make(map[string]Role, 7)
-	for _, r := range BuiltinRoles() {
+	roles := BuiltinRoles()
+	rolesIndex = make(map[string]Role, len(roles))
+	for _, r := range roles {
 		rolesIndex[r.ID] = r
 	}
 }

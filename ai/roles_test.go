@@ -104,19 +104,11 @@ func TestGetRoleDefault(t *testing.T) {
 	}
 }
 
-func TestGetRoleIsImmutable(t *testing.T) {
-	// Calling GetRole twice should return distinct values.
+func TestGetRoleReturnsValidData(t *testing.T) {
+	// Calling GetRole twice should return equal data, regardless of pointer identity.
 	r1 := GetRole("cli-expert")
 	r2 := GetRole("cli-expert")
-	if r1 == r2 {
-		// If they happen to point to the same address, verify we got valid data.
-		if r1.ID != "cli-expert" {
-			t.Error("role ID mismatch")
-		}
-	} else {
-		// Different pointers but same data — fine.
-		if r1.ID != r2.ID {
-			t.Error("two lookups returned different role data")
-		}
+	if r1.ID != r2.ID || r1.Name != r2.Name || r1.SystemPrompt != r2.SystemPrompt {
+		t.Error("two lookups returned different role data")
 	}
 }
