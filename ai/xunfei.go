@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -96,26 +97,30 @@ func GenerateAuthURL(config XunfeiConfig) (string, error) {
 	return u.String(), nil
 }
 
-// xfyunFirstFrame is the first-frame JSON structure for Xunfei IAT v2.
-type xfyunFirstFrame struct {
-	Header    xfyunFrameHeader   `json:"header"`
-	Parameter xfyunFrameParams   `json:"parameter"`
-	Payload   xfyunFramePayload  `json:"payload"`
+// xfyunFrame is the JSON frame structure for Xunfei IAT v2 WebSocket messages.
+type xfyunFrame struct {
+	Header    xfyunFrameHeader  `json:"header"`
+	Parameter xfyunFrameParams  `json:"parameter"`
+	Payload   xfyunFramePayload `json:"payload"`
 }
 
+// xfyunFrameHeader is the header of a Xunfei IAT v2 frame.
 type xfyunFrameHeader struct {
 	AppID  string `json:"app_id"`
 	Status int    `json:"status"`
 }
 
+// xfyunFrameParams holds IAT-specific parameters.
 type xfyunFrameParams struct {
 	IAT map[string]interface{} `json:"iat"`
 }
 
+// xfyunFramePayload wraps the audio payload.
 type xfyunFramePayload struct {
 	Audio xfyunAudioPayload `json:"audio"`
 }
 
+// xfyunAudioPayload describes the audio encoding and data.
 type xfyunAudioPayload struct {
 	Encoding    string `json:"encoding"`
 	SampleRate  int    `json:"sample_rate"`
@@ -151,7 +156,7 @@ func BuildFirstFrame(config XunfeiConfig, params SpeechParams, audio string, seq
 		iatParams["dhw"] = "utf-8;" + params.Hotwords
 	}
 
-	frame := xfyunFirstFrame{
+	frame := xfyunFrame{
 		Header: xfyunFrameHeader{AppID: config.AppID, Status: 0},
 		Parameter: xfyunFrameParams{IAT: iatParams},
 		Payload: xfyunFramePayload{
@@ -173,8 +178,8 @@ func BuildFirstFrame(config XunfeiConfig, params SpeechParams, audio string, seq
 // BuildMiddleFrame builds a middle (continuation) WebSocket frame with audio data.
 // audio is base64-encoded PCM audio. seq is the sequence number.
 func BuildMiddleFrame(audio string, seq int) ([]byte, error) {
-	frame := xfyunFirstFrame{
-		Header: xfyunFrameHeader{AppID: "", Status: 1},
+	frame := xfyunFrame{
+		Header: xfyunFrameHeader{Status: 1},
 		Payload: xfyunFramePayload{
 			Audio: xfyunAudioPayload{
 				Encoding:   "raw",
@@ -191,15 +196,14 @@ func BuildMiddleFrame(audio string, seq int) ([]byte, error) {
 // BuildLastFrame builds the final WebSocket frame signalling end of audio.
 // seq is the final sequence number.
 func BuildLastFrame(seq int) ([]byte, error) {
-	frame := xfyunFirstFrame{
-		Header: xfyunFrameHeader{AppID: "", Status: 2},
+	frame := xfyunFrame{
+		Header: xfyunFrameHeader{Status: 2},
 		Payload: xfyunFramePayload{
 			Audio: xfyunAudioPayload{
 				Encoding:   "raw",
 				SampleRate: 16000,
 				Seq:        seq,
 				Status:     2,
-				Audio:      "",
 			},
 		},
 	}
@@ -212,16 +216,19 @@ type xfyunResponse struct {
 	Payload *xfyunResponsePayload `json:"payload,omitempty"`
 }
 
+// xfyunResponseHeader is the header of a Xunfei IAT v2 response.
 type xfyunResponseHeader struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Status  int    `json:"status"`
 }
 
+// xfyunResponsePayload wraps the optional result payload.
 type xfyunResponsePayload struct {
 	Result *xfyunResultPayload `json:"result,omitempty"`
 }
 
+// xfyunResultPayload holds the base64-encoded recognition result.
 type xfyunResultPayload struct {
 	Text string `json:"text"` // base64-encoded JSON
 }
@@ -275,14 +282,14 @@ func ParseResult(data []byte) (*SpeechResult, error) {
 		return nil, fmt.Errorf("failed to parse decoded text: %w", err)
 	}
 
-	var text string
+	var text strings.Builder
 	for _, word := range textData.WS {
 		for _, cw := range word.CW {
-			text += cw.W
+			text.WriteString(cw.W)
 		}
 	}
 
-	result.Text = text
+	result.Text = text.String()
 	result.SN = textData.SN
 	result.LS = textData.LS
 	result.PGS = textData.PGS
@@ -299,15 +306,8 @@ func ParseResult(data []byte) (*SpeechResult, error) {
 // XFYUN_APP_ID, XFYUN_API_KEY, XFYUN_API_SECRET.
 func LoadXunfeiConfigFromEnv() XunfeiConfig {
 	return XunfeiConfig{
-		AppID:     getEnvDefault("XFYUN_APP_ID", ""),
-		APIKey:    getEnvDefault("XFYUN_API_KEY", ""),
-		APISecret: getEnvDefault("XFYUN_API_SECRET", ""),
+		AppID:     os.Getenv("XFYUN_APP_ID"),
+		APIKey:    os.Getenv("XFYUN_API_KEY"),
+		APISecret: os.Getenv("XFYUN_API_SECRET"),
 	}
-}
-
-func getEnvDefault(key, fallback string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return val
-	}
-	return fallback
 }

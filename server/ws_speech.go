@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -74,11 +73,7 @@ func (s *speechSession) sendError(msg string) {
 // handleSpeechWS handles WebSocket connections to /ws/speech.
 // It proxies audio between the browser and the Xunfei IAT STT service.
 func (server *Server) handleSpeechWS(w http.ResponseWriter, r *http.Request) {
-	xunfeiCfg := ai.XunfeiConfig{
-		AppID:     os.Getenv("XFYUN_APP_ID"),
-		APIKey:    os.Getenv("XFYUN_API_KEY"),
-		APISecret: os.Getenv("XFYUN_API_SECRET"),
-	}
+	xunfeiCfg := ai.LoadXunfeiConfigFromEnv()
 
 	if !xunfeiCfg.IsConfigured() {
 		w.Header().Set("Content-Type", "application/json")
@@ -211,12 +206,6 @@ func (s *speechSession) relayXunfeiToClient(xfConn *websocket.Conn) {
 	defer xfConn.Close()
 
 	for {
-		select {
-		case <-s.done:
-			return
-		default:
-		}
-
 		_, raw, err := xfConn.ReadMessage()
 		if err != nil {
 			select {

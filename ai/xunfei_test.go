@@ -296,14 +296,10 @@ func TestParseResult_EmptyResult(t *testing.T) {
 
 func TestParseResult_PartialResult(t *testing.T) {
 	// Build a realistic Xunfei response with base64-encoded text payload.
-	innerText := `{"sn":1,"ls":false,"bg":0,"ed":0,"lsd":false,"pgs":"apd","rg":[0,100],"cn":{"st":{"type":"0","cm":0.00},"cw":[{"w":"你","wp":"n"},{"w":"好","wp":"n"}]}}`
+	innerText := `{"sn":1,"ls":false,"bg":0,"ed":0,"lsd":false,"pgs":"apd","rg":[0,100],"ws":[{"cw":[{"w":"你"},{"w":"好"}]}]}`
 	encodedText := base64.StdEncoding.EncodeToString([]byte(innerText))
 
 	resp := `{"header":{"code":0,"message":"success","status":1},"payload":{"result":{"text":"` + encodedText + `"}}}`
-	// But our parser uses ws (word slots) not cn.cw, so adjust the inner text format.
-	innerText2 := `{"sn":1,"ls":false,"bg":0,"ed":0,"lsd":false,"pgs":"apd","rg":[0,100],"ws":[{"cw":[{"w":"你"},{"w":"好"}]}]}`
-	encodedText2 := base64.StdEncoding.EncodeToString([]byte(innerText2))
-	resp = `{"header":{"code":0,"message":"success","status":1},"payload":{"result":{"text":"` + encodedText2 + `"}}}`
 
 	result, err := ParseResult([]byte(resp))
 	if err != nil {
