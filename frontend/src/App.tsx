@@ -5,7 +5,12 @@ import { TerminalTab } from './components/TerminalTab';
 import { KanbanBoard } from './kanban';
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy';
 import { NotepadPanel } from './notepad/NotepadPanel';
+import { ConversationList } from './conversations/ConversationList';
+import { ConversationViewer } from './conversations/ConversationViewer';
 import MobileApp from './mobile/MobileApp';
+import type { AISession } from './conversations/types';
+
+type AppView = 'terminal' | 'conversations';
 
 const NOTEPAD_TAB_ID = '__notepad__';
 
@@ -24,6 +29,10 @@ function DesktopLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('terminal');
   const [imperialStudyOpen, setImperialStudyOpen] = useState(true);
+  const [activeView, setActiveView] = useState<AppView>('terminal');
+  const [selectedSession, setSelectedSession] = useState<AISession | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [projectFilter] = useState<string | null>(null);
 
   const openNotepad = useCallback(() => {
     setTabs((prev) => {
@@ -62,6 +71,16 @@ function DesktopLayout() {
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
 
+  const handleSelectSession = useCallback((session: AISession) => {
+    setSelectedSession(session);
+    setSelectedSessionId(session.id);
+  }, []);
+
+  const handleBackToList = useCallback(() => {
+    setSelectedSession(null);
+    setSelectedSessionId(null);
+  }, []);
+
   return (
     <div style={styles.container}>
       {imperialStudyOpen && (
@@ -80,32 +99,51 @@ function DesktopLayout() {
           <button onClick={() => setSidebarOpen(!sidebarOpen)} style={styles.toggleBtn}>
             {sidebarOpen ? '\u25C0' : '\u25B6'}
           </button>
-          {tabs.map((tab) => (
-            <div
-              key={tab.id}
-              style={{
-                ...styles.tab,
-                ...(tab.id === activeTabId ? styles.tabActive : {}),
-              }}
-              onClick={() => {
-                setViewMode('terminal');
-                setActiveTabId(tab.id);
-              }}
-            >
-              <span style={styles.tabLabel}>{tab.type === 'notepad' ? 'Notepad' : tab.id}</span>
-              {tab.id !== NOTEPAD_TAB_ID && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    closeTab(tab.id);
-                  }}
-                  style={styles.tabClose}
-                >
-                  \u00D7
-                </button>
-              )}
-            </div>
-          ))}
+          <div
+            style={{
+              ...styles.viewTab,
+              ...(activeView === 'terminal' ? styles.viewTabActive : {}),
+            }}
+            onClick={() => setActiveView('terminal')}
+          >
+            Terminal
+          </div>
+          <div
+            style={{
+              ...styles.viewTab,
+              ...(activeView === 'conversations' ? styles.viewTabActive : {}),
+            }}
+            onClick={() => setActiveView('conversations')}
+          >
+            Conversations
+          </div>
+          {activeView === 'terminal' &&
+            tabs.map((tab) => (
+              <div
+                key={tab.id}
+                style={{
+                  ...styles.tab,
+                  ...(tab.id === activeTabId ? styles.tabActive : {}),
+                }}
+                onClick={() => {
+                  setViewMode('terminal');
+                  setActiveTabId(tab.id);
+                }}
+              >
+                <span style={styles.tabLabel}>{tab.type === 'notepad' ? 'Notepad' : tab.id}</span>
+                {tab.id !== NOTEPAD_TAB_ID && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeTab(tab.id);
+                    }}
+                    style={styles.tabClose}
+                  >
+                    \u00D7
+                  </button>
+                )}
+              </div>
+            ))}
           <div
             style={{
               ...styles.tab,
@@ -119,16 +157,38 @@ function DesktopLayout() {
             <span style={{ fontSize: '14px' }}>{'\u270E'}</span>
           </button>
         </div>
-        <div style={styles.terminalArea}>
-          {viewMode === 'kanban' ? (
-            <KanbanBoard />
-          ) : (
-            <>
-              {activeTab && activeTab.type === 'notepad' && <NotepadPanel key={NOTEPAD_TAB_ID} />}
-              {activeTab && activeTab.type === 'terminal' && (
-                <TerminalTab key={activeTab.id} session={activeTab.session} pane={activeTab.pane} />
+        <div style={styles.contentArea}>
+          {activeView === 'terminal' && (
+            <div style={styles.terminalArea}>
+              {viewMode === 'kanban' ? (
+                <KanbanBoard />
+              ) : (
+                <>
+                  {activeTab && activeTab.type === 'notepad' && <NotepadPanel key={NOTEPAD_TAB_ID} />}
+                  {activeTab && activeTab.type === 'terminal' && (
+                    <TerminalTab key={activeTab.id} session={activeTab.session} pane={activeTab.pane} />
+                  )}
+                </>
               )}
-            </>
+            </div>
+          )}
+          {activeView === 'conversations' && (
+            <div style={styles.conversationsLayout}>
+              <div style={styles.conversationsListPane}>
+                <ConversationList
+                  projectPath={projectFilter}
+                  selectedSessionId={selectedSessionId}
+                  onSelectSession={handleSelectSession}
+                />
+              </div>
+              <div style={styles.conversationsViewerPane}>
+                <ConversationViewer
+                  sessionId={selectedSessionId}
+                  sessionInfo={selectedSession}
+                  onBack={handleBackToList}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -186,6 +246,21 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '4px 8px',
     marginRight: '4px',
   },
+  viewTab: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '4px 14px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: 600,
+    whiteSpace: 'nowrap' as const,
+    color: '#565f89',
+    borderRight: '1px solid #24283b',
+  },
+  viewTabActive: {
+    backgroundColor: '#1a1b26',
+    color: '#c0caf5',
+  },
   tab: {
     display: 'flex',
     alignItems: 'center',
@@ -223,7 +298,26 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
   },
+  contentArea: {
+    flex: 1,
+    overflow: 'hidden',
+  },
   terminalArea: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  conversationsLayout: {
+    display: 'flex',
+    height: '100%',
+    overflow: 'hidden',
+  },
+  conversationsListPane: {
+    width: '320px',
+    minWidth: '320px',
+    borderRight: '1px solid #24283b',
+    overflow: 'hidden',
+  },
+  conversationsViewerPane: {
     flex: 1,
     overflow: 'hidden',
   },
