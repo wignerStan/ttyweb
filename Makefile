@@ -9,7 +9,7 @@ test-frontend:
 	cd frontend && npx vitest run
 
 # E2E tests (Playwright only)
-test-e2e:
+test-e2e: build
 	cd frontend && npx playwright test
 
 # Run all tests
