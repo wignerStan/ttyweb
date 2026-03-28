@@ -13,8 +13,8 @@ import (
 
 // wsStreamMessage is a JSON message sent over the AI stream WebSocket.
 type wsStreamMessage struct {
-	Type string `json:"type"` // "token" or "done" or "error"
-	Data string `json:"data"` // token content, full text on done, error message on error
+	Type string `json:"type"` // "token", "done", or "error"
+	Data string `json:"data"`
 }
 
 // handleAIStream handles the /ws/ai/stream WebSocket endpoint.
@@ -28,7 +28,6 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// Read the initial request message.
 	_, msgBytes, err := conn.ReadMessage()
 	if err != nil {
 		log.Printf("[ai-stream] Failed to read initial message: %v", err)
@@ -49,34 +48,22 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Resolve role configuration: check if role matches a built-in or custom role.
-	roleConfig := resolveRoleConfig(req.Role)
-
-	if roleConfig.SystemPrompt == "" {
-		// Fall back to a generic system prompt.
-		roleConfig.SystemPrompt = "You are a helpful assistant that generates terminal commands. Respond concisely."
+	systemPrompt := resolveSystemPrompt(req.Role)
+	if systemPrompt == "" {
+		systemPrompt = "You are a helpful assistant that generates terminal commands. Respond concisely."
 	}
 
-	apiURL := roleConfig.APIURL
-	apiKey := roleConfig.APIKey
-	model := roleConfig.Model
+	apiURL := getEnvOrDefault("OPENAI_API_URL", "https://api.openai.com/v1")
+	model := getEnvOrDefault("OPENAI_MODEL", "gpt-4")
+	apiKey := os.Getenv("OPENAI_API_KEY")
 
-	// If no per-role config, check environment variables.
-	if apiURL == "" {
-		apiURL = getEnvOrDefault("OPENAI_API_URL", "https://api.openai.com/v1")
-	}
-	if model == "" {
-		model = getEnvOrDefault("OPENAI_MODEL", "gpt-4")
-	}
-
-	// Stream the response.
 	var fullText string
 	err = ai.StreamChatCompletion(
 		r.Context(),
 		apiURL,
 		apiKey,
 		model,
-		roleConfig.SystemPrompt,
+		systemPrompt,
 		req.Prompt,
 		func(token string) {
 			fullText += token
@@ -94,7 +81,6 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send completion message with full accumulated text.
 	if writeErr := conn.WriteJSON(wsStreamMessage{
 		Type: "done",
 		Data: fullText,
@@ -103,63 +89,46 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// roleStreamConfig holds per-role LLM configuration.
-type roleStreamConfig struct {
-	SystemPrompt string
-	APIURL       string
-	APIKey       string
-	Model        string
+// builtinRoleIDMap maps frontend role string IDs to store numeric IDs.
+var builtinRoleIDMap = map[string]int{
+	"cli": 1,
+	"ops": 7,
+	"prompt":   5,
+	"frontend": 3,
+	"backend":  4,
+	"ui":       3,
+	"api":      4,
 }
 
-// resolveRoleConfig looks up a role by ID and returns its system prompt.
-// Per-role LLM config (model, API URL) is supported when the role has
-// custom fields set via the roles API.
-func resolveRoleConfig(roleID string) roleStreamConfig {
-	roles := store.ListRoles()
-
-	// Map string role IDs from the frontend to numeric store IDs.
-	// The frontend uses string IDs like "cli", "ops", "frontend", etc.
-	// The store uses numeric IDs 1-7 for built-in roles.
-	builtinIDMap := map[string]int{
-		"cli":      1,
-		"ops":      7,
-		"prompt":   5,
-		"frontend": 3,
-		"backend":  4,
-		"ui":       3,
-		"api":      4,
-	}
-
-	storeID, ok := builtinIDMap[roleID]
+// resolveSystemPrompt looks up a role by its frontend string ID and returns
+// its system prompt. Returns an empty string if the role is not found.
+func resolveSystemPrompt(roleID string) string {
+	storeID, ok := builtinRoleIDMap[roleID]
 	if !ok {
-		// Try to find by name or return defaults.
-		return roleStreamConfig{SystemPrompt: ""}
+		return ""
 	}
 
-	for _, r := range roles {
+	for _, r := range store.ListRoles() {
 		if r.ID == storeID {
-			return roleStreamConfig{
-				SystemPrompt: r.SystemPrompt,
-			}
+			return r.SystemPrompt
 		}
 	}
 
-	return roleStreamConfig{SystemPrompt: ""}
+	return ""
 }
 
 // sendWSStreamError writes a JSON error message over the WebSocket.
 func sendWSStreamError(conn *websocket.Conn, message string) {
-	err := conn.WriteJSON(wsStreamMessage{
+	if err := conn.WriteJSON(wsStreamMessage{
 		Type: "error",
 		Data: message,
-	})
-	if err != nil {
+	}); err != nil {
 		log.Printf("[ai-stream] Failed to send error: %v", err)
 	}
 }
 
 // getEnvOrDefault returns the value of the environment variable named by key,
-// or falls back to defaultValue if the variable is empty or not set.
+// or defaultValue if the variable is empty or not set.
 func getEnvOrDefault(key string, defaultValue string) string {
 	if v := os.Getenv(key); v != "" {
 		return v

@@ -118,33 +118,23 @@ func StreamChatCompletion(
 		}
 
 		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		// SSE format: lines starting with "data: "
-		if !strings.HasPrefix(line, "data: ") {
+		if line == "" || !strings.HasPrefix(line, "data: ") {
 			continue
 		}
 
 		data := strings.TrimPrefix(line, "data: ")
 
-		// Stream end marker
 		if data == "[DONE]" {
 			return nil
 		}
 
 		var msg StreamMessage
 		if err := json.Unmarshal([]byte(data), &msg); err != nil {
-			// Skip malformed lines
-			continue
+			continue // skip malformed lines
 		}
 
-		if len(msg.Choices) > 0 {
-			content := msg.Choices[0].Delta.Content
-			if content != "" {
-				callback(content)
-			}
+		if len(msg.Choices) > 0 && msg.Choices[0].Delta.Content != "" {
+			callback(msg.Choices[0].Delta.Content)
 		}
 	}
 }

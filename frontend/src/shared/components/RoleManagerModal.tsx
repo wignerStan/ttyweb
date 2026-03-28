@@ -98,10 +98,10 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
       emoji: r.emoji,
       label: r.label,
       desc: r.desc,
-      prompt: r.prompt || '',
-      suffix: r.suffix || '',
-      model: r.model || '',
-      apiUrl: r.apiUrl || '',
+      prompt: r.prompt ?? '',
+      suffix: r.suffix ?? '',
+      model: r.model ?? '',
+      apiUrl: r.apiUrl ?? '',
     })
     setIsCreating(false)
     setShowLlmConfig(!!(r.model || r.apiUrl))

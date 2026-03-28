@@ -34,6 +34,30 @@ interface AiCommandTabProps {
   onTextConsumed?: () => void
 }
 
+function resetStreamState(
+  setStreaming: (v: boolean) => void,
+  setStreamText: (v: string) => void,
+  streamTextRef: React.MutableRefObject<string>,
+) {
+  setStreaming(false)
+  setStreamText('')
+  streamTextRef.current = ''
+}
+
+function closeWebSocket(wsRef: React.MutableRefObject<WebSocket | null>) {
+  if (wsRef.current) {
+    wsRef.current.close()
+    wsRef.current = null
+  }
+}
+
+function buildAuthHeaders(): Record<string, string> {
+  const auth = getAuthHeader()
+  const headers: Record<string, string> = {}
+  if (auth) headers['Authorization'] = auth
+  return headers
+}
+
 export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: AiCommandTabProps) {
   const [input, setInput] = useState('')
   const [selectedRole, setSelectedRole] = useState('cli')
@@ -80,10 +104,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
   const fetchRoles = useCallback(async () => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch('/api/roles', { headers })
+      const res = await fetch('/api/roles', { headers: buildAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         if (data.roles?.length) setRoles(data.roles)
@@ -96,16 +117,11 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
   useEffect(() => { fetchRoles() }, [fetchRoles])
 
   const stopStreaming = useCallback(() => {
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-    setStreaming(false)
-    // Convert whatever we have so far to a result
-    if (streamTextRef.current) {
-      setResult({ command: streamTextRef.current, explanation: '' })
-      setStreamText('')
-      streamTextRef.current = ''
+    closeWebSocket(wsRef)
+    const partialText = streamTextRef.current
+    resetStreamState(setStreaming, setStreamText, streamTextRef)
+    if (partialText) {
+      setResult({ command: partialText, explanation: '' })
     }
   }, [])
 
@@ -118,18 +134,48 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
   const handleClear = useCallback(() => {
     setInput('')
     setResult(null)
-    setStreamText('')
-    streamTextRef.current = ''
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-    setStreaming(false)
+    closeWebSocket(wsRef)
+    resetStreamState(setStreaming, setStreamText, streamTextRef)
     setLoading(false)
   }, [])
 
+  const handleCopy = useCallback(async () => {
+    const text = streaming ? streamText : result?.command
+    if (text) {
+      try {
+        await navigator.clipboard.writeText(text)
+      } catch { /* ignore */ }
+    }
+  }, [result, streaming, streamText])
+
+  const handleExecute = useCallback(() => {
+    const text = streaming ? streamText : result?.command
+    if (text) {
+      onSend(text + '\n')
+    }
+  }, [result, onSend, streaming, streamText])
+
+  const fallbackNonStreaming = useCallback(async (prompt: string) => {
+    setLoading(true)
+    try {
+      const headers = { ...buildAuthHeaders(), 'Content-Type': 'application/json' }
+      const res = await fetch('/api/ai/command', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ prompt, role: selectedRole })
+      })
+      const data = await res.json()
+      setResult({ command: data.command || '', explanation: data.explanation || '' })
+    } catch (err) {
+      setResult({ command: '', explanation: '\u8BF7\u6C42\u5931\u8D25: ' + (err instanceof Error ? err.message : String(err)) })
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedRole])
+
   const handleGenerate = useCallback(async () => {
     if (!input.trim() || loading || streaming) return
+
     // Template role: construct command and put in input box, no API call
     if (selectedRole === TEMPLATE_ROLE_ID) {
       const url = input.trim()
@@ -137,11 +183,10 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       return
     }
 
-    // Try streaming via WebSocket first
     setLoading(true)
     setResult(null)
-    setStreamText('')
     streamTextRef.current = ''
+    setStreamText('')
 
     const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${location.pathname}ws/ai/stream`
 
@@ -162,18 +207,12 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
             streamTextRef.current += msg.data
             setStreamText(streamTextRef.current)
           } else if (msg.type === 'done') {
-            ws.close()
-            wsRef.current = null
-            setStreaming(false)
+            closeWebSocket(wsRef)
+            resetStreamState(setStreaming, setStreamText, streamTextRef)
             setResult({ command: msg.data || streamTextRef.current, explanation: '' })
-            setStreamText('')
-            streamTextRef.current = ''
           } else if (msg.type === 'error') {
-            ws.close()
-            wsRef.current = null
-            setStreaming(false)
-            setStreamText('')
-            streamTextRef.current = ''
+            closeWebSocket(wsRef)
+            resetStreamState(setStreaming, setStreamText, streamTextRef)
             setResult({ command: '', explanation: '\u9519\u8BEF: ' + msg.data })
           }
         } catch {
@@ -182,12 +221,8 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       }
 
       ws.onerror = () => {
-        ws.close()
-        wsRef.current = null
-        setStreaming(false)
-        setStreamText('')
-        streamTextRef.current = ''
-        // Fallback to non-streaming API
+        closeWebSocket(wsRef)
+        resetStreamState(setStreaming, setStreamText, streamTextRef)
         fallbackNonStreaming(input.trim())
       }
 
@@ -197,50 +232,11 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
         }
       }
     } catch {
-      // If WebSocket fails entirely, fallback to REST API
       fallbackNonStreaming(input.trim())
     }
-  }, [input, selectedRole, loading, streaming])
-
-  // Non-streaming fallback
-  const fallbackNonStreaming = useCallback(async (prompt: string) => {
-    setLoading(true)
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch('/api/ai/command', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ prompt, role: selectedRole })
-      })
-      const data = await res.json()
-      setResult({ command: data.command || '', explanation: data.explanation || '' })
-    } catch (err) {
-      setResult({ command: '', explanation: '\u8BF7\u6C42\u5931\u8D25: ' + (err instanceof Error ? err.message : String(err)) })
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedRole])
-
-  const handleCopy = useCallback(async () => {
-    const text = streaming ? streamText : result?.command
-    if (text) {
-      try {
-        await navigator.clipboard.writeText(text)
-      } catch { /* ignore */ }
-    }
-  }, [result, streaming, streamText])
-
-  const handleExecute = useCallback(() => {
-    const text = streaming ? streamText : result?.command
-    if (text) {
-      onSend(text + '\n')
-    }
-  }, [result, onSend, streaming, streamText])
+  }, [input, selectedRole, loading, streaming, fallbackNonStreaming])
 
   const selectedRoleDef = roles.find(r => r.id === selectedRole)
-  const displayText = streaming ? streamText : null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '8px', gap: '8px', overflow: 'auto' }}>
@@ -547,7 +543,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       </div>
 
       {/* Streaming output */}
-      {displayText && (
+      {streaming && streamText && (
         <div ref={resultRef} style={{
           background: '#1a1c20',
           border: '1px solid #4d78cc44',
@@ -567,53 +563,10 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
             maxHeight: '200px',
             overflow: 'auto',
           }}>
-            {displayText}
+            {streamText}
             <span style={{ color: '#4d78cc' }}>&#9646;</span>
           </pre>
-          <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-            <button
-              onClick={handleCopy}
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                padding: '6px',
-                background: '#2c313a',
-                color: '#abb2bf',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                cursor: 'pointer',
-              }}
-              type="button"
-            >
-              <Copy size={12} /> \u590D\u5236
-            </button>
-            <button
-              onClick={handleExecute}
-              disabled={disabled}
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                padding: '6px',
-                background: '#4d78cc',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                opacity: disabled ? 0.5 : 1,
-              }}
-              type="button"
-            >
-              <Play size={12} /> \u6267\u884C
-            </button>
-          </div>
+          <ActionButtons onCopy={handleCopy} onExecute={handleExecute} disabled={disabled} />
         </div>
       )}
 
@@ -657,50 +610,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
               }}>
                 {result.command}
               </pre>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  onClick={handleCopy}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    padding: '6px',
-                    background: '#2c313a',
-                    color: '#abb2bf',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  type="button"
-                >
-                  <Copy size={12} /> \u590D\u5236
-                </button>
-                <button
-                  onClick={handleExecute}
-                  disabled={disabled}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    padding: '6px',
-                    background: '#4d78cc',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    opacity: disabled ? 0.5 : 1,
-                  }}
-                  type="button"
-                >
-                  <Play size={12} /> \u6267\u884C
-                </button>
-              </div>
+              <ActionButtons onCopy={handleCopy} onExecute={handleExecute} disabled={disabled} />
             </>
           )}
         </div>
@@ -712,6 +622,61 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
         roles={roles}
         onRolesChanged={fetchRoles}
       />
+    </div>
+  )
+}
+
+interface ActionButtonsProps {
+  onCopy: () => void
+  onExecute: () => void
+  disabled?: boolean
+}
+
+function ActionButtons({ onCopy, onExecute, disabled }: ActionButtonsProps) {
+  return (
+    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+      <button
+        onClick={onCopy}
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '4px',
+          padding: '6px',
+          background: '#2c313a',
+          color: '#abb2bf',
+          border: 'none',
+          borderRadius: '4px',
+          fontSize: '12px',
+          cursor: 'pointer',
+        }}
+        type="button"
+      >
+        <Copy size={12} /> \u590D\u5236
+      </button>
+      <button
+        onClick={onExecute}
+        disabled={disabled}
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '4px',
+          padding: '6px',
+          background: '#4d78cc',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '4px',
+          fontSize: '12px',
+          cursor: 'pointer',
+          opacity: disabled ? 0.5 : 1,
+        }}
+        type="button"
+      >
+        <Play size={12} /> \u6267\u884C
+      </button>
     </div>
   )
 }
