@@ -13,9 +13,15 @@ import (
 func (server *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	svc, err := projectService()
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service: "+err.Error())
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		projects, err := projectService().ListProjects()
+		projects, err := svc.ListProjects()
 		if err != nil {
 			writeAPIError(w, http.StatusInternalServerError, "failed to list projects: "+err.Error())
 			return
@@ -42,7 +48,7 @@ func (server *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 			opts = append(opts, service.WithWorktreeBasePath(body.WorktreeBasePath))
 		}
 
-		project, err := projectService().AddProject(body.Name, body.Path, opts...)
+		project, err := svc.AddProject(body.Name, body.Path, opts...)
 		if err != nil {
 			switch err {
 			case service.ErrProjectNameRequired:
@@ -76,6 +82,12 @@ func (server *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	svc, err := projectService()
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service: "+err.Error())
+		return
+	}
+
 	prefix := server.options.Path + "api/projects/"
 	relative := strings.TrimPrefix(r.URL.Path, prefix)
 	relative = strings.TrimSuffix(relative, "/")
@@ -92,7 +104,7 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 
 	switch r.Method {
 	case http.MethodGet:
-		project, err := projectService().GetProject(relative)
+		project, err := svc.GetProject(relative)
 		if err != nil {
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
@@ -100,13 +112,13 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 		writeAPISuccess(w, project)
 
 	case http.MethodPut:
-		var body map[string]interface{}
+		var body service.UpdateProjectRequest
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			writeAPIError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 
-		project, err := projectService().UpdateProject(relative, body)
+		project, err := svc.UpdateProject(relative, body)
 		if err != nil {
 			if errors.Is(err, service.ErrProjectNotFound) {
 				writeAPIError(w, http.StatusNotFound, "project not found")
@@ -118,7 +130,7 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 		writeAPISuccess(w, project)
 
 	case http.MethodDelete:
-		err := projectService().DeleteProject(relative)
+		err := svc.DeleteProject(relative)
 		if err != nil {
 			if errors.Is(err, service.ErrProjectNotFound) {
 				writeAPIError(w, http.StatusNotFound, "project not found")
@@ -141,7 +153,13 @@ func (server *Server) handleProjectSync(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	project, err := projectService().SyncProject(id)
+	svc, err := projectService()
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service: "+err.Error())
+		return
+	}
+
+	project, err := svc.SyncProject(id)
 	if err != nil {
 		if errors.Is(err, service.ErrProjectNotFound) {
 			writeAPIError(w, http.StatusNotFound, "project not found")

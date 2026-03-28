@@ -294,11 +294,16 @@ func TestUpdateProject(t *testing.T) {
 		t.Fatalf("AddProject: %v", err)
 	}
 
-	updated, err := svc.UpdateProject(created.ID, map[string]interface{}{
-		"name":        "renamed",
-		"description": "updated description",
-		"priority":    3,
-	})
+	name := "renamed"
+	desc := "updated description"
+	priority := 3
+	req := UpdateProjectRequest{
+		Name:        &name,
+		Description: &desc,
+		Priority:    &priority,
+	}
+
+	updated, err := svc.UpdateProject(created.ID, req)
 	if err != nil {
 		t.Fatalf("UpdateProject: %v", err)
 	}
@@ -318,11 +323,161 @@ func TestUpdateProject_NotFound(t *testing.T) {
 	db := setupTestDB(t)
 	svc := NewProjectService(db)
 
-	_, err := svc.UpdateProject("nonexistent", map[string]interface{}{
-		"name": "nope",
-	})
+	name := "nope"
+	_, err := svc.UpdateProject("nonexistent", UpdateProjectRequest{Name: &name})
 	if err != ErrProjectNotFound {
 		t.Errorf("expected ErrProjectNotFound, got %v", err)
+	}
+}
+
+func TestUpdateProject_MassAssignmentBlocked(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewProjectService(db)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	created, err := svc.AddProject("mass-assign-test", repoDir)
+	if err != nil {
+		t.Fatalf("AddProject: %v", err)
+	}
+
+	// Only name and description are in the request. Path, ID, RemoteURL,
+	// DefaultBranch, LastSyncAt are NOT part of UpdateProjectRequest,
+	// so they cannot be set via UpdateProject even if an attacker tries
+	// to inject extra JSON fields (they will be ignored during decode).
+	name := "updated-name"
+	desc := "updated-desc"
+	req := UpdateProjectRequest{
+		Name:        &name,
+		Description: &desc,
+	}
+
+	updated, err := svc.UpdateProject(created.ID, req)
+	if err != nil {
+		t.Fatalf("UpdateProject: %v", err)
+	}
+
+	// Whitelisted fields should be updated.
+	if updated.Name != "updated-name" {
+		t.Errorf("expected name 'updated-name', got %q", updated.Name)
+	}
+	if updated.Description != "updated-desc" {
+		t.Errorf("expected description 'updated-desc', got %q", updated.Description)
+	}
+
+	// Non-whitelisted fields must remain unchanged.
+	if updated.Path != created.Path {
+		t.Errorf("path should not have changed, got %q", updated.Path)
+	}
+	if updated.ID != created.ID {
+		t.Errorf("ID should not have changed, got %q", updated.ID)
+	}
+	if updated.RemoteURL != created.RemoteURL {
+		t.Errorf("remote_url should not have changed, got %q", updated.RemoteURL)
+	}
+	if updated.DefaultBranch != created.DefaultBranch {
+		t.Errorf("default_branch should not have changed, got %q", updated.DefaultBranch)
+	}
+}
+
+func TestUpdateProject_EmptyRequest(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewProjectService(db)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	created, err := svc.AddProject("empty-req-test", repoDir)
+	if err != nil {
+		t.Fatalf("AddProject: %v", err)
+	}
+
+	// Empty request (all nil fields) should return the project unchanged.
+	result, err := svc.UpdateProject(created.ID, UpdateProjectRequest{})
+	if err != nil {
+		t.Fatalf("UpdateProject with empty request: %v", err)
+	}
+	if result.Name != created.Name {
+		t.Errorf("expected name %q unchanged, got %q", created.Name, result.Name)
+	}
+}
+
+func TestUpdateProject_PartialUpdate(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewProjectService(db)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	desc := "original description"
+	created, err := svc.AddProject("partial-test", repoDir, WithDescription(desc), WithPriority(1))
+	if err != nil {
+		t.Fatalf("AddProject: %v", err)
+	}
+
+	// Update only priority; description should remain unchanged.
+	priority := 10
+	req := UpdateProjectRequest{Priority: &priority}
+
+	updated, err := svc.UpdateProject(created.ID, req)
+	if err != nil {
+		t.Fatalf("UpdateProject: %v", err)
+	}
+
+	if updated.Priority != 10 {
+		t.Errorf("expected priority 10, got %d", updated.Priority)
+	}
+	if updated.Description != "original description" {
+		t.Errorf("expected description unchanged, got %q", updated.Description)
+	}
+}
+
+func TestUpdateProject_WorktreeBasePath(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewProjectService(db)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	created, err := svc.AddProject("worktree-test", repoDir)
+	if err != nil {
+		t.Fatalf("AddProject: %v", err)
+	}
+
+	wtPath := "/tmp/my-worktrees"
+	req := UpdateProjectRequest{WorktreeBasePath: &wtPath}
+
+	updated, err := svc.UpdateProject(created.ID, req)
+	if err != nil {
+		t.Fatalf("UpdateProject: %v", err)
+	}
+
+	if updated.WorktreeBasePath != "/tmp/my-worktrees" {
+		t.Errorf("expected worktree_base_path '/tmp/my-worktrees', got %q", updated.WorktreeBasePath)
+	}
+}
+
+func TestToUpdates_OnlyNonNilFields(t *testing.T) {
+	name := "name-only"
+	req := UpdateProjectRequest{Name: &name}
+
+	updates := req.toUpdates()
+
+	if len(updates) != 1 {
+		t.Fatalf("expected 1 update, got %d: %v", len(updates), updates)
+	}
+	if updates["name"] != "name-only" {
+		t.Errorf("expected name 'name-only', got %v", updates["name"])
+	}
+	if _, ok := updates["description"]; ok {
+		t.Error("description should not be in updates when nil")
+	}
+	if _, ok := updates["priority"]; ok {
+		t.Error("priority should not be in updates when nil")
+	}
+	if _, ok := updates["worktree_base_path"]; ok {
+		t.Error("worktree_base_path should not be in updates when nil")
 	}
 }
 

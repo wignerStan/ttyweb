@@ -14,14 +14,44 @@ import (
 	"gorm.io/gorm"
 )
 
+// UpdateProjectRequest contains only the fields that users are allowed to
+// update on a project. Any field not present in this struct is ignored,
+// preventing mass-assignment of sensitive columns (id, path, remote_url,
+// last_sync_at, created_at, updated_at).
+type UpdateProjectRequest struct {
+	Name             *string `json:"name"`
+	Description      *string `json:"description"`
+	Priority         *int    `json:"priority"`
+	WorktreeBasePath *string `json:"worktree_base_path"`
+}
+
+// toUpdates converts the non-nil fields of the request into a GORM updates
+// map. Only fields explicitly set in the request will be included.
+func (r *UpdateProjectRequest) toUpdates() map[string]interface{} {
+	updates := make(map[string]interface{})
+	if r.Name != nil {
+		updates["name"] = *r.Name
+	}
+	if r.Description != nil {
+		updates["description"] = *r.Description
+	}
+	if r.Priority != nil {
+		updates["priority"] = *r.Priority
+	}
+	if r.WorktreeBasePath != nil {
+		updates["worktree_base_path"] = *r.WorktreeBasePath
+	}
+	return updates
+}
+
 // runGitCommand executes a git command in the given directory and returns its
-// trimmed stdout. Returns ("", nil) if the command fails (non-zero exit).
+// trimmed stdout. Returns an error if the command fails.
 func runGitCommand(dir string, args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
 	out, err := cmd.Output()
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("git %v: %w", args, err)
 	}
 	return strings.TrimSpace(string(out)), nil
 }
@@ -162,8 +192,22 @@ func (s *ProjectService) GetProject(id string) (*Project, error) {
 	return &project, nil
 }
 
-// UpdateProject applies partial updates to a project.
-func (s *ProjectService) UpdateProject(id string, updates map[string]interface{}) (*Project, error) {
+// UpdateProject applies partial updates to a project using only the fields
+// present in the typed request. This prevents mass-assignment of sensitive
+// columns (id, path, remote_url, last_sync_at, created_at, updated_at).
+func (s *ProjectService) UpdateProject(id string, req UpdateProjectRequest) (*Project, error) {
+	updates := req.toUpdates()
+	if len(updates) == 0 {
+		return s.GetProject(id)
+	}
+
+	return s.updateProjectFields(id, updates)
+}
+
+// updateProjectFields applies a GORM updates map to a project. This is an
+// internal method used by both UpdateProject (user-facing, whitelisted) and
+// SyncProject (system-facing, sets remote_url/default_branch/last_sync_at).
+func (s *ProjectService) updateProjectFields(id string, updates map[string]interface{}) (*Project, error) {
 	var project Project
 	if err := s.db.Where("id = ?", id).First(&project).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -220,7 +264,7 @@ func (s *ProjectService) SyncProject(id string) (*Project, error) {
 		"last_sync_at":   time.Now().UTC(),
 	}
 
-	return s.UpdateProject(id, updates)
+	return s.updateProjectFields(id, updates)
 }
 
 // validateGitRepo checks that path is an existing directory containing a .git
@@ -238,13 +282,20 @@ func validateGitRepo(path string) error {
 	return nil
 }
 
-// gitRemoteURL returns the fetch URL of the origin remote, or an empty string.
+// gitRemoteURL returns the fetch URL of the origin remote, or an empty string
+// if no origin remote is configured.
 func gitRemoteURL(repoPath string) (string, error) {
-	url, _ := runGitCommand(repoPath, "remote", "get-url", "origin")
+	url, err := runGitCommand(repoPath, "remote", "get-url", "origin")
+	if err != nil {
+		// No origin remote configured is not an error.
+		return "", nil
+	}
 	return url, nil
 }
 
 // gitDefaultBranch returns the default branch name (HEAD symbolic ref).
+// Returns "main" as a fallback if the symbolic-ref command fails (detached HEAD
+// or no commits).
 func gitDefaultBranch(repoPath string) (string, error) {
 	branch, err := runGitCommand(repoPath, "symbolic-ref", "--short", "HEAD")
 	if err != nil || branch == "" {

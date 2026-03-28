@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -228,18 +228,24 @@ func writeAPIError(w http.ResponseWriter, code int, message string) {
 }
 
 // projectService returns a lazily-initialized ProjectService backed by SQLite.
+// Returns an error if the database cannot be opened.
 var (
 	projectServiceOnce     sync.Once
 	projectServiceInstance *service.ProjectService
+	projectServiceErr      error
 )
 
-func projectService() *service.ProjectService {
+func projectService() (*service.ProjectService, error) {
 	projectServiceOnce.Do(func() {
 		gormDB, err := db.Open()
 		if err != nil {
-			log.Fatalf("failed to open project database: %v", err)
+			projectServiceErr = fmt.Errorf("open project database: %w", err)
+			return
 		}
 		projectServiceInstance = service.NewProjectService(gormDB)
 	})
-	return projectServiceInstance
+	if projectServiceErr != nil {
+		return nil, projectServiceErr
+	}
+	return projectServiceInstance, nil
 }
