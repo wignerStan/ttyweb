@@ -14,6 +14,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// runGitCommand executes a git command in the given directory and returns its
+// trimmed stdout. Returns ("", nil) if the command fails (non-zero exit).
+func runGitCommand(dir string, args ...string) (string, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
+		return "", nil
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 // Project represents a tracked git repository with metadata.
 type Project struct {
 	ID              string     `gorm:"primaryKey;type:text" json:"id"`
@@ -95,7 +107,7 @@ func (s *ProjectService) AddProject(name, path string, opts ...ProjectOption) (*
 
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInvalidProjectPath, err)
+		return nil, fmt.Errorf("resolve path: %w", err)
 	}
 
 	if err := validateGitRepo(absPath); err != nil {
@@ -202,40 +214,25 @@ func (s *ProjectService) SyncProject(id string) (*Project, error) {
 		return nil, fmt.Errorf("detect default branch: %w", err)
 	}
 
-	now := time.Now().UTC()
 	updates := map[string]interface{}{
 		"remote_url":     remoteURL,
 		"default_branch": defaultBranch,
-		"last_sync_at":   now,
+		"last_sync_at":   time.Now().UTC(),
 	}
 
 	return s.UpdateProject(id, updates)
 }
 
-// validateGitRepo checks that path is an absolute path to an existing directory
-// containing a .git entry (file or directory).
+// validateGitRepo checks that path is an existing directory containing a .git
+// entry (file or directory).
 func validateGitRepo(path string) error {
-	if !filepath.IsAbs(path) {
-		return ErrInvalidProjectPath
-	}
-
 	info, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return ErrInvalidProjectPath
-		}
-		return fmt.Errorf("%w: %v", ErrInvalidProjectPath, err)
-	}
-	if !info.IsDir() {
+	if err != nil || !info.IsDir() {
 		return ErrInvalidProjectPath
 	}
 
-	gitEntry := filepath.Join(path, ".git")
-	if _, err := os.Stat(gitEntry); err != nil {
-		if os.IsNotExist(err) {
-			return ErrInvalidProjectPath
-		}
-		return fmt.Errorf("%w: %v", ErrInvalidProjectPath, err)
+	if _, err := os.Stat(filepath.Join(path, ".git")); err != nil {
+		return ErrInvalidProjectPath
 	}
 
 	return nil
@@ -243,26 +240,18 @@ func validateGitRepo(path string) error {
 
 // gitRemoteURL returns the fetch URL of the origin remote, or an empty string.
 func gitRemoteURL(repoPath string) (string, error) {
-	cmd := exec.Command("git", "remote", "get-url", "origin")
-	cmd.Dir = repoPath
-	out, err := cmd.Output()
-	if err != nil {
-		// No remote configured is not an error.
-		return "", nil
-	}
-	return strings.TrimSpace(string(out)), nil
+	url, _ := runGitCommand(repoPath, "remote", "get-url", "origin")
+	return url, nil
 }
 
 // gitDefaultBranch returns the default branch name (HEAD symbolic ref).
 func gitDefaultBranch(repoPath string) (string, error) {
-	cmd := exec.Command("git", "symbolic-ref", "--short", "HEAD")
-	cmd.Dir = repoPath
-	out, err := cmd.Output()
-	if err != nil {
+	branch, err := runGitCommand(repoPath, "symbolic-ref", "--short", "HEAD")
+	if err != nil || branch == "" {
 		// Detached HEAD or no commits; fall back to "main".
 		return "main", nil
 	}
-	return strings.TrimSpace(string(out)), nil
+	return branch, nil
 }
 
 // generateID creates a random 16-character hex string using crypto/rand.

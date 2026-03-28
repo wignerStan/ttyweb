@@ -228,6 +228,11 @@ func writeAPIError(w http.ResponseWriter, code int, message string) {
 }
 
 // projectService returns a lazily-initialized ProjectService backed by SQLite.
+var (
+	projectServiceOnce     sync.Once
+	projectServiceInstance *service.ProjectService
+)
+
 func projectService() *service.ProjectService {
 	projectServiceOnce.Do(func() {
 		gormDB, err := db.Open()
@@ -238,8 +243,3 @@ func projectService() *service.ProjectService {
 	})
 	return projectServiceInstance
 }
-
-var (
-	projectServiceOnce     sync.Once
-	projectServiceInstance *service.ProjectService
-)

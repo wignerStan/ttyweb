@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -84,17 +85,14 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 	}
 
 	// Route: /api/projects/{id}/sync
-	if strings.HasSuffix(relative, "/sync") {
-		server.handleProjectSync(w, r, strings.TrimSuffix(relative, "/sync"))
+	if id, ok := strings.CutSuffix(relative, "/sync"); ok {
+		server.handleProjectSync(w, r, id)
 		return
 	}
 
-	// Treat the remaining path as the project ID.
-	id := relative
-
 	switch r.Method {
 	case http.MethodGet:
-		project, err := projectService().GetProject(id)
+		project, err := projectService().GetProject(relative)
 		if err != nil {
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
@@ -108,9 +106,9 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		project, err := projectService().UpdateProject(id, body)
+		project, err := projectService().UpdateProject(relative, body)
 		if err != nil {
-			if err == service.ErrProjectNotFound {
+			if errors.Is(err, service.ErrProjectNotFound) {
 				writeAPIError(w, http.StatusNotFound, "project not found")
 				return
 			}
@@ -120,9 +118,9 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 		writeAPISuccess(w, project)
 
 	case http.MethodDelete:
-		err := projectService().DeleteProject(id)
+		err := projectService().DeleteProject(relative)
 		if err != nil {
-			if err == service.ErrProjectNotFound {
+			if errors.Is(err, service.ErrProjectNotFound) {
 				writeAPIError(w, http.StatusNotFound, "project not found")
 				return
 			}
@@ -143,14 +141,9 @@ func (server *Server) handleProjectSync(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	if id == "" {
-		writeAPIError(w, http.StatusBadRequest, "project ID required")
-		return
-	}
-
 	project, err := projectService().SyncProject(id)
 	if err != nil {
-		if err == service.ErrProjectNotFound {
+		if errors.Is(err, service.ErrProjectNotFound) {
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
 		}
