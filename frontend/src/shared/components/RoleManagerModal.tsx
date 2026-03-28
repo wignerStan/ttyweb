@@ -1,19 +1,8 @@
 import { useState, useCallback } from 'react'
 import { X, Plus, Pencil, Trash2 } from 'lucide-react'
 import { getAuthHeader } from '../../utils/auth'
+import type { AiRole } from '../../types'
 import './RoleManagerModal.css'
-
-interface Role {
-  id: string
-  emoji: string
-  label: string
-  desc: string
-  prompt?: string
-  suffix?: string
-  isCustom?: boolean
-  model?: string
-  apiUrl?: string
-}
 
 interface RoleFormData {
   id: string
@@ -31,7 +20,7 @@ const emptyForm: RoleFormData = { id: '', emoji: '', label: '', desc: '', prompt
 interface RoleManagerModalProps {
   open: boolean
   onClose: () => void
-  roles: Role[]
+  roles: AiRole[]
   onRolesChanged: () => void
 }
 
@@ -92,7 +81,7 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
     setShowLlmConfig(false)
   }, [])
 
-  const handleStartEdit = useCallback((r: Role) => {
+  const handleStartEdit = useCallback((r: AiRole) => {
     setEditingRole({
       id: r.id,
       emoji: r.emoji,

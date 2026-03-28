@@ -2,10 +2,11 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Send, Copy, Play, Loader2, ChevronUp, ChevronDown, ChevronRight, X, Terminal, Square } from 'lucide-react'
 import { RoleManagerModal } from './RoleManagerModal'
 import { getAuthHeader } from '../../utils/auth'
+import type { AiRole } from '../../types'
 
 const TEMPLATE_ROLE_ID = 'research-publish'
 
-const BUILTIN_ROLES = [
+const BUILTIN_ROLES: AiRole[] = [
   { id: 'cli', emoji: '\u{1F5A5}\u{FE0F}', label: '\u547D\u4EE4\u884C\u5927\u795E', desc: '\u751F\u6210\u53EF\u6267\u884C\u7684\u7EC8\u7AEF\u547D\u4EE4' },
   { id: 'ops', emoji: '\u{1F527}', label: '\u8FD0\u7EF4\u4E13\u5BB6', desc: '\u4F18\u5316 DevOps/\u8FD0\u7EF4\u63D0\u793A\u8BCD' },
   { id: 'prompt', emoji: '\u{2728}', label: '\u63D0\u793A\u8BCD\u4F18\u5316', desc: '\u901A\u7528 AI \u63D0\u793A\u8BCD\u4F18\u5316' },
@@ -15,18 +16,6 @@ const BUILTIN_ROLES = [
   { id: 'api', emoji: '\u{1F504}', label: 'API\u8F6C\u6362', desc: 'API \u67B6\u6784\u8F6C\u6362\u4E0E\u91CD\u6784' },
 ]
 
-interface Role {
-  id: string
-  emoji: string
-  label: string
-  desc: string
-  prompt?: string
-  suffix?: string
-  isCustom?: boolean
-  model?: string
-  apiUrl?: string
-}
-
 interface AiCommandTabProps {
   onSend: (text: string) => void
   disabled?: boolean
@@ -34,10 +23,58 @@ interface AiCommandTabProps {
   onTextConsumed?: () => void
 }
 
+const PRE_STYLE: React.CSSProperties = {
+  background: '#13151a',
+  borderRadius: '4px',
+  padding: '8px',
+  color: '#98c379',
+  fontSize: '12px',
+  fontFamily: 'Menlo, Monaco, monospace',
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-all',
+  margin: 0,
+  overflow: 'auto',
+}
+
+function CopyExecuteButtons({ onCopy, onExecute, disabled }: {
+  onCopy: () => void
+  onExecute: () => void
+  disabled?: boolean
+}) {
+  return (
+    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+      <button
+        onClick={onCopy}
+        style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: '4px', padding: '6px', background: '#2c313a', color: '#abb2bf',
+          border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer',
+        }}
+        type="button"
+      >
+        <Copy size={12} /> \u590D\u5236
+      </button>
+      <button
+        onClick={onExecute}
+        disabled={disabled}
+        style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: '4px', padding: '6px', background: '#4d78cc', color: '#fff',
+          border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer',
+          opacity: disabled ? 0.5 : 1,
+        }}
+        type="button"
+      >
+        <Play size={12} /> \u6267\u884C
+      </button>
+    </div>
+  )
+}
+
 export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: AiCommandTabProps) {
   const [input, setInput] = useState('')
   const [selectedRole, setSelectedRole] = useState('cli')
-  const [roles, setRoles] = useState<Role[]>(BUILTIN_ROLES)
+  const [roles, setRoles] = useState<AiRole[]>(BUILTIN_ROLES)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ command: string; explanation: string } | null>(null)
   const [expanded, setExpanded] = useState(false)
@@ -95,19 +132,23 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
   useEffect(() => { fetchRoles() }, [fetchRoles])
 
-  const stopStreaming = useCallback(() => {
+  const resetStream = useCallback(() => {
     if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
     }
     setStreaming(false)
-    // Convert whatever we have so far to a result
+    setStreamText('')
+    streamTextRef.current = ''
+  }, [])
+
+  const stopStreaming = useCallback(() => {
+    resetStream()
     if (streamTextRef.current) {
       setResult({ command: streamTextRef.current, explanation: '' })
-      setStreamText('')
       streamTextRef.current = ''
     }
-  }, [])
+  }, [resetStream])
 
   const handleDirectSend = useCallback(() => {
     if (!input.trim() || disabled) return
@@ -118,26 +159,38 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
   const handleClear = useCallback(() => {
     setInput('')
     setResult(null)
-    setStreamText('')
-    streamTextRef.current = ''
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-    setStreaming(false)
+    resetStream()
     setLoading(false)
-  }, [])
+  }, [resetStream])
+
+  const fallbackNonStreaming = useCallback(async (prompt: string) => {
+    setLoading(true)
+    try {
+      const auth = getAuthHeader()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (auth) headers['Authorization'] = auth
+      const res = await fetch('/api/ai/command', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ prompt, role: selectedRole })
+      })
+      const data = await res.json()
+      setResult({ command: data.command || '', explanation: data.explanation || '' })
+    } catch (err) {
+      setResult({ command: '', explanation: '\u8BF7\u6C42\u5931\u8D25: ' + (err instanceof Error ? err.message : String(err)) })
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedRole])
 
   const handleGenerate = useCallback(async () => {
     if (!input.trim() || loading || streaming) return
-    // Template role: construct command and put in input box, no API call
     if (selectedRole === TEMPLATE_ROLE_ID) {
       const url = input.trim()
       setInput(`\u7528 github-project-researcher \u7814\u7A76 ${url}\uFF0C\u7136\u540E\u7528 md2wechat \u53D1\u5FAE\u4FE1\u516C\u4F17\u53F7`)
       return
     }
 
-    // Try streaming via WebSocket first
     setLoading(true)
     setResult(null)
     setStreamText('')
@@ -162,19 +215,11 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
             streamTextRef.current += msg.data
             setStreamText(streamTextRef.current)
           } else if (msg.type === 'done') {
-            ws.close()
-            wsRef.current = null
-            setStreaming(false)
             setResult({ command: msg.data || streamTextRef.current, explanation: '' })
-            setStreamText('')
-            streamTextRef.current = ''
+            resetStream()
           } else if (msg.type === 'error') {
-            ws.close()
-            wsRef.current = null
-            setStreaming(false)
-            setStreamText('')
-            streamTextRef.current = ''
             setResult({ command: '', explanation: '\u9519\u8BEF: ' + msg.data })
+            resetStream()
           }
         } catch {
           // ignore parse errors
@@ -182,12 +227,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       }
 
       ws.onerror = () => {
-        ws.close()
-        wsRef.current = null
-        setStreaming(false)
-        setStreamText('')
-        streamTextRef.current = ''
-        // Fallback to non-streaming API
+        resetStream()
         fallbackNonStreaming(input.trim())
       }
 
@@ -197,31 +237,9 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
         }
       }
     } catch {
-      // If WebSocket fails entirely, fallback to REST API
       fallbackNonStreaming(input.trim())
     }
-  }, [input, selectedRole, loading, streaming])
-
-  // Non-streaming fallback
-  const fallbackNonStreaming = useCallback(async (prompt: string) => {
-    setLoading(true)
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch('/api/ai/command', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ prompt, role: selectedRole })
-      })
-      const data = await res.json()
-      setResult({ command: data.command || '', explanation: data.explanation || '' })
-    } catch (err) {
-      setResult({ command: '', explanation: '\u8BF7\u6C42\u5931\u8D25: ' + (err instanceof Error ? err.message : String(err)) })
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedRole])
+  }, [input, selectedRole, loading, streaming, resetStream, fallbackNonStreaming])
 
   const handleCopy = useCallback(async () => {
     const text = streaming ? streamText : result?.command
@@ -240,7 +258,6 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
   }, [result, onSend, streaming, streamText])
 
   const selectedRoleDef = roles.find(r => r.id === selectedRole)
-  const displayText = streaming ? streamText : null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '8px', gap: '8px', overflow: 'auto' }}>
@@ -547,73 +564,18 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       </div>
 
       {/* Streaming output */}
-      {displayText && (
+      {streaming && streamText && (
         <div ref={resultRef} style={{
           background: '#1a1c20',
           border: '1px solid #4d78cc44',
           borderRadius: '6px',
           padding: '8px',
         }}>
-          <pre style={{
-            background: '#13151a',
-            borderRadius: '4px',
-            padding: '8px',
-            color: '#98c379',
-            fontSize: '12px',
-            fontFamily: 'Menlo, Monaco, monospace',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-all',
-            margin: 0,
-            maxHeight: '200px',
-            overflow: 'auto',
-          }}>
-            {displayText}
+          <pre style={{ ...PRE_STYLE, maxHeight: '200px' }}>
+            {streamText}
             <span style={{ color: '#4d78cc' }}>&#9646;</span>
           </pre>
-          <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-            <button
-              onClick={handleCopy}
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                padding: '6px',
-                background: '#2c313a',
-                color: '#abb2bf',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                cursor: 'pointer',
-              }}
-              type="button"
-            >
-              <Copy size={12} /> \u590D\u5236
-            </button>
-            <button
-              onClick={handleExecute}
-              disabled={disabled}
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                padding: '6px',
-                background: '#4d78cc',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '12px',
-                cursor: 'pointer',
-                opacity: disabled ? 0.5 : 1,
-              }}
-              type="button"
-            >
-              <Play size={12} /> \u6267\u884C
-            </button>
-          </div>
+          <CopyExecuteButtons onCopy={handleCopy} onExecute={handleExecute} disabled={disabled} />
         </div>
       )}
 
@@ -642,65 +604,10 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
           </div>
           {result.command && (
             <>
-              <pre style={{
-                background: '#13151a',
-                borderRadius: '4px',
-                padding: '8px',
-                color: '#98c379',
-                fontSize: '12px',
-                fontFamily: 'Menlo, Monaco, monospace',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-                margin: 0,
-                maxHeight: expanded ? 'none' : '80px',
-                overflow: expanded ? 'auto' : 'hidden',
-              }}>
+              <pre style={{ ...PRE_STYLE, maxHeight: expanded ? 'none' : '80px', overflow: expanded ? 'auto' : 'hidden' }}>
                 {result.command}
               </pre>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  onClick={handleCopy}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    padding: '6px',
-                    background: '#2c313a',
-                    color: '#abb2bf',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  type="button"
-                >
-                  <Copy size={12} /> \u590D\u5236
-                </button>
-                <button
-                  onClick={handleExecute}
-                  disabled={disabled}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    padding: '6px',
-                    background: '#4d78cc',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    opacity: disabled ? 0.5 : 1,
-                  }}
-                  type="button"
-                >
-                  <Play size={12} /> \u6267\u884C
-                </button>
-              </div>
+              <CopyExecuteButtons onCopy={handleCopy} onExecute={handleExecute} disabled={disabled} />
             </>
           )}
         </div>
