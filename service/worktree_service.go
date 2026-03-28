@@ -286,9 +286,6 @@ func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) 
 
 // --- internal ---
 
-<<<<<<< HEAD
-func (s *WorktreeService) syncWorktrees(project *WtProject) error {
-=======
 // worktreesForProject returns all worktree records for the given project.
 // Caller must hold at least a read lock on s.mu.
 func (s *WorktreeService) worktreesForProject(projectID string) []WorktreeRecord {
@@ -314,8 +311,7 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 	return record, nil
 }
 
-func (s *WorktreeService) syncWorktrees(project *Project) error {
->>>>>>> 91a556c (refactor: simplify PR #12 (git worktree management))
+func (s *WorktreeService) syncWorktrees(project *WtProject) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	gitWorktrees, err := worktree.ListWorktrees(project.Path)
