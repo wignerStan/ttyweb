@@ -2,11 +2,15 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
+	"sync"
 
 	"ttyweb/backend"
+	"ttyweb/db"
 	"ttyweb/pkg/validate"
+	"ttyweb/service"
 )
 
 // apiResponse is a standard envelope for API responses.
@@ -72,6 +76,9 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"log", server.handleLog)
 	// Butler
 	mux.HandleFunc(apiPrefix+"butler/", server.handleButlerProxy)
+	// Projects
+	mux.HandleFunc(apiPrefix+"projects", server.handleProjects)
+	mux.HandleFunc(apiPrefix+"projects/", server.handleProjectDetail)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
@@ -219,3 +226,20 @@ func writeAPIError(w http.ResponseWriter, code int, message string) {
 	resp := apiResponse{Success: false, Error: message}
 	json.NewEncoder(w).Encode(resp)
 }
+
+// projectService returns a lazily-initialized ProjectService backed by SQLite.
+func projectService() *service.ProjectService {
+	projectServiceOnce.Do(func() {
+		gormDB, err := db.Open()
+		if err != nil {
+			log.Fatalf("failed to open project database: %v", err)
+		}
+		projectServiceInstance = service.NewProjectService(gormDB)
+	})
+	return projectServiceInstance
+}
+
+var (
+	projectServiceOnce     sync.Once
+	projectServiceInstance *service.ProjectService
+)
