@@ -58,38 +58,24 @@ main.go                  CLI flags, backend selection, server startup
 ├── server/              HTTP server, WebSocket handler, REST API, auth
 ├── webtty/              Core protocol: bridges backend.Slave ↔ WebSocket
 ├── backend/             Pluggable terminal backends (Factory pattern)
-│   ├── localcommand/    Raw shell command with PTY
-│   ├── tmux/            tmux session attachment/management
-│   └── zellij/          zellij session attachment
+├── pkg/                 Internal utilities (validate, homedir, randomstring)
 ├── frontend/            React SPA (Vite + TypeScript)
-│   └── src/
-│       ├── components/  TerminalTab, Sidebar, mobile views
-│       ├── hooks/       useWebSocket, useTerminal
-│       ├── mobile/      Separate mobile-optimized views
-│       └── App.tsx      Routes: / (desktop), /m (mobile)
 └── bindata/static/      Built frontend assets (Go embed target)
 ```
 
-### Key Patterns
+### Module Details
 
-**Backend Factory**: Each backend implements `backend.Factory` (creates `backend.Slave` per connection) and `backend.Slave` (webtty.Slave + io.ReadWriter + Close). Multiplexer backends (tmux, zellij) also implement `backend.SessionManager` for REST API session CRUD. The `local` backend uses `backend.NoSessionManager` (returns empty sessions). Backends are registered via switch in `main.go`.
+Each major package has its own `CLAUDE.md` with module-specific patterns and API documentation:
 
-**SessionManager Interface** (`backend/types.go`): Decouples the REST API from specific backends. The server dispatches API calls via `server.factory.(backend.SessionManager)` type assertion. This avoids hardcoding tmux/zellij calls in `server/api.go`.
+- **[server/CLAUDE.md](server/CLAUDE.md)** — Server setup, middleware, REST API routing, MemoryStore, API response envelope
+- **[backend/CLAUDE.md](backend/CLAUDE.md)** — Factory pattern, Slave/SessionManager interfaces, backend implementations
+- **[webtty/CLAUDE.md](webtty/CLAUDE.md)** — WebTTY binary protocol, codecs, master/slave bridge
+- **[frontend/CLAUDE.md](frontend/CLAUDE.md)** — React architecture, hooks, mobile views, E2E test setup
 
-**WebTTY Protocol**: Custom binary protocol over WebSocket. Single-byte type prefix + base64 payload. Client messages: Input(1), Ping(2), Resize(3), SetEncoding(4). Server messages: Output(1), Pong(2), SetWindowTitle(3), SetReconnect(5), SetBufferSize(6). Defined in `webtty/message_types.go`.
+### Cross-Module Patterns
 
-**WebSocket Origin Check**: The server's default `CheckOrigin` compares `Origin` header host against `r.Host`. The `Origin` header includes the scheme (`http://host:port`) so the check parses it with `url.Parse()` before comparing hosts.
+**Backend Registration** (`main.go`): Backends are selected via `-backend` flag and instantiated with a switch statement. Each must implement `backend.Factory`. The server imports this as `type Factory = backend.Factory`.
 
-**Frontend State**: No global state library. Component-local state with React hooks. WebSocket auto-reconnect built into `useWebSocket` hook.
+**Embedded Frontend**: `bindata/static/` holds the built React app, served via `go:embed` in `server/server.go`. Frontend builds to this directory (`vite.config.ts` → `outDir: '../bindata/static'`).
 
-### REST API (session-managing backends)
-
-- `GET /api/sessions` — list sessions (empty array for `local` backend)
-- `POST /api/sessions` — create session (503 for `local` backend)
-- `GET /api/sessions/{name}` — session details (503 for `local` backend)
-- `DELETE /api/sessions/{name}` — kill session (503 for `local` backend)
-- `GET /api/backends` — list backends with availability and active status
-
-## E2E Test Setup
-
-Playwright expects the binary at `./ttyweb` (built from project root). It starts the server on port 18899 with `-backend local -port 18899 -w`. Two projects: `chromium` (desktop) and `mobile` (iPhone viewport). The `reuseExistingServer` flag is enabled outside CI, so a running dev server can be reused. The `make test-e2e` target auto-builds the binary first.
+**Input Validation** (`pkg/validate/`): Strict regex allowlist for session names (`^[a-zA-Z0-9_.-]{1,128}$`) and pane IDs (`^[a-zA-Z0-9_.%:-]+$`). Used in API handlers before constructing shell commands.
