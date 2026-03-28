@@ -114,95 +114,25 @@ func TestEnvVarOverrides(t *testing.T) {
 		name   string
 		envKey string
 		envVal string
-		check  func(*Config)
+		get    func(*Config) string
 	}{
-		{
-			name:   "LLM_API_KEY",
-			envKey: "LLM_API_KEY",
-			envVal: "env-api-key",
-			check: func(c *Config) {
-				if c.LLM.ApiKey != "env-api-key" {
-					t.Errorf("LLM.ApiKey = %q, want %q", c.LLM.ApiKey, "env-api-key")
-				}
-			},
-		},
-		{
-			name:   "LLM_API_URL",
-			envKey: "LLM_API_URL",
-			envVal: "https://env.example.com/v1",
-			check: func(c *Config) {
-				if c.LLM.ApiURL != "https://env.example.com/v1" {
-					t.Errorf("LLM.ApiURL = %q, want %q", c.LLM.ApiURL, "https://env.example.com/v1")
-				}
-			},
-		},
-		{
-			name:   "LLM_MODEL",
-			envKey: "LLM_MODEL",
-			envVal: "env-model",
-			check: func(c *Config) {
-				if c.LLM.Model != "env-model" {
-					t.Errorf("LLM.Model = %q, want %q", c.LLM.Model, "env-model")
-				}
-			},
-		},
-		{
-			name:   "XFYUN_APP_ID",
-			envKey: "XFYUN_APP_ID",
-			envVal: "env-app-id",
-			check: func(c *Config) {
-				if c.Xunfei.AppID != "env-app-id" {
-					t.Errorf("Xunfei.AppID = %q, want %q", c.Xunfei.AppID, "env-app-id")
-				}
-			},
-		},
-		{
-			name:   "XFYUN_API_KEY",
-			envKey: "XFYUN_API_KEY",
-			envVal: "env-xf-key",
-			check: func(c *Config) {
-				if c.Xunfei.ApiKey != "env-xf-key" {
-					t.Errorf("Xunfei.ApiKey = %q, want %q", c.Xunfei.ApiKey, "env-xf-key")
-				}
-			},
-		},
-		{
-			name:   "XFYUN_API_SECRET",
-			envKey: "XFYUN_API_SECRET",
-			envVal: "env-xf-secret",
-			check: func(c *Config) {
-				if c.Xunfei.ApiSecret != "env-xf-secret" {
-					t.Errorf("Xunfei.ApiSecret = %q, want %q", c.Xunfei.ApiSecret, "env-xf-secret")
-				}
-			},
-		},
-		{
-			name:   "BUTLER_HOST",
-			envKey: "BUTLER_HOST",
-			envVal: "env-butler-host",
-			check: func(c *Config) {
-				if c.Butler.Host != "env-butler-host" {
-					t.Errorf("Butler.Host = %q, want %q", c.Butler.Host, "env-butler-host")
-				}
-			},
-		},
-		{
-			name:   "BUTLER_PORT",
-			envKey: "BUTLER_PORT",
-			envVal: "9999",
-			check: func(c *Config) {
-				if c.Butler.Port != "9999" {
-					t.Errorf("Butler.Port = %q, want %q", c.Butler.Port, "9999")
-				}
-			},
-		},
+		{"LLM_API_KEY", "LLM_API_KEY", "env-api-key", func(c *Config) string { return c.LLM.ApiKey }},
+		{"LLM_API_URL", "LLM_API_URL", "https://env.example.com/v1", func(c *Config) string { return c.LLM.ApiURL }},
+		{"LLM_MODEL", "LLM_MODEL", "env-model", func(c *Config) string { return c.LLM.Model }},
+		{"XFYUN_APP_ID", "XFYUN_APP_ID", "env-app-id", func(c *Config) string { return c.Xunfei.AppID }},
+		{"XFYUN_API_KEY", "XFYUN_API_KEY", "env-xf-key", func(c *Config) string { return c.Xunfei.ApiKey }},
+		{"XFYUN_API_SECRET", "XFYUN_API_SECRET", "env-xf-secret", func(c *Config) string { return c.Xunfei.ApiSecret }},
+		{"BUTLER_HOST", "BUTLER_HOST", "env-butler-host", func(c *Config) string { return c.Butler.Host }},
+		{"BUTLER_PORT", "BUTLER_PORT", "9999", func(c *Config) string { return c.Butler.Port }},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv(tt.envKey, tt.envVal)
 			cfg := applyEnvOverrides(DefaultConfig())
-			tt.check(cfg)
+			if got := tt.get(cfg); got != tt.envVal {
+				t.Errorf("%s = %q, want %q", tt.envKey, got, tt.envVal)
+			}
 		})
 	}
 }

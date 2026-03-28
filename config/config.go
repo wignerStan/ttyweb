@@ -53,28 +53,6 @@ var (
 	configOnce   sync.Once
 )
 
-// Load reads and parses a JSON config file at the given path, then applies
-// environment variable overrides on top. If the file does not exist, it
-// returns DefaultConfig() with env var overrides applied.
-func Load(path string) (*Config, error) {
-	base := DefaultConfig()
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return applyEnvOverrides(base), nil
-		}
-		return nil, fmt.Errorf("reading config file %s: %w", path, err)
-	}
-
-	cfg := *base // copy defaults
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("parsing config file %s: %w", path, err)
-	}
-
-	return applyEnvOverrides(&cfg), nil
-}
-
 // envOverride maps environment variable names to setter functions.
 var envOverride = []struct {
 	key string
@@ -96,6 +74,28 @@ func copyConfig(cfg *Config) *Config {
 	return &cp
 }
 
+// Load reads and parses a JSON config file at the given path, then applies
+// environment variable overrides on top. If the file does not exist, it
+// returns DefaultConfig() with env var overrides applied.
+func Load(path string) (*Config, error) {
+	base := DefaultConfig()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return applyEnvOverrides(base), nil
+		}
+		return nil, fmt.Errorf("reading config file %s: %w", path, err)
+	}
+
+	cfg := *base
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("parsing config file %s: %w", path, err)
+	}
+
+	return applyEnvOverrides(&cfg), nil
+}
+
 // LoadOrDefault loads from the default config path, falling back to defaults
 // if the file is missing. The result is cached for subsequent calls.
 func LoadOrDefault() *Config {
@@ -109,7 +109,7 @@ func LoadOrDefault() *Config {
 	return copyConfig(globalConfig)
 }
 
-// Get returns the cached global config (must call LoadOrDefault first).
+// Get returns the cached global config, loading defaults if not yet initialized.
 func Get() *Config {
 	if globalConfig == nil {
 		return LoadOrDefault()

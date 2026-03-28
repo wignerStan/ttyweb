@@ -67,14 +67,14 @@ func main() {
 
 	args := flag.Args()
 
-	// Load configuration: explicit path, or default location.
-	if configFile != "" {
-		_, err := config.Load(configFile)
-		if err != nil {
-			log.Fatalf("failed to load config: %v", err)
-		}
+	// Load configuration: explicit -config path, or default location.
+	configPath := configFile
+	if configPath == "" {
+		configPath = config.DefaultConfigPath()
 	}
-	config.LoadOrDefault()
+	if _, err := config.Load(configPath); err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
 	// Initialize database.
 	if dbPath == "" {
