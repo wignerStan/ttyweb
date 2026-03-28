@@ -3,6 +3,10 @@ import type { ActivityEvent } from '../types';
 import { POLL_ACTIVITY_MS, BUTLER_API_BASE } from '../constants';
 import { getAuthHeader } from '../../../../utils/auth';
 
+function toError(e: unknown): Error {
+    return e instanceof Error ? e : new Error(String(e));
+}
+
 export function useActivityEvents(studyId?: string, limit = 20) {
     const [events, setEvents] = useState<ActivityEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -22,8 +26,8 @@ export function useActivityEvents(studyId?: string, limit = 20) {
             const data: ActivityEvent[] = json?.data?.activity_events ?? [];
             setEvents(data);
             setError(null);
-        } catch (e: any) {
-            setError(e);
+        } catch (e: unknown) {
+            setError(toError(e));
         } finally {
             setLoading(false);
         }
@@ -31,7 +35,6 @@ export function useActivityEvents(studyId?: string, limit = 20) {
 
     useEffect(() => {
         refetch();
-        // Activity is historical — poll less frequently
         const interval = setInterval(refetch, POLL_ACTIVITY_MS);
         return () => clearInterval(interval);
     }, [refetch]);

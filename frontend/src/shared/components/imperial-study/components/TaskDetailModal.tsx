@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+// TaskDetailModal.tsx — Run detail overlay with thinking chain and event timeline
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useRunDetail } from '../hooks/useRunDetail';
 
@@ -10,6 +11,17 @@ interface TaskDetailModalProps {
 function formatTime(iso: string | null): string {
     if (!iso) return '\u2014';
     return new Date(iso).toLocaleString();
+}
+
+function extractPayloadText(payload: unknown): string {
+    if (!payload) return '';
+    if (typeof payload === 'string') return payload;
+    if (typeof payload === 'object') {
+        const obj = payload as Record<string, unknown>;
+        if (typeof obj.text === 'string') return obj.text;
+        return JSON.stringify(obj);
+    }
+    return String(payload);
 }
 
 export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
@@ -34,7 +46,6 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
     return (
         <div className="is-modal-overlay" onClick={handleOverlayClick}>
             <div className="is-modal is-task-detail-modal">
-                {/* Header */}
                 <div className="is-modal__header">
                     <span className="is-modal__header-title">
                         {run ? `Run: ${run.id.slice(0, 8)}` : 'Run Detail'}
@@ -63,7 +74,6 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
 
                 {run && (
                     <div className="is-task-detail-body">
-                        {/* Intent Section */}
                         <div className="is-task-detail-section">
                             <div className="is-task-detail-section__label">Intent</div>
                             <div className="is-task-detail-section__content">
@@ -71,7 +81,6 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
                             </div>
                         </div>
 
-                        {/* Meta */}
                         <div className="is-task-detail-section">
                             <div className="is-task-detail-section__label">Info</div>
                             <div className="is-task-detail-meta">
@@ -82,7 +91,6 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
                             </div>
                         </div>
 
-                        {/* Thinking Chain */}
                         {thinkingEvents.length > 0 && (
                             <div className="is-task-detail-section">
                                 <div className="is-task-detail-section__label">
@@ -95,9 +103,7 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
                                                 {new Date(ev.created_at).toLocaleTimeString()}
                                             </span>
                                             <span className="is-thinking-chain__text">
-                                                {typeof ev.payload === 'object' && ev.payload
-                                                    ? (ev.payload as Record<string, unknown>).text as string ?? JSON.stringify(ev.payload)
-                                                    : String(ev.payload ?? '')}
+                                                {extractPayloadText(ev.payload)}
                                             </span>
                                         </div>
                                     ))}
@@ -105,7 +111,6 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
                             </div>
                         )}
 
-                        {/* Result / Error */}
                         {(run.result || run.error) && (
                             <div className="is-task-detail-section">
                                 <div className="is-task-detail-section__label">
@@ -117,7 +122,6 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
                             </div>
                         )}
 
-                        {/* All Events Timeline */}
                         {events.length > 0 && (
                             <div className="is-task-detail-section">
                                 <div className="is-task-detail-section__label">

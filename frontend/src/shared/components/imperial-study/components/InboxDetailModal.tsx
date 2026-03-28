@@ -1,12 +1,8 @@
 // InboxDetailModal.tsx — Inbox item detail overlay
-import React, { useState } from 'react';
-import {
-    X,
-    FileText,
-    LucideIcon,
-} from 'lucide-react';
+import { useState } from 'react';
+import { X } from 'lucide-react';
 import type { InboxItem, ReplyDecision } from '../types';
-import { INBOX_KIND_CONFIG, KIND_ICON_MAP } from '../constants';
+import { INBOX_KIND_CONFIG, INBOX_KIND_DEFAULT_ICON, INBOX_KIND_DEFAULT_COLOR } from '../constants';
 import { useReplyInbox } from '../hooks/useReplyInbox';
 
 interface InboxDetailModalProps {
@@ -20,8 +16,8 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
     const { submitReply, loading } = useReplyInbox();
 
     const cfg = INBOX_KIND_CONFIG[item.kind];
-    const Icon: LucideIcon = cfg ? (KIND_ICON_MAP[cfg.icon] ?? FileText) : FileText;
-    const iconColor = cfg ? cfg.color : 'var(--zinc-400)';
+    const Icon = cfg?.icon ?? INBOX_KIND_DEFAULT_ICON;
+    const iconColor = cfg?.color ?? INBOX_KIND_DEFAULT_COLOR;
 
     const handleAction = async (decision: ReplyDecision) => {
         try {

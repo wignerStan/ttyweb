@@ -16,9 +16,8 @@ export function useRunDetail(runId: string | null) {
     const fetchDetail = useCallback(async (id: string, signal: AbortSignal) => {
         try {
             const authHeader = getAuthHeader();
-            const headers: HeadersInit = {
-                ...(authHeader ? { 'Authorization': authHeader } : {}),
-            };
+            const headers: Record<string, string> = {};
+            if (authHeader) headers['Authorization'] = authHeader;
             const [runRes, eventsRes] = await Promise.all([
                 fetch(`${BUTLER_API_BASE}/runs/${id}`, { signal, headers }),
                 fetch(`${BUTLER_API_BASE}/runs/${id}/events`, { signal, headers }),
@@ -38,9 +37,10 @@ export function useRunDetail(runId: string | null) {
             setEvents(eventsData);
             setError(null);
             return runData;
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (!signal.aborted) {
-                setError(e.message ?? 'Failed to fetch run detail');
+                const msg = e instanceof Error ? e.message : 'Failed to fetch run detail';
+                setError(msg);
             }
             return null;
         }

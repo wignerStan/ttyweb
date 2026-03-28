@@ -9,6 +9,10 @@ interface InboxFilters {
     kind?: string;
 }
 
+function toError(e: unknown): Error {
+    return e instanceof Error ? e : new Error(String(e));
+}
+
 export function useInboxItems(filters?: InboxFilters) {
     const [items, setItems] = useState<InboxItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -34,8 +38,8 @@ export function useInboxItems(filters?: InboxFilters) {
             setItems(data);
             setUnreadCount(data.filter(i => i.status === 'pending').length);
             setError(null);
-        } catch (e: any) {
-            setError(e);
+        } catch (e: unknown) {
+            setError(toError(e));
         } finally {
             setLoading(false);
         }

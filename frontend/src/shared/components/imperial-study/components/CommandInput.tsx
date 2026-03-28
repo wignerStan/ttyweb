@@ -31,15 +31,20 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
         setFeedback(null);
     }, []);
 
-    const activeTagLabel = useMemo(() => {
-        if (!activeTag) return null;
-        return ASSISTANT_TAGS.find(t => t.id === activeTag)?.label ?? null;
-    }, [activeTag]);
-
     const resetHeight = useCallback(() => {
         const el = textareaRef.current;
         if (el) el.style.height = 'auto';
     }, []);
+
+    const resetInput = useCallback(() => {
+        setIntent('');
+        resetHeight();
+    }, [resetHeight]);
+
+    const activeTagLabel = useMemo(() => {
+        if (!activeTag) return null;
+        return ASSISTANT_TAGS.find(t => t.id === activeTag)?.label ?? null;
+    }, [activeTag]);
 
     const handleSubmit = useCallback(async () => {
         const trimmed = intent.trim();
@@ -48,8 +53,7 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
         // If a tag is selected, route to assistant pane
         if (activeTag) {
             onAssistantSend?.(trimmed, activeTag);
-            setIntent('');
-            resetHeight();
+            resetInput();
             return;
         }
 
@@ -78,15 +82,13 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
                     setFeedback({ type: "ok", msg: "Chat mode" });
                     onAssistantSend?.(trimmed, "chat");
                     onTagChange("chat");
-                    setIntent("");
-                    resetHeight();
+                    resetInput();
                     setTimeout(clearFeedback, 3000);
                     return;
                 }
 
                 setFeedback({ type: "ok", msg: `Dispatched \u00b7 run ${data.data.run_id?.slice(0, 8)}` });
-                setIntent("");
-                resetHeight();
+                resetInput();
                 onDispatched?.({ ...data.data, intent: trimmed });
                 // Auto-clear feedback
                 setTimeout(clearFeedback, 4000);
@@ -100,7 +102,7 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
         } finally {
             setLoading(false);
         }
-    }, [intent, loading, onDispatched, clearFeedback, paneTarget, activeTag, onAssistantSend, onTagChange, resetHeight]);
+    }, [intent, loading, onDispatched, clearFeedback, paneTarget, activeTag, onAssistantSend, onTagChange, resetInput]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

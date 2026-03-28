@@ -24,16 +24,12 @@ function deriveStage(
         if (ev.event_type === 'task_failed') {
             return { stage: 'return', status: 'failed', result: ev.summary };
         }
-    }
-    for (let i = events.length - 1; i >= 0; i--) {
-        const ev = events[i]!;
         if (ev.event_type === 'task_started' || ev.event_type === 'worker_launched') {
             return { stage: 'processing', status: 'running' };
         }
     }
     return { stage: 'outflow', status: 'pending' };
 }
-
 
 interface DashboardRun {
     id: string;
@@ -42,9 +38,6 @@ interface DashboardRun {
     assistant: string | null;
     intent: string | null;
     queued_at: string | null;
-    started_at: string | null;
-    ended_at: string | null;
-    elapsed_seconds: number | null;
 }
 
 function mapState(s: string): { stage: PipelineStage; status: PipelineStatus } {
@@ -76,14 +69,13 @@ export function useRunPipeline() {
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const burstStartRef = useRef<number>(0);
 
-
     useEffect(() => {
         let cancelled = false;
         (async () => {
             try {
-                const authHeaderInit = getAuthHeader();
+                const authHeader = getAuthHeader();
                 const res = await fetch(`${BUTLER_API_BASE}/dashboard/runs?limit=${MAX_RUNS}`, {
-                    headers: authHeaderInit ? { 'Authorization': authHeaderInit } : undefined,
+                    headers: authHeader ? { 'Authorization': authHeader } : undefined,
                 });
                 if (!res.ok || cancelled) return;
                 const json = await res.json();
@@ -95,6 +87,7 @@ export function useRunPipeline() {
         })();
         return () => { cancelled = true; };
     }, []);
+
     const stopBurst = useCallback(() => {
         if (timerRef.current) {
             clearTimeout(timerRef.current);
@@ -115,9 +108,9 @@ export function useRunPipeline() {
             timerRef.current = setTimeout(async () => {
                 try {
                     const params = new URLSearchParams({ limit: '50' });
-                    const authHeaderPoll = getAuthHeader();
+                    const authHeader = getAuthHeader();
                     const res = await fetch(`${BUTLER_API_BASE}/activity_events?${params}`, {
-                        headers: authHeaderPoll ? { 'Authorization': authHeaderPoll } : undefined,
+                        headers: authHeader ? { 'Authorization': authHeader } : undefined,
                     });
                     if (!res.ok) return;
                     const json = await res.json();

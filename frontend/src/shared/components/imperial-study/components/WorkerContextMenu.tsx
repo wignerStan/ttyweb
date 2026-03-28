@@ -2,15 +2,22 @@
 import { useEffect, useRef } from 'react';
 import { Terminal, Copy, Pause, Power } from 'lucide-react';
 import { getAuthHeader } from '../../../../utils/auth';
+import { BUTLER_API_BASE } from '../constants';
 
 interface WorkerContextMenuProps {
-    /** Screen X coordinate where menu should appear */
     x: number;
-    /** Screen Y coordinate where menu should appear */
     y: number;
     workerId: string;
     paneTarget: string;
     onClose: () => void;
+}
+
+function authHeaders(contentType?: string): Record<string, string> {
+    const authHeader = getAuthHeader();
+    const headers: Record<string, string> = {};
+    if (contentType) headers['Content-Type'] = contentType;
+    if (authHeader) headers['Authorization'] = authHeader;
+    return headers;
 }
 
 export function WorkerContextMenu({
@@ -21,7 +28,6 @@ export function WorkerContextMenu({
 }: WorkerContextMenuProps) {
     const menuRef = useRef<HTMLDivElement>(null);
 
-    // Close on outside click or Escape
     useEffect(() => {
         const onClickOutside = (e: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -31,7 +37,6 @@ export function WorkerContextMenu({
         const onEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
         };
-        // Small delay so the right-click that opened menu doesn't immediately close it
         const t = setTimeout(() => {
             document.addEventListener('click', onClickOutside);
             document.addEventListener('keydown', onEscape);
@@ -54,27 +59,18 @@ export function WorkerContextMenu({
                 navigator.clipboard.writeText(paneTarget).catch(console.error);
                 break;
             case 'pause':
-                {
-                    const authHeader = getAuthHeader();
-                    fetch(`/api/butler/worker_sessions/${workerId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            ...(authHeader ? { 'Authorization': authHeader } : {}),
-                        },
-                        body: JSON.stringify({ state: 'paused' }),
-                    }).catch(err => console.error('[imperial] pause failed', err));
-                }
+                fetch(`${BUTLER_API_BASE}/worker_sessions/${workerId}`, {
+                    method: 'PUT',
+                    headers: authHeaders('application/json'),
+                    body: JSON.stringify({ state: 'paused' }),
+                }).catch(err => console.error('[imperial] pause failed', err));
                 break;
             case 'kill':
                 if (!confirm('Kill this worker?')) return;
-                {
-                    const authHeader = getAuthHeader();
-                    fetch(`/api/butler/worker_sessions/${workerId}`, {
-                        method: 'DELETE',
-                        headers: authHeader ? { 'Authorization': authHeader } : undefined,
-                    }).catch(err => console.error('[imperial] kill failed', err));
-                }
+                fetch(`${BUTLER_API_BASE}/worker_sessions/${workerId}`, {
+                    method: 'DELETE',
+                    headers: authHeaders(),
+                }).catch(err => console.error('[imperial] kill failed', err));
                 break;
         }
         onClose();

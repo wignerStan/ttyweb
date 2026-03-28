@@ -3,6 +3,10 @@ import type { ImperialStudy } from '../types';
 import { BUTLER_API_BASE } from '../constants';
 import { getAuthHeader } from '../../../../utils/auth';
 
+function toError(e: unknown): Error {
+    return e instanceof Error ? e : new Error(String(e));
+}
+
 export function useImperialStudies() {
     const [studies, setStudies] = useState<ImperialStudy[]>([]);
     const [loading, setLoading] = useState(true);
@@ -20,14 +24,13 @@ export function useImperialStudies() {
             const data: ImperialStudy[] = json?.data?.imperial_studies ?? [];
             setStudies(data);
             setError(null);
-        } catch (e: any) {
-            setError(e);
+        } catch (e: unknown) {
+            setError(toError(e));
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Fetch once on mount — studies rarely change, no polling needed
     useEffect(() => {
         refetch();
     }, [refetch]);
