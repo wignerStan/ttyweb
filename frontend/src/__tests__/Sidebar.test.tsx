@@ -27,9 +27,11 @@ function mockFetchSuccess(data: unknown) {
 
 describe('Sidebar', () => {
   let onSelect: ReturnType<typeof vi.fn>;
+  let onProjectsClick: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     onSelect = vi.fn();
+    onProjectsClick = vi.fn();
   });
 
   afterEach(() => {
@@ -39,7 +41,7 @@ describe('Sidebar', () => {
   it('renders Sessions header and new session input', () => {
     global.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     expect(screen.getByText('Sessions')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('new session')).toBeInTheDocument();
@@ -49,7 +51,7 @@ describe('Sidebar', () => {
     const fetchMock = mockFetchSuccess(mockSessions);
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith('/api/sessions');
@@ -59,7 +61,7 @@ describe('Sidebar', () => {
   it('displays sessions from API', async () => {
     global.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     await waitFor(() => {
       expect(screen.getByText('session-1')).toBeInTheDocument();
@@ -70,7 +72,7 @@ describe('Sidebar', () => {
   it('shows empty state when no sessions', async () => {
     global.fetch = mockFetchSuccess([]) as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     await waitFor(() => {
       expect(screen.getByText('No sessions found')).toBeInTheDocument();
@@ -84,7 +86,7 @@ describe('Sidebar', () => {
       json: async () => ({ success: false, error: 'connection failed' }),
     }) as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     await waitFor(() => {
       expect(screen.getByText('connection failed')).toBeInTheDocument();
@@ -95,7 +97,7 @@ describe('Sidebar', () => {
     const user = userEvent.setup();
     global.fetch = mockFetchSuccess([]) as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     const input = screen.getByPlaceholderText('new session');
     await user.type(input, 'my-new-session');
@@ -110,7 +112,7 @@ describe('Sidebar', () => {
       return listMock() as ReturnType<typeof fetch>;
     }) as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     const input = screen.getByPlaceholderText('new session');
     await user.type(input, 'new-session-test');
@@ -129,7 +131,7 @@ describe('Sidebar', () => {
   it('shows attached badge for attached sessions', async () => {
     global.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch;
 
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     await waitFor(() => {
       expect(screen.getByText('A')).toBeInTheDocument();
@@ -147,7 +149,7 @@ describe('Sidebar', () => {
     }) as unknown as typeof fetch;
 
     const user = userEvent.setup();
-    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />);
+    render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} onProjectsClick={onProjectsClick as () => void} />);
 
     await waitFor(() => {
       expect(screen.getByText('session-1')).toBeInTheDocument();

@@ -15,13 +15,26 @@ vi.mock('../components/TerminalTab', () => ({
 
 // Mock Sidebar
 vi.mock('../components/Sidebar', () => ({
-  Sidebar: ({ onSelect }: { onSelect: (s: string, p?: string) => void }) => (
+  Sidebar: ({ onSelect, onProjectsClick }: { onSelect: (s: string, p?: string) => void; onProjectsClick: () => void }) => (
     <div data-testid="sidebar">
       <button data-testid="mock-session-select" onClick={() => onSelect('test-session')}>
         Select test-session
       </button>
+      <button data-testid="mock-projects-click" onClick={onProjectsClick}>
+        Projects
+      </button>
     </div>
   ),
+}));
+
+// Mock FloatingImperialStudy
+vi.mock('../shared/components/imperial-study/components/FloatingImperialStudy', () => ({
+  FloatingImperialStudy: () => null,
+}));
+
+// Mock ProjectList
+vi.mock('../worktree/ProjectList', () => ({
+  ProjectList: () => <div data-testid="project-list">Projects</div>,
 }));
 
 // Mock MobileApp to prevent auth API calls
@@ -87,16 +100,16 @@ describe('App', () => {
   it('closes a tab via close button', async () => {
     renderApp();
 
-    // 3 buttons: sidebar mock select, toggle, tab close
+    // 4 buttons: sidebar mock select, sidebar projects, toggle, tab close
     const buttonsBefore = screen.getAllByRole('button');
-    expect(buttonsBefore.length).toBe(3);
+    expect(buttonsBefore.length).toBe(4);
 
-    // Click the tab close button (third button)
-    fireEvent.click(buttonsBefore[2]!);
+    // Click the tab close button (fourth button)
+    fireEvent.click(buttonsBefore[3]!);
 
-    // After closing the only tab: sidebar select + toggle remain (no close button)
+    // After closing the only tab: sidebar select + sidebar projects + toggle remain (no close button)
     const buttonsAfter = screen.getAllByRole('button');
-    expect(buttonsAfter.length).toBe(2);
+    expect(buttonsAfter.length).toBe(3);
   });
 
   it('renders MobileApp on /m route', () => {
