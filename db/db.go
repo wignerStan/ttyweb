@@ -9,13 +9,12 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var (
-	globalDB atomic.Pointer[gorm.DB]
-)
+var globalDB atomic.Pointer[gorm.DB]
 
 // Init opens a SQLite database at the given DSN, configures WAL mode,
 // sets connection limits, and stores the handle for later retrieval.
-// Safe to call only once; subsequent calls return an error.
+// Calling Init when a database is already open will overwrite the handle
+// without closing the previous connection.
 func Init(dsn string) error {
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -63,7 +62,8 @@ func IsAvailable() bool {
 	if err != nil {
 		return false
 	}
-	return sqlDB.Ping() == nil
+	err = sqlDB.Ping()
+	return err == nil
 }
 
 // Close closes the underlying SQL connection.
@@ -79,11 +79,13 @@ func Close() error {
 		return err
 	}
 
-	if cerr := sqlDB.Close(); cerr != nil {
-		return cerr
+	globalDB.Store(nil)
+
+	err = sqlDB.Close()
+	if err != nil {
+		return err
 	}
 
-	globalDB.Store(nil)
 	log.Println("[db] Database connection closed")
 	return nil
 }

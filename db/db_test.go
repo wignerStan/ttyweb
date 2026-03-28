@@ -82,7 +82,7 @@ func TestDefaultOptions_NoXDGDataHome(t *testing.T) {
 		t.Skip("HOME not set")
 	}
 	opts := DefaultOptions()
-	expected := home + "/.local/share/ttyweb/ttyweb.db"
+	expected := filepath.Join(home, ".local", "share", "ttyweb", "ttyweb.db")
 	if opts.Path != expected {
 		t.Errorf("DefaultOptions().Path = %q, want %q", opts.Path, expected)
 	}
