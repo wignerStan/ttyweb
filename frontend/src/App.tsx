@@ -4,12 +4,16 @@ import { Sidebar } from './components/Sidebar';
 import { TerminalTab } from './components/TerminalTab';
 import { KanbanBoard } from './kanban';
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy';
+import { NotepadPanel } from './notepad/NotepadPanel';
 import MobileApp from './mobile/MobileApp';
+
+const NOTEPAD_TAB_ID = '__notepad__';
 
 interface Tab {
   id: string;
   session: string;
   pane: string;
+  type?: 'terminal' | 'notepad';
 }
 
 type ViewMode = 'terminal' | 'kanban';
@@ -27,7 +31,17 @@ function DesktopLayout() {
       if (prev.some((t) => t.id === id)) return prev;
       return [...prev, { id, session, pane: pane ?? '' }];
     });
+    setViewMode('terminal');
     setActiveTabId(id);
+  }, []);
+
+  const openNotepad = useCallback(() => {
+    setTabs((prev) => {
+      if (prev.some((t) => t.id === NOTEPAD_TAB_ID)) return prev;
+      return [...prev, { id: NOTEPAD_TAB_ID, type: 'notepad' as const, session: '', pane: '' }];
+    });
+    setViewMode('terminal');
+    setActiveTabId(NOTEPAD_TAB_ID);
   }, []);
 
   const closeTab = useCallback((tabId: string) => {
@@ -77,16 +91,18 @@ function DesktopLayout() {
                 setActiveTabId(tab.id);
               }}
             >
-              <span style={styles.tabLabel}>{tab.id}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeTab(tab.id);
-                }}
-                style={styles.tabClose}
-              >
-                \u00D7
-              </button>
+              <span style={styles.tabLabel}>{tab.type === 'notepad' ? 'Notepad' : tab.id}</span>
+              {tab.id !== NOTEPAD_TAB_ID && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeTab(tab.id);
+                  }}
+                  style={styles.tabClose}
+                >
+                  \u00D7
+                </button>
+              )}
             </div>
           ))}
           <div
@@ -98,17 +114,24 @@ function DesktopLayout() {
           >
             <span style={styles.tabLabel}>Kanban</span>
           </div>
+          <button onClick={openNotepad} style={styles.notepadBtn} title="Open Notepad">
+            +
+          </button>
         </div>
         <div style={styles.terminalArea}>
           {viewMode === 'kanban' ? (
             <KanbanBoard />
           ) : (
-            activeTab && (
-              <TerminalTab
-                key={activeTab.id}
-                session={activeTab.session}
-                pane={activeTab.pane}
-              />
+            activeTab && activeTab.type === 'notepad' ? (
+              <NotepadPanel key={NOTEPAD_TAB_ID} />
+            ) : (
+              activeTab && (
+                <TerminalTab
+                  key={activeTab.id}
+                  session={activeTab.session}
+                  pane={activeTab.pane}
+                />
+              )
             )
           )}
         </div>
@@ -191,6 +214,14 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     lineHeight: '1',
     padding: '0',
+  },
+  notepadBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#a9b1d6',
+    cursor: 'pointer',
+    fontSize: '14px',
+    padding: '4px 8px',
   },
   terminalArea: {
     flex: 1,
