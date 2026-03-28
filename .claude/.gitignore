@@ -1,0 +1,11 @@
+# Local/machine-specific settings
+settings.local.json
+
+# Worktree state (created during isolated worktree sessions)
+worktrees/
+
+# Scheduled tasks (session-only or persistent cron state)
+scheduled_tasks.json
+
+# Memory index is rebuilt per-session, no need to track
+projects/
