@@ -49,22 +49,23 @@ func EncodeProjectPath(path string) string {
 	return result.String()
 }
 
-// claudeProjectsDir returns the path to ~/.claude/projects/.
-func claudeProjectsDir() (string, error) {
+// homeSubdir returns an absolute path under the user's home directory.
+func homeSubdir(relPath string) (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to resolve home directory: %w", err)
 	}
-	return filepath.Join(home, ".claude", "projects"), nil
+	return filepath.Join(home, relPath), nil
+}
+
+// claudeProjectsDir returns the path to ~/.claude/projects/.
+func claudeProjectsDir() (string, error) {
+	return homeSubdir(".claude/projects")
 }
 
 // codexSessionsDir returns the path to ~/.codex/sessions/.
 func codexSessionsDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve home directory: %w", err)
-	}
-	return filepath.Join(home, ".codex", "sessions"), nil
+	return homeSubdir(".codex/sessions")
 }
 
 // ScanClaudeProjects lists project directories under ~/.claude/projects/.
@@ -157,14 +158,6 @@ func ScanCodexSessions() ([]AISession, error) {
 		return nil, err
 	}
 
-	dirInfo, err := os.Stat(sessionDir)
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to stat codex sessions directory: %w", err)
-	}
-
 	// Only scan today's directory for immediate results.
 	now := time.Now()
 	todayDir := filepath.Join(sessionDir, now.Format("2006"), now.Format("01"), now.Format("02"))
@@ -213,7 +206,6 @@ func ScanCodexSessions() ([]AISession, error) {
 		return sessions[i].FileModTime.After(sessions[j].FileModTime)
 	})
 
-	_ = dirInfo // referenced to avoid unused variable lint
 	return sessions, nil
 }
 

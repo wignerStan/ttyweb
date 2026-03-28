@@ -2,7 +2,6 @@ package ai
 
 import (
 	"context"
-	"os"
 	"sync"
 	"time"
 )
@@ -118,58 +117,7 @@ func (w *LogWatcher) scanClaude() {
 	if err != nil {
 		return
 	}
-
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	currentMap := make(map[string]AISession, len(current))
-	for _, session := range current {
-		sessionID := session.SessionID
-		currentMap[sessionID] = session
-
-		prev, exists := w.sessions[sessionID]
-		if !exists {
-			// New session.
-			select {
-			case w.events <- AISessionEvent{
-				Type:      AISessionEventNew,
-				Session:   session,
-				Timestamp: time.Now(),
-			}:
-			default:
-			}
-		} else if session.FileModTime.After(prev.FileModTime) || session.FileSize != prev.FileSize {
-			// Updated session.
-			select {
-			case w.events <- AISessionEvent{
-				Type:      AISessionEventUpdated,
-				Session:   session,
-				Timestamp: time.Now(),
-			}:
-			default:
-			}
-		}
-	}
-
-	// Detect completed sessions (files no longer present).
-	for sessionID, prev := range w.sessions {
-		if _, exists := currentMap[sessionID]; !exists {
-			select {
-			case w.events <- AISessionEvent{
-				Type:      AISessionEventCompleted,
-				Session:   prev,
-				Timestamp: time.Now(),
-			}:
-			default:
-			}
-			delete(w.sessions, sessionID)
-		}
-	}
-
-	// Update tracked sessions.
-	for sessionID, session := range currentMap {
-		w.sessions[sessionID] = session
-	}
+	w.emitSessionChanges(current, "")
 }
 
 func (w *LogWatcher) scanCodex() {
@@ -177,7 +125,14 @@ func (w *LogWatcher) scanCodex() {
 	if err != nil {
 		return
 	}
+	w.emitSessionChanges(current, string(AssistantTypeCodex))
+}
 
+// emitSessionChanges compares the current scan results against tracked sessions,
+// emitting events for new, updated, and completed sessions.
+// The completedFilter param restricts completed-event detection to sessions of that type;
+// an empty string means detect completions for all session types.
+func (w *LogWatcher) emitSessionChanges(current []AISession, completedFilter string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -188,43 +143,37 @@ func (w *LogWatcher) scanCodex() {
 
 		prev, exists := w.sessions[sessionID]
 		if !exists {
-			select {
-			case w.events <- AISessionEvent{
-				Type:      AISessionEventNew,
-				Session:   session,
-				Timestamp: time.Now(),
-			}:
-			default:
-			}
+			w.sendEvent(AISessionEventNew, session)
 		} else if session.FileModTime.After(prev.FileModTime) || session.FileSize != prev.FileSize {
-			select {
-			case w.events <- AISessionEvent{
-				Type:      AISessionEventUpdated,
-				Session:   session,
-				Timestamp: time.Now(),
-			}:
-			default:
-			}
+			w.sendEvent(AISessionEventUpdated, session)
 		}
 	}
 
-	// Detect completed sessions.
+	// Detect completed sessions (files no longer present).
 	for sessionID, prev := range w.sessions {
-		if _, exists := currentMap[sessionID]; !exists && prev.Type == string(AssistantTypeCodex) {
-			select {
-			case w.events <- AISessionEvent{
-				Type:      AISessionEventCompleted,
-				Session:   prev,
-				Timestamp: time.Now(),
-			}:
-			default:
+		if _, exists := currentMap[sessionID]; !exists {
+			if completedFilter == "" || prev.Type == completedFilter {
+				w.sendEvent(AISessionEventCompleted, prev)
+				delete(w.sessions, sessionID)
 			}
-			delete(w.sessions, sessionID)
 		}
 	}
 
 	for sessionID, session := range currentMap {
 		w.sessions[sessionID] = session
+	}
+}
+
+// sendEvent emits a session event, dropping it if the channel is full.
+// Must be called with w.mu held.
+func (w *LogWatcher) sendEvent(eventType AISessionEventType, session AISession) {
+	select {
+	case w.events <- AISessionEvent{
+		Type:      eventType,
+		Session:   session,
+		Timestamp: time.Now(),
+	}:
+	default:
 	}
 }
 
@@ -238,13 +187,4 @@ func (w *LogWatcher) GetSessions() []AISession {
 		result = append(result, session)
 	}
 	return result
-}
-
-// isDirWritable checks if a directory path exists and is accessible.
-func isDirWritable(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
 }

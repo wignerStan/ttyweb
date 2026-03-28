@@ -9,20 +9,28 @@ import (
 	"time"
 )
 
+// jsonlScanner returns a buffered scanner for a JSONL file, or an error.
+// The caller must close the returned file.
+func jsonlScanner(filePath string) (*os.File, *bufio.Scanner, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open file %q: %w", filePath, err)
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 64*1024), 2*1024*1024)
+	return file, scanner, nil
+}
+
 // ParseClaudeConversation reads a Claude Code JSONL session file and extracts
 // user and assistant messages, including tool use blocks.
 func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
-	file, err := os.Open(filePath)
+	file, scanner, err := jsonlScanner(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file %q: %w", filePath, err)
+		return nil, err
 	}
 	defer file.Close()
 
 	var messages []ConversationMessage
-	scanner := bufio.NewScanner(file)
-	buf := make([]byte, 0, 64*1024)
-	scanner.Buffer(buf, 2*1024*1024)
-
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
@@ -35,7 +43,6 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 			Timestamp string          `json:"timestamp"`
 			IsMeta    bool            `json:"isMeta"`
 		}
-
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			continue
 		}
@@ -55,7 +62,6 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 			if entry.IsMeta || msgContent.Role != "user" {
 				continue
 			}
-
 			msgs := parseClaudeUserContent(msgContent.Content, ts)
 			messages = append(messages, msgs...)
 
@@ -63,7 +69,6 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 			if msgContent.Role != "assistant" {
 				continue
 			}
-
 			msg := parseClaudeAssistantContent(msgContent.Content, ts)
 			if msg.Content != "" || len(msg.ToolUse) > 0 {
 				messages = append(messages, msg)
@@ -74,13 +79,20 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 	return messages, scanner.Err()
 }
 
+// isSkippableContent returns true for empty strings or Claude Code internal commands.
+func isSkippableContent(text string) bool {
+	return text == "" ||
+		strings.HasPrefix(text, "<command-") ||
+		strings.HasPrefix(text, "<local-command")
+}
+
 // parseClaudeUserContent extracts messages from Claude user content.
 // Content can be a plain string or an array of content blocks (including tool results).
 func parseClaudeUserContent(content interface{}, ts time.Time) []ConversationMessage {
 	switch v := content.(type) {
 	case string:
 		text := strings.TrimSpace(v)
-		if text == "" || strings.HasPrefix(text, "<command-") || strings.HasPrefix(text, "<local-command") {
+		if isSkippableContent(text) {
 			return nil
 		}
 		return []ConversationMessage{{
@@ -89,13 +101,11 @@ func parseClaudeUserContent(content interface{}, ts time.Time) []ConversationMes
 			Timestamp: ts,
 		}}
 	case []interface{}:
-		// Check for tool result blocks.
 		if hasClaudeToolResultInBlocks(v) {
 			return parseClaudeToolResultBlocks(v, ts)
 		}
-		// Otherwise, render as text.
 		text := strings.TrimSpace(renderClaudeBlocksToText(v))
-		if text == "" || strings.HasPrefix(text, "<command-") || strings.HasPrefix(text, "<local-command") {
+		if isSkippableContent(text) {
 			return nil
 		}
 		return []ConversationMessage{{
@@ -229,17 +239,13 @@ func renderClaudeBlocksToText(content interface{}) string {
 // ParseCodexConversation reads a Codex JSONL session file and extracts
 // user and assistant messages.
 func ParseCodexConversation(filePath string) ([]ConversationMessage, error) {
-	file, err := os.Open(filePath)
+	file, scanner, err := jsonlScanner(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file %q: %w", filePath, err)
+		return nil, err
 	}
 	defer file.Close()
 
 	var messages []ConversationMessage
-	scanner := bufio.NewScanner(file)
-	buf := make([]byte, 0, 64*1024)
-	scanner.Buffer(buf, 2*1024*1024)
-
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
@@ -251,7 +257,6 @@ func ParseCodexConversation(filePath string) ([]ConversationMessage, error) {
 			Type      string          `json:"type"`
 			Payload   json.RawMessage `json:"payload"`
 		}
-
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
 			continue
 		}
