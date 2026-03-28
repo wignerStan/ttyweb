@@ -54,6 +54,9 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"panes/status", server.handlePaneStatus)
 	// AI
 	mux.HandleFunc(apiPrefix+"ai/command", server.handleAICommand)
+	// AI Sessions (dispatcher for list/detail/conversation/refresh/cleanup)
+	mux.HandleFunc(apiPrefix+"ai/sessions", server.handleAISessions)
+	mux.HandleFunc(apiPrefix+"ai/sessions/", server.handleAISessions)
 	// Upload
 	mux.HandleFunc(apiPrefix+"upload", server.handleUpload)
 	// Config
