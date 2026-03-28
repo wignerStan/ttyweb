@@ -74,7 +74,7 @@ func main() {
 			log.Fatalf("failed to load config: %v", err)
 		}
 	}
-	appConfig := config.LoadOrDefault()
+	config.LoadOrDefault()
 
 	// Initialize database.
 	if dbPath == "" {
@@ -91,7 +91,6 @@ func main() {
 	}()
 
 	options := &server.Options{
-		ConfigFile:          configFile,
 		Address:             addr,
 		Port:                port,
 		Path:                path,
@@ -102,8 +101,6 @@ func main() {
 			"hostname": hostname(),
 		},
 	}
-
-	_ = appConfig
 
 	if cred != "" {
 		options.EnableBasicAuth = true

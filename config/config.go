@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 )
 
@@ -69,15 +68,32 @@ func Load(path string) (*Config, error) {
 	}
 
 	cfg := *base // copy defaults
-	trimmed := strings.TrimSpace(string(data))
-	if trimmed == "" {
-		return applyEnvOverrides(&cfg), nil
-	}
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("parsing config file %s: %w", path, err)
 	}
 
 	return applyEnvOverrides(&cfg), nil
+}
+
+// envOverride maps environment variable names to setter functions.
+var envOverride = []struct {
+	key string
+	set func(*Config, string)
+}{
+	{"LLM_API_KEY", func(c *Config, v string) { c.LLM.ApiKey = v }},
+	{"LLM_API_URL", func(c *Config, v string) { c.LLM.ApiURL = v }},
+	{"LLM_MODEL", func(c *Config, v string) { c.LLM.Model = v }},
+	{"XFYUN_APP_ID", func(c *Config, v string) { c.Xunfei.AppID = v }},
+	{"XFYUN_API_KEY", func(c *Config, v string) { c.Xunfei.ApiKey = v }},
+	{"XFYUN_API_SECRET", func(c *Config, v string) { c.Xunfei.ApiSecret = v }},
+	{"BUTLER_HOST", func(c *Config, v string) { c.Butler.Host = v }},
+	{"BUTLER_PORT", func(c *Config, v string) { c.Butler.Port = v }},
+}
+
+// copyConfig returns a shallow copy of cfg.
+func copyConfig(cfg *Config) *Config {
+	cp := *cfg
+	return &cp
 }
 
 // LoadOrDefault loads from the default config path, falling back to defaults
@@ -90,9 +106,7 @@ func LoadOrDefault() *Config {
 		}
 		globalConfig = cfg
 	})
-	// Return a copy to preserve immutability.
-	cp := *globalConfig
-	return &cp
+	return copyConfig(globalConfig)
 }
 
 // Get returns the cached global config (must call LoadOrDefault first).
@@ -100,39 +114,17 @@ func Get() *Config {
 	if globalConfig == nil {
 		return LoadOrDefault()
 	}
-	cp := *globalConfig
-	return &cp
+	return copyConfig(globalConfig)
 }
 
 // applyEnvOverrides returns a new Config with values replaced by any
 // non-empty environment variables.
 func applyEnvOverrides(cfg *Config) *Config {
-	cp := *cfg
-
-	if v := os.Getenv("LLM_API_KEY"); v != "" {
-		cp.LLM.ApiKey = v
+	cp := copyConfig(cfg)
+	for _, override := range envOverride {
+		if v := os.Getenv(override.key); v != "" {
+			override.set(cp, v)
+		}
 	}
-	if v := os.Getenv("LLM_API_URL"); v != "" {
-		cp.LLM.ApiURL = v
-	}
-	if v := os.Getenv("LLM_MODEL"); v != "" {
-		cp.LLM.Model = v
-	}
-	if v := os.Getenv("XFYUN_APP_ID"); v != "" {
-		cp.Xunfei.AppID = v
-	}
-	if v := os.Getenv("XFYUN_API_KEY"); v != "" {
-		cp.Xunfei.ApiKey = v
-	}
-	if v := os.Getenv("XFYUN_API_SECRET"); v != "" {
-		cp.Xunfei.ApiSecret = v
-	}
-	if v := os.Getenv("BUTLER_HOST"); v != "" {
-		cp.Butler.Host = v
-	}
-	if v := os.Getenv("BUTLER_PORT"); v != "" {
-		cp.Butler.Port = v
-	}
-
-	return &cp
+	return cp
 }

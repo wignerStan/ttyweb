@@ -26,16 +26,9 @@ func DefaultConfig() *Config {
 			ApiURL: "https://api.openai.com/v1/chat/completions",
 			Model:  "gpt-4o",
 		},
-		Xunfei: XunfeiConfig{},
 		Butler: ButlerConfig{
 			Host: "localhost",
 			Port: "8215",
-		},
-		DB: DBConfig{
-			Path: "",
-		},
-		Worktree: WorktreeConfig{
-			BasePath: "",
 		},
 	}
 }
