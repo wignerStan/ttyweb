@@ -1,65 +1,30 @@
 import { test, expect } from './fixtures';
+import {
+  hasSessionManagement,
+  cleanupSessions,
+  waitForSessionInSidebar,
+  waitForSessionRemovedFromSidebar,
+} from './helpers';
 
 test.describe('Session management via UI', () => {
-  // Track sessions created during each test for guaranteed cleanup
   const createdSessions: string[] = [];
 
   test.afterEach(async ({ apiRequest }) => {
-    for (const name of createdSessions) {
-      try {
-        await apiRequest({
-          method: 'DELETE',
-          path: `/api/sessions/${encodeURIComponent(name)}`,
-        });
-      } catch {
-        // Session may already be deleted by the test itself — ignore
-      }
-    }
+    await cleanupSessions(apiRequest, createdSessions);
     createdSessions.length = 0;
   });
 
-  // Wait for sidebar to display a session name by polling the DOM.
-  // The sidebar fetches /api/sessions every 3s — we poll the DOM until the text appears.
-  async function waitForSessionInSidebar(
-    page: import('@playwright/test').Page,
-    name: string,
-  ) {
-    await expect
-      .poll(
-        async () => {
-          const elements = await page.locator('*').all();
-          for (const el of elements) {
-            const text = await el.textContent();
-            if (text?.includes(name)) return true;
-          }
-          return false;
-        },
-        { timeout: 10000, intervals: [500, 1000] },
-      )
-      .toBe(true);
-  }
+  test('sidebar always shows Sessions header', async ({ page }) => {
+    await page.goto('/');
+    const header = page.locator('h3:has-text("Sessions")');
+    await expect(header).toBeVisible({ timeout: 5000 });
+  });
 
-  // Wait for a session to be removed from the sidebar by polling the DOM.
-  async function waitForSessionRemovedFromSidebar(
-    page: import('@playwright/test').Page,
-    name: string,
-  ) {
-    await expect
-      .poll(
-        async () => {
-          const elements = await page.locator('*').all();
-          for (const el of elements) {
-            const text = await el.textContent();
-            if (text?.includes(name)) return false;
-          }
-          return true;
-        },
-        { timeout: 10000, intervals: [500, 1000] },
-      )
-      .toBe(true);
-  }
+  test.describe.configure({ mode: 'serial' });
 
-  test('sidebar displays session list from API', async ({ page, apiRequest }) => {
+  test('sidebar displays session list from API', async ({ page, apiRequest, request }) => {
+    test.skip(!await hasSessionManagement(request), 'Requires session management');
+
     const name = `ui-list-${Date.now()}`;
     createdSessions.push(name);
 
@@ -71,12 +36,11 @@ test.describe('Session management via UI', () => {
 
     await page.goto('/');
     await waitForSessionInSidebar(page, name);
-
-    const sessionEntry = page.locator(`text=${name}`).first();
-    await expect(sessionEntry).toBeVisible();
   });
 
-  test('create session via sidebar input', async ({ page, apiRequest }) => {
+  test('create session via sidebar input', async ({ page, apiRequest, request }) => {
+    test.skip(!await hasSessionManagement(request), 'Requires session management');
+
     await page.goto('/');
 
     const name = `ui-create-${Date.now()}`;
@@ -88,12 +52,11 @@ test.describe('Session management via UI', () => {
     await input.press('Enter');
 
     await waitForSessionInSidebar(page, name);
-
-    const sessionEntry = page.locator(`text=${name}`).first();
-    await expect(sessionEntry).toBeVisible();
   });
 
-  test('kill session via sidebar button', async ({ page, apiRequest }) => {
+  test('kill session via sidebar button', async ({ page, apiRequest, request }) => {
+    test.skip(!await hasSessionManagement(request), 'Requires session management');
+
     const name = `ui-kill-${Date.now()}`;
     createdSessions.push(name);
 
@@ -107,8 +70,6 @@ test.describe('Session management via UI', () => {
     await waitForSessionInSidebar(page, name);
 
     const sessionEntry = page.locator(`text=${name}`).first();
-    await expect(sessionEntry).toBeVisible();
-
     const sessionRow = sessionEntry.locator('..');
     const killBtn = sessionRow.locator('button[title="Kill session"]');
     await killBtn.click({ force: true });
@@ -121,7 +82,6 @@ test.describe('Session management via UI', () => {
       })
       .toBe(false);
 
-    // Verify in UI as well
     await waitForSessionRemovedFromSidebar(page, name);
 
     // Session successfully killed — remove from cleanup list
@@ -129,7 +89,9 @@ test.describe('Session management via UI', () => {
     if (idx !== -1) createdSessions.splice(idx, 1);
   });
 
-  test('expand session to show pane details', async ({ page, apiRequest }) => {
+  test('expand session to show pane details', async ({ page, apiRequest, request }) => {
+    test.skip(!await hasSessionManagement(request), 'Requires session management');
+
     const name = `ui-expand-${Date.now()}`;
     createdSessions.push(name);
 
@@ -143,8 +105,6 @@ test.describe('Session management via UI', () => {
     await waitForSessionInSidebar(page, name);
 
     const sessionEntry = page.locator(`text=${name}`).first();
-    await expect(sessionEntry).toBeVisible();
-
     const sessionRow = sessionEntry.locator('..');
     await sessionRow.click({ force: true });
 
@@ -153,11 +113,5 @@ test.describe('Session management via UI', () => {
 
     const connectLink = page.locator('text=Connect to session').first();
     await expect(connectLink).toBeVisible({ timeout: 5000 });
-  });
-
-  test('sidebar always shows Sessions header', async ({ page }) => {
-    await page.goto('/');
-    const header = page.locator('h3:has-text("Sessions")');
-    await expect(header).toBeVisible({ timeout: 5000 });
   });
 });

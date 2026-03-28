@@ -1,28 +1,8 @@
 import { test, expect } from './fixtures';
+import { injectWebSocketMonitor } from './helpers';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type W = any;
-
-/** Inject a WebSocket monitor that captures sent/received messages. */
-async function injectWebSocketMonitor(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    const origWebSocket = window.WebSocket;
-    (window as W).__wsMessages = [];
-    (window as W).__wsSent = [];
-    window.WebSocket = function (url: string | URL, protocols?: string | string[]) {
-      const ws = protocols ? new origWebSocket(url, protocols) : new origWebSocket(url);
-      ws.addEventListener('message', (event) => {
-        (window as W).__wsMessages.push(event.data);
-      });
-      const origSend = ws.send.bind(ws);
-      ws.send = (data: string | ArrayBufferLike | Blob | ArrayBufferView) => {
-        (window as W).__wsSent.push(data);
-        return origSend(data);
-      };
-      return ws;
-    } as unknown as typeof WebSocket;
-  });
-}
 
 test.describe('Terminal input and output', () => {
   test('WebSocket protocol correctly encodes input', async ({ page }) => {
@@ -64,8 +44,6 @@ test.describe('Terminal input and output', () => {
     expect(receivedMessages.length).toBeGreaterThan(0);
 
     // Verify message type prefixes — protocol defines types 0-6
-    // Type 0: unknown, 1: output, 2: pong, 3: set window title, 4: set preferences,
-    // 5: reconnect, 6: set buffer size
     const validOutputPrefixes = ['0', '1', '2', '3', '4', '5', '6'];
     for (const msg of receivedMessages) {
       const type = String(msg)[0];

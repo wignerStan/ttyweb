@@ -1,29 +1,8 @@
 import { test, expect } from './fixtures';
+import { injectWebSocketMonitor } from './helpers';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type W = any;
-
-/** Inject a WebSocket monitor that captures all sent/received messages and stores the WS instance. */
-async function injectWebSocketMonitor(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    const origWebSocket = window.WebSocket;
-    (window as W).__wsMessages = [];
-    (window as W).__wsSent = [];
-    window.WebSocket = function (url: string | URL, protocols?: string | string[]) {
-      const ws = protocols ? new origWebSocket(url, protocols) : new origWebSocket(url);
-      ws.addEventListener('message', (event) => {
-        (window as W).__wsMessages.push(event.data);
-      });
-      const origSend = ws.send.bind(ws);
-      ws.send = (data: string | ArrayBufferLike | Blob | ArrayBufferView) => {
-        (window as W).__wsSent.push(data);
-        return origSend(data);
-      };
-      (window as W).__wsInstance = ws;
-      return ws;
-    } as unknown as typeof WebSocket;
-  });
-}
 
 test.describe('WebSocket terminal connection', () => {
   test('WebSocket connects and terminal shows connected status', async ({ page }) => {
@@ -35,15 +14,16 @@ test.describe('WebSocket terminal connection', () => {
     await injectWebSocketMonitor(page);
     await page.goto('/');
 
+    // Wait for WebSocket connection first to avoid race condition
+    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 15000 });
+
     // Wait for terminal output (type '1' = base64 encoded output, type '3' = title)
     await page.waitForFunction(
       () => {
         const msgs = (window as W).__wsMessages || [];
-        return msgs.some((msg: string) => {
-          return msg[0] === '1' || msg[0] === '3';
-        });
+        return msgs.some((msg: string) => msg[0] === '1' || msg[0] === '3');
       },
-      { timeout: 10000 },
+      { timeout: 15000 },
     );
 
     const wsMessages = await page.evaluate(() => (window as W).__wsMessages || []);

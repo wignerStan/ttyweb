@@ -66,13 +66,16 @@ test.describe('SPA frontend rendering', () => {
   test('tab close button removes the tab', async ({ page }) => {
     await page.goto('/');
 
-    const tabText = page.locator('span', { hasText: 'ttyweb' }).first();
-    await expect(tabText).toBeVisible({ timeout: 5000 });
+    // Wait for the default "ttyweb" tab to appear
+    const tabLabel = page.locator('text=ttyweb').first();
+    await expect(tabLabel).toBeVisible({ timeout: 5000 });
 
-    const closeBtn = tabText.locator('..').locator('button', { hasText: '\u00D7' });
+    // Find the close button next to it using XPath
+    const closeBtn = tabLabel.locator('xpath=following-sibling::button').first();
     await closeBtn.click({ force: true });
 
-    await expect(tabText).not.toBeVisible({ timeout: 3000 });
+    // The tab should be removed
+    await expect(page.locator('text=ttyweb')).not.toBeVisible({ timeout: 3000 });
   });
 
   test('window resize does not crash page', async ({ page }) => {

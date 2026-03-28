@@ -1,13 +1,15 @@
 import { test, expect } from './fixtures';
+import { hasSessionManagement, cleanupSessions } from './helpers';
 
 test.describe('API edge cases (risk-based)', () => {
   test('DELETE nonexistent session returns error', async ({ apiRequest }) => {
-    // Backend returns 500 for kill failure on nonexistent sessions
+    // Backend returns 500 for kill failure, 503 if session management unavailable
     const { status } = await apiRequest({
       method: 'DELETE',
       path: '/api/sessions/nonexistent-session-xyz-999',
+      retryConfig: { maxRetries: 0 },
     });
-    expect([404, 500]).toContain(status);
+    expect([404, 500, 503]).toContain(status);
   });
 
   test('session name with special characters is handled', async ({ apiRequest }) => {
@@ -16,10 +18,11 @@ test.describe('API edge cases (risk-based)', () => {
       method: 'POST',
       path: '/api/sessions',
       body: { name },
+      retryConfig: { maxRetries: 0 },
     });
 
-    // The API should either create it successfully or reject with validation error
-    expect([200, 400, 422, 500]).toContain(createStatus);
+    // The API should either create it successfully, reject with validation error, or not support sessions
+    expect([200, 400, 422, 500, 503]).toContain(createStatus);
 
     // If created, verify cleanup works
     if (createStatus === 200) {
@@ -37,9 +40,10 @@ test.describe('API edge cases (risk-based)', () => {
       method: 'POST',
       path: '/api/sessions',
       body: { name },
+      retryConfig: { maxRetries: 0 },
     });
 
-    // Should succeed — unicode names are valid
+    // Should succeed — unicode names are valid (if backend supports sessions)
     if (createStatus === 200) {
       expect(createBody.success).toBe(true);
 
@@ -63,8 +67,9 @@ test.describe('API edge cases (risk-based)', () => {
       method: 'POST',
       path: '/api/sessions',
       body: { name: '' },
+      retryConfig: { maxRetries: 0 },
     });
-    // Backend may accept or reject empty names — document the behavior
+    // Backend may accept or reject empty names, or not support sessions
     if (status === 200) {
       expect(body.success).toBe(true);
       // Cleanup if created
@@ -75,8 +80,7 @@ test.describe('API edge cases (risk-based)', () => {
         });
       }
     }
-    // Either 400 (rejected) or 200 (accepted) are valid
-    expect([200, 400]).toContain(status);
+    expect([200, 400, 503]).toContain(status);
   });
 
   test('GET backends returns expected structure', async ({ apiRequest }) => {
@@ -95,7 +99,9 @@ test.describe('API edge cases (risk-based)', () => {
     }
   });
 
-  test('concurrent session creation does not corrupt state', async ({ apiRequest }) => {
+  test('concurrent session creation does not corrupt state', async ({ apiRequest, request }) => {
+    test.skip(!await hasSessionManagement(request), 'Requires session management');
+
     const timestamp = Date.now();
     const names = [
       `concurrent-a-${timestamp}`,
@@ -131,13 +137,6 @@ test.describe('API edge cases (risk-based)', () => {
     }
 
     // Cleanup all
-    await Promise.all(
-      names.map((name) =>
-        apiRequest({
-          method: 'DELETE',
-          path: `/api/sessions/${encodeURIComponent(name)}`,
-        }),
-      ),
-    );
+    await cleanupSessions(apiRequest, names);
   });
 });
