@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,15 +21,15 @@ type aiCommandResponse struct {
 	Explanation string `json:"explanation"`
 }
 
-// resolveConfig returns the first non-empty value from the given sources.
-func resolveConfig(envKey, headerName, queryParam string, r *http.Request) string {
+// resolveEnvConfig returns the value of the given environment variable, or the
+// provided fallback if the variable is empty. Configuration is read exclusively
+// from the server environment -- never from HTTP headers or query parameters --
+// to prevent SSRF and credential-exposure attacks.
+func resolveEnvConfig(envKey, fallback string) string {
 	if v := os.Getenv(envKey); v != "" {
 		return v
 	}
-	if v := r.Header.Get(headerName); v != "" {
-		return v
-	}
-	return r.URL.Query().Get(queryParam)
+	return fallback
 }
 
 // defaultAPIURL is the fallback API URL when none is configured.
@@ -63,22 +62,16 @@ func (server *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 	role := ai.GetRoleDefault(body.Role)
 	systemPrompt := role.SystemPrompt + "\n\n" + role.Suffix
 
-	// Resolve LLM configuration. Priority: env vars > request headers > query params.
-	apiKey := resolveConfig("LLM_API_KEY", "X-LLM-Api-Key", "api_key", r)
-	apiURL := resolveConfig("LLM_API_URL", "X-LLM-Api-URL", "api_url", r)
-	model := resolveConfig("LLM_MODEL", "X-LLM-Model", "model", r)
-
-	if apiURL == "" {
-		apiURL = defaultAPIURL
-	}
-	if model == "" {
-		model = defaultModel
-	}
+	// Resolve LLM configuration from environment variables only.
+	// Headers and query parameters are intentionally ignored to prevent SSRF.
+	apiKey := os.Getenv("LLM_API_KEY")
+	apiURL := resolveEnvConfig("LLM_API_URL", defaultAPIURL)
+	model := resolveEnvConfig("LLM_MODEL", defaultModel)
 
 	if apiKey == "" {
 		writeAPISuccess(w, aiCommandResponse{
 			Command:     "",
-			Explanation: "No LLM API key configured. Set LLM_API_KEY environment variable or pass X-LLM-Api-Key header.",
+			Explanation: "No LLM API key configured. Set the LLM_API_KEY environment variable.",
 		})
 		return
 	}
@@ -87,12 +80,12 @@ func (server *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 	content, err := client.ChatCompletion(r.Context(), systemPrompt, body.Prompt)
 	if err != nil {
 		log.Printf("[AI] request failed: %v", err)
-		writeAPIError(w, http.StatusInternalServerError, fmt.Sprintf("AI request failed: %s", err.Error()))
+		writeAPIError(w, http.StatusInternalServerError, "AI request failed")
 		return
 	}
 
 	writeAPISuccess(w, aiCommandResponse{
 		Command:     ai.ExtractCommand(content),
-		Explanation: fmt.Sprintf("[%s] %s", role.ID, model),
+		Explanation: role.ID,
 	})
 }
