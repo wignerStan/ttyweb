@@ -1,0 +1,364 @@
+package server
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+// Profile represents a saved session profile configuration.
+type Profile struct {
+	ID         int    `json:"id"`
+	ProfileKey string `json:"profile_key"`
+	Name       string `json:"name"`
+	SortOrder  int    `json:"sort_order"`
+}
+
+// SessionGroup represents a group of sessions within a profile.
+type SessionGroup struct {
+	ID         int    `json:"id"`
+	GroupName  string `json:"group_name"`
+	SortOrder  int    `json:"sort_order"`
+	ProfileKey string `json:"profile_key"`
+}
+
+// Snippet represents a saved command snippet.
+type Snippet struct {
+	Index   int    `json:"index"`
+	Name    string `json:"name"`
+	Command string `json:"command"`
+}
+
+// AiRole represents a custom AI assistant role with a system prompt.
+type AiRole struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	SystemPrompt string `json:"system_prompt"`
+}
+
+// TaskEvent represents a conversation event within a task.
+type TaskEvent struct {
+	ID        int                    `json:"id"`
+	TaskID    string                 `json:"task_id"`
+	PaneKey   string                 `json:"pane_key"`
+	Timestamp time.Time              `json:"ts"`
+	Event     string                 `json:"event"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	Completed bool                   `json:"completed"`
+}
+
+// MemoryStore provides an in-memory data store with thread-safe CRUD operations.
+type MemoryStore struct {
+	mu           sync.RWMutex
+	profiles     []Profile
+	groups       []SessionGroup
+	snippets     []Snippet
+	roles        []AiRole
+	tasks        []TaskEvent
+	paneStatuses map[string]string
+	nextProfileID int
+	nextGroupID   int
+	nextRoleID    int
+	nextTaskID    int
+}
+
+// NewMemoryStore creates and initializes a MemoryStore with default AI roles.
+func NewMemoryStore() *MemoryStore {
+	s := &MemoryStore{
+		profiles:     []Profile{},
+		groups:       []SessionGroup{},
+		snippets:     []Snippet{},
+		roles:        builtinRoles(),
+		tasks:        []TaskEvent{},
+		paneStatuses: make(map[string]string),
+		nextProfileID: 1,
+		nextGroupID:   1,
+		nextRoleID:    1,
+		nextTaskID:    1,
+	}
+
+	// Set next IDs past the default roles.
+	s.nextRoleID = len(builtinRoles()) + 1
+	return s
+}
+
+func builtinRoles() []AiRole {
+	return []AiRole{
+		{ID: 1, Name: "CLI", Description: "Command-line interface expert", SystemPrompt: "You are a CLI expert. Help users with terminal commands, shell scripting, and command-line tools."},
+		{ID: 2, Name: "Operations", Description: "Systems operations expert", SystemPrompt: "You are an operations expert. Help with system administration, deployment, monitoring, and infrastructure."},
+		{ID: 3, Name: "Frontend", Description: "Frontend development expert", SystemPrompt: "You are a frontend expert. Help with HTML, CSS, JavaScript, TypeScript, React, Vue, and web development."},
+		{ID: 4, Name: "Backend", Description: "Backend development expert", SystemPrompt: "You are a backend expert. Help with server-side development, APIs, databases, and backend architecture."},
+		{ID: 5, Name: "Full-Stack", Description: "Full-stack development expert", SystemPrompt: "You are a full-stack expert. Help with both frontend and backend development, architecture decisions, and DevOps."},
+		{ID: 6, Name: "Security", Description: "Security expert", SystemPrompt: "You are a security expert. Help with application security, code review, vulnerability assessment, and secure coding practices."},
+		{ID: 7, Name: "DevOps", Description: "DevOps and CI/CD expert", SystemPrompt: "You are a DevOps expert. Help with CI/CD pipelines, containerization, orchestration, and infrastructure as code."},
+	}
+}
+
+// --- Profile CRUD ---
+
+func (s *MemoryStore) ListProfiles() []Profile {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make([]Profile, len(s.profiles))
+	copy(result, s.profiles)
+	return result
+}
+
+func (s *MemoryStore) CreateProfile(p Profile) Profile {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p.ID = s.nextProfileID
+	s.nextProfileID++
+	s.profiles = append(s.profiles, p)
+	return p
+}
+
+func (s *MemoryStore) UpdateProfile(id int, p Profile) (Profile, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.profiles {
+		if existing.ID == id {
+			p.ID = id
+			s.profiles[i] = p
+			return p, nil
+		}
+	}
+	return Profile{}, fmt.Errorf("profile not found")
+}
+
+func (s *MemoryStore) DeleteProfile(id int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.profiles {
+		if existing.ID == id {
+			s.profiles = append(s.profiles[:i], s.profiles[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("profile not found")
+}
+
+// --- Group CRUD ---
+
+func (s *MemoryStore) ListGroups(profileKey string) []SessionGroup {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if profileKey == "" {
+		result := make([]SessionGroup, len(s.groups))
+		copy(result, s.groups)
+		return result
+	}
+	var filtered []SessionGroup
+	for _, g := range s.groups {
+		if g.ProfileKey == profileKey {
+			filtered = append(filtered, g)
+		}
+	}
+	return filtered
+}
+
+func (s *MemoryStore) CreateGroup(g SessionGroup) SessionGroup {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g.ID = s.nextGroupID
+	s.nextGroupID++
+	s.groups = append(s.groups, g)
+	return g
+}
+
+func (s *MemoryStore) UpdateGroup(id int, g SessionGroup) (SessionGroup, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.groups {
+		if existing.ID == id {
+			g.ID = id
+			s.groups[i] = g
+			return g, nil
+		}
+	}
+	return SessionGroup{}, fmt.Errorf("group not found")
+}
+
+func (s *MemoryStore) DeleteGroup(id int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.groups {
+		if existing.ID == id {
+			s.groups = append(s.groups[:i], s.groups[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("group not found")
+}
+
+// --- Snippet CRUD ---
+
+func (s *MemoryStore) ListSnippets() []Snippet {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make([]Snippet, len(s.snippets))
+	copy(result, s.snippets)
+	return result
+}
+
+func (s *MemoryStore) CreateSnippet(sn Snippet) Snippet {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sn.Index = len(s.snippets)
+	s.snippets = append(s.snippets, sn)
+	return sn
+}
+
+func (s *MemoryStore) UpdateSnippet(index int, sn Snippet) (Snippet, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if index < 0 || index >= len(s.snippets) {
+		return Snippet{}, fmt.Errorf("snippet not found at index %d", index)
+	}
+	sn.Index = index
+	s.snippets[index] = sn
+	return sn, nil
+}
+
+func (s *MemoryStore) DeleteSnippet(index int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if index < 0 || index >= len(s.snippets) {
+		return fmt.Errorf("snippet not found at index %d", index)
+	}
+	s.snippets = append(s.snippets[:index], s.snippets[index+1:]...)
+	// Re-index remaining snippets.
+	for i := range s.snippets {
+		s.snippets[i].Index = i
+	}
+	return nil
+}
+
+// --- AiRole CRUD ---
+
+func (s *MemoryStore) ListRoles() []AiRole {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make([]AiRole, len(s.roles))
+	copy(result, s.roles)
+	return result
+}
+
+func (s *MemoryStore) CreateRole(r AiRole) AiRole {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r.ID = s.nextRoleID
+	s.nextRoleID++
+	s.roles = append(s.roles, r)
+	return r
+}
+
+func (s *MemoryStore) UpdateRole(id int, r AiRole) (AiRole, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.roles {
+		if existing.ID == id {
+			r.ID = id
+			s.roles[i] = r
+			return r, nil
+		}
+	}
+	return AiRole{}, fmt.Errorf("role not found")
+}
+
+func (s *MemoryStore) DeleteRole(id int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.roles {
+		if existing.ID == id {
+			s.roles = append(s.roles[:i], s.roles[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("role not found")
+}
+
+// --- Task CRUD ---
+
+func (s *MemoryStore) ListTasks(page, limit int) ([]TaskEvent, int) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	total := len(s.tasks)
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20
+	}
+	start := (page - 1) * limit
+	if start >= total {
+		return []TaskEvent{}, total
+	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	result := make([]TaskEvent, end-start)
+	copy(result, s.tasks[start:end])
+	return result, total
+}
+
+func (s *MemoryStore) AddTaskEvent(t TaskEvent) TaskEvent {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	t.ID = s.nextTaskID
+	s.nextTaskID++
+	if t.Timestamp.IsZero() {
+		t.Timestamp = time.Now()
+	}
+	s.tasks = append(s.tasks, t)
+	return t
+}
+
+func (s *MemoryStore) CompleteTask(id int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, t := range s.tasks {
+		if t.ID == id {
+			updated := s.tasks[i]
+			updated.Completed = true
+			s.tasks[i] = updated
+			return nil
+		}
+	}
+	return fmt.Errorf("task not found")
+}
+
+func (s *MemoryStore) GetTaskEventsByPane(paneKey string) []TaskEvent {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var events []TaskEvent
+	for _, t := range s.tasks {
+		if t.PaneKey == paneKey {
+			events = append(events, t)
+		}
+	}
+	return events
+}
+
+// --- Pane Status ---
+
+func (s *MemoryStore) GetPaneStatuses() map[string]string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make(map[string]string, len(s.paneStatuses))
+	for k, v := range s.paneStatuses {
+		result[k] = v
+	}
+	return result
+}
+
+func (s *MemoryStore) SetPaneStatus(paneKey, status string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.paneStatuses[paneKey] = status
+}
+
+// store is the global in-memory data store.
+var store = NewMemoryStore()
