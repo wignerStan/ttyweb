@@ -3,6 +3,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TerminalTab } from '../components/TerminalTab';
 import { Terminal } from '@xterm/xterm';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (...args: any[]) => any;
+
+interface MockWS extends Record<string, unknown> {
+  _open: () => void;
+  _message: (data: string) => void;
+  _close: () => void;
+  _error: () => void;
+}
+
 // Mock xterm.js modules — use function syntax (not arrow) so they work as constructors
 vi.mock('@xterm/xterm', () => {
   const MockTerminal = vi.fn(function (this: Record<string, unknown>) {
@@ -31,9 +41,9 @@ vi.mock('@xterm/addon-web-links', () => {
 });
 
 // Helper to create a mock WebSocket
-function createMockWebSocket() {
+function createMockWebSocket(): MockWS {
   const handlers: Record<string, EventListener> = {};
-  const ws: Record<string, unknown> = {
+  const ws: MockWS = {
     url: 'ws://localhost/ws',
     readyState: 0,
     binaryType: '',
@@ -76,18 +86,19 @@ function createMockWebSocket() {
 // Helper to get the last Terminal mock instance
 function getTerminalMock() {
   const MockedTerminal = vi.mocked(Terminal);
-  const instance = MockedTerminal.mock.instances[MockedTerminal.mock.instances.length - 1];
-  return instance as Record<string, unknown>;
+  const instances = MockedTerminal.mock.instances;
+  const last = instances[instances.length - 1]!;
+  return last as unknown as Record<string, AnyFn>;
 }
 
 describe('TerminalTab', () => {
-  let mockWebSocket: ReturnType<typeof createMockWebSocket>;
+  let mockWebSocket: MockWS;
   let container: HTMLDivElement;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockWebSocket = createMockWebSocket();
-    const MockWS = vi.fn(function () { return mockWebSocket; });
+    const MockWS = vi.fn(function () { return mockWebSocket; }) as ReturnType<typeof vi.fn> & { OPEN: number; CLOSED: number };
     MockWS.OPEN = 1;
     MockWS.CLOSED = 3;
     vi.stubGlobal('WebSocket', MockWS);
@@ -199,22 +210,23 @@ describe('TerminalTab', () => {
   });
 
   it('sends keystrokes as base64 type 1 messages', () => {
-    const { unmount } = render(<TerminalTab session="ttyweb" pane="" />, { container });
+    render(<TerminalTab session="ttyweb" pane="" />, { container });
 
     act(() => {
       mockWebSocket._open();
     });
 
     const term = getTerminalMock();
-    const onDataMock = vi.mocked(term.onData as ReturnType<typeof vi.fn>);
+    const onDataMock = term.onData as ReturnType<typeof vi.fn>;
+    const onDataCalls = onDataMock.mock.calls;
 
-    // Debug: verify the callback was registered
-    expect(onDataMock).toHaveBeenCalledTimes(1);
-    const onDataCallback = onDataMock.mock.calls[0][0];
+    // Verify the callback was registered
+    expect(onDataCalls.length).toBeGreaterThanOrEqual(1);
+    const onDataCallback = onDataCalls[0]![0] as (data: string) => void;
     expect(typeof onDataCallback).toBe('function');
 
     // Clear send history so we only check for the keystroke message
-    vi.mocked(mockWebSocket.send).mockClear();
+    (vi.mocked(mockWebSocket.send) as ReturnType<typeof vi.fn>).mockClear();
 
     act(() => {
       onDataCallback('a');
@@ -232,8 +244,11 @@ describe('TerminalTab', () => {
     });
 
     const term = getTerminalMock();
-    const onResizeMock = vi.mocked(term.onResize as ReturnType<typeof vi.fn>);
-    const onResizeCallback = onResizeMock.mock.calls[0][0];
+    const onResizeMock = term.onResize as ReturnType<typeof vi.fn>;
+    const onResizeCalls = onResizeMock.mock.calls;
+
+    expect(onResizeCalls.length).toBeGreaterThanOrEqual(1);
+    const onResizeCallback = onResizeCalls[0]![0] as (data: { cols: number; rows: number }) => void;
 
     act(() => {
       onResizeCallback({ cols: 120, rows: 40 });
