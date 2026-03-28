@@ -14,8 +14,8 @@ func TestEncodeProjectPath(t *testing.T) {
 	}{
 		{"/home/user/projects/my-app", "-home-user-projects-my-app"},
 		{"D:\\codes\\2025\\aicode-kanban", "D--codes-2025-aicode-kanban"},
-		{"/home/user/game_system2/next", "-home-user-game-system2-next"},
-		{"/tmp/test_project", "-tmp-test-project"},
+		{"/home/user/game_system2/next", "-home-user-game_system2-next"},
+		{"/tmp/test_project", "-tmp-test_project"},
 	}
 
 	for _, tt := range tests {
@@ -25,6 +25,21 @@ func TestEncodeProjectPath(t *testing.T) {
 				t.Errorf("EncodeProjectPath(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestEncodeProjectPath_NoCollisionBetweenUnderscoreAndDash(t *testing.T) {
+	underscore := EncodeProjectPath("/my_project")
+	dash := EncodeProjectPath("/my-project")
+
+	if underscore == dash {
+		t.Errorf("EncodeProjectPath produces collision: /my_project and /my-project both encode to %q", underscore)
+	}
+	if underscore != "-my_project" {
+		t.Errorf("EncodeProjectPath(%q) = %q, want %q", "/my_project", underscore, "-my_project")
+	}
+	if dash != "-my-project" {
+		t.Errorf("EncodeProjectPath(%q) = %q, want %q", "/my-project", dash, "-my-project")
 	}
 }
 

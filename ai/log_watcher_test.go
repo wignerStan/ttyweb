@@ -14,6 +14,29 @@ func TestLogWatcher_NewAndStop(t *testing.T) {
 	watcher.Stop()
 }
 
+func TestLogWatcher_DoubleStop(t *testing.T) {
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+
+	watcher := NewLogWatcher("", 100*time.Millisecond)
+	events := watcher.Watch()
+
+	// Let the watcher do its initial scan.
+	time.Sleep(200 * time.Millisecond)
+
+	// First Stop should succeed.
+	watcher.Stop()
+
+	// Channel should be closed after first Stop.
+	_, ok := <-events
+	if ok {
+		t.Error("event channel should be closed after first Stop()")
+	}
+
+	// Second Stop should not panic.
+	watcher.Stop()
+}
+
 func TestLogWatcher_WatchLifecycle(t *testing.T) {
 	homeDir := t.TempDir()
 	t.Setenv("HOME", homeDir)
