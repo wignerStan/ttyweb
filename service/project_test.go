@@ -127,8 +127,8 @@ func TestAddProject_WithOptions(t *testing.T) {
 	if found.Name != "my-project" {
 		t.Errorf("expected name 'my-project', got %q", found.Name)
 	}
-	if !found.CreatedAt.Before(now.Add(time.Second)) {
-		t.Error("CreatedAt should be set")
+	if found.CreatedAt.Before(now) {
+		t.Error("CreatedAt should be after the recorded start time")
 	}
 }
 
