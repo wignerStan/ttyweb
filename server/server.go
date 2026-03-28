@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"crypto/x509"
 	"io/fs"
 	"log"
@@ -20,8 +21,10 @@ import (
 	"github.com/pkg/errors"
 
 	"ttyweb/bindata"
+	"ttyweb/db"
 	"ttyweb/pkg/homedir"
 	"ttyweb/pkg/randomstring"
+	"ttyweb/service"
 	"ttyweb/webtty"
 )
 
@@ -32,6 +35,7 @@ type Server struct {
 
 	upgrader      *websocket.Upgrader
 	titleTemplate *noesctmpl.Template
+	noteSvc       *service.NoteService
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
@@ -81,6 +85,12 @@ func New(factory Factory, options *Options) (*Server, error) {
 		}
 	}
 
+	database, err := db.GetDB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get database: %w", err)
+	}
+	noteSvc := service.NewNoteService(database)
+
 	return &Server{
 		factory: factory,
 		options: options,
@@ -92,6 +102,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 			CheckOrigin:     originChekcer,
 		},
 		titleTemplate: titleTemplate,
+		noteSvc:       noteSvc,
 	}, nil
 }
 
