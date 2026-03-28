@@ -8,6 +8,9 @@ coverage/
 # Frontend build
 frontend/dist/
 
+# Lockfiles
+bun.lock
+
 # Dependencies
 node_modules/
 
