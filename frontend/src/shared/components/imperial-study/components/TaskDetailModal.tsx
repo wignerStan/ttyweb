@@ -54,7 +54,7 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
                 </div>
 
                 {loading && !run && (
-                    <div className="is-task-detail-loading">加载中...</div>
+                    <div className="is-task-detail-loading">Loading...</div>
                 )}
 
                 {error && !run && (

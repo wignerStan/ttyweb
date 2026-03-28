@@ -1,25 +1,13 @@
-// InboxDetailModal.tsx — Inbox item detail overlay (Spec §5.1)
+// InboxDetailModal.tsx — Inbox item detail overlay
 import React, { useState } from 'react';
 import {
     X,
-    HelpCircle,
-    ShieldCheck,
     FileText,
-    AlertTriangle,
-    CheckCircle2,
     LucideIcon,
 } from 'lucide-react';
 import type { InboxItem, ReplyDecision } from '../types';
-import { INBOX_KIND_CONFIG } from '../constants';
+import { INBOX_KIND_CONFIG, KIND_ICON_MAP } from '../constants';
 import { useReplyInbox } from '../hooks/useReplyInbox';
-
-const KIND_ICON_MAP: Record<string, LucideIcon> = {
-    HelpCircle,
-    ShieldCheck,
-    FileText,
-    AlertTriangle,
-    CheckCircle2,
-};
 
 interface InboxDetailModalProps {
     item: InboxItem;
@@ -44,7 +32,6 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
         }
     };
 
-    // Close on overlay click
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) onClose();
     };
@@ -52,7 +39,6 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
     return (
         <div className="is-modal-overlay" onClick={handleOverlayClick}>
             <div className="is-modal">
-                {/* ── Header ── */}
                 <div className="is-modal__header">
                     <span className="is-modal__header-title">Inbox Detail</span>
                     <button
@@ -64,7 +50,6 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
                     </button>
                 </div>
 
-                {/* ── Meta ── */}
                 <div className="is-modal__meta">
                     <div className="is-modal__meta-row">
                         <span className="is-modal__meta-label">Kind:</span>
@@ -82,15 +67,13 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
                         <span>
                             {item.created_at
                                 ? new Date(item.created_at).toLocaleString()
-                                : '—'}
+                                : '\u2014'}
                         </span>
                     </div>
                 </div>
 
-                {/* ── Body ── */}
                 <div className="is-modal__body">{item.body}</div>
 
-                {/* ── Reply textarea ── */}
                 <div className="is-modal__reply">
                     <textarea
                         className="is-modal__textarea"
@@ -102,21 +85,20 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
                     />
                 </div>
 
-                {/* ── Action buttons ── */}
                 <div className="is-modal__actions">
                     <button
                         className="is-btn is-btn--approve"
                         onClick={() => handleAction('approved')}
                         disabled={loading}
                     >
-                        Approve ✓
+                        Approve
                     </button>
                     <button
                         className="is-btn is-btn--reject"
                         onClick={() => handleAction('rejected')}
                         disabled={loading}
                     >
-                        Reject ✕
+                        Reject
                     </button>
                     <button
                         className="is-btn is-btn--reply"
@@ -124,7 +106,7 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
                         disabled={loading || !replyText.trim()}
                         style={{ marginLeft: 'auto' }}
                     >
-                        Reply →
+                        Reply
                     </button>
                 </div>
             </div>

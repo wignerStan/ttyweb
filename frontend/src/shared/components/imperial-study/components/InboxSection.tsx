@@ -1,24 +1,8 @@
 // InboxSection.tsx — Inbox collapsible section + InboxCard
 import { useState } from 'react';
-import {
-    ChevronRight,
-    HelpCircle,
-    ShieldCheck,
-    FileText,
-    AlertTriangle,
-    CheckCircle2,
-    LucideIcon
-} from 'lucide-react';
+import { ChevronRight, FileText } from 'lucide-react';
 import type { InboxItem } from '../types';
-import { INBOX_KIND_CONFIG } from '../constants';
-
-const KIND_ICON_MAP: Record<string, LucideIcon> = {
-    HelpCircle,
-    ShieldCheck,
-    FileText,
-    AlertTriangle,
-    CheckCircle2,
-};
+import { INBOX_KIND_CONFIG, KIND_ICON_MAP } from '../constants';
 
 // ── InboxCard ────────────────────────────────────────────────────────────────
 interface InboxCardProps {
@@ -28,7 +12,6 @@ interface InboxCardProps {
 
 function InboxCard({ item, onClick }: InboxCardProps) {
     const cfg = INBOX_KIND_CONFIG[item.kind];
-    // fallback to FileText if not found
     const Icon = cfg ? (KIND_ICON_MAP[cfg.icon] ?? FileText) : FileText;
     const color = cfg ? cfg.color : 'var(--zinc-400)';
 

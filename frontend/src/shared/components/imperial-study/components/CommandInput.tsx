@@ -1,4 +1,4 @@
-// CommandInput.tsx — 下指令 (Give Orders to Butler)
+// CommandInput.tsx — Command input for dispatching to Butler
 import { useState, useCallback, useRef, useMemo } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { VoiceInput } from "../../VoiceInput";
@@ -7,10 +7,10 @@ import { getAuthHeader } from "../../../../utils/auth";
 import type { RoutingInfo } from "../types";
 
 const ASSISTANT_TAGS = [
-    { id: 'translator', label: '翻译', color: '#8b5cf6' },
-    { id: 'cli', label: '命令行', color: '#06b6d4' },
-    { id: 'market', label: '行情', color: '#f59e0b' },
-    { id: 'chat', label: '闲聊', color: '#ec4899' },
+    { id: 'translator', label: 'Translate', color: '#8b5cf6' },
+    { id: 'cli', label: 'CLI', color: '#06b6d4' },
+    { id: 'market', label: 'Market', color: '#f59e0b' },
+    { id: 'chat', label: 'Chat', color: '#ec4899' },
 ] as const;
 
 interface CommandInputProps {
@@ -73,9 +73,9 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
             const data = await res.json();
 
             if (data.success) {
-                // Chat fallback: auto-switch to 闲聊 mode
+                // Chat fallback: auto-switch to chat mode
                 if (data.data?.chat_fallback) {
-                    setFeedback({ type: "ok", msg: "闲聊模式" });
+                    setFeedback({ type: "ok", msg: "Chat mode" });
                     onAssistantSend?.(trimmed, "chat");
                     onTagChange("chat");
                     setIntent("");
@@ -84,7 +84,7 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
                     return;
                 }
 
-                setFeedback({ type: "ok", msg: `已下旨 · run ${data.data.run_id?.slice(0, 8)}` });
+                setFeedback({ type: "ok", msg: `Dispatched \u00b7 run ${data.data.run_id?.slice(0, 8)}` });
                 setIntent("");
                 resetHeight();
                 onDispatched?.({ ...data.data, intent: trimmed });
@@ -136,7 +136,7 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
                     value={intent}
                     onChange={handleChange}
                     onKeyDown={handleKeyDown}
-                    placeholder={activeTagLabel ? `${activeTagLabel}... (\u2318+Enter)` : "\u4e0b\u65e8\u2026 (\u2318+Enter \u53d1\u9001)"}
+                    placeholder={activeTagLabel ? `${activeTagLabel}... (\u2318+Enter)` : "Enter command... (\u2318+Enter to send)"}
                     disabled={loading}
                     rows={1}
                 />

@@ -9,9 +9,9 @@ interface RunPipelineProps {
 }
 
 const STAGE_META: Record<PipelineStage, { label: string; sublabel: string }> = {
-    outflow: { label: '出旨', sublabel: 'Outflow' },
-    processing: { label: '执行', sublabel: 'Processing' },
-    return: { label: '回銮', sublabel: 'Return' },
+    outflow: { label: 'Outflow', sublabel: 'Outflow' },
+    processing: { label: 'Processing', sublabel: 'Processing' },
+    return: { label: 'Return', sublabel: 'Return' },
 };
 
 const STAGES: PipelineStage[] = ['outflow', 'processing', 'return'];

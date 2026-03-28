@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { TerminalTab } from './components/TerminalTab';
+import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy';
 import MobileApp from './mobile/MobileApp';
 
 interface Tab {
@@ -14,6 +15,7 @@ function DesktopLayout() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [imperialStudyOpen, setImperialStudyOpen] = useState(true);
 
   const openTab = useCallback((session: string, pane?: string) => {
     const id = pane ? `${session}:${pane}` : session;
@@ -43,6 +45,12 @@ function DesktopLayout() {
 
   return (
     <div style={styles.container}>
+      {imperialStudyOpen && (
+        <FloatingImperialStudy
+          activePaneKey={activeTab?.id ?? null}
+          onClose={() => setImperialStudyOpen(false)}
+        />
+      )}
       {sidebarOpen && (
         <div style={styles.sidebar}>
           <Sidebar onSelect={openTab} />

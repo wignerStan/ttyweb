@@ -1,4 +1,4 @@
-// WorkerContextMenu.tsx — Right-click context menu for WorkerCard (Spec §5.2)
+// WorkerContextMenu.tsx — Right-click context menu for WorkerCard
 import { useEffect, useRef } from 'react';
 import { Terminal, Copy, Pause, Power } from 'lucide-react';
 import { getAuthHeader } from '../../../../utils/auth';
@@ -67,7 +67,7 @@ export function WorkerContextMenu({
                 }
                 break;
             case 'kill':
-                if (!confirm('确定要终止该 worker 吗？')) return;
+                if (!confirm('Kill this worker?')) return;
                 {
                     const authHeader = getAuthHeader();
                     fetch(`/api/butler/worker_sessions/${workerId}`, {

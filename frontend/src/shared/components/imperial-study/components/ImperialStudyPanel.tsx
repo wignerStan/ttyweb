@@ -54,7 +54,7 @@ export function ImperialStudyPanel({ activePaneKey, floating }: ImperialStudyPan
             {!floating && (
                 <div className="is-panel-header">
                     <div className="is-panel-header__row">
-                        <span className="is-panel-header__title">御書房</span>
+                        <span className="is-panel-header__title">Imperial Study</span>
                         <button
                             className={`is-icon-btn ${spinning ? 'spinning' : ''}`}
                             onClick={handleRefresh}

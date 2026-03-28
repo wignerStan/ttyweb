@@ -34,3 +34,22 @@ export const POLL_ACTIVITY_MS = 10_000;
 
 // ── Butler API Base URL (proxied by TmuxWeb) ─────────────────────────────────
 export const BUTLER_API_BASE = '/api/butler';
+
+// ── Inbox Kind Icon Map ─────────────────────────────────────────────────────
+// Import the icon components where needed and use this map for lookup
+import {
+    HelpCircle,
+    ShieldCheck,
+    FileText,
+    AlertTriangle,
+    CheckCircle2,
+    type LucideIcon,
+} from 'lucide-react';
+
+export const KIND_ICON_MAP: Record<string, LucideIcon> = {
+    HelpCircle,
+    ShieldCheck,
+    FileText,
+    AlertTriangle,
+    CheckCircle2,
+};
