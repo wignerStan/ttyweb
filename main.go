@@ -13,6 +13,7 @@ import (
 	"ttyweb/backend/localcommand"
 	"ttyweb/backend/tmux"
 	"ttyweb/backend/zellij"
+	"ttyweb/db"
 	"ttyweb/server"
 )
 
@@ -29,6 +30,7 @@ func main() {
 		write     bool
 		titleFmt  string
 		session   string
+		dbPath    string
 	)
 
 	flag.StringVar(&addr, "addr", "0.0.0.0", "IP address to listen")
@@ -42,6 +44,7 @@ func main() {
 	flag.BoolVar(&write, "w", false, "Permit client write")
 	flag.StringVar(&titleFmt, "title-format", "{{ .command }}@ttyweb", "Window title format")
 	flag.StringVar(&session, "session", "ttyweb", "Default session name (tmux/zellij)")
+	flag.StringVar(&dbPath, "db", "", "SQLite database path (empty to disable)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: ttyweb [options] [-- command args...]\n\n")
@@ -68,6 +71,7 @@ func main() {
 		PermitWrite:         write,
 		TitleFormat:         titleFmt,
 		PermitArguments:     backend == "local",
+		DBPath:              dbPath,
 		TitleVariables: map[string]interface{}{
 			"hostname": hostname(),
 		},
@@ -115,6 +119,18 @@ func main() {
 
 	if err != nil {
 		log.Fatalf("failed to create backend: %v", err)
+	}
+
+	// Initialize database if path is provided.
+	if dbPath != "" {
+		if err := db.Init(dbPath); err != nil {
+			log.Fatalf("failed to initialize database: %v", err)
+		}
+		defer func() {
+			if cerr := db.Close(); cerr != nil {
+				log.Printf("failed to close database: %v", cerr)
+			}
+		}()
 	}
 
 	srv, err := server.New(factory, options)
