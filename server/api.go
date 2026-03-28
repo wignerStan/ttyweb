@@ -31,6 +31,47 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"sessions", server.handleListSessions)
 	mux.HandleFunc(apiPrefix+"sessions/", server.handleSessionDetail)
 	mux.HandleFunc(apiPrefix+"backends", server.handleListBackends)
+
+	// Auth
+	mux.HandleFunc(apiPrefix+"auth/check", server.handleAuthCheck)
+	// Profiles
+	mux.HandleFunc(apiPrefix+"profiles", server.handleProfiles)
+	mux.HandleFunc(apiPrefix+"profiles/", server.handleProfileDetail)
+	// Groups
+	mux.HandleFunc(apiPrefix+"groups", server.handleGroups)
+	mux.HandleFunc(apiPrefix+"groups/", server.handleGroupDetail)
+	// Snippets
+	mux.HandleFunc(apiPrefix+"snippets", server.handleSnippets)
+	mux.HandleFunc(apiPrefix+"snippets/", server.handleSnippetDetail)
+	// Roles
+	mux.HandleFunc(apiPrefix+"roles/defaults", server.handleDefaultRoles)
+	mux.HandleFunc(apiPrefix+"roles", server.handleRoles)
+	mux.HandleFunc(apiPrefix+"roles/", server.handleRoleDetail)
+	// Tasks
+	mux.HandleFunc(apiPrefix+"tasks", server.handleTasks)
+	mux.HandleFunc(apiPrefix+"tasks/", server.handleTaskDetail)
+	// Panes
+	mux.HandleFunc(apiPrefix+"panes/status", server.handlePaneStatus)
+	// AI
+	mux.HandleFunc(apiPrefix+"ai/command", server.handleAICommand)
+	// Upload
+	mux.HandleFunc(apiPrefix+"upload", server.handleUpload)
+	// Config
+	mux.HandleFunc(apiPrefix+"opencode-config", server.handleConfig)
+	// Tmux extensions
+	mux.HandleFunc(apiPrefix+"tmux/config", server.handleTmuxConfig)
+	mux.HandleFunc(apiPrefix+"tmux/quick-dirs", server.handleQuickDirs)
+	mux.HandleFunc(apiPrefix+"tmux/new-window", server.handleTmuxNewWindow)
+	mux.HandleFunc(apiPrefix+"tmux/new-session", server.handleTmuxNewSession)
+	mux.HandleFunc(apiPrefix+"tmux/tree", server.handleTmuxTree)
+	mux.HandleFunc(apiPrefix+"tmux/send-keys", server.handleTmuxSendKeys)
+	mux.HandleFunc(apiPrefix+"tmux/pane-mode", server.handleTmuxPaneMode)
+	// Telemetry
+	mux.HandleFunc(apiPrefix+"telemetry", server.handleTelemetry)
+	// Log
+	mux.HandleFunc(apiPrefix+"log", server.handleLog)
+	// Butler
+	mux.HandleFunc(apiPrefix+"butler/", server.handleButlerProxy)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
