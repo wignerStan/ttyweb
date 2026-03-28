@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -69,7 +70,14 @@ func New(factory Factory, options *Options) (*Server, error) {
 	} else {
 		originChekcer = func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")
-			return origin == "" || origin == r.Host
+			if origin == "" {
+				return true
+			}
+			u, err := url.Parse(origin)
+			if err != nil {
+				return false
+			}
+			return u.Host == r.Host
 		}
 	}
 
