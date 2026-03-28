@@ -5,15 +5,24 @@ import (
 	"net/http"
 	"strings"
 
-	"ttyweb/backend/tmux"
+	"ttyweb/backend"
 	"ttyweb/pkg/validate"
 )
 
 // apiResponse is a standard envelope for API responses.
 type apiResponse struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
+	Success bool            `json:"success"`
+	Data    json.RawMessage `json:"data,omitempty"`
+	Error   string          `json:"error,omitempty"`
+}
+
+// sessionManager returns the SessionManager for the active backend,
+// or a NoSessionManager if the backend doesn't support it.
+func (server *Server) sessionManager() backend.SessionManager {
+	if sm, ok := server.factory.(backend.SessionManager); ok {
+		return sm
+	}
+	return backend.NoSessionManager{}
 }
 
 // setupAPIHandlers registers REST API routes on the given mux.
@@ -29,14 +38,24 @@ func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request)
 
 	switch r.Method {
 	case http.MethodGet:
-		sessions, err := tmux.ListSessions()
+		sm := server.sessionManager()
+		if !sm.IsAvailable() {
+			writeAPISuccess(w, []interface{}{})
+			return
+		}
+		data, err := sm.ListSessions()
 		if err != nil {
 			writeAPIError(w, http.StatusInternalServerError, "failed to list sessions: "+err.Error())
 			return
 		}
-		writeAPISuccess(w, sessions)
+		writeAPISuccessRaw(w, data)
 
 	case http.MethodPost:
+		sm := server.sessionManager()
+		if !sm.IsAvailable() {
+			writeAPIError(w, http.StatusServiceUnavailable, "session management not available for this backend")
+			return
+		}
 		var body struct {
 			Name    string   `json:"name"`
 			Command []string `json:"command"`
@@ -51,7 +70,7 @@ func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request)
 				return
 			}
 		}
-		name, err := tmux.CreateSession(body.Name, body.Command...)
+		name, err := sm.CreateSession(body.Name, body.Command...)
 		if err != nil {
 			writeAPIError(w, http.StatusInternalServerError, "failed to create session: "+err.Error())
 			return
@@ -79,17 +98,23 @@ func (server *Server) handleSessionDetail(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	sm := server.sessionManager()
+	if !sm.IsAvailable() {
+		writeAPIError(w, http.StatusServiceUnavailable, "session management not available for this backend")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		detail, err := tmux.GetSessionDetail(path)
+		data, err := sm.GetSessionDetail(path)
 		if err != nil {
 			writeAPIError(w, http.StatusNotFound, "session not found: "+err.Error())
 			return
 		}
-		writeAPISuccess(w, detail)
+		writeAPISuccessRaw(w, data)
 
 	case http.MethodDelete:
-		if err := tmux.KillSession(path); err != nil {
+		if err := sm.KillSession(path); err != nil {
 			writeAPIError(w, http.StatusInternalServerError, "failed to kill session: "+err.Error())
 			return
 		}
@@ -102,15 +127,48 @@ func (server *Server) handleSessionDetail(w http.ResponseWriter, r *http.Request
 
 func (server *Server) handleListBackends(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	sm := server.sessionManager()
+	current := server.factory.Name()
+
 	backends := []map[string]interface{}{
-		{"name": "local", "available": true},
-		{"name": "tmux", "available": tmux.IsServerRunning()},
-		{"name": "zellij", "available": false}, // TODO: check zellij availability
+		{"name": "local", "available": true, "active": current == "local command"},
+		{"name": "tmux", "available": sm.IsAvailable() && current == "tmux", "active": current == "tmux"},
+		{"name": "zellij", "available": sm.IsAvailable() && current == "zellij", "active": current == "zellij"},
 	}
+
+	// Check availability for backends that aren't the current one.
+	// The local backend never has session management.
+	// For non-active backends, show them as available if the binary exists,
+	// but session APIs only work with the active backend.
+	if current != "tmux" {
+		for _, b := range backends {
+			if b["name"] == "tmux" {
+				b["available"] = false // can't manage sessions from a different active backend
+			}
+		}
+	}
+	if current != "zellij" {
+		for _, b := range backends {
+			if b["name"] == "zellij" {
+				b["available"] = false
+			}
+		}
+	}
+
 	writeAPISuccess(w, backends)
 }
 
 func writeAPISuccess(w http.ResponseWriter, data interface{}) {
+	raw, err := json.Marshal(data)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "failed to marshal response")
+		return
+	}
+	writeAPISuccessRaw(w, raw)
+}
+
+func writeAPISuccessRaw(w http.ResponseWriter, data json.RawMessage) {
 	resp := apiResponse{Success: true, Data: data}
 	json.NewEncoder(w).Encode(resp)
 }
