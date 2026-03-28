@@ -85,7 +85,7 @@ export function useWorktrees(): UseWorktreesState & UseWorktreesActions {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiRequest<Project[]>('/api/projects');
+      const data = await apiRequest<Project[]>('/api/worktree/projects');
       setProjects(data);
       return data;
     } catch (err) {
@@ -103,7 +103,7 @@ export function useWorktrees(): UseWorktreesState & UseWorktreesActions {
       setLoading(true);
       setError(null);
       try {
-        const data = await apiRequest<Project>('/api/projects', {
+        const data = await apiRequest<Project>('/api/worktree/projects', {
           method: 'POST',
           body: JSON.stringify(params),
         });
@@ -121,48 +121,20 @@ export function useWorktrees(): UseWorktreesState & UseWorktreesActions {
     [],
   );
 
+  // TODO: No backend endpoint exists for deleting projects yet.
+  // This function is kept as a placeholder for future implementation.
   const deleteProject = useCallback(
-    async (projectId: string): Promise<void> => {
-      setLoading(true);
-      setError(null);
-      try {
-        await apiRequest<null>(`/api/projects/${projectId}`, {
-          method: 'DELETE',
-        });
-        setProjects((prev) => prev.filter((p) => p.id !== projectId));
-        setWorktreesByProject((prev) => {
-          const next = { ...prev };
-          delete next[projectId];
-          return next;
-        });
-      } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : 'Failed to delete project';
-        setError(msg);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
+    async (_projectId: string): Promise<void> => {
+      throw new Error('Deleting projects is not yet supported');
     },
     [],
   );
 
+  // TODO: No dedicated project-level sync endpoint exists on the backend.
+  // Use syncAll() instead, which calls POST /api/worktree/projects/{id}/worktrees/sync.
   const syncProject = useCallback(
-    async (projectId: string): Promise<void> => {
-      setLoading(true);
-      setError(null);
-      try {
-        await apiRequest<null>(`/api/projects/${projectId}/sync`, {
-          method: 'POST',
-        });
-      } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : 'Failed to sync project';
-        setError(msg);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
+    async (_projectId: string): Promise<void> => {
+      throw new Error('Project-level sync is not available. Use syncAll() instead.');
     },
     [],
   );

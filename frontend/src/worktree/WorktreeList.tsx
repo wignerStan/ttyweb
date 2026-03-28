@@ -17,7 +17,7 @@ interface WorktreeListProps {
   project: Project;
   worktrees: Worktree[];
   loading: boolean;
-  onCreate: (params: { branch_name: string; create_branch?: boolean; base_branch?: string }) => void;
+  onCreate: (params: { branchName: string; createBranch?: boolean; baseBranch?: string }) => void;
   onDelete: (worktreeId: string) => void;
   onRefreshStatus: (worktreeId: string) => void;
   onCommitAll: (worktreeId: string, message: string) => void;
@@ -43,9 +43,9 @@ export function WorktreeList({
 
   const handleCreate = useCallback(
     (params: {
-      branch_name: string;
-      create_branch?: boolean;
-      base_branch?: string;
+      branchName: string;
+      createBranch?: boolean;
+      baseBranch?: string;
     }) => {
       onCreate(params);
       onRefreshWorktrees();
@@ -55,9 +55,9 @@ export function WorktreeList({
 
   const handleDelete = useCallback(
     (worktree: Worktree) => {
-      if (worktree.is_main) return;
+      if (worktree.isMain) return;
       const confirmed = window.confirm(
-        `Delete worktree "${worktree.branch_name}"? This cannot be undone.`,
+        `Delete worktree "${worktree.branchName}"? This cannot be undone.`,
       );
       if (!confirmed) return;
 
@@ -93,7 +93,7 @@ export function WorktreeList({
     }
   }, [onSyncAll, onRefreshWorktrees]);
 
-  const existingBranches = worktrees.map((wt) => wt.branch_name);
+  const existingBranches = worktrees.map((wt) => wt.branchName);
 
   return (
     <div className="wt-list">
@@ -228,22 +228,22 @@ function WorktreeCard({
   onCommit,
 }: WorktreeCardProps) {
   const hasPendingChanges =
-    (wt.status_modified ?? 0) > 0 ||
-    (wt.status_staged ?? 0) > 0 ||
-    (wt.status_untracked ?? 0) > 0;
+    (wt.statusModified ?? 0) > 0 ||
+    (wt.statusStaged ?? 0) > 0 ||
+    (wt.statusUntracked ?? 0) > 0;
 
   const commitLine =
-    wt.head_commit && wt.head_commit_message
-      ? `${wt.head_commit.slice(0, 8)} ${wt.head_commit_message.split('\n')[0]}`
-      : wt.head_commit_message?.split('\n')[0] ?? null;
+    wt.headCommit && wt.headCommitMessage
+      ? `${wt.headCommit.slice(0, 8)} ${wt.headCommitMessage.split('\n')[0]}`
+      : wt.headCommitMessage?.split('\n')[0] ?? null;
 
   return (
     <div className="wt-card">
       <div className="wt-card-header">
         <div className="wt-card-header-left">
           <GitBranchIcon size={13} />
-          <span className="wt-card-branch">{wt.branch_name}</span>
-          {wt.is_main && <span className="wt-badge wt-badge-main">main</span>}
+          <span className="wt-card-branch">{wt.branchName}</span>
+          {wt.isMain && <span className="wt-badge wt-badge-main">main</span>}
         </div>
         <div className="wt-card-actions">
           <button
@@ -262,7 +262,7 @@ function WorktreeCard({
               <GitCommitHorizontal size={13} />
             </button>
           )}
-          {!wt.is_main && (
+          {!wt.isMain && (
             <button
               className="wt-icon-btn wt-icon-btn-danger"
               title="Delete worktree"
@@ -277,15 +277,15 @@ function WorktreeCard({
 
       <div className="wt-card-body">
         <WorktreeStatus
-          ahead={wt.status_ahead}
-          behind={wt.status_behind}
-          modified={wt.status_modified}
-          staged={wt.status_staged}
-          untracked={wt.status_untracked}
-          conflicts={wt.status_conflicts}
+          ahead={wt.statusAhead}
+          behind={wt.statusBehind}
+          modified={wt.statusModified}
+          staged={wt.statusStaged}
+          untracked={wt.statusUntracked}
+          conflicts={wt.statusConflicts}
         />
         {commitLine && (
-          <span className="wt-card-commit" title={wt.head_commit_message}>
+          <span className="wt-card-commit" title={wt.headCommitMessage}>
             {commitLine}
           </span>
         )}

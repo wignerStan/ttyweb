@@ -41,11 +41,8 @@ export function WorktreeDialog({
   useEffect(() => {
     if (open) {
       resetForm();
-      if (project?.default_branch) {
-        setForm((prev) => ({ ...prev, baseBranch: project.default_branch ?? '' }));
-      }
     }
-  }, [open, project, resetForm]);
+  }, [open, resetForm]);
 
   const updateField = useCallback(
     <K extends keyof typeof INITIAL_FORM>(key: K, value: (typeof INITIAL_FORM)[K]) => {
@@ -70,9 +67,9 @@ export function WorktreeDialog({
     setError(null);
     try {
       await onSubmit({
-        branch_name: form.branchName.trim(),
-        create_branch: form.createBranch,
-        base_branch: form.createBranch ? form.baseBranch.trim() : undefined,
+        branchName: form.branchName.trim(),
+        createBranch: form.createBranch,
+        baseBranch: form.createBranch ? form.baseBranch.trim() : undefined,
       });
       onClose();
     } catch (err) {
@@ -147,7 +144,7 @@ export function WorktreeDialog({
                 type="text"
                 value={form.baseBranch}
                 onChange={(e) => updateField('baseBranch', e.target.value)}
-                placeholder={project?.default_branch ?? 'main'}
+                placeholder="main"
               />
             </>
           )}

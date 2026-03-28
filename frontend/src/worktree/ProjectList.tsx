@@ -12,7 +12,6 @@ import {
 import type { Project } from './types';
 import { useWorktrees } from './useWorktrees';
 import { WorktreeList } from './WorktreeList';
-import { GitBranchIcon } from './GitBranchIcon';
 import './worktree.css';
 
 export function ProjectList() {
@@ -24,7 +23,6 @@ export function ProjectList() {
     fetchProjects,
     createProject,
     deleteProject,
-    syncProject,
     fetchWorktrees,
     createWorktree,
     deleteWorktree,
@@ -37,11 +35,7 @@ export function ProjectList() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    name: '',
-    path: '',
-    description: '',
-  });
+  const [createPath, setCreatePath] = useState('');
 
   useEffect(() => {
     fetchProjects();
@@ -64,19 +58,15 @@ export function ProjectList() {
   );
 
   const handleCreateProject = useCallback(async () => {
-    if (!createForm.name.trim() || !createForm.path.trim()) return;
+    if (!createPath.trim()) return;
     try {
-      await createProject({
-        name: createForm.name.trim(),
-        path: createForm.path.trim(),
-        description: createForm.description.trim() || undefined,
-      });
-      setCreateForm({ name: '', path: '', description: '' });
+      await createProject({ path: createPath.trim() });
+      setCreatePath('');
       setShowCreateForm(false);
     } catch {
       // Error handled by hook
     }
-  }, [createForm, createProject]);
+  }, [createPath, createProject]);
 
   const handleDeleteProject = useCallback(
     async (project: Project) => {
@@ -99,13 +89,12 @@ export function ProjectList() {
   const handleSyncProject = useCallback(
     async (projectId: string) => {
       try {
-        await syncProject(projectId);
-        await fetchWorktrees(projectId);
+        await syncAll(projectId);
       } catch {
         // Error handled by hook
       }
     },
-    [syncProject, fetchWorktrees],
+    [syncAll],
   );
 
   const filteredProjects = projects.filter((p) => {
@@ -113,8 +102,7 @@ export function ProjectList() {
     const q = searchQuery.toLowerCase();
     return (
       p.name.toLowerCase().includes(q) ||
-      p.path.toLowerCase().includes(q) ||
-      (p.description ?? '').toLowerCase().includes(q)
+      p.path.toLowerCase().includes(q)
     );
   });
 
@@ -160,37 +148,10 @@ export function ProjectList() {
             <input
               className="wt-form-input"
               type="text"
-              value={createForm.name}
-              onChange={(e) =>
-                setCreateForm((prev) => ({ ...prev, name: e.target.value }))
-              }
-              placeholder="Project name"
-              autoFocus
-            />
-          </div>
-          <div className="pl-form-row">
-            <input
-              className="wt-form-input"
-              type="text"
-              value={createForm.path}
-              onChange={(e) =>
-                setCreateForm((prev) => ({ ...prev, path: e.target.value }))
-              }
+              value={createPath}
+              onChange={(e) => setCreatePath(e.target.value)}
               placeholder="/path/to/project"
-            />
-          </div>
-          <div className="pl-form-row">
-            <input
-              className="wt-form-input"
-              type="text"
-              value={createForm.description}
-              onChange={(e) =>
-                setCreateForm((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              placeholder="Description (optional)"
+              autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCreateProject();
               }}
@@ -206,7 +167,7 @@ export function ProjectList() {
             <button
               className="wt-btn wt-btn-primary wt-btn-sm"
               onClick={handleCreateProject}
-              disabled={loading || !createForm.name.trim() || !createForm.path.trim()}
+              disabled={loading || !createPath.trim()}
             >
               Create
             </button>
@@ -256,20 +217,9 @@ export function ProjectList() {
                     <span className="pl-project-path" title={project.path}>
                       {project.path}
                     </span>
-                    {project.description && (
-                      <span className="pl-project-desc">
-                        {project.description}
-                      </span>
-                    )}
                   </div>
                 </div>
                 <div className="pl-project-meta">
-                  {project.default_branch && (
-                    <span className="pl-branch-tag">
-                      <GitBranchIcon size={12} />
-                      {project.default_branch}
-                    </span>
-                  )}
                   <span className="pl-wt-count">{worktrees.length} wt</span>
                   <button
                     className="wt-icon-btn"
