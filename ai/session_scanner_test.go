@@ -227,3 +227,215 @@ func TestScanCodexSessions_NonexistentDir(t *testing.T) {
 		t.Errorf("ScanCodexSessions() returned %d sessions, want 0", len(sessions))
 	}
 }
+
+func TestEncodeProjectPath_NonASCII(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"/home/user/cafe", "-home-user-cafe"},
+		{"/home/user/resume.txt", "-home-user-resume.txt"},
+		{"/home/user/proj", "-home-user-proj"},
+		{"/path/with spaces/dir", "-path-with spaces-dir"},
+		{"C:\\Users\\test\\project", "C--Users-test-project"},
+		{"/home/user/", "-home-user"},
+		{"/home/user//double//slash", "-home-user-double-slash"},
+		{".", "."},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := EncodeProjectPath(tt.input)
+			if result != tt.expected {
+				t.Errorf("EncodeProjectPath(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestScanClaudeSessions_SortedByModTime(t *testing.T) {
+	homeDir := t.TempDir()
+	projectDir := filepath.Join(homeDir, ".claude", "projects", "-home-user-proj")
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	content := `{"type":"user","message":{"role":"user","content":"hi"},"timestamp":"2025-01-01T00:00:00Z"}`
+	olderFile := filepath.Join(projectDir, "older.jsonl")
+	newerFile := filepath.Join(projectDir, "newer.jsonl")
+
+	if err := os.WriteFile(olderFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	// Sleep briefly to ensure different mod times.
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(newerFile, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", homeDir)
+
+	sessions, err := ScanClaudeSessions("/home/user/proj")
+	if err != nil {
+		t.Fatalf("ScanClaudeSessions() error = %v", err)
+	}
+
+	if len(sessions) != 2 {
+		t.Fatalf("got %d sessions, want 2", len(sessions))
+	}
+	// Newest first.
+	if sessions[0].SessionID != "newer" {
+		t.Errorf("first session = %q, want %q", sessions[0].SessionID, "newer")
+	}
+	if sessions[1].SessionID != "older" {
+		t.Errorf("second session = %q, want %q", sessions[1].SessionID, "older")
+	}
+}
+
+func TestScanClaudeSessions_SkipsSubdirectories(t *testing.T) {
+	homeDir := t.TempDir()
+	projectDir := filepath.Join(homeDir, ".claude", "projects", "-home-user-proj")
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	// Create a subdirectory (should be skipped).
+	if err := os.MkdirAll(filepath.Join(projectDir, "subdir"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	content := `{"type":"user","message":{"role":"user","content":"hi"},"timestamp":"2025-01-01T00:00:00Z"}`
+	if err := os.WriteFile(filepath.Join(projectDir, "sess-1.jsonl"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", homeDir)
+
+	sessions, err := ScanClaudeSessions("/home/user/proj")
+	if err != nil {
+		t.Fatalf("ScanClaudeSessions() error = %v", err)
+	}
+	if len(sessions) != 1 {
+		t.Fatalf("got %d sessions, want 1", len(sessions))
+	}
+}
+
+func TestScanClaudeSessions_FileMetadata(t *testing.T) {
+	homeDir := t.TempDir()
+	projectDir := filepath.Join(homeDir, ".claude", "projects", "-home-user-proj")
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	content := `{"type":"user","message":{"role":"user","content":"Hello!"},"timestamp":"2025-01-01T00:00:00Z"}`
+	filePath := filepath.Join(projectDir, "meta-test.jsonl")
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", homeDir)
+
+	sessions, err := ScanClaudeSessions("/home/user/proj")
+	if err != nil {
+		t.Fatalf("ScanClaudeSessions() error = %v", err)
+	}
+	if len(sessions) != 1 {
+		t.Fatalf("got %d sessions, want 1", len(sessions))
+	}
+
+	s := sessions[0]
+	if s.FileSize <= 0 {
+		t.Errorf("FileSize = %d, want > 0", s.FileSize)
+	}
+	if s.FilePath != filePath {
+		t.Errorf("FilePath = %q, want %q", s.FilePath, filePath)
+	}
+	if s.FileModTime.IsZero() {
+		t.Error("FileModTime is zero")
+	}
+}
+
+func TestScanClaudeProjects_Sorted(t *testing.T) {
+	homeDir := t.TempDir()
+	claudeDir := filepath.Join(homeDir, ".claude", "projects")
+	if err := os.MkdirAll(filepath.Join(claudeDir, "z-project"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(claudeDir, "a-project"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(claudeDir, "m-project"), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", homeDir)
+
+	projects, err := ScanClaudeProjects()
+	if err != nil {
+		t.Fatalf("ScanClaudeProjects() error = %v", err)
+	}
+	if len(projects) != 3 {
+		t.Fatalf("got %d projects, want 3", len(projects))
+	}
+	// Should be sorted alphabetically.
+	if projects[0] != "a-project" || projects[1] != "m-project" || projects[2] != "z-project" {
+		t.Errorf("projects = %v, want sorted order", projects)
+	}
+}
+
+func TestExtractCodexSessionID_TooFewParts(t *testing.T) {
+	// Less than 9 parts after stripping prefix/suffix.
+	result := extractCodexSessionID("rollout-2025-12-01.jsonl")
+	if result != "" {
+		t.Errorf("extractCodexSessionID(%q) = %q, want empty", "rollout-2025-12-01.jsonl", result)
+	}
+}
+
+func TestScanCodexSessions_SkipsSubdirectories(t *testing.T) {
+	homeDir := t.TempDir()
+	now := time.Now()
+	dateDir := filepath.Join(homeDir, ".codex", "sessions",
+		now.Format("2006"), now.Format("01"), now.Format("02"))
+	if err := os.MkdirAll(filepath.Join(dateDir, "subdir"), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	filename := "rollout-" + now.Format("2006-01-02T15-04-05") + "-019ad666-f5ab-7501-a616-bbdc79da615b.jsonl"
+	content := `{"type":"event_msg","payload":{"type":"user_message","message":"hi"}}`
+	if err := os.WriteFile(filepath.Join(dateDir, filename), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", homeDir)
+
+	sessions, err := ScanCodexSessions()
+	if err != nil {
+		t.Fatalf("ScanCodexSessions() error = %v", err)
+	}
+	if len(sessions) != 1 {
+		t.Fatalf("got %d sessions, want 1", len(sessions))
+	}
+}
+
+func TestScanCodexSessions_InvalidSessionID(t *testing.T) {
+	homeDir := t.TempDir()
+	now := time.Now()
+	dateDir := filepath.Join(homeDir, ".codex", "sessions",
+		now.Format("2006"), now.Format("01"), now.Format("02"))
+	if err := os.MkdirAll(dateDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Filename with less than 9 parts after prefix/suffix stripping.
+	if err := os.WriteFile(filepath.Join(dateDir, "rollout-short.jsonl"), []byte("data"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", homeDir)
+
+	sessions, err := ScanCodexSessions()
+	if err != nil {
+		t.Fatalf("ScanCodexSessions() error = %v", err)
+	}
+	if len(sessions) != 0 {
+		t.Errorf("got %d sessions, want 0 (invalid session ID should be skipped)", len(sessions))
+	}
+}

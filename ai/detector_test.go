@@ -189,3 +189,71 @@ func TestAssistantType_String(t *testing.T) {
 		t.Errorf("AssistantTypeCodex.String() = %q, want %q", AssistantTypeCodex.String(), "codex")
 	}
 }
+
+func TestDetectAssistant_ClaudeCodeCLIJS(t *testing.T) {
+	got, ok := DetectAssistant("claude-code/cli.js")
+	if !ok {
+		t.Error("expected detection of claude-code/cli.js")
+	}
+	if got != AssistantTypeClaudeCode {
+		t.Errorf("got %q, want %q", got, AssistantTypeClaudeCode)
+	}
+}
+
+func TestDetectAssistant_CodexJS(t *testing.T) {
+	got, ok := DetectAssistant("codex.js")
+	if !ok {
+		t.Error("expected detection of codex.js")
+	}
+	if got != AssistantTypeCodex {
+		t.Errorf("got %q, want %q", got, AssistantTypeCodex)
+	}
+}
+
+func TestDetectAssistant_SubstringAmbiguity(t *testing.T) {
+	tests := []struct {
+		name    string
+		command string
+		found   bool
+	}{
+		{
+			name:    "noclause does not trigger claude",
+			command: "echo 'this has noclause in it'",
+			found:   false,
+		},
+		{
+			name:    "codexy does not trigger codex",
+			command: "python codexy.py",
+			found:   false,
+		},
+		{
+			name:    "claude with leading slash in path",
+			command: "/usr/bin/claude -p prompt",
+			found:   true,
+		},
+		{
+			name:    "codex with leading slash in path",
+			command: "/usr/bin/codex -q prompt",
+			found:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, ok := DetectAssistant(tt.command)
+			if ok != tt.found {
+				t.Errorf("DetectAssistant(%q) found = %v, want %v", tt.command, ok, tt.found)
+			}
+		})
+	}
+}
+
+func TestDetectAssistant_CodexBinPath(t *testing.T) {
+	got, ok := DetectAssistant("codex/bin/codex.js")
+	if !ok {
+		t.Error("expected detection of codex/bin/codex.js")
+	}
+	if got != AssistantTypeCodex {
+		t.Errorf("got %q, want %q", got, AssistantTypeCodex)
+	}
+}
