@@ -13,26 +13,29 @@ import (
 	"ttyweb/backend/localcommand"
 	"ttyweb/backend/tmux"
 	"ttyweb/backend/zellij"
+	"ttyweb/config"
 	"ttyweb/db"
 	"ttyweb/server"
 )
 
 func main() {
 	var (
-		addr      string
-		port      string
-		path      string
-		backend   string
-		cred      string
-		enableTLS bool
-		tlsCrt    string
-		tlsKey    string
-		write     bool
-		titleFmt  string
-		session   string
-		dbPath    string
+		configFile string
+		addr       string
+		port       string
+		path       string
+		backend    string
+		cred       string
+		enableTLS  bool
+		tlsCrt     string
+		tlsKey     string
+		write      bool
+		titleFmt   string
+		session    string
+		dbPath     string
 	)
 
+	flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
 	flag.StringVar(&addr, "addr", "0.0.0.0", "IP address to listen")
 	flag.StringVar(&port, "port", "8080", "Port number")
 	flag.StringVar(&path, "path", "/", "Base path")
@@ -64,6 +67,15 @@ func main() {
 
 	args := flag.Args()
 
+	// Load configuration: explicit path, or default location.
+	if configFile != "" {
+		_, err := config.Load(configFile)
+		if err != nil {
+			log.Fatalf("failed to load config: %v", err)
+		}
+	}
+	appConfig := config.LoadOrDefault()
+
 	// Initialize database.
 	if dbPath == "" {
 		dbOpts := db.DefaultOptions()
@@ -79,6 +91,7 @@ func main() {
 	}()
 
 	options := &server.Options{
+		ConfigFile:          configFile,
 		Address:             addr,
 		Port:                port,
 		Path:                path,
@@ -89,6 +102,8 @@ func main() {
 			"hostname": hostname(),
 		},
 	}
+
+	_ = appConfig
 
 	if cred != "" {
 		options.EnableBasicAuth = true

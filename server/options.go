@@ -5,6 +5,7 @@ import (
 )
 
 type Options struct {
+	ConfigFile          string `hcl:"config_file" flagName:"config" flagDescribe:"Path to JSON configuration file"`
 	Address             string `hcl:"address" flagName:"address" flagSName:"a" flagDescribe:"IP address to listen" default:"0.0.0.0"`
 	Port                string `hcl:"port" flagName:"port" flagSName:"p" flagDescribe:"Port number to liten" default:"8080"`
 	Path                string `hcl:"path" flagName:"path" flagSName:"m" flagDescribe:"Base path" default:"/"`
