@@ -34,6 +34,21 @@ var hopByHopHeaders = map[string]bool{
 	"Upgrade":             true,
 }
 
+// butlerAllowedResponseHeaders is an allowlist of response headers forwarded
+// from the upstream Butler service. All other headers are stripped.
+var butlerAllowedResponseHeaders = map[string]bool{
+	"Content-Type":      true,
+	"Content-Length":    true,
+	"Cache-Control":     true,
+	"Last-Modified":     true,
+	"Etag":              true,
+	"X-Request-Id":      true,
+}
+
+// butlerMaxRequestBodyBytes is the maximum allowed request body size for
+// normal (non-SSE) Butler proxy requests (1 MB).
+const butlerMaxRequestBodyBytes int64 = 1 << 20
+
 // butlerTarget resolves the Butler service address from environment variables
 // with a default fallback of "localhost:9999".
 func butlerTarget() string {
@@ -53,6 +68,15 @@ func isSSERequest(r *http.Request) bool {
 	return strings.Contains(r.Header.Get("Accept"), "text/event-stream")
 }
 
+// isValidButlerPath validates that the request path does not contain path
+// traversal sequences and starts with the expected /api/ prefix.
+func isValidButlerPath(path string) bool {
+	if !strings.HasPrefix(path, "/api/") {
+		return false
+	}
+	return !strings.Contains(path, "..")
+}
+
 // copyHeaders copies headers from src to dst, skipping hop-by-hop headers.
 func copyHeaders(dst, src http.Header) {
 	for key, vals := range src {
@@ -65,10 +89,29 @@ func copyHeaders(dst, src http.Header) {
 	}
 }
 
+// copyAllowedResponseHeaders copies only allowlisted headers from src to dst.
+func copyAllowedResponseHeaders(dst, src http.Header) {
+	for key, vals := range src {
+		if !butlerAllowedResponseHeaders[key] {
+			continue
+		}
+		for _, val := range vals {
+			dst.Add(key, val)
+		}
+	}
+}
+
 // handleButlerProxy is a real HTTP reverse proxy for the Butler orchestration service.
 // All requests to /api/butler/* are forwarded to the upstream Butler service.
 // SSE requests are detected and handled via direct byte piping with no buffering.
 func (server *Server) handleButlerProxy(w http.ResponseWriter, r *http.Request) {
+	if !isValidButlerPath(r.URL.Path) {
+		log.Printf("[Butler Proxy] rejected invalid path: %s", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		writeAPIError(w, http.StatusBadRequest, "invalid request path")
+		return
+	}
+
 	target := butlerTarget()
 
 	// Forward the full request path and query string to the upstream Butler service.
@@ -87,11 +130,12 @@ func (server *Server) handleButlerProxy(w http.ResponseWriter, r *http.Request) 
 
 // proxySSE handles SSE (Server-Sent Events) requests by hijacking the connection
 // and piping bytes directly without buffering. No timeout is applied so that
-// long-lived SSE streams are not interrupted.
+// long-lived SSE streams are not interrupted. The request context is propagated
+// so that client disconnections cancel the upstream request.
 func (server *Server) proxySSE(w http.ResponseWriter, r *http.Request, targetURL, target string) {
 	log.Printf("[Butler Proxy] SSE request: %s %s -> %s", r.Method, r.URL.Path, targetURL)
 
-	proxyReq, err := http.NewRequest(r.Method, targetURL, r.Body)
+	proxyReq, err := http.NewRequestWithContext(r.Context(), r.Method, targetURL, r.Body)
 	if err != nil {
 		log.Printf("[Butler Proxy] SSE: failed to create request: %v", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -148,12 +192,16 @@ func (server *Server) proxySSE(w http.ResponseWriter, r *http.Request, targetURL
 	}
 }
 
-// proxyNormal handles standard (non-SSE) proxy requests with a 30s dial timeout
-// and 60s request timeout. Hop-by-hop headers are stripped before forwarding.
+// proxyNormal handles standard (non-SSE) proxy requests with a 30s dial timeout,
+// 60s request timeout, and a 1 MB body size limit. The request context is
+// propagated so that client disconnections cancel the upstream request.
+// Response headers are filtered through an allowlist.
 func (server *Server) proxyNormal(w http.ResponseWriter, r *http.Request, targetURL, target string) {
 	log.Printf("[Butler Proxy] %s %s -> %s", r.Method, r.URL.Path, targetURL)
 
-	proxyReq, err := http.NewRequest(r.Method, targetURL, r.Body)
+	limitedBody := http.MaxBytesReader(w, r.Body, butlerMaxRequestBodyBytes)
+
+	proxyReq, err := http.NewRequestWithContext(r.Context(), r.Method, targetURL, limitedBody)
 	if err != nil {
 		log.Printf("[Butler Proxy] failed to create request: %v", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -174,8 +222,8 @@ func (server *Server) proxyNormal(w http.ResponseWriter, r *http.Request, target
 	}
 	defer resp.Body.Close()
 
-	// Copy response headers, stripping hop-by-hop.
-	copyHeaders(w.Header(), resp.Header)
+	// Copy only allowlisted response headers.
+	copyAllowedResponseHeaders(w.Header(), resp.Header)
 	w.WriteHeader(resp.StatusCode)
 
 	if _, err := io.Copy(w, resp.Body); err != nil {
