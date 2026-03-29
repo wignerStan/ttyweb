@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"ttyweb/worktree"
@@ -49,7 +50,7 @@ type WorktreeService struct {
 	mu        sync.RWMutex
 	projects  map[string]WtProject
 	worktrees map[string]WorktreeRecord
-	nextID    int
+	nextID    atomic.Int64
 	repoLock  *worktree.RepoLock
 }
 
@@ -387,8 +388,7 @@ func (s *WorktreeService) syncWorktrees(project *WtProject) error {
 }
 
 func (s *WorktreeService) newID() string {
-	s.nextID++
-	return fmt.Sprintf("wt-%d", s.nextID)
+	return fmt.Sprintf("wt-%d", s.nextID.Add(1))
 }
 
 func normalizePath(p string) string {
