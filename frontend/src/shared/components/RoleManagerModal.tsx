@@ -1,17 +1,8 @@
 import { useState, useCallback } from 'react'
 import { X, Plus, Pencil, Trash2 } from 'lucide-react'
 import { getAuthHeader } from '../../utils/auth'
+import type { AiRole } from '../../types'
 import './RoleManagerModal.css'
-
-interface Role {
-  id: string
-  emoji: string
-  label: string
-  desc: string
-  prompt?: string
-  suffix?: string
-  isCustom?: boolean
-}
 
 interface RoleFormData {
   id: string
@@ -20,20 +11,23 @@ interface RoleFormData {
   desc: string
   prompt: string
   suffix: string
+  model: string
+  apiUrl: string
 }
 
-const emptyForm: RoleFormData = { id: '', emoji: '', label: '', desc: '', prompt: '', suffix: '' }
+const emptyForm: RoleFormData = { id: '', emoji: '', label: '', desc: '', prompt: '', suffix: '', model: '', apiUrl: '' }
 
 interface RoleManagerModalProps {
   open: boolean
   onClose: () => void
-  roles: Role[]
+  roles: AiRole[]
   onRolesChanged: () => void
 }
 
 export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleManagerModalProps) {
   const [editingRole, setEditingRole] = useState<RoleFormData | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [showLlmConfig, setShowLlmConfig] = useState(false)
 
   const handleSaveRole = useCallback(async (form: RoleFormData) => {
     try {
@@ -42,15 +36,26 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (auth) headers['Authorization'] = auth
+
+      const body: Record<string, string> = {
+        name: form.label,
+        description: form.desc,
+        system_prompt: form.prompt,
+      }
+      if (form.suffix) body['suffix'] = form.suffix
+      if (form.model) body['model'] = form.model
+      if (form.apiUrl) body['api_url'] = form.apiUrl
+
       const res = await fetch(url, {
         method,
         headers,
-        body: JSON.stringify(form)
+        body: JSON.stringify(body)
       })
       if (res.ok) {
         await onRolesChanged()
         setEditingRole(null)
         setIsCreating(false)
+        setShowLlmConfig(false)
       }
     } catch { /* ignore */ }
   }, [isCreating, onRolesChanged])
@@ -73,9 +78,10 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
   const handleStartCreate = useCallback(() => {
     setEditingRole({ ...emptyForm })
     setIsCreating(true)
+    setShowLlmConfig(false)
   }, [])
 
-  const handleStartEdit = useCallback((r: Role) => {
+  const handleStartEdit = useCallback((r: AiRole) => {
     setEditingRole({
       id: r.id,
       emoji: r.emoji,
@@ -83,13 +89,17 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
       desc: r.desc,
       prompt: r.prompt || '',
       suffix: r.suffix || '',
+      model: r.model || '',
+      apiUrl: r.apiUrl || '',
     })
     setIsCreating(false)
+    setShowLlmConfig(!!(r.model || r.apiUrl))
   }, [])
 
   const handleCancelEdit = useCallback(() => {
     setEditingRole(null)
     setIsCreating(false)
+    setShowLlmConfig(false)
   }, [])
 
   if (!open) return null
@@ -120,6 +130,11 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
                 <div className="role-modal-item-text">
                   <span className="role-modal-item-label">{r.label}</span>
                   <span className="role-modal-item-desc">{r.desc}</span>
+                  {r.model && (
+                    <span className="role-modal-item-desc" style={{ color: '#4d78cc' }}>
+                      {r.model}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="role-modal-item-actions">
@@ -195,6 +210,36 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
                 rows={2}
                 className="role-modal-textarea"
               />
+
+              {/* LLM Config section */}
+              <button
+                type="button"
+                onClick={() => setShowLlmConfig(!showLlmConfig)}
+                className="role-modal-llm-toggle"
+              >
+                {showLlmConfig ? '▼' : '▶'} LLM 配置 (可选)
+              </button>
+
+              {showLlmConfig && (
+                <div className="role-modal-llm-config">
+                  <input
+                    placeholder="模型 (例如: gpt-4, claude-3)"
+                    value={editingRole.model}
+                    onChange={e => setEditingRole({ ...editingRole, model: e.target.value })}
+                    className="role-modal-input"
+                  />
+                  <input
+                    placeholder="API URL (例如: https://api.openai.com/v1)"
+                    value={editingRole.apiUrl}
+                    onChange={e => setEditingRole({ ...editingRole, apiUrl: e.target.value })}
+                    className="role-modal-input"
+                  />
+                  <div className="role-modal-llm-hint">
+                    留空则使用服务器默认配置 (环境变量 OPENAI_API_URL / OPENAI_MODEL)
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={() => handleSaveRole(editingRole)}
                 className="role-modal-save-btn"

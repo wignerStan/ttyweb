@@ -81,6 +81,18 @@ export interface TaskDetail extends Task {
   summary: TaskSummary | null
 }
 
+export interface AiRole {
+  id: string
+  emoji: string
+  label: string
+  desc: string
+  prompt?: string
+  suffix?: string
+  isCustom?: boolean
+  model?: string
+  apiUrl?: string
+}
+
 export interface AiConversation {
   conversation_id: string
   pane_key: string
