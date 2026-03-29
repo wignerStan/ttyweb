@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { TerminalTab } from './components/TerminalTab';
+import { KanbanBoard } from './kanban';
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy';
 import MobileApp from './mobile/MobileApp';
 
@@ -11,10 +12,13 @@ interface Tab {
   pane: string;
 }
 
+type ViewMode = 'terminal' | 'kanban';
+
 function DesktopLayout() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('terminal');
   const [imperialStudyOpen, setImperialStudyOpen] = useState(true);
 
   const openTab = useCallback((session: string, pane?: string) => {
@@ -68,7 +72,10 @@ function DesktopLayout() {
                 ...styles.tab,
                 ...(tab.id === activeTabId ? styles.tabActive : {}),
               }}
-              onClick={() => setActiveTabId(tab.id)}
+              onClick={() => {
+                setViewMode('terminal');
+                setActiveTabId(tab.id);
+              }}
             >
               <span style={styles.tabLabel}>{tab.id}</span>
               <button
@@ -82,14 +89,27 @@ function DesktopLayout() {
               </button>
             </div>
           ))}
+          <div
+            style={{
+              ...styles.tab,
+              ...(viewMode === 'kanban' ? styles.tabActive : {}),
+            }}
+            onClick={() => setViewMode('kanban')}
+          >
+            <span style={styles.tabLabel}>Kanban</span>
+          </div>
         </div>
         <div style={styles.terminalArea}>
-          {activeTab && (
-            <TerminalTab
-              key={activeTab.id}
-              session={activeTab.session}
-              pane={activeTab.pane}
-            />
+          {viewMode === 'kanban' ? (
+            <KanbanBoard />
+          ) : (
+            activeTab && (
+              <TerminalTab
+                key={activeTab.id}
+                session={activeTab.session}
+                pane={activeTab.pane}
+              />
+            )
           )}
         </div>
       </div>

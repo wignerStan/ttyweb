@@ -233,6 +233,7 @@ func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFu
 	wsMux.Handle("/", siteHandler)
 	wsMux.HandleFunc(pathPrefix+"ws", server.generateHandleWS(ctx, cancel, counter))
 	wsMux.HandleFunc(pathPrefix+"ws/speech", server.handleSpeechWS)
+	wsMux.HandleFunc(pathPrefix+"ws/ai/stream", server.handleAIStream)
 	server.setupAPIHandlers(wsMux, pathPrefix)
 	siteHandler = http.Handler(wsMux)
 
