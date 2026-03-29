@@ -22,6 +22,14 @@ func NewRepoLock() *RepoLock {
 	return &RepoLock{locks: make(map[string]*repoEntry)}
 }
 
+// Remove removes the lock entry for a path, freeing the map entry.
+// The caller must ensure no lock is held for the path when calling Remove.
+func (rl *RepoLock) Remove(path string) {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	delete(rl.locks, path)
+}
+
 // Lock acquires an exclusive (write) lock for the repository at path.
 // Returns an unlock function, or nil if ctx is cancelled before the lock is acquired.
 func (rl *RepoLock) Lock(path string, ctx context.Context) func() {

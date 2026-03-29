@@ -102,6 +102,25 @@ func TestRepoLock_LockRespectsContext(t *testing.T) {
 	unlock()
 }
 
+func TestRepoLock_Remove(t *testing.T) {
+	t.Parallel()
+
+	rl := NewRepoLock()
+	path := "/repo/test"
+
+	unlock := rl.Lock(path, context.Background())
+	unlock()
+
+	rl.Remove(path)
+
+	unlock2 := rl.Lock(path, context.Background())
+	unlock2()
+
+	if len(rl.locks) != 1 {
+		t.Errorf("expected 1 entry after Remove+re-Lock, got %d", len(rl.locks))
+	}
+}
+
 func TestRepoLock_RLockConcurrency(t *testing.T) {
 	t.Parallel()
 
