@@ -1,0 +1,651 @@
+/* ===================================
+   Worktree Management - Tokyo Night
+   =================================== */
+
+/* -- Color Tokens -- */
+:root {
+  --wt-bg: #1a1b26;
+  --wt-surface: #24283b;
+  --wt-surface-hover: #2f3349;
+  --wt-border: #3b4261;
+  --wt-text: #a9b1d6;
+  --wt-text-dim: #565f89;
+  --wt-text-bright: #c0caf5;
+  --wt-accent: #7aa2f7;
+  --wt-green: #9ece6a;
+  --wt-red: #f7768e;
+  --wt-orange: #e0af68;
+  --wt-cyan: #7dcfff;
+  --wt-purple: #bb9af7;
+  --wt-radius: 4px;
+}
+
+/* ===================================
+   Project List
+   =================================== */
+
+.pl-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  background: var(--wt-bg);
+  color: var(--wt-text);
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+}
+
+.pl-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--wt-border);
+  flex-shrink: 0;
+}
+
+.pl-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.pl-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wt-text-bright);
+}
+
+.pl-header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pl-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--wt-surface);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius);
+  padding: 6px 10px;
+  color: var(--wt-text-dim);
+}
+
+.pl-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--wt-text-bright);
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.pl-search-input::placeholder {
+  color: var(--wt-text-dim);
+}
+
+/* Create Form */
+
+.pl-create-form {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--wt-border);
+  background: var(--wt-surface);
+}
+
+.pl-form-row {
+  margin-bottom: 8px;
+}
+
+.pl-form-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.pl-form-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* Error */
+
+.pl-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  color: var(--wt-red);
+  font-size: 12px;
+  background: rgba(247, 118, 142, 0.08);
+  border-bottom: 1px solid rgba(247, 118, 142, 0.2);
+}
+
+.pl-error-dismiss {
+  background: none;
+  border: none;
+  color: var(--wt-red);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+
+/* List */
+
+.pl-list {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.pl-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--wt-text-dim);
+  font-size: 12px;
+}
+
+/* Project Card */
+
+.pl-project {
+  border-bottom: 1px solid rgba(59, 66, 97, 0.4);
+}
+
+.pl-project-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 12px;
+}
+
+.pl-project-card:hover {
+  background: var(--wt-surface-hover);
+}
+
+.pl-project-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pl-expand-icon {
+  color: var(--wt-text-dim);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.pl-project-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.pl-project-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wt-text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-project-path {
+  font-size: 11px;
+  color: var(--wt-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-project-desc {
+  font-size: 11px;
+  color: var(--wt-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-project-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pl-branch-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--wt-accent);
+  background: rgba(122, 162, 247, 0.1);
+  border: 1px solid rgba(122, 162, 247, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--wt-radius);
+  white-space: nowrap;
+}
+
+.pl-wt-count {
+  font-size: 11px;
+  color: var(--wt-text-dim);
+  white-space: nowrap;
+}
+
+/* Worktrees Panel (expanded inside project) */
+
+.pl-worktrees {
+  border-top: 1px solid var(--wt-border);
+  background: rgba(22, 22, 30, 0.5);
+}
+
+/* ===================================
+   Worktree List
+   =================================== */
+
+.wt-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.wt-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(59, 66, 97, 0.4);
+}
+
+.wt-list-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--wt-text-dim);
+}
+
+.wt-list-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wt-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--wt-text-dim);
+  font-size: 12px;
+}
+
+.wt-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  overflow: auto;
+  max-height: 50vh;
+}
+
+/* ===================================
+   Worktree Card
+   =================================== */
+
+.wt-card {
+  background: var(--wt-surface);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.wt-card:hover {
+  border-color: var(--wt-accent);
+}
+
+.wt-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.wt-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.wt-card-branch {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wt-text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wt-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.wt-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 10px 8px;
+  font-size: 11px;
+  overflow: hidden;
+}
+
+.wt-card-commit {
+  color: var(--wt-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.wt-card-path {
+  color: var(--wt-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  font-size: 10px;
+}
+
+/* Badge */
+
+.wt-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: var(--wt-radius);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.wt-badge-main {
+  color: var(--wt-cyan);
+  background: rgba(125, 207, 255, 0.1);
+  border: 1px solid rgba(125, 207, 255, 0.25);
+}
+
+/* ===================================
+   Buttons
+   =================================== */
+
+.wt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1.4;
+}
+
+.wt-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wt-btn-sm {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.wt-btn-primary {
+  background: var(--wt-accent);
+  border-color: var(--wt-accent);
+  color: #1a1b26;
+  font-weight: 600;
+}
+
+.wt-btn-primary:hover:not(:disabled) {
+  background: #89b4fa;
+}
+
+.wt-btn-secondary {
+  background: var(--wt-surface);
+  color: var(--wt-text);
+}
+
+.wt-btn-secondary:hover:not(:disabled) {
+  background: var(--wt-surface-hover);
+}
+
+.wt-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--wt-radius);
+  color: var(--wt-text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.wt-icon-btn:hover:not(:disabled) {
+  background: var(--wt-surface-hover);
+  color: var(--wt-text-bright);
+}
+
+.wt-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wt-icon-btn-danger:hover:not(:disabled) {
+  color: var(--wt-red);
+  background: rgba(247, 118, 142, 0.1);
+}
+
+/* ===================================
+   Dialog
+   =================================== */
+
+.wt-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.wt-dialog {
+  background: var(--wt-bg);
+  border: 1px solid var(--wt-border);
+  border-radius: 6px;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wt-dialog-sm {
+  width: 360px;
+}
+
+.wt-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--wt-border);
+}
+
+.wt-dialog-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wt-text-bright);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wt-dialog-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--wt-radius);
+  color: var(--wt-text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.wt-dialog-close:hover {
+  background: var(--wt-surface-hover);
+  color: var(--wt-text-bright);
+}
+
+.wt-icon-x {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.wt-dialog-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+}
+
+.wt-dialog-error {
+  padding: 8px 10px;
+  background: rgba(247, 118, 142, 0.1);
+  border: 1px solid rgba(247, 118, 142, 0.3);
+  border-radius: var(--wt-radius);
+  color: var(--wt-red);
+  font-size: 12px;
+}
+
+.wt-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--wt-border);
+}
+
+/* ===================================
+   Form Elements
+   =================================== */
+
+.wt-form-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--wt-text);
+  margin-bottom: 0;
+}
+
+.wt-form-input {
+  width: 100%;
+  background: var(--wt-surface);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius);
+  color: var(--wt-text-bright);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.wt-form-input:focus {
+  border-color: var(--wt-accent);
+}
+
+.wt-form-input::placeholder {
+  color: var(--wt-text-dim);
+}
+
+.wt-form-select {
+  width: 100%;
+  background: var(--wt-surface);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius);
+  color: var(--wt-text-bright);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.wt-form-select:focus {
+  border-color: var(--wt-accent);
+}
+
+.wt-form-textarea {
+  width: 100%;
+  background: var(--wt-surface);
+  border: 1px solid var(--wt-border);
+  border-radius: var(--wt-radius);
+  color: var(--wt-text-bright);
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s;
+}
+
+.wt-form-textarea:focus {
+  border-color: var(--wt-accent);
+}
+
+.wt-form-textarea::placeholder {
+  color: var(--wt-text-dim);
+}
+
+.wt-form-hint {
+  font-size: 10px;
+  color: var(--wt-text-dim);
+}
+
+.wt-form-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--wt-text);
+  cursor: pointer;
+}
+
+.wt-form-toggle input[type="checkbox"] {
+  accent-color: var(--wt-accent);
+}

@@ -28,9 +28,10 @@ interface ApiResponse<T> {
 
 interface SidebarProps {
   onSelect: (session: string, pane?: string) => void;
+  onProjectsClick: () => void;
 }
 
-export function Sidebar({ onSelect }: SidebarProps) {
+export function Sidebar({ onSelect, onProjectsClick }: SidebarProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, SessionDetail>>({});
@@ -100,7 +101,16 @@ export function Sidebar({ onSelect }: SidebarProps) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h3 style={styles.title}>Sessions</h3>
+        <div style={styles.titleRow}>
+          <h3 style={styles.title}>Sessions</h3>
+          <button
+            style={styles.projectsBtn}
+            onClick={onProjectsClick}
+            title="Projects & Worktrees"
+          >
+            Projects
+          </button>
+        </div>
         <div style={styles.createRow}>
           <input
             style={styles.input}
@@ -173,10 +183,26 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid #24283b',
   },
   title: {
-    margin: '0 0 8px 0',
+    margin: 0,
     fontSize: '14px',
     fontWeight: 600,
     color: '#c0caf5',
+  },
+  titleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '8px',
+  },
+  projectsBtn: {
+    background: '#24283b',
+    border: '1px solid #3b4261',
+    color: '#7aa2f7',
+    padding: '2px 8px',
+    cursor: 'pointer',
+    borderRadius: '2px',
+    fontSize: '11px',
+    fontWeight: 600,
   },
   createRow: {
     display: 'flex',

@@ -2,10 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { TerminalTab } from './components/TerminalTab';
+import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy';
+import { ProjectList } from './worktree/ProjectList';
 import MobileApp from './mobile/MobileApp';
 
 interface Tab {
   id: string;
+  kind: 'terminal' | 'projects';
   session: string;
   pane: string;
 }
@@ -14,12 +17,25 @@ function DesktopLayout() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [imperialStudyOpen, setImperialStudyOpen] = useState(true);
 
   const openTab = useCallback((session: string, pane?: string) => {
     const id = pane ? `${session}:${pane}` : session;
     setTabs((prev) => {
       if (prev.some((t) => t.id === id)) return prev;
-      return [...prev, { id, session, pane: pane ?? '' }];
+      return [...prev, { id, kind: 'terminal', session, pane: pane ?? '' }];
+    });
+    setActiveTabId(id);
+  }, []);
+
+  const openProjectsTab = useCallback(() => {
+    const id = '__projects__';
+    setTabs((prev) => {
+      if (prev.some((t) => t.id === id)) {
+        setActiveTabId(id);
+        return prev;
+      }
+      return [...prev, { id, kind: 'projects', session: '', pane: '' }];
     });
     setActiveTabId(id);
   }, []);
@@ -43,9 +59,15 @@ function DesktopLayout() {
 
   return (
     <div style={styles.container}>
+      {imperialStudyOpen && (
+        <FloatingImperialStudy
+          activePaneKey={activeTab?.id ?? null}
+          onClose={() => setImperialStudyOpen(false)}
+        />
+      )}
       {sidebarOpen && (
         <div style={styles.sidebar}>
-          <Sidebar onSelect={openTab} />
+          <Sidebar onSelect={openTab} onProjectsClick={openProjectsTab} />
         </div>
       )}
       <div style={styles.main}>
@@ -76,12 +98,15 @@ function DesktopLayout() {
           ))}
         </div>
         <div style={styles.terminalArea}>
-          {activeTab && (
+          {activeTab && activeTab.kind === 'terminal' && (
             <TerminalTab
               key={activeTab.id}
               session={activeTab.session}
               pane={activeTab.pane}
             />
+          )}
+          {activeTab && activeTab.kind === 'projects' && (
+            <ProjectList />
           )}
         </div>
       </div>
