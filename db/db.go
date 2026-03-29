@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/glebarez/sqlite"
@@ -23,6 +24,10 @@ var (
 func Init(dsn string) error {
 	initMu.Lock()
 	defer initMu.Unlock()
+
+	if strings.TrimSpace(dsn) == "" {
+		return fmt.Errorf("dsn must not be empty")
+	}
 
 	if globalDB != nil {
 		return nil
@@ -105,9 +110,11 @@ func Close() error {
 	}
 
 	if cerr := sqlDB.Close(); cerr != nil {
+		// Keep globalDB alive so the caller can retry Close().
 		return fmt.Errorf("close database: %w", cerr)
 	}
 
+	// Clear globals only after successful close.
 	globalDB = nil
 	available = false
 	return nil

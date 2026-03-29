@@ -268,3 +268,96 @@ func TestDefaultOptions(t *testing.T) {
 		t.Fatalf("DefaultOptions().Path = %q, want %q", opts.Path, expected)
 	}
 }
+
+func TestAutoMigrate_NotInitialized(t *testing.T) {
+	resetGlobal()
+
+	type PlaceholderModel struct {
+		ID uint `gorm:"primaryKey"`
+	}
+
+	RegisterModel(&PlaceholderModel{})
+	err := AutoMigrate()
+	if err != ErrNotInitialized {
+		t.Fatalf("AutoMigrate() error = %v, want %v", err, ErrNotInitialized)
+	}
+}
+
+func TestAutoMigrate_Success(t *testing.T) {
+	resetGlobal()
+
+	type VerifyModel struct {
+		ID    uint   `gorm:"primaryKey"`
+		Label string `gorm:"size:255"`
+	}
+
+	dsn := tempDB(t)
+	if err := Init(dsn); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	RegisterModel(&VerifyModel{})
+	if err := AutoMigrate(); err != nil {
+		t.Fatalf("AutoMigrate() error = %v", err)
+	}
+
+	got, err := GetDB()
+	if err != nil {
+		t.Fatalf("GetDB() error = %v", err)
+	}
+
+	// Verify table exists by querying sqlite_master directly.
+	var name string
+	row := got.Raw(
+		"SELECT name FROM sqlite_master WHERE type='table' AND name='verify_models'",
+	).Row()
+	if err := row.Scan(&name); err != nil {
+		t.Fatalf("sqlite_master query error = %v", err)
+	}
+	if name != "verify_models" {
+		t.Fatalf("table name = %q, want verify_models", name)
+	}
+
+	_ = Close()
+}
+
+func TestAutoMigrate_NoModels(t *testing.T) {
+	resetGlobal()
+
+	dsn := tempDB(t)
+	if err := Init(dsn); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	// No models registered — AutoMigrate should be a no-op.
+	err := AutoMigrate()
+	if err != nil {
+		t.Fatalf("AutoMigrate() with no models error = %v, want nil", err)
+	}
+
+	_ = Close()
+}
+
+func TestInit_EmptyDSN(t *testing.T) {
+	resetGlobal()
+
+	err := Init("")
+	if err == nil {
+		t.Fatal("Init('') error = nil, want error")
+	}
+
+	err = Init("   ")
+	if err == nil {
+		t.Fatal("Init('   ') error = nil, want error")
+	}
+}
+
+func TestInit_InvalidDSN(t *testing.T) {
+	resetGlobal()
+
+	// Path to a non-existent directory that MkdirAll cannot create.
+	err := Init("/nonexistent/path/db.sqlite")
+	if err == nil {
+		t.Fatal("Init() with invalid path error = nil, want error")
+	}
+}
