@@ -60,7 +60,7 @@ describe('TaskDialog', () => {
     const user = userEvent.setup()
     await user.click(screen.getByText('Save Changes'))
     expect(onSave).toHaveBeenCalledOnce()
-    const formData = onSave.mock.calls[0][0]
+    const formData = onSave.mock.calls[0]![0]!
     expect(formData.title).toBe('Updated title')
   })
 

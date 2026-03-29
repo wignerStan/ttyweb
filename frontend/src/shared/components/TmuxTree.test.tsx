@@ -672,7 +672,8 @@ describe('TmuxTree', () => {
     )
 
     const detailsBtns = screen.getAllByTitle('View details')
-    await user.click(detailsBtns[0])
+    expect(detailsBtns[0]).toBeTruthy()
+    await user.click(detailsBtns[0]!)
 
     expect(onPaneContextMenu).toHaveBeenCalledWith('my-session:0:%0')
   })
@@ -1723,7 +1724,7 @@ describe('TmuxTree', () => {
 
   it('renders multiple sessions in tree', () => {
     const sessions: TmuxSession[] = [
-      mockSessions[0],
+      mockSessions[0]!,
       { ...mockMultiWindowSession, sessionName: 'another-session' },
     ]
 
@@ -1906,7 +1907,11 @@ describe('TmuxTree', () => {
 
   it('handles createAndAssign error gracefully', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockRejectedValue(new Error('Server error'))
+    const fetchMock = vi.fn(() => {
+      const p = Promise.reject(new Error('Server error'))
+      p.catch(() => {}) // prevent unhandled rejection warning
+      return p
+    })
     globalThis.fetch = fetchMock
 
     render(
@@ -1951,7 +1956,11 @@ describe('TmuxTree', () => {
 
   it('handles assignToGroup error gracefully', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockRejectedValue(new Error('Server error'))
+    const fetchMock = vi.fn(() => {
+      const p = Promise.reject(new Error('Server error'))
+      p.catch(() => {}) // prevent unhandled rejection warning
+      return p
+    })
     globalThis.fetch = fetchMock
 
     render(
@@ -2553,9 +2562,11 @@ describe('TmuxTree', () => {
     expect(groupCalls.length).toBeGreaterThan(0)
 
     // Verify the body contains group_id: null
-    const call = groupCalls.find((c: unknown[]) => c[1]?.method === 'PUT')
+    const call = groupCalls.find(
+      (c: unknown[]) => (c[1] as Record<string, unknown>)?.method === 'PUT',
+    )
     expect(call).toBeTruthy()
-    const body = JSON.parse(call[1].body)
+    const body = JSON.parse((call![1] as Record<string, unknown>).body as string)
     expect(body.group_id).toBeNull()
 
     vi.useRealTimers()

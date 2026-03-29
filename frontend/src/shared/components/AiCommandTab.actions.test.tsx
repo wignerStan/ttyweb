@@ -39,7 +39,8 @@ describe('AiCommandTab actions', () => {
     const sendBtns = screen
       .getAllByRole('button')
       .filter((btn) => btn.textContent?.includes('\\u53D1\\u9001\\u7EC8\\u7AEF'))
-    await userEvent.click(sendBtns[0])
+    expect(sendBtns[0]).toBeTruthy()
+    await userEvent.click(sendBtns[0]!)
 
     expect(onSend).toHaveBeenCalledWith('ls -la\n')
   })
@@ -60,7 +61,8 @@ describe('AiCommandTab actions', () => {
     const clearBtns = screen
       .getAllByRole('button')
       .filter((btn) => btn.getAttribute('title')?.includes('\\u6E05\\u7A7A'))
-    await userEvent.click(clearBtns[0])
+    expect(clearBtns[0]).toBeTruthy()
+    await userEvent.click(clearBtns[0]!)
 
     expect(screen.queryByText('echo hi')).not.toBeInTheDocument()
   })

@@ -57,6 +57,6 @@ describe('useActivityEvents', () => {
     await act(async () => {
       await result.current.refetch()
     })
-    expect(result.current.events[0].summary).toBe('Updated')
+    expect(result.current.events[0]!.summary).toBe('Updated')
   })
 })

@@ -1,11 +1,30 @@
 import { act, render, screen } from '@testing-library/react'
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
+import type { Mock } from 'vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTelemetryEmitter } from '../utils/telemetryEmitter'
 import { MobileTerminal } from './MobileTerminal'
 
 type AnyFn = (...args: unknown[]) => unknown
+
+interface MockTerminal {
+  open: Mock
+  loadAddon: Mock
+  write: Mock
+  dispose: Mock
+  onData: Mock
+  onResize: Mock
+  cols: number
+  rows: number
+  options: Record<string, unknown>
+  buffer: {
+    active: {
+      viewportY: number
+      getLine: Mock
+    }
+  }
+}
 
 interface MockWS extends Record<string, unknown> {
   _open: () => void
@@ -135,25 +154,29 @@ function createMockWebSocket(): MockWS {
   return ws
 }
 
-function getTermInstance(idx = 0): Record<string, AnyFn> {
-  return Terminal.mock.instances[idx] as unknown as Record<string, AnyFn>
+function getTermInstance(idx = 0): MockTerminal {
+  return (Terminal as unknown as Mock).mock.instances[idx] as unknown as MockTerminal
 }
 
-function getFitInstance(idx = 0): Record<string, AnyFn> {
-  return FitAddon.mock.instances[idx] as unknown as Record<string, AnyFn>
+function getFitInstance(idx = 0): { fit: Mock } {
+  return (FitAddon as unknown as Mock).mock.instances[idx] as unknown as { fit: Mock }
 }
 
-function getOnDataCallback(term: Record<string, AnyFn>): (data: string) => void {
-  return term._onDataCb as (data: string) => void
+function getWSCalls(): unknown[][] {
+  return (globalThis.WebSocket as unknown as Mock).mock.calls
 }
 
-function getResizeCalls(sendMock: ReturnType<typeof vi.fn>) {
+function getOnDataCallback(term: MockTerminal): (data: string) => void {
+  return (term as unknown as Record<string, unknown>)._onDataCb as (data: string) => void
+}
+
+function getResizeCalls(sendMock: Mock) {
   return sendMock.mock.calls.filter(
     (c: unknown[]) => typeof c[0] === 'string' && c[0].startsWith('3'),
   )
 }
 
-function getInputCalls(sendMock: ReturnType<typeof vi.fn>) {
+function getInputCalls(sendMock: Mock) {
   return sendMock.mock.calls.filter(
     (c: unknown[]) => typeof c[0] === 'string' && c[0].startsWith('1'),
   )
@@ -233,7 +256,7 @@ describe('MobileTerminal', () => {
     })
 
     const term = getTermInstance()
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       mockWebSocket._message('1aGVsbG8=')
@@ -251,7 +274,7 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       screen.getByTestId('toolbox-send').click()
@@ -432,7 +455,7 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    const initialWsCount = (WebSocket as ReturnType<typeof vi.fn>).mock.calls.length
+    const initialWsCount = getWSCalls().length
 
     act(() => {
       mockWebSocket._close()
@@ -442,9 +465,7 @@ describe('MobileTerminal', () => {
       vi.advanceTimersByTime(2000)
     })
 
-    expect((WebSocket as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(
-      initialWsCount,
-    )
+    expect(getWSCalls().length).toBeGreaterThan(initialWsCount)
   })
 
   it('shows reconnect failure message after max attempts', () => {
@@ -483,7 +504,7 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    const initialWsCount = (WebSocket as ReturnType<typeof vi.fn>).mock.calls.length
+    const initialWsCount = getWSCalls().length
 
     act(() => {
       unmount()
@@ -493,7 +514,7 @@ describe('MobileTerminal', () => {
       vi.advanceTimersByTime(30000)
     })
 
-    expect((WebSocket as ReturnType<typeof vi.fn>).mock.calls.length).toBe(initialWsCount)
+    expect(getWSCalls().length).toBe(initialWsCount)
   })
 
   // --- Font size effect ---
@@ -531,13 +552,13 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       screen.getByTitle('Fit window').click()
     })
 
-    const resizeCalls = getResizeCalls(mockWebSocket.send as ReturnType<typeof vi.fn>)
+    const resizeCalls = getResizeCalls(mockWebSocket.send as unknown as Mock)
     expect(resizeCalls.length).toBeGreaterThan(0)
   })
 
@@ -579,7 +600,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       onDataCallback('\x1b[I')
@@ -602,7 +623,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       onDataCallback('a')
@@ -621,14 +642,14 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       onDataCallback('a')
       onDataCallback('a')
     })
 
-    const inputCalls = getInputCalls(mockWebSocket.send as ReturnType<typeof vi.fn>)
+    const inputCalls = getInputCalls(mockWebSocket.send as unknown as Mock)
     expect(inputCalls.length).toBe(1)
   })
 
@@ -840,10 +861,10 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    const resizeCalls = getResizeCalls(mockWebSocket.send as ReturnType<typeof vi.fn>)
+    const resizeCalls = getResizeCalls(mockWebSocket.send as unknown as Mock)
     expect(resizeCalls.length).toBeGreaterThan(0)
 
-    const payload = JSON.parse(resizeCalls[0][0].slice(1))
+    const payload = JSON.parse(resizeCalls[0]![0].slice(1))
     expect(payload).toHaveProperty('columns')
     expect(payload).toHaveProperty('rows')
   })
@@ -859,16 +880,16 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       screen.getByTitle('Fit window').click()
     })
 
-    const resizeCalls = getResizeCalls(mockWebSocket.send as ReturnType<typeof vi.fn>)
+    const resizeCalls = getResizeCalls(mockWebSocket.send as unknown as Mock)
     expect(resizeCalls.length).toBeGreaterThan(0)
 
-    const payload = JSON.parse(resizeCalls[0][0].slice(1))
+    const payload = JSON.parse(resizeCalls[0]![0].slice(1))
     expect(typeof payload.columns).toBe('number')
     expect(typeof payload.rows).toBe('number')
   })
@@ -1041,7 +1062,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       onDataCallback(' ')
@@ -1049,7 +1070,7 @@ describe('MobileTerminal', () => {
       onDataCallback(' ')
     })
 
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     expect(spaceCalls.length).toBeLessThan(3)
@@ -1070,14 +1091,14 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       onDataCallback('\r')
       onDataCallback('\n')
     })
 
-    const enterCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const enterCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && (c[0] === '1DQo=' || c[0] === '1Cg=='),
     )
     expect(enterCalls.length).toBeLessThanOrEqual(2)
@@ -1100,13 +1121,13 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       onDataCallback(' ')
     })
 
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     expect(spaceCalls.length).toBe(1)
@@ -1125,7 +1146,7 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       screen.getByTestId('toolbox-send').click()
@@ -1181,11 +1202,11 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    const authCall = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.find(
+    const authCall = (mockWebSocket.send as unknown as Mock).mock.calls.find(
       (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('AuthToken'),
     )
     expect(authCall).toBeTruthy()
-    const parsed = JSON.parse(authCall[0])
+    const parsed = JSON.parse(authCall![0])
     expect(parsed).toHaveProperty('AuthToken')
     expect(parsed).toHaveProperty('Arguments')
     expect(parsed.Arguments).toContain('session=test-session')
@@ -1199,7 +1220,7 @@ describe('MobileTerminal', () => {
       container,
     })
 
-    const call = Terminal.mock.calls[0]
+    const call = (Terminal as unknown as Mock).mock.calls[0]!
     expect(call[0].theme).toEqual({
       background: '#0f1115',
       foreground: '#abb2bf',
@@ -1367,7 +1388,7 @@ describe('MobileTerminal', () => {
     })
 
     const termContainer = container.querySelector('.mobile-terminal-container') as HTMLElement
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Two finger touch start
     const touchStartEvent = createTouchEvent('touchstart', [
@@ -1524,7 +1545,7 @@ describe('MobileTerminal', () => {
     })
 
     const termContainer = container.querySelector('.mobile-terminal-container') as HTMLElement
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Two finger scroll with enough movement to trigger sendScroll
     // SCROLL_THRESHOLD = 20, so we need deltaY > 20
@@ -1542,7 +1563,7 @@ describe('MobileTerminal', () => {
     termContainer.dispatchEvent(moveEvent)
 
     // Should send scroll escape sequences
-    const scrollCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const scrollCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('\x1b[<'),
     )
     expect(scrollCalls.length).toBeGreaterThan(0)
@@ -1558,8 +1579,6 @@ describe('MobileTerminal', () => {
     act(() => {
       mockWebSocket._open()
     })
-
-    const _initialWsCount = (WebSocket as ReturnType<typeof vi.fn>).mock.calls.length
 
     // Close the WebSocket
     act(() => {
@@ -1596,14 +1615,14 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    const initialWsCount = (WebSocket as ReturnType<typeof vi.fn>).mock.calls.length
+    const initialWsCount = getWSCalls().length
 
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'))
     })
 
     // Should NOT create a new WebSocket
-    expect((WebSocket as ReturnType<typeof vi.fn>).mock.calls.length).toBe(initialWsCount)
+    expect(getWSCalls().length).toBe(initialWsCount)
   })
 
   // --- Manual reconnect after max attempts ---
@@ -1637,14 +1656,14 @@ describe('MobileTerminal', () => {
 
     // Now trigger input via onData callback - this should trigger manual reconnect
     const onDataCallback = getOnDataCallback(term)
-    const wsCountBefore = (WebSocket as ReturnType<typeof vi.fn>).mock.calls.length
+    const wsCountBefore = getWSCalls().length
 
     act(() => {
       onDataCallback('a')
     })
 
     // Should attempt to reconnect
-    expect((WebSocket as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(wsCountBefore)
+    expect(getWSCalls().length).toBeGreaterThan(wsCountBefore)
   })
 
   // --- iOS reconnect telemetry ---
@@ -1708,14 +1727,6 @@ describe('MobileTerminal', () => {
     })
 
     // The new WebSocket should be opened - trigger its onopen
-    // Get the latest mockWebSocket which was created during reconnect
-    const _lastWsCall = (WebSocket as ReturnType<typeof vi.fn>).mock.calls[
-      (WebSocket as ReturnType<typeof vi.fn>).mock.calls.length - 1
-    ]
-    // The reconnect message should be written
-    const _reconnectedMsg = term.write.mock.calls.find(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('\u5DF2\u91CD\u8FDE'),
-    )
     // This may or may not appear depending on timing - just check no crash
     expect(screen.getByTestId('mobile-toolbox')).toBeInTheDocument()
 
@@ -1770,15 +1781,15 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Get the ResizeObserver callback from the mock
     // The ResizeObserver is created in the effect, so we need to trigger it
     const roInstances = (ResizeObserver as unknown as { mock: { instances: unknown[] } }).mock
       ?.instances
     if (roInstances && roInstances.length > 0) {
-      const roInstance = roInstances[0] as Record<string, AnyFn>
-      const roCallback = roInstance.cb
+      const roInstance = roInstances[0]! as Record<string, AnyFn>
+      const roCallback = roInstance.cb!
 
       // Simulate resize
       act(() => {
@@ -1836,7 +1847,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send 2 spaces with time gap to avoid dedup (50ms threshold)
     act(() => {
@@ -1845,7 +1856,7 @@ describe('MobileTerminal', () => {
       onDataCallback(' ')
     })
 
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     // Should allow both through (below burst threshold of 3)
@@ -1867,14 +1878,14 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send only 1 enter (below ENTER_BURST_COUNT = 2)
     act(() => {
       onDataCallback('\r')
     })
 
-    const enterCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const enterCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1DQ==',
     )
     expect(enterCalls.length).toBe(1)
@@ -1895,7 +1906,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send regular character (not a suppressed input type)
     act(() => {
@@ -1933,7 +1944,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send space right after transition (within BURST_SUPPRESSION_WINDOW_MS = 200)
     act(() => {
@@ -1941,7 +1952,7 @@ describe('MobileTerminal', () => {
     })
 
     // Should be suppressed due to post-transition
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     expect(spaceCalls.length).toBe(0)
@@ -1975,7 +1986,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Advance past BURST_SUPPRESSION_WINDOW_MS (200ms)
     act(() => {
@@ -1987,7 +1998,7 @@ describe('MobileTerminal', () => {
     })
 
     // Should be allowed after window expires
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     expect(spaceCalls.length).toBe(1)
@@ -2010,7 +2021,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send 3+ spaces (SPACE_BURST_COUNT = 3)
     act(() => {
@@ -2019,7 +2030,7 @@ describe('MobileTerminal', () => {
       onDataCallback(' ')
     })
 
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     expect(spaceCalls.length).toBeLessThan(3)
@@ -2040,7 +2051,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send 2+ enters (ENTER_BURST_COUNT = 2)
     act(() => {
@@ -2048,7 +2059,7 @@ describe('MobileTerminal', () => {
       onDataCallback('\n')
     })
 
-    const enterCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const enterCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && (c[0] === '1DQo=' || c[0] === '1Cg=='),
     )
     expect(enterCalls.length).toBeLessThanOrEqual(2)
@@ -2088,7 +2099,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send 4 different characters to avoid dedup, and non-burst-suppressed types
     act(() => {
@@ -2137,14 +2148,14 @@ describe('MobileTerminal', () => {
 
     // After visibility change, post-transition suppression should be active
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     act(() => {
       onDataCallback(' ')
     })
 
     // Should be suppressed due to post-transition
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     expect(spaceCalls.length).toBe(0)
@@ -2216,7 +2227,7 @@ describe('MobileTerminal', () => {
 
     // Make getLine return null to simulate empty buffer
     const term = getTermInstance()
-    term.buffer.active.getLine = () => null
+    term.buffer.active.getLine = vi.fn(() => null)
 
     const termContainer = container.querySelector('.mobile-terminal-container') as HTMLElement
 
@@ -2261,7 +2272,7 @@ describe('MobileTerminal', () => {
     })
 
     const termContainer = container.querySelector('.mobile-terminal-container') as HTMLElement
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Two finger touch start
     const startEvent = createTouchEvent('touchstart', [
@@ -2278,7 +2289,7 @@ describe('MobileTerminal', () => {
     termContainer.dispatchEvent(moveEvent)
 
     // Should NOT send scroll sequences (deltaY < SCROLL_THRESHOLD)
-    const scrollCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const scrollCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('\x1b[<'),
     )
     expect(scrollCalls.length).toBe(0)
@@ -2292,7 +2303,7 @@ describe('MobileTerminal', () => {
     // Don't open WebSocket - it stays in CONNECTING state
     mockWebSocket.readyState = 0
 
-    const initialWsCount = (WebSocket as ReturnType<typeof vi.fn>).mock.calls.length
+    const initialWsCount = getWSCalls().length
 
     Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
     act(() => {
@@ -2300,7 +2311,7 @@ describe('MobileTerminal', () => {
     })
 
     // Should NOT trigger reconnect (readyState is CONNECTING)
-    expect((WebSocket as ReturnType<typeof vi.fn>).mock.calls.length).toBe(initialWsCount)
+    expect(getWSCalls().length).toBe(initialWsCount)
 
     Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
   })
@@ -2342,7 +2353,7 @@ describe('MobileTerminal', () => {
     })
 
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Send a non-suppressed character (not space/enter/newline)
     act(() => {
@@ -2369,7 +2380,7 @@ describe('MobileTerminal', () => {
 
     // Don't trigger any transition - lastTransitionRef should be null
     const onDataCallback = getOnDataCallback(getTermInstance())
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Advance past BURST_SUPPRESSION_WINDOW_MS to ensure no timing issues
     act(() => {
@@ -2381,7 +2392,7 @@ describe('MobileTerminal', () => {
     })
 
     // Should pass through (no transition set)
-    const spaceCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const spaceCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0] === '1IA==',
     )
     expect(spaceCalls.length).toBe(1)
@@ -2398,7 +2409,7 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Trigger ResizeObserver callback - dimensions stay at 80x24 (mock defaults)
     const roCb = MockResizeObserver.instances[0]?.cb
@@ -2410,9 +2421,6 @@ describe('MobileTerminal', () => {
     }
 
     // Should not send resize since dimensions haven't changed (lastCols/lastRows start at 0, but first call sets them)
-    const _resizeCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].startsWith('3'),
-    )
     // First call: lastCols=0, cols=80 -> dimensions changed, sends resize
     // Actually, the first fit() call from the effect already sends the initial resize.
     // Here we trigger a second callback where lastCols=80, cols=80 -> no change
@@ -2424,7 +2432,7 @@ describe('MobileTerminal', () => {
         roCb()
       })
     }
-    const resizeCalls2 = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const resizeCalls2 = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0].startsWith('3'),
     )
     // After the first trigger sets lastCols=80, the second should not send
@@ -2441,7 +2449,7 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
-    ;(mockWebSocket.send as ReturnType<typeof vi.fn>).mockClear()
+    ;(mockWebSocket.send as unknown as Mock).mockClear()
 
     // Change the terminal's cols to simulate a resize
     const term = getTermInstance()
@@ -2457,7 +2465,7 @@ describe('MobileTerminal', () => {
     }
 
     // Should send resize since cols changed (lastCols=80 from fit, now cols=100)
-    const resizeCalls = (mockWebSocket.send as ReturnType<typeof vi.fn>).mock.calls.filter(
+    const resizeCalls = (mockWebSocket.send as unknown as Mock).mock.calls.filter(
       (c: unknown[]) => typeof c[0] === 'string' && c[0].startsWith('3'),
     )
     expect(resizeCalls.length).toBeGreaterThan(0)

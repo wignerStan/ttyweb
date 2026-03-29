@@ -68,7 +68,8 @@ describe('FileUpload', () => {
     await userEvent.upload(input, file)
     await waitFor(() => expect(screen.getByText('test.txt')).toBeInTheDocument())
     const pathBtns = screen.getAllByText('路径')
-    await userEvent.click(pathBtns[0])
+    expect(pathBtns[0]).toBeTruthy()
+    await userEvent.click(pathBtns[0]!)
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith('/tmp/test.txt'))
   })
 

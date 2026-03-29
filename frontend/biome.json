@@ -4,7 +4,12 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": { "noExplicitAny": "error", "noConsole": "warn", "useIterableCallbackReturn": "off" },
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noConsole": "warn",
+        "useIterableCallbackReturn": "off",
+        "noRedundantUseStrict": "error"
+      },
       "complexity": { "noForEach": "off" },
       "style": {
         "noNonNullAssertion": "off"
@@ -16,7 +21,8 @@
         "useSemanticElements": "off"
       },
       "correctness": {
-        "noUnusedFunctionParameters": "warn"
+        "noUnusedFunctionParameters": "warn",
+        "noUnusedImports": "error"
       }
     }
   },
@@ -25,6 +31,13 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
   "overrides": [

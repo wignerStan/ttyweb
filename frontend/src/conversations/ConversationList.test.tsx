@@ -75,7 +75,7 @@ describe('ConversationList', () => {
     const user = userEvent.setup()
     await user.click(screen.getByText('Fix authentication'))
     expect(onSelectSession).toHaveBeenCalledOnce()
-    expect(onSelectSession.mock.calls[0][0].id).toBe('s1')
+    expect(onSelectSession.mock.calls[0]![0]!.id).toBe('s1')
   })
 
   it('empty state', () => {

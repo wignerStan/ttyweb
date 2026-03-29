@@ -146,8 +146,8 @@ describe('telemetry', () => {
       const after = Date.now()
 
       const events = getRecentEvents()
-      expect(events[0].timestamp).toBeGreaterThanOrEqual(before)
-      expect(events[0].timestamp).toBeLessThanOrEqual(after)
+      expect(events[0]!.timestamp).toBeGreaterThanOrEqual(before)
+      expect(events[0]!.timestamp).toBeLessThanOrEqual(after)
     })
   })
 
@@ -166,7 +166,7 @@ describe('telemetry', () => {
 
       expect(getRecentEvents(3)).toHaveLength(3)
       // Should return the last 3
-      expect(getRecentEvents(3)[2].data).toEqual({ i: 9 })
+      expect(getRecentEvents(3)[2]!.data).toEqual({ i: 9 })
     })
 
     it('should return all events when count exceeds buffer', () => {
@@ -209,9 +209,9 @@ describe('telemetry', () => {
       // Buffer max is 50, so only 50 should remain
       expect(events).toHaveLength(50)
       // First remaining event should be index 5 (oldest evicted)
-      expect(events[0].data).toEqual({ index: 5 })
+      expect(events[0]!.data).toEqual({ index: 5 })
       // Last event should be index 54
-      expect(events[49].data).toEqual({ index: 54 })
+      expect(events[49]!.data).toEqual({ index: 54 })
     })
   })
 

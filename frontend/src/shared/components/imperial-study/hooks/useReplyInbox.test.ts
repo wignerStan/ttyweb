@@ -23,10 +23,10 @@ describe('useReplyInbox', () => {
     })
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(fetchMock.mock.calls[0][0]).toContain('/api/butler/approval_replies')
-    expect(fetchMock.mock.calls[0][1].method).toBe('POST')
-    expect(fetchMock.mock.calls[1][0]).toContain('/api/butler/inbox_items/inbox-1')
-    expect(fetchMock.mock.calls[1][1].method).toBe('PUT')
+    expect(fetchMock.mock.calls[0]![0]).toContain('/api/butler/approval_replies')
+    expect(fetchMock.mock.calls[0]![1]!.method).toBe('POST')
+    expect(fetchMock.mock.calls[1]![0]).toContain('/api/butler/inbox_items/inbox-1')
+    expect(fetchMock.mock.calls[1]![1]!.method).toBe('PUT')
   })
 
   it('returns loading and error states', () => {

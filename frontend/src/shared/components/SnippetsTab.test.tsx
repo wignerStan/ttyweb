@@ -66,7 +66,7 @@ describe('SnippetsTab', () => {
     await waitFor(() => expect(screen.getByText('ls')).toBeInTheDocument())
     const trashButtons = document.querySelectorAll('button svg.lucide-trash-2')
     if (trashButtons.length > 0) {
-      const trashBtn = trashButtons[0].closest('button')!
+      const trashBtn = trashButtons[0]!.closest('button')!
       await userEvent.click(trashBtn)
     }
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3))
@@ -79,7 +79,10 @@ describe('SnippetsTab', () => {
     const playButtons = screen
       .getAllByRole('button')
       .filter((btn) => btn.innerHTML.includes('play'))
-    if (playButtons.length > 0) await userEvent.click(playButtons[0])
+    if (playButtons.length > 0) {
+      expect(playButtons[0]).toBeTruthy()
+      await userEvent.click(playButtons[0]!)
+    }
     await waitFor(() => expect(onSend).toHaveBeenCalledWith('ls -la\n'))
   })
 })

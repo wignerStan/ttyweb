@@ -113,7 +113,7 @@ describe('useKeyboardAvoider', () => {
 
     // Trigger a resize event
     act(() => {
-      vv._listeners.resize.forEach((fn) => fn(new Event('resize')))
+      vv._listeners.resize!.forEach((fn) => fn(new Event('resize')))
     })
 
     // Before debounce fires, should not have called again
@@ -139,7 +139,7 @@ describe('useKeyboardAvoider', () => {
 
     // Trigger resize, then debounce
     act(() => {
-      vv._listeners.resize.forEach((fn) => fn(new Event('resize')))
+      vv._listeners.resize!.forEach((fn) => fn(new Event('resize')))
       vi.advanceTimersByTime(100)
     })
 
