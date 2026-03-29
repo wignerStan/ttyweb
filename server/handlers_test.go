@@ -192,10 +192,8 @@ func TestGenerateHandleWS_MaxConnectionExceeded(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/ws", nil)
 	handler(rec, req)
-	if rec.Code != http.StatusOK {
-		// The handler upgrades to WebSocket, so a non-WS request gets a bad handshake
-		// which still returns 200-ish. But we just want to verify no panic.
-		t.Logf("got %d (expected non-panic)", rec.Code)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 when max connections exceeded, got %d", rec.Code)
 	}
 }
 
