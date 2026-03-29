@@ -101,7 +101,7 @@ func main() {
 		log.Println("Received signal, shutting down...")
 	}()
 
-	if err := srv.Run(context.Background(), server.WithGracefullContext(gracefulCtx)); err != nil {
+	if err := srv.Run(context.Background(), server.WithGracefulContext(gracefulCtx)); err != nil {
 		log.Printf("Server exited: %v", err)
 	}
 }

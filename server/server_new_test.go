@@ -399,7 +399,7 @@ func TestRun_WithGracefulShutdown(t *testing.T) {
 		gracefulCancel() // trigger graceful shutdown
 	}()
 
-	err = srv.Run(ctx, WithGracefullContext(gracefulCtx))
+	err = srv.Run(ctx, WithGracefulContext(gracefulCtx))
 	if err != nil {
 		t.Logf("Run returned: %v (expected nil for graceful shutdown)", err)
 	}
