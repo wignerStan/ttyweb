@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"context"
+	"sync"
 )
 
 // defaultMaxOps is the maximum number of concurrent git CLI operations.
@@ -25,7 +26,7 @@ func NewOperationSemaphore(n int) *OperationSemaphore {
 func (s *OperationSemaphore) Acquire(ctx context.Context) (Guard, error) {
 	select {
 	case s.sem <- struct{}{}:
-		return Guard{release: func() { <-s.sem }}, nil
+		return Guard{release: func() { <-s.sem }, once: &sync.Once{}}, nil
 	case <-ctx.Done():
 		return Guard{}, ctx.Err()
 	}
@@ -34,13 +35,15 @@ func (s *OperationSemaphore) Acquire(ctx context.Context) (Guard, error) {
 // Guard represents a held semaphore permit. Call Release to return it.
 type Guard struct {
 	release func()
+	once    *sync.Once
 }
 
-// Release returns the permit to the semaphore.
-func (g Guard) Release() {
-	if g.release != nil {
-		g.release()
+// Release returns the permit to the semaphore. Safe to call multiple times.
+func (g *Guard) Release() {
+	if g == nil || g.release == nil {
+		return
 	}
+	g.once.Do(g.release)
 }
 
 // DefaultSemaphore returns the global shared operation semaphore.

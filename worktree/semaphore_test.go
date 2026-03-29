@@ -68,6 +68,37 @@ func TestOperationSemaphore_Cancel(t *testing.T) {
 	}
 }
 
+func TestGuard_DoubleReleaseSafe(t *testing.T) {
+	t.Parallel()
+
+	sem := NewOperationSemaphore(1)
+
+	guard, err := sem.Acquire(context.Background())
+	if err != nil {
+		t.Fatalf("Acquire: %v", err)
+	}
+
+	guard.Release()
+	done := make(chan struct{})
+	go func() {
+		guard.Release()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("second Release() blocked (deadlock)")
+	}
+}
+
+func TestGuard_NilGuardReleaseSafe(t *testing.T) {
+	t.Parallel()
+
+	var g Guard
+	g.Release()
+}
+
 func TestDefaultSemaphore(t *testing.T) {
 	t.Parallel()
 
