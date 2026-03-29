@@ -7,6 +7,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+
+	"ttyweb/worktree"
 )
 
 func TestWorktreeService_ConcurrentCreateDifferentProjects(t *testing.T) {
@@ -251,6 +253,72 @@ func TestWorktreeService_CommitWorktree(t *testing.T) {
 	}
 	if record.HeadCommit == "" {
 		t.Error("expected non-empty HeadCommit after commit")
+	}
+}
+
+func TestWorktreeService_RemoveWorktree_Success(t *testing.T) {
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+	wt, _ := svc.CreateWorktree(context.Background(), project.ID, "remove-me", "main", true)
+
+	err := svc.RemoveWorktree(context.Background(), project.ID, wt.ID, false)
+	if err != nil {
+		t.Fatalf("RemoveWorktree: %v", err)
+	}
+
+	// Verify it's gone from the list.
+	wts, err := svc.ListWorktrees(context.Background(), project.ID)
+	if err != nil {
+		t.Fatalf("ListWorktrees after remove: %v", err)
+	}
+	for _, w := range wts {
+		if w.ID == wt.ID {
+			t.Error("removed worktree should not appear in list")
+		}
+	}
+}
+
+func TestWorktreeService_SyncAllWorktrees_UpdatesExisting(t *testing.T) {
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+
+	// First sync populates the worktree map (insert path).
+	wts1, err := svc.SyncAllWorktrees(context.Background(), project.ID)
+	if err != nil {
+		t.Fatalf("SyncAllWorktrees (1st): %v", err)
+	}
+	if len(wts1) == 0 {
+		t.Fatal("expected at least 1 worktree after first sync")
+	}
+
+	// Make a commit so HEAD changes, then re-sync (update path).
+	commitFile := filepath.Join(repoDir, "sync-test.txt")
+	if err := os.WriteFile(commitFile, []byte("data\n"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if err := worktree.CommitWorktree(context.Background(), repoDir, "sync test commit"); err != nil {
+		t.Fatalf("CommitWorktree: %v", err)
+	}
+
+	wts2, err := svc.SyncAllWorktrees(context.Background(), project.ID)
+	if err != nil {
+		t.Fatalf("SyncAllWorktrees (2nd): %v", err)
+	}
+	if len(wts2) != len(wts1) {
+		t.Errorf("expected %d worktrees after re-sync, got %d", len(wts1), len(wts2))
+	}
+
+	// Verify the head commit was updated.
+	for _, wt := range wts2 {
+		if wt.IsMain && wt.HeadCommit == "" {
+			t.Error("expected non-empty HeadCommit for main worktree after re-sync")
+		}
 	}
 }
 

@@ -224,6 +224,33 @@ func TestLoadDirectoryPath(t *testing.T) {
 	}
 }
 
+func TestLoadOrDefault_BadConfigFile(t *testing.T) {
+	// Write invalid JSON to the default config path via XDG_CONFIG_HOME.
+	tmpDir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", tmpDir)
+
+	configDir := filepath.Join(tmpDir, "ttyweb")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(configDir, "config.json"), []byte("not json{{{"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Reset global state so LoadOrDefault runs fresh.
+	configOnce = sync.Once{}
+	globalConfig = nil
+
+	cfg := LoadOrDefault()
+	if cfg == nil {
+		t.Fatal("LoadOrDefault returned nil")
+	}
+	// Should fall back to defaults when config file is invalid.
+	if cfg.LLM.Model == "" {
+		t.Error("expected default LLM.Model when config file is bad")
+	}
+}
+
 func TestGetReturnsCopy(t *testing.T) {
 	// Reset global state for this test.
 	globalConfig = nil

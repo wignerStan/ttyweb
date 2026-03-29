@@ -485,6 +485,47 @@ func TestCommitWorktree_NothingToCommit(t *testing.T) {
 	}
 }
 
+func TestFilterGitEnv(t *testing.T) {
+	env := []string{
+		"HOME=/home/user",
+		"GIT_DIR=/some/repo/.git",
+		"PATH=/usr/bin",
+		"GIT_WORK_TREE=/some/repo",
+		"GIT_COMMON_DIR=/some/repo/.git/objects",
+		"GIT_OBJECT_DIRECTORY=/some/repo/.git/objects",
+		"GIT_INDEX_FILE=/some/repo/.git/index",
+		"GIT_ALTERNATE_OBJECT_DIRECTORIES=/alt/objects",
+		"GIT_TERMINAL_PROMPT=0",
+	}
+	filtered := FilterGitEnv(env)
+
+	for _, e := range filtered {
+		key, _, _ := strings.Cut(e, "=")
+		switch key {
+		case "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY",
+			"GIT_INDEX_FILE", "GIT_ALTERNATE_OBJECT_DIRECTORIES":
+			t.Errorf("expected %s to be filtered out, got %q", key, e)
+		}
+	}
+
+	expected := []string{"HOME=/home/user", "PATH=/usr/bin", "GIT_TERMINAL_PROMPT=0"}
+	if len(filtered) != len(expected) {
+		t.Errorf("expected %d entries, got %d: %v", len(expected), len(filtered), filtered)
+	}
+	for _, want := range expected {
+		found := false
+		for _, got := range filtered {
+			if got == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected %q in filtered env", want)
+		}
+	}
+}
+
 func TestSanitizeBranchName(t *testing.T) {
 	tests := []struct {
 		input string

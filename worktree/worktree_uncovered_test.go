@@ -411,3 +411,16 @@ func TestRunGitCmd_Failure(t *testing.T) {
 		t.Fatal("expected error for invalid git subcommand")
 	}
 }
+
+func TestKindError_Error(t *testing.T) {
+	t.Parallel()
+	if ErrNotFound.Error() != "not_found" {
+		t.Errorf("expected 'not_found', got %q", ErrNotFound.Error())
+	}
+	if ErrConflict.Error() != "conflict" {
+		t.Errorf("expected 'conflict', got %q", ErrConflict.Error())
+	}
+	if ErrWorktreeLocked.Error() != "worktree_locked" {
+		t.Errorf("expected 'worktree_locked', got %q", ErrWorktreeLocked.Error())
+	}
+}

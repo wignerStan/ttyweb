@@ -242,6 +242,31 @@ func TestResolveDBPath_Explicit(t *testing.T) {
 	}
 }
 
+func TestBuildOptions_WithTLSNoCertKey(t *testing.T) {
+	t.Parallel()
+	opts := buildOptions("", "", "", "local", "", "", false, true, "", "")
+	if !opts.EnableTLS {
+		t.Error("expected EnableTLS true")
+	}
+	if opts.TLSCrtFile != "" {
+		t.Errorf("TLSCrtFile = %q, want empty", opts.TLSCrtFile)
+	}
+	if opts.TLSKeyFile != "" {
+		t.Errorf("TLSKeyFile = %q, want empty", opts.TLSKeyFile)
+	}
+}
+
+func TestBuildOptions_WithTitleVariables(t *testing.T) {
+	t.Parallel()
+	opts := buildOptions("0.0.0.0", "8080", "/", "local", "", "test {{ .hostname }}", false, false, "", "")
+	if opts.TitleFormat != "test {{ .hostname }}" {
+		t.Errorf("TitleFormat = %q", opts.TitleFormat)
+	}
+	if _, ok := opts.TitleVariables["hostname"]; !ok {
+		t.Error("expected hostname in TitleVariables")
+	}
+}
+
 func TestLoadConfig_Default(t *testing.T) {
 	t.Parallel()
 	err := loadConfig("")
