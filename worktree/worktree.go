@@ -249,7 +249,12 @@ func GetWorktreeStatus(ctx context.Context, worktreePath string) (*WorktreeStatu
 	if status, err := collectStatusPorcelainContext(ctx, absPath); err == nil {
 		return status, nil
 	}
-	// Fallback to go-git.
+	// If context was cancelled, return the error rather than falling back
+	// to context-unaware go-git.
+	if ctx.Err() != nil {
+		return nil, &OpError{Kind: KindCancelled, Path: absPath, Detail: "status collection cancelled", Cause: ctx.Err()}
+	}
+	// Fallback to go-git for non-cancellation errors.
 	return collectStatusGoGit(absPath)
 }
 
