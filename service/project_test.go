@@ -6,26 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
-
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
-
-// setupTestDB creates an in-memory SQLite database with the Project table migrated.
-func setupTestDB(t *testing.T) *gorm.DB {
-	t.Helper()
-
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("open test database: %v", err)
-	}
-
-	if err := db.AutoMigrate(&Project{}); err != nil {
-		t.Fatalf("migrate test database: %v", err)
-	}
-
-	return db
-}
 
 // initGitRepo creates a bare git repository at the given path with an initial commit.
 func initGitRepo(t *testing.T, path string) {
