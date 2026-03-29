@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"io"
 	"sync"
 	"testing"
@@ -271,4 +272,504 @@ func (ms *mockSlave) ResizeTerminal(columns int, rows int) error {
 	ms.rows = rows
 	ms.wg.Done()
 	return nil
+}
+
+// --- Error-returning and specialized mocks ---
+
+// errMaster is a mockMaster whose Write always returns an error.
+type errMaster struct {
+	mockMaster
+	writeErr error
+}
+
+func (m *errMaster) Write(buf []byte) (int, error) {
+	return 0, m.writeErr
+}
+
+// errSlave is a mockSlave whose Write always returns an error.
+type errSlave struct {
+	mockSlave
+	writeErr error
+}
+
+func (s *errSlave) Write(buf []byte) (int, error) {
+	return 0, s.writeErr
+}
+
+// errResizeSlave is a mockSlave whose ResizeTerminal returns an error.
+type errResizeSlave struct {
+	mockSlave
+	resizeErr error
+}
+
+func (s *errResizeSlave) ResizeTerminal(columns int, rows int) error {
+	s.columns = columns
+	s.rows = rows
+	return s.resizeErr
+}
+
+// eofReadMaster is a mockMaster whose Read returns EOF immediately,
+// causing the master-read goroutine to exit. Write succeeds so
+// sendInitializeMessage doesn't block.
+type eofReadMaster struct {
+	writeTo *io.PipeWriter
+}
+
+func newEOFReadMaster() *eofReadMaster {
+	r, w := io.Pipe()
+	go func() {
+		// Drain all writes so they never block
+		buf := make([]byte, 4096)
+		for {
+			if _, err := r.Read(buf); err != nil {
+				return
+			}
+		}
+	}()
+	return &eofReadMaster{writeTo: w}
+}
+
+func (m *eofReadMaster) Read(buf []byte) (int, error) {
+	return 0, io.EOF
+}
+
+func (m *eofReadMaster) Write(buf []byte) (int, error) {
+	return m.writeTo.Write(buf)
+}
+
+// eofReadSlave is a mockSlave whose Read returns EOF immediately,
+// causing the slave-read goroutine to exit. Write succeeds so
+// handleMasterReadEvent Input writes don't block.
+type eofReadSlave struct {
+	writeTo *io.PipeWriter
+}
+
+func newEOFReadSlave() *eofReadSlave {
+	r, w := io.Pipe()
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			if _, err := r.Read(buf); err != nil {
+				return
+			}
+		}
+	}()
+	return &eofReadSlave{writeTo: w}
+}
+
+func (s *eofReadSlave) Read(buf []byte) (int, error) {
+	return 0, io.EOF
+}
+
+func (s *eofReadSlave) Write(buf []byte) (int, error) {
+	return s.writeTo.Write(buf)
+}
+
+func (s *eofReadSlave) WindowTitleVariables() map[string]interface{} {
+	return nil
+}
+
+func (s *eofReadSlave) ResizeTerminal(columns int, rows int) error {
+	return nil
+}
+
+// --- Edge case tests ---
+
+func TestNewOptionError(t *testing.T) {
+	t.Parallel()
+
+	errOption := func(wt *WebTTY) error {
+		return errors.New("option error")
+	}
+
+	_, err := New(newMockMaster(), newMockSlave(), errOption)
+	if err == nil {
+		t.Fatal("expected error from New() when option returns error")
+	}
+}
+
+func TestRunInitializationError(t *testing.T) {
+	t.Parallel()
+
+	// Master whose Write fails, causing sendInitializeMessage to fail
+	master := &errMaster{
+		writeErr: errors.New("write failed"),
+	}
+	slave := newMockSlave()
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = dt.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error from Run() when init write fails")
+	}
+}
+
+func TestRunSlaveReadError(t *testing.T) {
+	t.Parallel()
+
+	// Use a regular mockMaster (blocks on Read) and an eofReadSlave (returns EOF).
+	// This ensures the slave-read goroutine exits first with ErrSlaveClosed.
+	// We need to drain the master write pipe so sendInitializeMessage doesn't block.
+	rawMaster := newMockMaster()
+	slave := newEOFReadSlave()
+
+	dt, err := New(rawMaster, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Drain init messages in background so sendInitializeMessage completes
+	go func() {
+		buf := make([]byte, 1024)
+		rawMaster.gottyToMasterReader.Read(buf)
+		rawMaster.gottyToMasterReader.Read(buf)
+	}()
+
+	err = dt.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error from Run() when slave read fails")
+	}
+	if err != ErrSlaveClosed {
+		t.Fatalf("expected ErrSlaveClosed, got %v", err)
+	}
+}
+
+func TestRunMasterReadError(t *testing.T) {
+	t.Parallel()
+
+	// Use eofReadMaster (returns EOF on Read) so the master-read
+	// goroutine exits immediately with ErrMasterClosed.
+	// Use regular mockSlave (blocks on Read) so the slave-read
+	// goroutine stays alive, making the result deterministic.
+	master := newEOFReadMaster()
+	slave := newMockSlave()
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = dt.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error from Run() when master read fails")
+	}
+	if err != ErrMasterClosed {
+		t.Fatalf("expected ErrMasterClosed, got %v", err)
+	}
+}
+
+func TestRunErrorFromErrsChannel(t *testing.T) {
+	t.Parallel()
+
+	// When the errs channel returns an error (not context cancel),
+	// the select case err = <-errs should be taken
+	master := newEOFReadMaster()
+	slave := newEOFReadSlave()
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = dt.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error from Run() via errs channel")
+	}
+}
+
+func TestHandleSlaveReadEventWriteError(t *testing.T) {
+	t.Parallel()
+
+	// Create a WebTTY directly and test handleSlaveReadEvent
+	master := &errMaster{
+		writeErr: errors.New("master write failed"),
+	}
+	slave := newMockSlave()
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	err = dt.handleSlaveReadEvent([]byte("test data"))
+	if err == nil {
+		t.Fatal("expected error from handleSlaveReadEvent when master write fails")
+	}
+}
+
+func TestInputWithEmptyData(t *testing.T) {
+	t.Parallel()
+
+	// Test that Input with only the prefix byte (no data) is handled gracefully
+	slave := newMockSlave()
+	master := newMockMaster()
+
+	dt, err := New(master, slave, WithPermitWrite())
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	// handleMasterReadEvent with just the Input prefix byte
+	err = dt.handleMasterReadEvent([]byte{Input})
+	if err != nil {
+		t.Fatalf("Unexpected error from handleMasterReadEvent with empty input: %s", err)
+	}
+}
+
+func TestInputWithSlaveWriteError(t *testing.T) {
+	t.Parallel()
+
+	master := newMockMaster()
+	slave := &errSlave{
+		writeErr: errors.New("slave write failed"),
+	}
+
+	dt, err := New(master, slave, WithPermitWrite())
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	err = dt.handleMasterReadEvent([]byte("1hello"))
+	if err == nil {
+		t.Fatal("expected error from handleMasterReadEvent when slave write fails")
+	}
+}
+
+func TestPingWriteError(t *testing.T) {
+	t.Parallel()
+
+	master := &errMaster{
+		writeErr: errors.New("master write failed"),
+	}
+	slave := newMockSlave()
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	err = dt.handleMasterReadEvent([]byte{Ping})
+	if err == nil {
+		t.Fatal("expected error from handleMasterReadEvent when pong write fails")
+	}
+}
+
+func TestHandleMasterReadEvent_DecodeError(t *testing.T) {
+	t.Parallel()
+
+	master := newMockMaster()
+	slave := newMockSlave()
+
+	dt, err := New(master, slave, WithPermitWrite())
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	// Switch to base64 encoding, then send Input with invalid base64 data.
+	err = dt.handleMasterReadEvent(append([]byte{SetEncoding}, []byte("base64")...))
+	if err != nil {
+		t.Fatalf("unexpected error setting encoding: %v", err)
+	}
+
+	// Send Input prefix byte followed by invalid base64 data.
+	// base64.StdEncoding should reject '!' characters.
+	err = dt.handleMasterReadEvent(append([]byte{Input}, []byte("!!!invalid!!!")...))
+	if err == nil {
+		t.Fatal("expected error from handleMasterReadEvent for invalid base64 payload")
+	}
+}
+
+func TestResizeTerminalWithFixedColumnsAndRows(t *testing.T) {
+	t.Parallel()
+
+	master := newMockMaster()
+	slave := newMockSlave()
+
+	dt, err := New(master, slave, WithFixedColumns(80), WithFixedRows(24))
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	// With fixed columns and rows, ResizeTerminal should be a no-op
+	err = dt.handleMasterReadEvent([]byte(`3{"Columns": 999, "Rows": 888}`))
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+
+	// Slave should not have been resized
+	if slave.columns != 0 || slave.rows != 0 {
+		t.Fatalf("expected no resize, got columns=%d rows=%d", slave.columns, slave.rows)
+	}
+}
+
+func TestResizeTerminalEmptyPayload(t *testing.T) {
+	t.Parallel()
+
+	slave := newMockSlave()
+	master := newMockMaster()
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	// ResizeTerminal with only the prefix byte and no payload
+	err = dt.handleMasterReadEvent([]byte{ResizeTerminal})
+	if err == nil {
+		t.Fatal("expected error from handleMasterReadEvent for empty resize payload")
+	}
+}
+
+func TestResizeTerminalSlaveError(t *testing.T) {
+	t.Parallel()
+
+	master := newMockMaster()
+	slave := &errResizeSlave{
+		resizeErr: errors.New("resize failed"),
+	}
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	err = dt.handleMasterReadEvent([]byte(`3{"Columns": 100, "Rows": 50}`))
+	if err == nil {
+		t.Fatal("expected error from handleMasterReadEvent when slave resize fails")
+	}
+}
+
+func TestInitializationWithReconnectWriteError(t *testing.T) {
+	t.Parallel()
+
+	// Master that succeeds for first 2 writes (WindowTitle, SetBufferSize)
+	// but fails on the 3rd (SetReconnect)
+	rawMaster := newMockMaster()
+	master := &countingErrMaster{
+		mockMaster: *rawMaster,
+		failAfter:  2,
+		writeErr:   errors.New("write failed on reconnect"),
+	}
+
+	// Drain the pipe so the first 2 writes don't block
+	go func() {
+		buf := make([]byte, 1024)
+		rawMaster.gottyToMasterReader.Read(buf)
+		rawMaster.gottyToMasterReader.Read(buf)
+	}()
+
+	slave := newMockSlave()
+
+	dt, err := New(master, slave, WithReconnect(10))
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = dt.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error from Run() when reconnect write fails")
+	}
+}
+
+func TestInitializationWithPreferencesWriteError(t *testing.T) {
+	t.Parallel()
+
+	// Master that succeeds for first 2 writes but fails on the 3rd (SetPreferences)
+	rawMaster := newMockMaster()
+	master := &countingErrMaster{
+		mockMaster: *rawMaster,
+		failAfter:  2,
+		writeErr:   errors.New("write failed on preferences"),
+	}
+
+	// Drain the pipe so the first 2 writes don't block
+	go func() {
+		buf := make([]byte, 1024)
+		rawMaster.gottyToMasterReader.Read(buf)
+		rawMaster.gottyToMasterReader.Read(buf)
+	}()
+
+	slave := newMockSlave()
+
+	dt, err := New(master, slave, WithMasterPreferences(map[string]string{"a": "b"}))
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = dt.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error from Run() when preferences write fails")
+	}
+}
+
+func TestInitializationBufferSizeWriteError(t *testing.T) {
+	t.Parallel()
+
+	// Master that succeeds for the first write (WindowTitle)
+	// but fails on the 2nd (SetBufferSize)
+	rawMaster := newMockMaster()
+	master := &countingErrMaster{
+		mockMaster: *rawMaster,
+		failAfter:  1,
+		writeErr:   errors.New("write failed on buffer size"),
+	}
+
+	// Drain the pipe so the first write doesn't block
+	go func() {
+		buf := make([]byte, 1024)
+		rawMaster.gottyToMasterReader.Read(buf)
+	}()
+
+	slave := newMockSlave()
+
+	dt, err := New(master, slave)
+	if err != nil {
+		t.Fatalf("Unexpected error from New(): %s", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = dt.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error from Run() when buffer size write fails")
+	}
+}
+
+// countingErrMaster is a master that succeeds for the first N writes then fails.
+type countingErrMaster struct {
+	mockMaster
+	count     int
+	failAfter int
+	writeErr  error
+}
+
+func (m *countingErrMaster) Write(buf []byte) (int, error) {
+	m.count++
+	if m.count > m.failAfter {
+		return 0, m.writeErr
+	}
+	return m.mockMaster.Write(buf)
 }

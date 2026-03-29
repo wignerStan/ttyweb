@@ -379,6 +379,40 @@ func TestParseResult_NoPayload(t *testing.T) {
 	}
 }
 
+func TestParseResult_InvalidBase64(t *testing.T) {
+	resp := `{"header":{"code":0,"message":"success","status":1},"payload":{"result":{"text":"not-valid-base64!!!"}}}`
+	_, err := ParseResult([]byte(resp))
+	if err == nil {
+		t.Fatal("expected error for invalid base64, got nil")
+	}
+}
+
+func TestParseResult_ValidBase64InvalidJSON(t *testing.T) {
+	encodedText := base64.StdEncoding.EncodeToString([]byte("not json at all"))
+	resp := `{"header":{"code":0,"message":"success","status":1},"payload":{"result":{"text":"` + encodedText + `"}}}`
+	_, err := ParseResult([]byte(resp))
+	if err == nil {
+		t.Fatal("expected error for invalid JSON after base64 decode, got nil")
+	}
+}
+
+func TestLoadXunfeiConfigFromEnv(t *testing.T) {
+	t.Setenv("XFYUN_APP_ID", "test-app")
+	t.Setenv("XFYUN_API_KEY", "test-key")
+	t.Setenv("XFYUN_API_SECRET", "test-secret")
+
+	cfg := LoadXunfeiConfigFromEnv()
+	if cfg.AppID != "test-app" {
+		t.Errorf("AppID = %q, want %q", cfg.AppID, "test-app")
+	}
+	if cfg.APIKey != "test-key" {
+		t.Errorf("APIKey = %q, want %q", cfg.APIKey, "test-key")
+	}
+	if cfg.APISecret != "test-secret" {
+		t.Errorf("APISecret = %q, want %q", cfg.APISecret, "test-secret")
+	}
+}
+
 // --- IsConfigured ---
 
 func TestXunfeiConfig_IsConfigured(t *testing.T) {

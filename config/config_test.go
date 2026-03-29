@@ -217,6 +217,13 @@ func TestLoadEmptyFile(t *testing.T) {
 	}
 }
 
+func TestLoadDirectoryPath(t *testing.T) {
+	_, err := Load("/tmp")
+	if err == nil {
+		t.Fatal("expected error when loading a directory path, got nil")
+	}
+}
+
 func TestGetReturnsCopy(t *testing.T) {
 	// Reset global state for this test.
 	globalConfig = nil

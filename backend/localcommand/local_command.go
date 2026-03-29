@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -27,6 +28,7 @@ type LocalCommand struct {
 	cmd       *exec.Cmd
 	pty       *os.File
 	ptyClosed chan struct{}
+	ptyMu     sync.Mutex
 }
 
 func New(command string, argv []string, headers map[string][]string, options ...Option) (*LocalCommand, error) {
@@ -72,7 +74,9 @@ func New(command string, argv []string, headers map[string][]string, options ...
 	// close pty so that Read() on the pty breaks with an EOF.
 	go func() {
 		defer func() {
+			lcmd.ptyMu.Lock()
 			_ = lcmd.pty.Close()
+			lcmd.ptyMu.Unlock()
 			close(lcmd.ptyClosed)
 		}()
 
@@ -83,10 +87,14 @@ func New(command string, argv []string, headers map[string][]string, options ...
 }
 
 func (lcmd *LocalCommand) Read(p []byte) (n int, err error) {
+	lcmd.ptyMu.Lock()
+	defer lcmd.ptyMu.Unlock()
 	return lcmd.pty.Read(p)
 }
 
 func (lcmd *LocalCommand) Write(p []byte) (n int, err error) {
+	lcmd.ptyMu.Lock()
+	defer lcmd.ptyMu.Unlock()
 	return lcmd.pty.Write(p)
 }
 
@@ -113,6 +121,8 @@ func (lcmd *LocalCommand) WindowTitleVariables() map[string]interface{} {
 }
 
 func (lcmd *LocalCommand) ResizeTerminal(width int, height int) error {
+	lcmd.ptyMu.Lock()
+	defer lcmd.ptyMu.Unlock()
 	window := pty.Winsize{
 		Rows: uint16(height),
 		Cols: uint16(width),

@@ -43,6 +43,51 @@ func TestFactoryName(t *testing.T) {
 	}
 }
 
+func TestNew_FailedCommand(t *testing.T) {
+	t.Parallel()
+	_, err := New("/nonexistent/command/that/does/not/exist", []string{}, nil)
+	if err == nil {
+		t.Error("expected error for nonexistent command")
+	}
+}
+
+func TestNew_WithHeaders(t *testing.T) {
+	t.Parallel()
+	lcmd, err := New("/bin/cat", []string{}, map[string][]string{
+		"X-Custom": {"value1", "value2"},
+	}, WithCloseTimeout(5*time.Second))
+	if err != nil {
+		t.Skipf("skipping: PTY not available: %v", err)
+	}
+	defer func() { _ = lcmd.Close() }()
+	if lcmd.closeTimeout != 5*time.Second {
+		t.Errorf("closeTimeout = %v, want 5s", lcmd.closeTimeout)
+	}
+}
+
+func TestCloseTimeoutC_Negative(t *testing.T) {
+	t.Parallel()
+	lcmd := &LocalCommand{closeTimeout: -1 * time.Second}
+	ch := lcmd.closeTimeoutC()
+	select {
+	case <-ch:
+		t.Error("negative timeout channel should never fire")
+	case <-time.After(50 * time.Millisecond):
+		// expected
+	}
+}
+
+func TestFactoryNew_NegativeTimeout(t *testing.T) {
+	// CloseTimeout < 0 should NOT add WithCloseTimeout option
+	factory, err := NewFactory("/bin/cat", []string{}, &Options{CloseTimeout: -1})
+	if err != nil {
+		t.Fatalf("NewFactory() returned error: %v", err)
+	}
+	if len(factory.opts) != 1 {
+		t.Errorf("expected 1 option (close signal only), got %d", len(factory.opts))
+	}
+}
+
 func TestFactoryNew(t *testing.T) {
 	factory, err := NewFactory("/bin/cat", []string{}, &Options{})
 	if err != nil {

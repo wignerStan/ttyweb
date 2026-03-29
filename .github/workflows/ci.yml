@@ -59,8 +59,8 @@ jobs:
         run: |
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
           echo "Go coverage: ${COVERAGE}%"
-          if awk "BEGIN {exit !($COVERAGE < 80)}"; then
-            echo "::error::Go coverage ${COVERAGE}% below 80%"
+          if awk "BEGIN {exit !($COVERAGE < 90)}"; then
+            echo "::error::Go coverage ${COVERAGE}% below 90%"
             exit 1
           fi
       - uses: actions/upload-artifact@v4

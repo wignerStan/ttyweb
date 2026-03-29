@@ -17,7 +17,6 @@ import (
 )
 
 func TestHandleAIListSessions_NoQueryParams(t *testing.T) {
-	t.Parallel()
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(
@@ -41,7 +40,6 @@ func TestHandleAIListSessions_NoQueryParams(t *testing.T) {
 }
 
 func TestHandleAIListSessions_EmptyProject(t *testing.T) {
-	t.Parallel()
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(
@@ -55,7 +53,6 @@ func TestHandleAIListSessions_EmptyProject(t *testing.T) {
 }
 
 func TestAISessionDetail_NonExistent(t *testing.T) {
-	t.Parallel()
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(
@@ -69,7 +66,6 @@ func TestAISessionDetail_NonExistent(t *testing.T) {
 }
 
 func TestAISessionDetail_Success(t *testing.T) {
-	t.Parallel()
 	now := time.Now()
 	record := aiSessionService.Store().Upsert(ai.AISession{
 		SessionID:             "detail-test",
@@ -114,7 +110,6 @@ func TestAISessionDetail_Success(t *testing.T) {
 }
 
 func TestAISessionConversation_NonExistent(t *testing.T) {
-	t.Parallel()
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(
@@ -128,7 +123,6 @@ func TestAISessionConversation_NonExistent(t *testing.T) {
 }
 
 func TestAISessionRefresh_NonExistent(t *testing.T) {
-	t.Parallel()
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(
@@ -142,7 +136,6 @@ func TestAISessionRefresh_NonExistent(t *testing.T) {
 }
 
 func TestAISessionConversation_Existing(t *testing.T) {
-	t.Parallel()
 	now := time.Now()
 	record := aiSessionService.Store().Upsert(ai.AISession{
 		SessionID:             "conv-edge-test",
@@ -170,7 +163,6 @@ func TestAISessionConversation_Existing(t *testing.T) {
 }
 
 func TestAISessionRefresh_Existing(t *testing.T) {
-	t.Parallel()
 	now := time.Now()
 	record := aiSessionService.Store().Upsert(ai.AISession{
 		SessionID:             "refresh-edge-test",
@@ -198,7 +190,6 @@ func TestAISessionRefresh_Existing(t *testing.T) {
 }
 
 func TestNewAISessionResponse_AllFields(t *testing.T) {
-	t.Parallel()
 	now := time.Now()
 	lastMsg := now.Add(time.Hour)
 	r := newAISessionResponse(service.AISessionRecord{
