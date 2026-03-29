@@ -52,8 +52,17 @@ func (rl *RepoLock) Lock(path string, ctx context.Context) func() {
 // Returns an unlock function. The caller must invoke it when done.
 func (rl *RepoLock) RLock(path string, ctx context.Context) func() {
 	entry := rl.getEntry(path)
-	entry.mu.RLock()
-	return entry.mu.RUnlock
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+		if entry.mu.TryRLock() {
+			return entry.mu.RUnlock
+		}
+		runtime.Gosched()
+	}
 }
 
 func (rl *RepoLock) getEntry(path string) *repoEntry {
