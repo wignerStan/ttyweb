@@ -1,3 +1,4 @@
+// RunPipeline.tsx — Pipeline visualization for dispatched intents
 import { useState } from 'react';
 import { ArrowRight, X, CheckCircle2, XCircle, Loader2, Send, ChevronDown, ChevronRight } from 'lucide-react';
 import type { PipelineRun, PipelineStage } from '../types';
@@ -8,16 +9,18 @@ interface RunPipelineProps {
     onDismiss: (runId: string) => void;
 }
 
-const STAGE_META: Record<PipelineStage, { label: string; sublabel: string }> = {
-    outflow: { label: '出旨', sublabel: 'Outflow' },
-    processing: { label: '执行', sublabel: 'Processing' },
-    return: { label: '回銮', sublabel: 'Return' },
+const STAGE_LABEL: Record<PipelineStage, string> = {
+    outflow: 'Outflow',
+    processing: 'Processing',
+    return: 'Return',
 };
 
 const STAGES: PipelineStage[] = ['outflow', 'processing', 'return'];
 
 function StageIcon({ stage, run }: { stage: PipelineStage; run: PipelineRun }) {
-    const reached = STAGES.indexOf(stage) <= STAGES.indexOf(run.stage);
+    const stageIndex = STAGES.indexOf(stage);
+    const runStageIndex = STAGES.indexOf(run.stage);
+    const reached = stageIndex <= runStageIndex;
     const isCurrent = stage === run.stage;
 
     if (!reached) {
@@ -39,8 +42,7 @@ function StageIcon({ stage, run }: { stage: PipelineStage; run: PipelineRun }) {
 
 function formatTime(ts: string | null): string {
     if (!ts) return '';
-    const d = new Date(ts);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    return new Date(ts).toLocaleTimeString();
 }
 
 export function RunPipeline({ runs, activeRun, onDismiss }: RunPipelineProps) {
@@ -49,6 +51,7 @@ export function RunPipeline({ runs, activeRun, onDismiss }: RunPipelineProps) {
     if (!run) return null;
 
     const isActive = run.status === 'running' || run.status === 'pending';
+    const runStageIndex = STAGES.indexOf(run.stage);
 
     return (
         <div className="is-pipeline" data-status={run.status}>
@@ -64,24 +67,30 @@ export function RunPipeline({ runs, activeRun, onDismiss }: RunPipelineProps) {
             </div>
 
             <div className="is-pipeline__stages">
-                {STAGES.map((stage, i) => (
-                    <div key={stage} className="is-pipeline__stage-group">
-                        <div
-                            className={`is-pipeline__stage ${stage === run.stage ? 'current' : ''} ${STAGES.indexOf(stage) < STAGES.indexOf(run.stage) ? 'passed' : ''}`}
-                            data-status={stage === run.stage ? run.status : STAGES.indexOf(stage) < STAGES.indexOf(run.stage) ? 'done' : 'pending'}
-                        >
-                            <StageIcon stage={stage} run={run} />
-                            <span className="is-pipeline__stage-label">
-                                {STAGE_META[stage].label}
-                            </span>
-                        </div>
-                        {i < STAGES.length - 1 && (
-                            <div className={`is-pipeline__connector ${isActive && STAGES.indexOf(stage) < STAGES.indexOf(run.stage) ? 'flow' : ''} ${isActive && stage === run.stage ? 'flow' : ''}`}>
-                                <ArrowRight size={10} />
+                {STAGES.map((stage, i) => {
+                    const stageIndex = STAGES.indexOf(stage);
+                    const passed = stageIndex < runStageIndex;
+                    const isFlowing = isActive && stageIndex <= runStageIndex;
+
+                    return (
+                        <div key={stage} className="is-pipeline__stage-group">
+                            <div
+                                className={`is-pipeline__stage ${stage === run.stage ? 'current' : ''} ${passed ? 'passed' : ''}`}
+                                data-status={stage === run.stage ? run.status : passed ? 'done' : 'pending'}
+                            >
+                                <StageIcon stage={stage} run={run} />
+                                <span className="is-pipeline__stage-label">
+                                    {STAGE_LABEL[stage]}
+                                </span>
                             </div>
-                        )}
-                    </div>
-                ))}
+                            {i < STAGES.length - 1 && (
+                                <div className={`is-pipeline__connector ${isFlowing ? 'flow' : ''}`}>
+                                    <ArrowRight size={10} />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="is-pipeline__meta">

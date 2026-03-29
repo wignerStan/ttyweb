@@ -34,14 +34,13 @@ export function ImperialStudyPanel({ activePaneKey, floating }: ImperialStudyPan
     const assistant = useAssistantPanes();
     const pipeline = useRunPipeline();
 
+    const intentMap = useMemo(
+        () => Object.fromEntries(
+            pipeline.runs.filter(r => r.intent).map(r => [r.run_id, r.intent]),
+        ) as Record<string, string>,
+        [pipeline.runs],
+    );
 
-    const intentMap = useMemo(() => {
-        const map: Record<string, string> = {};
-        for (const r of pipeline.runs) {
-            if (r.intent) map[r.run_id] = r.intent;
-        }
-        return map;
-    }, [pipeline.runs]);
     const handleRefresh = useCallback(async () => {
         setSpinning(true);
         await Promise.all([refetchWorkers(), refetchInbox(), refetchActivity()]);
@@ -54,7 +53,7 @@ export function ImperialStudyPanel({ activePaneKey, floating }: ImperialStudyPan
             {!floating && (
                 <div className="is-panel-header">
                     <div className="is-panel-header__row">
-                        <span className="is-panel-header__title">御書房</span>
+                        <span className="is-panel-header__title">Imperial Study</span>
                         <button
                             className={`is-icon-btn ${spinning ? 'spinning' : ''}`}
                             onClick={handleRefresh}
@@ -125,7 +124,7 @@ export function ImperialStudyPanel({ activePaneKey, floating }: ImperialStudyPan
                 />
             )}
 
-            {/* Task Detail Modal */}
+            {/* ── Task Detail Modal ── */}
             {selectedRunId && (
                 <TaskDetailModal
                     runId={selectedRunId}

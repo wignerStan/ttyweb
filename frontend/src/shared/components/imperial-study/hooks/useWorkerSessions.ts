@@ -3,6 +3,10 @@ import type { WorkerSession } from '../types';
 import { POLL_WORKERS_MS, BUTLER_API_BASE } from '../constants';
 import { getAuthHeader } from '../../../../utils/auth';
 
+function toError(e: unknown): Error {
+    return e instanceof Error ? e : new Error(String(e));
+}
+
 export function useWorkerSessions(studyId?: string) {
     const [workers, setWorkers] = useState<WorkerSession[]>([]);
     const [loading, setLoading] = useState(true);
@@ -21,8 +25,8 @@ export function useWorkerSessions(studyId?: string) {
             const data: WorkerSession[] = json?.data?.worker_sessions ?? [];
             setWorkers(data);
             setError(null);
-        } catch (e: any) {
-            setError(e);
+        } catch (e: unknown) {
+            setError(toError(e));
         } finally {
             setLoading(false);
         }

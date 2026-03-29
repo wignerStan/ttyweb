@@ -29,6 +29,11 @@ vi.mock('../mobile/MobileApp', () => ({
   default: () => <div data-testid="mobile-app">Mobile</div>,
 }));
 
+// Mock FloatingImperialStudy to prevent hook API calls
+vi.mock('../shared/components/imperial-study/components/FloatingImperialStudy', () => ({
+  FloatingImperialStudy: () => null,
+}));
+
 function renderApp(initialEntry = '/') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>

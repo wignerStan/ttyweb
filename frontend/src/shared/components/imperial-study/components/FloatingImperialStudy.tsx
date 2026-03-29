@@ -1,4 +1,4 @@
-// FloatingImperialStudy.tsx — Transparent floating strip for 御書房
+// FloatingImperialStudy.tsx — Transparent floating strip for Imperial Study
 import { ScrollText, Minus, X } from 'lucide-react';
 import { ImperialStudyPanel } from './ImperialStudyPanel';
 import { useFloatingPanel } from '../hooks/useFloatingPanel';
@@ -30,7 +30,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
                 className="is-floating-bubble"
                 style={{ left: position.x, top: position.y }}
                 onClick={toggleCollapse}
-                title="展开御書房"
+                title="Open Imperial Study"
             >
                 <ScrollText size={20} />
                 {unreadCount > 0 && (
@@ -55,7 +55,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
             {/* Drag handle (thin title bar) */}
             <div className="is-floating-panel__titlebar" onMouseDown={onDragStart}>
                 <ScrollText size={12} className="is-floating-panel__icon" />
-                <span className="is-floating-panel__title">御書房</span>
+                <span className="is-floating-panel__title">Imperial Study</span>
                 <span className="is-floating-panel__stats">
                     {unreadCount > 0 && `${unreadCount} unread`}
                 </span>
@@ -69,19 +69,19 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
                         value={opacity}
                         onChange={(e) => setOpacity(Number(e.target.value))}
                         onMouseDown={(e) => e.stopPropagation()}
-                        title={`透明度 ${Math.round(opacity * 100)}%`}
+                        title={`Opacity ${Math.round(opacity * 100)}%`}
                     />
                     <button
                         className="is-floating-panel__btn"
                         onClick={(e) => { e.stopPropagation(); toggleCollapse(); }}
-                        title="最小化"
+                        title="Minimize"
                     >
                         <Minus size={12} />
                     </button>
                     <button
                         className="is-floating-panel__btn is-floating-panel__btn--close"
                         onClick={(e) => { e.stopPropagation(); onClose(); }}
-                        title="关闭浮窗"
+                        title="Close panel"
                     >
                         <X size={12} />
                     </button>

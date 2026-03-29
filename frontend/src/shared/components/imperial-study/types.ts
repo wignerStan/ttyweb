@@ -1,5 +1,5 @@
-// types.ts — 御書房 Plugin TypeScript Interfaces
-// Mirrors Butler backend models (Appendix A)
+// types.ts — Imperial Study Plugin TypeScript Interfaces
+// Mirrors Butler backend models
 
 export type StudyStatus = "active" | "paused" | "archived";
 export type WorkerState = "launching" | "idle" | "busy" | "exited" | "error";

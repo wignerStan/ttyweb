@@ -1,4 +1,4 @@
-// CommandInput.tsx — 下指令 (Give Orders to Butler)
+// CommandInput.tsx — Command input for dispatching to Butler
 import { useState, useCallback, useRef, useMemo } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { VoiceInput } from "../../VoiceInput";
@@ -7,10 +7,10 @@ import { getAuthHeader } from "../../../../utils/auth";
 import type { RoutingInfo } from "../types";
 
 const ASSISTANT_TAGS = [
-    { id: 'translator', label: '翻译', color: '#8b5cf6' },
-    { id: 'cli', label: '命令行', color: '#06b6d4' },
-    { id: 'market', label: '行情', color: '#f59e0b' },
-    { id: 'chat', label: '闲聊', color: '#ec4899' },
+    { id: 'translator', label: 'Translate', color: '#8b5cf6' },
+    { id: 'cli', label: 'CLI', color: '#06b6d4' },
+    { id: 'market', label: 'Market', color: '#f59e0b' },
+    { id: 'chat', label: 'Chat', color: '#ec4899' },
 ] as const;
 
 interface CommandInputProps {
@@ -31,15 +31,20 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
         setFeedback(null);
     }, []);
 
-    const activeTagLabel = useMemo(() => {
-        if (!activeTag) return null;
-        return ASSISTANT_TAGS.find(t => t.id === activeTag)?.label ?? null;
-    }, [activeTag]);
-
     const resetHeight = useCallback(() => {
         const el = textareaRef.current;
         if (el) el.style.height = 'auto';
     }, []);
+
+    const resetInput = useCallback(() => {
+        setIntent('');
+        resetHeight();
+    }, [resetHeight]);
+
+    const activeTagLabel = useMemo(() => {
+        if (!activeTag) return null;
+        return ASSISTANT_TAGS.find(t => t.id === activeTag)?.label ?? null;
+    }, [activeTag]);
 
     const handleSubmit = useCallback(async () => {
         const trimmed = intent.trim();
@@ -48,8 +53,7 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
         // If a tag is selected, route to assistant pane
         if (activeTag) {
             onAssistantSend?.(trimmed, activeTag);
-            setIntent('');
-            resetHeight();
+            resetInput();
             return;
         }
 
@@ -73,20 +77,18 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
             const data = await res.json();
 
             if (data.success) {
-                // Chat fallback: auto-switch to 闲聊 mode
+                // Chat fallback: auto-switch to chat mode
                 if (data.data?.chat_fallback) {
-                    setFeedback({ type: "ok", msg: "闲聊模式" });
+                    setFeedback({ type: "ok", msg: "Chat mode" });
                     onAssistantSend?.(trimmed, "chat");
                     onTagChange("chat");
-                    setIntent("");
-                    resetHeight();
+                    resetInput();
                     setTimeout(clearFeedback, 3000);
                     return;
                 }
 
-                setFeedback({ type: "ok", msg: `已下旨 · run ${data.data.run_id?.slice(0, 8)}` });
-                setIntent("");
-                resetHeight();
+                setFeedback({ type: "ok", msg: `Dispatched \u00b7 run ${data.data.run_id?.slice(0, 8)}` });
+                resetInput();
                 onDispatched?.({ ...data.data, intent: trimmed });
                 // Auto-clear feedback
                 setTimeout(clearFeedback, 4000);
@@ -100,7 +102,7 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
         } finally {
             setLoading(false);
         }
-    }, [intent, loading, onDispatched, clearFeedback, paneTarget, activeTag, onAssistantSend, onTagChange, resetHeight]);
+    }, [intent, loading, onDispatched, clearFeedback, paneTarget, activeTag, onAssistantSend, onTagChange, resetInput]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -136,7 +138,7 @@ export function CommandInput({ onDispatched, paneTarget, activeTag, onTagChange,
                     value={intent}
                     onChange={handleChange}
                     onKeyDown={handleKeyDown}
-                    placeholder={activeTagLabel ? `${activeTagLabel}... (\u2318+Enter)` : "\u4e0b\u65e8\u2026 (\u2318+Enter \u53d1\u9001)"}
+                    placeholder={activeTagLabel ? `${activeTagLabel}... (\u2318+Enter)` : "Enter command... (\u2318+Enter to send)"}
                     disabled={loading}
                     rows={1}
                 />

@@ -1,4 +1,4 @@
-/* imperial-study.css — 御書房 Plugin Styles
+/* imperial-study.css — Imperial Study Plugin Styles
    Scoped to .imperial-study prefix to avoid conflicts */
 
 /* ── CSS Variables (inherit from TmuxWeb global, fallbacks defined here) ── */
@@ -744,7 +744,7 @@
 .is-ctx-menu__item.danger {
     color: var(--is-error);
 }
-/* ── Command Input (下指令) ─────────────────────────────────────────────────── */
+/* ── Command Input ──────────────────────────────────────────────────────────── */
 .is-command {
     padding: 8px 12px;
     border-bottom: 1px solid var(--is-border);
@@ -1488,7 +1488,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   Pipeline — Run Visualization (管线)
+   Pipeline — Run Visualization
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .is-pipeline {
