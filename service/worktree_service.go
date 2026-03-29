@@ -27,19 +27,19 @@ type WtProject struct {
 
 // WorktreeRecord represents a persisted worktree.
 type WorktreeRecord struct {
-	ID                string    `json:"id"`
-	ProjectID         string    `json:"projectId"`
-	BranchName        string    `json:"branchName"`
-	Path              string    `json:"path"`
-	IsMain            bool      `json:"isMain"`
-	HeadCommit        string    `json:"headCommit,omitempty"`
-	HeadCommitMessage string    `json:"headCommitMessage,omitempty"`
-	StatusAhead       int       `json:"statusAhead"`
-	StatusBehind      int       `json:"statusBehind"`
-	StatusModified    int       `json:"statusModified"`
-	StatusStaged      int       `json:"statusStaged"`
-	StatusUntracked   int       `json:"statusUntracked"`
-	StatusConflicts   int       `json:"statusConflicts"`
+	ID                string `json:"id"`
+	ProjectID         string `json:"projectId"`
+	BranchName        string `json:"branchName"`
+	Path              string `json:"path"`
+	IsMain            bool   `json:"isMain"`
+	HeadCommit        string `json:"headCommit,omitempty"`
+	HeadCommitMessage string `json:"headCommitMessage,omitempty"`
+	StatusAhead       int    `json:"statusAhead"`
+	StatusBehind      int    `json:"statusBehind"`
+	StatusModified    int    `json:"statusModified"`
+	StatusStaged      int    `json:"statusStaged"`
+	StatusUntracked   int    `json:"statusUntracked"`
+	StatusConflicts   int    `json:"statusConflicts"`
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
 }
@@ -50,6 +50,7 @@ type WorktreeService struct {
 	projects  map[string]WtProject
 	worktrees map[string]WorktreeRecord
 	nextID    int
+	repoLock  *worktree.RepoLock
 }
 
 // NewWorktreeService creates a WorktreeService with initialized storage.
@@ -57,6 +58,7 @@ func NewWorktreeService() *WorktreeService {
 	return &WorktreeService{
 		projects:  make(map[string]WtProject),
 		worktrees: make(map[string]WorktreeRecord),
+		repoLock:  worktree.NewRepoLock(),
 	}
 }
 
@@ -147,7 +149,11 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 		return nil, err
 	}
 
-	wtPath, err := worktree.CreateWorktree(context.Background(), project.Path, branchName, baseBranch, createBranch)
+	ctx := context.Background()
+	unlock := s.repoLock.Lock(project.Path, ctx)
+	defer unlock()
+
+	wtPath, err := worktree.CreateWorktree(ctx, project.Path, branchName, baseBranch, createBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +212,11 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 		return errors.New("cannot remove main worktree")
 	}
 
-	if err := worktree.RemoveWorktree(context.Background(), project.Path, record.Path, force); err != nil {
+	ctx := context.Background()
+	unlock := s.repoLock.Lock(project.Path, ctx)
+	defer unlock()
+
+	if err := worktree.RemoveWorktree(ctx, project.Path, record.Path, force); err != nil {
 		return err
 	}
 
@@ -278,7 +288,16 @@ func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) 
 		return nil, err
 	}
 
-	if err := worktree.CommitWorktree(context.Background(), record.Path, message); err != nil {
+	project, err := s.GetProject(projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+	unlock := s.repoLock.Lock(project.Path, ctx)
+	defer unlock()
+
+	if err := worktree.CommitWorktree(ctx, record.Path, message); err != nil {
 		return nil, err
 	}
 
