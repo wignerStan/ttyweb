@@ -10,5 +10,16 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts'],
     exclude: ['**/e2e/**', '**/node_modules/**'],
     include: ['src/**/*.test.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.{ts,tsx}'],
+      thresholds: {
+        statements: 80,
+        branches: 75,
+        functions: 80,
+        lines: 80,
+      },
+    },
   },
 });

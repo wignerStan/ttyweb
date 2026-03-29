@@ -1,0 +1,51 @@
+version: "2"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - misspell
+    - exhaustive
+    - bodyclose
+    - noctx
+    - prealloc
+    - unconvert
+    - wastedassign
+    - depguard
+    - errname
+    - nilerr
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: io/ioutil
+              desc: deprecated since Go 1.16, use io and os packages instead
+    goimports:
+      local-prefixes: ttyweb
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: ttyweb
+
+severity:
+  default-severity: error
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+run:
+  timeout: 3m
+  tests: true
+
+exclude:
+  - _gen\.go
+  - bindata/
