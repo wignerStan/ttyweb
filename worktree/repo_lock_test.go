@@ -121,6 +121,24 @@ func TestRepoLock_Remove(t *testing.T) {
 	}
 }
 
+func TestRepoLock_RLockRespectsContext(t *testing.T) {
+	t.Parallel()
+	rl := NewRepoLock()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Acquire write lock to block readers.
+	unlock := rl.Lock("/test/path", context.Background())
+	defer unlock()
+
+	// Cancel context before RLock can succeed.
+	cancel()
+
+	unlockRL := rl.RLock("/test/path", ctx)
+	if unlockRL != nil {
+		t.Error("expected nil unlock func when context is cancelled")
+	}
+}
+
 func TestRepoLock_RLockConcurrency(t *testing.T) {
 	t.Parallel()
 
