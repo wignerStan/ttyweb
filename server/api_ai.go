@@ -41,7 +41,7 @@ const defaultModel = "gpt-4"
 // handleAICommand handles POST /api/ai/command.
 // It calls an OpenAI-compatible LLM API to generate a terminal command
 // based on the user prompt and the selected AI role.
-func (_ *Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleAICommand(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {

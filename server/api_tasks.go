@@ -8,7 +8,7 @@ import (
 )
 
 // handleTasks handles GET (list tasks with pagination).
-func (_ *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
@@ -44,9 +44,9 @@ func (server *Server) handleTaskDetail(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			var body struct {
-				TaskID  string                 `json:"task_id"`
-				PaneKey string                 `json:"pane_key"`
-				Event   string                 `json:"event"`
+				TaskID  string         `json:"task_id"`
+				PaneKey string         `json:"pane_key"`
+				Event   string         `json:"event"`
 				Data    map[string]any `json:"data"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

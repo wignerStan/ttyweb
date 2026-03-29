@@ -80,7 +80,7 @@ func copyConfig(cfg *Config) *Config {
 func Load(path string) (*Config, error) {
 	base := DefaultConfig()
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // reason: path is CLI-provided config file path, not user input
 	if err != nil {
 		if os.IsNotExist(err) {
 			return applyEnvOverrides(base), nil

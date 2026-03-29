@@ -39,13 +39,13 @@ type AiRole struct {
 
 // TaskEvent represents a conversation event within a task.
 type TaskEvent struct {
-	ID        int                    `json:"id"`
-	TaskID    string                 `json:"task_id"`
-	PaneKey   string                 `json:"pane_key"`
-	Timestamp time.Time              `json:"ts"`
-	Event     string                 `json:"event"`
+	ID        int            `json:"id"`
+	TaskID    string         `json:"task_id"`
+	PaneKey   string         `json:"pane_key"`
+	Timestamp time.Time      `json:"ts"`
+	Event     string         `json:"event"`
 	Data      map[string]any `json:"data,omitempty"`
-	Completed bool                   `json:"completed"`
+	Completed bool           `json:"completed"`
 }
 
 // MemoryStore provides an in-memory data store with thread-safe CRUD operations.

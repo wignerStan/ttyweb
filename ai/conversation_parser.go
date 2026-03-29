@@ -12,7 +12,7 @@ import (
 // jsonlScanner returns a buffered scanner for a JSONL file, or an error.
 // The caller must close the returned file.
 func jsonlScanner(filePath string) (*os.File, *bufio.Scanner, error) {
-	file, err := os.Open(filePath)
+	file, err := os.Open(filePath) //nolint:gosec // reason: filePath comes from AI log directory, not user input
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open file %q: %w", filePath, err)
 	}
@@ -50,8 +50,8 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 		ts, _ := time.Parse(time.RFC3339, entry.Timestamp)
 
 		var msgContent struct {
-			Role    string      `json:"role"`
-			Content any `json:"content"`
+			Role    string `json:"role"`
+			Content any    `json:"content"`
 		}
 		if err := json.Unmarshal(entry.Message, &msgContent); err != nil {
 			continue

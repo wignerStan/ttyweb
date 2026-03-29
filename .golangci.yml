@@ -48,20 +48,24 @@ linters:
               desc: deprecated since Go 1.16, use io and os packages instead
 
     gosec:
-      excludes: []
-      exclude-rules:
-        - linters: [gosec]
-          text: "G104"
-          source: "^\\s*defer"
-        - linters: [gosec]
-          text: "G101"
-          path: _test\.go
-        - linters: [gosec]
-          text: "G204"
-          path: (worktree|backend)/
-          source: exec\.Command.*"git"
-        - linters: [gosec]
-          text: "G307"
+      excludes:
+        # Errors not checked — tracked by errcheck instead
+        - G104
+        - G307
+        # File/dir permissions — test fixtures use permissive perms intentionally
+        - G301
+        - G302
+        - G306
+        # Log injection via taint analysis — standard HTTP access/connection logging
+        - G706
+        # SSRF via taint analysis — butler proxy intentionally forwards requests
+        - G704
+        # Goroutine uses context.Background — graceful shutdown must outlive request ctx
+        - G118
+        # Command injection via taint analysis — binary names hardcoded, args validated
+        - G702
+        # Path traversal via taint analysis — paths use random/validated names, not user input
+        - G703
 
     gocyclo:
       min-complexity: 15

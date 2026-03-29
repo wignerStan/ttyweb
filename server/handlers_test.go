@@ -35,15 +35,15 @@ func (m *mockSlave) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (_ *mockSlave) WindowTitleVariables() map[string]any {
+func (*mockSlave) WindowTitleVariables() map[string]any {
 	return map[string]any{"command": "mock", "hostname": "test"}
 }
 
-func (_ *mockSlave) ResizeTerminal(columns int, rows int) error {
+func (*mockSlave) ResizeTerminal(columns int, rows int) error {
 	return nil
 }
 
-func (_ *mockSlave) Close() error {
+func (*mockSlave) Close() error {
 	return nil
 }
 
@@ -61,8 +61,8 @@ func (f *mockSlaveFactory) New(params map[string][]string, headers map[string][]
 // errorFactory always returns an error from New.
 type errorFactory struct{}
 
-func (_ *errorFactory) Name() string { return "error-factory" }
-func (_ *errorFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
+func (*errorFactory) Name() string { return "error-factory" }
+func (*errorFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
 	return nil, errors.New("factory error")
 }
 
@@ -453,9 +453,9 @@ func TestProcessWSConn_PermitArguments_InvalidSession(t *testing.T) {
 		slave: &mockSlave{},
 	}
 	srv, err := New(factory, &Options{
-		Path:           "/",
-		TitleFormat:    "{{ .command }}",
-		Credential:     "",
+		Path:            "/",
+		TitleFormat:     "{{ .command }}",
+		Credential:      "",
 		PermitArguments: true,
 	})
 	if err != nil {
@@ -506,9 +506,9 @@ func TestProcessWSConn_PermitArguments_InvalidPane(t *testing.T) {
 		slave: &mockSlave{},
 	}
 	srv, err := New(factory, &Options{
-		Path:           "/",
-		TitleFormat:    "{{ .command }}",
-		Credential:     "",
+		Path:            "/",
+		TitleFormat:     "{{ .command }}",
+		Credential:      "",
 		PermitArguments: true,
 	})
 	if err != nil {

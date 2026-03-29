@@ -215,14 +215,14 @@ func TestCreateSession_WithCommand(t *testing.T) {
 // to exercise ListSessions parsing paths.
 func createRawSession(t *testing.T, name string) {
 	t.Helper()
-	cmd := exec.CommandContext(context.Background(), "zellij", "-s", name)
+	cmd := exec.CommandContext(context.Background(), "zellij", "-s", name) //nolint:gosec // reason: test code
 	if err := cmd.Start(); err != nil {
 		t.Skipf("skipping: could not start zellij session: %v", err)
 	}
 	// Give zellij time to register the session
 	time.Sleep(500 * time.Millisecond)
 	t.Cleanup(func() {
-		kill := exec.CommandContext(context.Background(), "zellij", "kill-session", name)
+		kill := exec.CommandContext(context.Background(), "zellij", "kill-session", name) //nolint:gosec // reason: test code
 		_ = kill.Run()
 	})
 }

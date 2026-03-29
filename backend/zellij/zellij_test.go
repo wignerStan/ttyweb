@@ -171,7 +171,7 @@ func TestSlave_ReadWrite(t *testing.T) {
 func TestSlave_Close(t *testing.T) {
 	requireZellij(t)
 
-	slave, err := NewZellijSlave("ttyweb-cls-" + randomHex(4),
+	slave, err := NewZellijSlave("ttyweb-cls-"+randomHex(4),
 		WithCloseTimeout(1*time.Second),
 	)
 	if err != nil {

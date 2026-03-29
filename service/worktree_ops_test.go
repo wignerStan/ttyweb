@@ -61,7 +61,7 @@ func TestWorktreeService_ConcurrentCreateSameProject(t *testing.T) {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
-			branch := "serialized-" + string(rune('A'+idx))
+			branch := "serialized-" + string(rune('A'+idx)) //nolint:gosec // reason: test-only int→rune conversion, values are bounded
 			_, err := svc.CreateWorktree(context.Background(), proj.ID, branch, "main", true)
 			if err != nil {
 				t.Errorf("CreateWorktree %d: %v", idx, err)

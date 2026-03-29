@@ -46,6 +46,7 @@ func (NoSessionManager) CreateSession(string, ...string) (string, error) { retur
 func (NoSessionManager) GetSessionDetail(string) (json.RawMessage, error) {
 	return nil, ErrNotSupported
 }
+
 // KillSession returns an error for backends without session management.
 func (NoSessionManager) KillSession(string) error { return ErrNotSupported }
 

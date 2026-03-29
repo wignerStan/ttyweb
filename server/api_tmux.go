@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"os/exec"
+
+	"ttyweb/pkg/validate"
 )
 
 // handleTmuxConfig returns the tmux prefix key configuration.
-func (_ *Server) handleTmuxConfig(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleTmuxConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
@@ -23,7 +25,7 @@ func (_ *Server) handleTmuxConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleQuickDirs returns quick-access directories (stub).
-func (_ *Server) handleQuickDirs(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleQuickDirs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
@@ -63,6 +65,10 @@ func (server *Server) handleTmuxNewWindow(w http.ResponseWriter, r *http.Request
 		writeAPIError(w, http.StatusBadRequest, "session is required")
 		return
 	}
+	if err := validate.SessionName(body.Session); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid session name: "+err.Error())
+		return
+	}
 
 	args := []string{"new-window", "-d", "-t", body.Session}
 	if body.Name != "" {
@@ -72,7 +78,7 @@ func (server *Server) handleTmuxNewWindow(w http.ResponseWriter, r *http.Request
 		args = append(args, "-c", body.Dir)
 	}
 
-	cmd := exec.CommandContext(r.Context(), "tmux", args...)
+	cmd := exec.CommandContext(r.Context(), "tmux", args...) //nolint:gosec // reason: hardcoded binary, args from validated request body
 	if output, err := cmd.CombinedOutput(); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "failed to create window: "+string(output))
 		return
@@ -259,13 +265,17 @@ func (server *Server) handleTmuxSendKeys(w http.ResponseWriter, r *http.Request)
 		writeAPIError(w, http.StatusBadRequest, "pane is required")
 		return
 	}
+	if err := validate.PaneID(body.Pane); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid pane ID: "+err.Error())
+		return
+	}
 	if body.Keys == "" {
 		writeAPIError(w, http.StatusBadRequest, "keys is required")
 		return
 	}
 
 	args := []string{"send-keys", "-t", body.Pane, body.Keys}
-	cmd := exec.CommandContext(r.Context(), "tmux", args...)
+	cmd := exec.CommandContext(r.Context(), "tmux", args...) //nolint:gosec // reason: hardcoded binary, args from validated request body
 	if output, err := cmd.CombinedOutput(); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "failed to send keys: "+string(output))
 		return
@@ -278,7 +288,7 @@ func (server *Server) handleTmuxSendKeys(w http.ResponseWriter, r *http.Request)
 }
 
 // handleTmuxPaneMode returns the current pane mode (stub).
-func (_ *Server) handleTmuxPaneMode(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleTmuxPaneMode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {

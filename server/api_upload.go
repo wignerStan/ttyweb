@@ -15,7 +15,7 @@ const uploadDir = "/tmp/ttyweb-uploads"
 // handleUpload handles POST multipart file uploads.
 // Accepts a "file" field in the form, saves to /tmp/ttyweb-uploads/,
 // and returns {filename, path, size, type}.
-func (_ *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
@@ -39,7 +39,7 @@ func (_ *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = file.Close() }()
 
 	// Ensure upload directory exists.
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+	if err := os.MkdirAll(uploadDir, 0o750); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "failed to create upload directory: "+err.Error())
 		return
 	}
@@ -50,7 +50,7 @@ func (_ *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	uniqueName := fmt.Sprintf("%s-%d%s", timestamp, time.Now().UnixNano(), ext)
 	destPath := filepath.Join(uploadDir, uniqueName)
 
-	dst, err := os.Create(destPath)
+	dst, err := os.Create(destPath) //nolint:gosec // reason: destPath is server-generated (timestamp + nano + extension), not user-controlled
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "failed to create file: "+err.Error())
 		return

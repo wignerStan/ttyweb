@@ -228,7 +228,7 @@ func TestHandleWorktreeProjects_POST_ValidGitRepo(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
+		Success bool           `json:"success"`
 		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
@@ -375,7 +375,7 @@ func TestHandleWorktreeList_POST_CreateWorktree(t *testing.T) {
 
 	// Create an initial commit so worktrees can be created.
 	runGit := func(args ...string) {
-		cmd := exec.CommandContext(context.Background(), "git", args...)
+		cmd := exec.CommandContext(context.Background(), "git", args...) //nolint:gosec // reason: test code
 		cmd.Dir = gitDir
 		cmd.Env = worktree.FilterGitEnv(os.Environ())
 		if out, err := cmd.CombinedOutput(); err != nil {
@@ -403,7 +403,7 @@ func TestHandleWorktreeList_POST_CreateWorktree(t *testing.T) {
 
 	// Parse the response to get the worktree ID.
 	var createResp struct {
-		Success bool                   `json:"success"`
+		Success bool           `json:"success"`
 		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&createResp); err != nil {

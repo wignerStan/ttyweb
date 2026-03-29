@@ -7,11 +7,11 @@ type AssistantType string
 
 const (
 	// AssistantTypeUnknown represents an undetermined assistant type.
-	AssistantTypeUnknown    AssistantType = ""
+	AssistantTypeUnknown AssistantType = ""
 	// AssistantTypeClaudeCode represents a Claude Code assistant.
 	AssistantTypeClaudeCode AssistantType = "claude_code"
 	// AssistantTypeCodex represents a Codex assistant.
-	AssistantTypeCodex      AssistantType = "codex"
+	AssistantTypeCodex AssistantType = "codex"
 )
 
 // String returns the string representation of the assistant type.

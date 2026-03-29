@@ -21,7 +21,7 @@ func NewFactory(defaultSession string) *Factory {
 }
 
 // Name returns the backend name.
-func (_ *Factory) Name() string { return "zellij" }
+func (*Factory) Name() string { return "zellij" }
 
 // New creates a new zellij slave instance.
 func (f *Factory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
@@ -37,12 +37,12 @@ func (f *Factory) New(params map[string][]string, headers map[string][]string) (
 }
 
 // IsAvailable checks whether zellij is installed.
-func (_ *Factory) IsAvailable() bool {
+func (*Factory) IsAvailable() bool {
 	return IsServerRunning()
 }
 
 // ListSessions returns all zellij sessions as JSON.
-func (_ *Factory) ListSessions() (json.RawMessage, error) {
+func (*Factory) ListSessions() (json.RawMessage, error) {
 	sessions, err := ListSessions()
 	if err != nil {
 		return nil, err
@@ -55,12 +55,12 @@ func (_ *Factory) ListSessions() (json.RawMessage, error) {
 }
 
 // CreateSession creates a new zellij session.
-func (_ *Factory) CreateSession(name string, command ...string) (string, error) {
+func (*Factory) CreateSession(name string, command ...string) (string, error) {
 	return CreateSession(name, command...)
 }
 
 // GetSessionDetail returns details for a zellij session.
-func (_ *Factory) GetSessionDetail(name string) (json.RawMessage, error) {
+func (*Factory) GetSessionDetail(name string) (json.RawMessage, error) {
 	sessions, err := ListSessions()
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (_ *Factory) GetSessionDetail(name string) (json.RawMessage, error) {
 }
 
 // KillSession terminates a zellij session.
-func (_ *Factory) KillSession(name string) error {
+func (*Factory) KillSession(name string) error {
 	return KillSession(name)
 }
 

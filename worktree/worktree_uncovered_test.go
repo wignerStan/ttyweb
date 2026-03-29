@@ -377,7 +377,7 @@ func TestCollectStatusPorcelain_InvalidPath(t *testing.T) {
 func TestHeadCommitMessage(t *testing.T) {
 	t.Parallel()
 	repo := initTestRepo(t)
-	msg := headCommitMessage(context.Background(),repo)
+	msg := headCommitMessage(context.Background(), repo)
 	if msg == "" {
 		t.Error("expected non-empty commit message for repo with commits")
 	}
@@ -388,7 +388,7 @@ func TestHeadCommitMessage_EmptyRepo(t *testing.T) {
 	dir := t.TempDir()
 	// Init a bare repo with no commits.
 	mustRun(t, dir, "init", "--bare")
-	msg := headCommitMessage(context.Background(),dir)
+	msg := headCommitMessage(context.Background(), dir)
 	if msg != "" {
 		t.Errorf("expected empty message for bare repo with no commits, got %q", msg)
 	}

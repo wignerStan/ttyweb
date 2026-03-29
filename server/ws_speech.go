@@ -76,7 +76,7 @@ func (s *speechSession) sendError(msg string) {
 
 // handleSpeechWS handles WebSocket connections to /ws/speech.
 // It proxies audio between the browser and the Xunfei IAT STT service.
-func (_ *Server) handleSpeechWS(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleSpeechWS(w http.ResponseWriter, r *http.Request) {
 	xunfeiCfg := ai.LoadXunfeiConfigFromEnv()
 
 	if !xunfeiCfg.IsConfigured() {

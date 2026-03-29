@@ -28,19 +28,19 @@ type WtProject struct {
 
 // WorktreeRecord represents a persisted worktree.
 type WorktreeRecord struct {
-	ID                string `json:"id"`
-	ProjectID         string `json:"projectId"`
-	BranchName        string `json:"branchName"`
-	Path              string `json:"path"`
-	IsMain            bool   `json:"isMain"`
-	HeadCommit        string `json:"headCommit,omitempty"`
-	HeadCommitMessage string `json:"headCommitMessage,omitempty"`
-	StatusAhead       int    `json:"statusAhead"`
-	StatusBehind      int    `json:"statusBehind"`
-	StatusModified    int    `json:"statusModified"`
-	StatusStaged      int    `json:"statusStaged"`
-	StatusUntracked   int    `json:"statusUntracked"`
-	StatusConflicts   int    `json:"statusConflicts"`
+	ID                string    `json:"id"`
+	ProjectID         string    `json:"projectId"`
+	BranchName        string    `json:"branchName"`
+	Path              string    `json:"path"`
+	IsMain            bool      `json:"isMain"`
+	HeadCommit        string    `json:"headCommit,omitempty"`
+	HeadCommitMessage string    `json:"headCommitMessage,omitempty"`
+	StatusAhead       int       `json:"statusAhead"`
+	StatusBehind      int       `json:"statusBehind"`
+	StatusModified    int       `json:"statusModified"`
+	StatusStaged      int       `json:"statusStaged"`
+	StatusUntracked   int       `json:"statusUntracked"`
+	StatusConflicts   int       `json:"statusConflicts"`
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
 }

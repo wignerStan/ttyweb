@@ -215,14 +215,14 @@ func (server *Server) webttyOptions(title []byte) []webtty.Option {
 	return opts
 }
 
-func (_ *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write(indexHTML)
 }
 
 // titleVariables merges maps in a specified order.
 // varUnits are name-keyed maps, whose names will be iterated using order.
-func (_ *Server) titleVariables(order []string, varUnits map[string]map[string]any) map[string]any {
+func (*Server) titleVariables(order []string, varUnits map[string]map[string]any) map[string]any {
 	titleVars := map[string]any{}
 
 	for _, name := range order {

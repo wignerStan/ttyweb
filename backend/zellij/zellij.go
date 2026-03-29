@@ -10,6 +10,8 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/pkg/errors"
+
+	"ttyweb/pkg/validate"
 )
 
 // Slave is a zellij session attached via PTY.
@@ -123,8 +125,8 @@ func (s *Slave) ResizeTerminal(width int, height int) error {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
 	ws := pty.Winsize{
-		Rows: uint16(height),
-		Cols: uint16(width),
+		Rows: validate.Uint16(height),
+		Cols: validate.Uint16(width),
 		X:    0,
 		Y:    0,
 	}

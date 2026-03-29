@@ -9,29 +9,29 @@ func TestOpError_Error(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		err    *OpError
-		want   string
+		name string
+		err  *OpError
+		want string
 	}{
 		{
-			name:   "worktree locked",
-			err:    &OpError{Kind: KindWorktreeLocked, Path: "/repo/wt", Detail: "another process"},
-			want:   "worktree_locked: /repo/wt (another process)",
+			name: "worktree locked",
+			err:  &OpError{Kind: KindWorktreeLocked, Path: "/repo/wt", Detail: "another process"},
+			want: "worktree_locked: /repo/wt (another process)",
 		},
 		{
-			name:   "conflict",
-			err:    &OpError{Kind: KindConflict, Path: "/repo/wt", Detail: "merge conflict in main.go"},
-			want:   "conflict: /repo/wt (merge conflict in main.go)",
+			name: "conflict",
+			err:  &OpError{Kind: KindConflict, Path: "/repo/wt", Detail: "merge conflict in main.go"},
+			want: "conflict: /repo/wt (merge conflict in main.go)",
 		},
 		{
-			name:   "not found",
-			err:    &OpError{Kind: KindNotFound, Path: "/repo/wt"},
-			want:   "not_found: /repo/wt",
+			name: "not found",
+			err:  &OpError{Kind: KindNotFound, Path: "/repo/wt"},
+			want: "not_found: /repo/wt",
 		},
 		{
-			name:   "empty kind",
-			err:    &OpError{Kind: "unknown", Path: "/repo"},
-			want:   "unknown: /repo",
+			name: "empty kind",
+			err:  &OpError{Kind: "unknown", Path: "/repo"},
+			want: "unknown: /repo",
 		},
 	}
 

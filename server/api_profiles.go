@@ -8,7 +8,7 @@ import (
 )
 
 // handleProfiles handles GET (list) and POST (create) for profiles.
-func (_ *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {

@@ -41,7 +41,7 @@ func stressCreateWorktrees(ctx context.Context, t *testing.T, repo string, repoL
 			}
 			defer unlock()
 
-			branch := "stress-" + string(rune('A'+idx))
+			branch := "stress-" + string(rune('A'+idx)) //nolint:gosec // reason: test-only int→rune conversion, values are bounded
 			p, err := CreateWorktree(ctx, repo, branch, "main", true)
 			if err != nil {
 				t.Errorf("CreateWorktree %d: %v", idx, err)
@@ -53,7 +53,7 @@ func stressCreateWorktrees(ctx context.Context, t *testing.T, repo string, repoL
 	}
 	wg.Wait()
 
-	if got := createSuccess.Load(); got != int32(numWorktrees) {
+	if got := createSuccess.Load(); got != int32(numWorktrees) { //nolint:gosec // reason: test-only int→int32 conversion, numWorktrees is small
 		t.Fatalf("created %d/%d worktrees", got, numWorktrees)
 	}
 
@@ -147,7 +147,7 @@ func stressRemoveWorktrees(ctx context.Context, t *testing.T, repo string, repoL
 	}
 	wg.Wait()
 
-	if got := removeSuccess.Load(); got != int32(numWorktrees) {
+	if got := removeSuccess.Load(); got != int32(numWorktrees) { //nolint:gosec // reason: test-only int→int32 conversion, numWorktrees is small
 		t.Errorf("removed %d/%d worktrees", got, numWorktrees)
 	}
 }

@@ -34,7 +34,7 @@ func initGitRepo(t *testing.T, path string) {
 
 func runGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
-	cmd := exec.CommandContext(context.Background(), "git", args...)
+	cmd := exec.CommandContext(context.Background(), "git", args...) //nolint:gosec // reason: test code
 	cmd.Dir = dir
 	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	out, err := cmd.CombinedOutput()

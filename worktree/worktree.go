@@ -107,7 +107,7 @@ func newGitCmd(dir string, args ...string) *exec.Cmd {
 
 // newGitCmdContext creates a git exec.Cmd with safe env defaults, honouring ctx for cancellation.
 func newGitCmdContext(ctx context.Context, dir string, args ...string) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // reason: hardcoded binary, args are static git subcommands
 	cmd.Env = append([]string(nil), gitCommandEnv...)
 
 	testEnvMu.RLock()
@@ -165,7 +165,7 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 
 	// Determine worktree directory.
 	worktreePath := filepath.Join(absRepo, ".worktrees", sanitizeBranchName(branchName))
-	if err := os.MkdirAll(filepath.Dir(worktreePath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(worktreePath), 0o750); err != nil {
 		return "", fmt.Errorf("create worktree parent dir: %w", err)
 	}
 

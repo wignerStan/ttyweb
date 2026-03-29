@@ -59,7 +59,7 @@ func TestHandleNotepad_POST(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
+		Success bool           `json:"success"`
 		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {

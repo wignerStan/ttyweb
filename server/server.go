@@ -52,7 +52,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 	}
 	if options.IndexFile != "" {
 		path := homedir.Expand(options.IndexFile)
-		indexData, err = os.ReadFile(path)
+		indexData, err = os.ReadFile(path) //nolint:gosec // reason: path comes from CLI option, not user input
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read custom index file at `%s`", path)
 		}
@@ -257,7 +257,8 @@ func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFu
 
 func (server *Server) setupHTTPServer(handler http.Handler) (*http.Server, error) {
 	srv := &http.Server{
-		Handler: handler,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	if server.options.EnableTLSClientAuth {
@@ -273,7 +274,7 @@ func (server *Server) setupHTTPServer(handler http.Handler) (*http.Server, error
 
 func (server *Server) tlsConfig() (*tls.Config, error) {
 	caFile := homedir.Expand(server.options.TLSCACrtFile)
-	caCert, err := os.ReadFile(caFile)
+	caCert, err := os.ReadFile(caFile) //nolint:gosec // reason: caFile comes from CLI option, not user input
 	if err != nil {
 		return nil, errors.New("could not open CA crt file " + caFile)
 	}

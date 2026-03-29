@@ -11,11 +11,13 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/pkg/errors"
+
+	"ttyweb/pkg/validate"
 )
 
 const (
 	// DefaultCloseSignal is the signal sent to close the command process.
-	DefaultCloseSignal  = syscall.SIGINT
+	DefaultCloseSignal = syscall.SIGINT
 	// DefaultCloseTimeout is the default duration before force-killing the process.
 	DefaultCloseTimeout = 10 * time.Second
 )
@@ -36,7 +38,7 @@ type LocalCommand struct {
 
 // New creates a new LocalCommand that runs the given command in a PTY.
 func New(command string, argv []string, headers map[string][]string, options ...Option) (*LocalCommand, error) {
-	cmd := exec.CommandContext(context.Background(), command, argv...)
+	cmd := exec.CommandContext(context.Background(), command, argv...) //nolint:gosec // reason: command comes from CLI flags, argv from validated input
 
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 
@@ -138,8 +140,8 @@ func (lcmd *LocalCommand) ResizeTerminal(width int, height int) error {
 	lcmd.ptyMu.Lock()
 	defer lcmd.ptyMu.Unlock()
 	window := pty.Winsize{
-		Rows: uint16(height),
-		Cols: uint16(width),
+		Rows: validate.Uint16(height),
+		Cols: validate.Uint16(width),
 		X:    0,
 		Y:    0,
 	}

@@ -11,9 +11,9 @@ type SessionEventType string
 
 const (
 	// SessionEventNew indicates a newly discovered session.
-	SessionEventNew       SessionEventType = "new"
+	SessionEventNew SessionEventType = "new"
 	// SessionEventUpdated indicates a session file has been modified.
-	SessionEventUpdated   SessionEventType = "updated"
+	SessionEventUpdated SessionEventType = "updated"
 	// SessionEventCompleted indicates a session file has been removed.
 	SessionEventCompleted SessionEventType = "completed"
 )

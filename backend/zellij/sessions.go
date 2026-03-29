@@ -101,7 +101,7 @@ func SessionsJSON() ([]byte, error) {
 
 // zellijOutput runs a zellij command and returns stdout.
 func zellijOutput(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "zellij", args...)
+	cmd := exec.CommandContext(context.Background(), "zellij", args...) //nolint:gosec // reason: hardcoded binary, args validated upstream
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -113,7 +113,7 @@ func zellijOutput(args ...string) (string, error) {
 
 // zellijExec runs a zellij command (ignoring output).
 func zellijExec(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "zellij", args...)
+	cmd := exec.CommandContext(context.Background(), "zellij", args...) //nolint:gosec // reason: hardcoded binary, args validated upstream
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out

@@ -37,7 +37,7 @@ func NewFactory(command string, argv []string, options *Options) (*Factory, erro
 }
 
 // Name returns the backend name.
-func (_ *Factory) Name() string {
+func (*Factory) Name() string {
 	return "local command"
 }
 

@@ -259,7 +259,7 @@ func SessionDetailJSON(name string) ([]byte, error) {
 
 // tmuxOutput runs a tmux command and returns stdout.
 func tmuxOutput(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "tmux", args...)
+	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: hardcoded binary, args validated upstream
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -271,7 +271,7 @@ func tmuxOutput(args ...string) (string, error) {
 
 // tmuxExec runs a tmux command (ignoring output).
 func tmuxExec(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "tmux", args...)
+	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: hardcoded binary, args validated upstream
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out

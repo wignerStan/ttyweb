@@ -54,7 +54,7 @@ func (r *UpdateProjectRequest) toUpdates() map[string]any {
 // runGitCommand executes a git command in the given directory and returns its
 // trimmed stdout. Returns an error if the command fails.
 func runGitCommand(dir string, args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "git", args...)
+	cmd := exec.CommandContext(context.Background(), "git", args...) //nolint:gosec // reason: hardcoded binary, args are static git subcommands
 	cmd.Dir = dir
 	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	out, err := cmd.Output()

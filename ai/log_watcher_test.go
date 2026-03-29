@@ -123,8 +123,8 @@ func TestLogWatcher_DetectsUpdatedSession(t *testing.T) {
 	}
 
 	// Modify the file.
-	time.Sleep(100 * time.Millisecond) // Ensure different mod time.
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644)
+	time.Sleep(100 * time.Millisecond)                             // Ensure different mod time.
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644) //nolint:gosec // reason: test code
 	if err != nil {
 		t.Fatal(err)
 	}

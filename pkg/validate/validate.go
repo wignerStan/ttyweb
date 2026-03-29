@@ -4,6 +4,7 @@ package validate
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 )
 
@@ -42,4 +43,16 @@ func PaneID(id string) error {
 		return fmt.Errorf("pane ID contains invalid characters: %q", id)
 	}
 	return nil
+}
+
+// Uint16 safely converts an int to uint16, clamping to the valid range.
+// Values below 0 become 0; values above math.MaxUint16 become math.MaxUint16.
+func Uint16(v int) uint16 {
+	if v < 0 {
+		return 0
+	}
+	if v > math.MaxUint16 {
+		return math.MaxUint16
+	}
+	return uint16(v)
 }

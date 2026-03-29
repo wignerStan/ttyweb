@@ -88,7 +88,7 @@ func (server *Server) handleAISessions(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleAIListSessions handles GET /api/ai/sessions.
-func (_ *Server) handleAIListSessions(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleAIListSessions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -110,7 +110,7 @@ func (_ *Server) handleAIListSessions(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleAICleanupSessions handles POST /api/ai/sessions/cleanup.
-func (_ *Server) handleAICleanupSessions(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleAICleanupSessions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -148,7 +148,7 @@ func (server *Server) handleAISessionSubroute(w http.ResponseWriter, r *http.Req
 }
 
 // aiSessionDetail handles GET /api/ai/sessions/:id.
-func (_ *Server) aiSessionDetail(w http.ResponseWriter, r *http.Request, id int) {
+func (*Server) aiSessionDetail(w http.ResponseWriter, r *http.Request, id int) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -166,7 +166,7 @@ func (_ *Server) aiSessionDetail(w http.ResponseWriter, r *http.Request, id int)
 // aiSessionConversationOrRefresh handles GET /api/ai/sessions/:id/conversation
 // and GET /api/ai/sessions/:id/refresh. When refresh is true, it re-parses
 // the session file before returning the conversation.
-func (_ *Server) aiSessionConversationOrRefresh(w http.ResponseWriter, r *http.Request, id int, refresh bool) {
+func (*Server) aiSessionConversationOrRefresh(w http.ResponseWriter, r *http.Request, id int, refresh bool) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

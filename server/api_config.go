@@ -6,7 +6,7 @@ import (
 
 // handleConfig returns the opencode configuration.
 // This is a stub that returns null configs since opencode is not integrated.
-func (_ *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
