@@ -342,12 +342,15 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 }
 
 func (s *WorktreeService) syncWorktrees(project *WtProject) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Phase 1: Run git I/O without holding the service lock.
 	gitWorktrees, err := worktree.ListWorktrees(context.Background(), project.Path)
 	if err != nil {
 		return err
 	}
+
+	// Phase 2: Update in-memory state under lock.
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	// Build map of existing DB worktrees by normalized path.
 	dbByPath := make(map[string]string)
