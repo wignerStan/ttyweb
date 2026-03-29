@@ -291,7 +291,7 @@ func gitRemoteURL(repoPath string) (string, error) {
 	url, err := runGitCommand(repoPath, "remote", "get-url", "origin")
 	if err != nil {
 		// No origin remote configured is not an error.
-		return "", nil
+		return "", nil //nolint:nilerr // intentional: no origin remote is expected, not an error
 	}
 	return url, nil
 }

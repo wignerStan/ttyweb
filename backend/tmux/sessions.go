@@ -23,8 +23,9 @@ func ListSessions() ([]Session, error) {
 		return nil, nil
 	}
 
-	var sessions []Session
-	for _, line := range strings.Split(out, "\n") {
+	lines := strings.Split(out, "\n")
+	sessions := make([]Session, 0, len(lines))
+	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -58,8 +59,9 @@ func ListPanes(session string) ([]Pane, error) {
 		return nil, nil
 	}
 
-	var panes []Pane
-	for _, line := range strings.Split(out, "\n") {
+	lines := strings.Split(out, "\n")
+	panes := make([]Pane, 0, len(lines))
+	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue

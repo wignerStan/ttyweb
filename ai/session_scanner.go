@@ -85,7 +85,7 @@ func ScanClaudeProjects() ([]string, error) {
 		return nil, fmt.Errorf("failed to read claude projects directory: %w", err)
 	}
 
-	var projects []string
+	projects := make([]string, 0, len(entries))
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
@@ -115,7 +115,7 @@ func ScanClaudeSessions(projectPath string) ([]AISession, error) {
 		return nil, fmt.Errorf("failed to read session directory %q: %w", sessionDir, err)
 	}
 
-	var sessions []AISession
+	sessions := make([]AISession, 0, len(entries))
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -171,7 +171,7 @@ func ScanCodexSessions() ([]AISession, error) {
 		return nil, fmt.Errorf("failed to read codex session directory %q: %w", todayDir, err)
 	}
 
-	var sessions []AISession
+	sessions := make([]AISession, 0, len(todayEntries))
 	for _, entry := range todayEntries {
 		if entry.IsDir() {
 			continue
