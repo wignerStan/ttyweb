@@ -433,7 +433,7 @@ func collectStatusPorcelainContext(ctx context.Context, path string) (*WorktreeS
 	cmd := newGitCmdContext(ctx, path, "status", "--porcelain=2", "--branch")
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("collectStatusPorcelain: git status: %w", err)
 	}
 	return parsePorcelainStatus(string(output)), nil
 }
@@ -514,17 +514,17 @@ func parseCount(token string) int {
 func collectStatusGoGit(path string) (*WorktreeStatus, error) {
 	repo, err := goGit.PlainOpen(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("collectStatusGoGit: open repo: %w", err)
 	}
 
 	worktree, err := repo.Worktree()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("collectStatusGoGit: get worktree: %w", err)
 	}
 
 	snap, err := worktree.Status()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("collectStatusGoGit: get status: %w", err)
 	}
 
 	status := &WorktreeStatus{}

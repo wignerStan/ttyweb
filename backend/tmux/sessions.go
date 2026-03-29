@@ -237,7 +237,11 @@ func SessionsJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(sessions)
+	data, err := json.Marshal(sessions)
+	if err != nil {
+		return nil, fmt.Errorf("SessionsJSON: marshal: %w", err)
+	}
+	return data, nil
 }
 
 // SessionDetailJSON returns a session with panes as JSON.
@@ -246,7 +250,11 @@ func SessionDetailJSON(name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(detail)
+	data, err := json.Marshal(detail)
+	if err != nil {
+		return nil, fmt.Errorf("SessionDetailJSON: marshal: %w", err)
+	}
+	return data, nil
 }
 
 // tmuxOutput runs a tmux command and returns stdout.
@@ -256,7 +264,7 @@ func tmuxOutput(args ...string) (string, error) {
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	if err := cmd.Run(); err != nil {
-		return "", err
+		return "", fmt.Errorf("tmux %s: %w", strings.Join(args, " "), err)
 	}
 	return out.String(), nil
 }

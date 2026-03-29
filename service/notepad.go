@@ -186,7 +186,7 @@ func (s *NoteService) ReorderNotes(reorders []NoteReorder) error {
 		return nil
 	}
 
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	err := s.db.Transaction(func(tx *gorm.DB) error {
 		for _, r := range reorders {
 			result := tx.Model(&NotePad{}).
 				Where("id = ?", r.ID).
@@ -200,4 +200,8 @@ func (s *NoteService) ReorderNotes(reorders []NoteReorder) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("ReorderNotes: %w", err)
+	}
+	return nil
 }

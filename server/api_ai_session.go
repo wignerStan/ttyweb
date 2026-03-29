@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"ttyweb/ai"
 	"ttyweb/service"
 )
@@ -207,7 +209,7 @@ func refreshSessionsFromDisk(projectPath string) error {
 
 	codexSessions, err := ai.ScanCodexSessions()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "refreshSessionsFromDisk: scanning codex sessions")
 	}
 	for _, s := range codexSessions {
 		aiSessionService.Store().Upsert(s)
@@ -220,7 +222,7 @@ func refreshSessionsFromDisk(projectPath string) error {
 func upsertClaudeSessions(projectPath string) error {
 	claudeSessions, err := ai.ScanClaudeSessions(projectPath)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "upsertClaudeSessions: scanning %q", projectPath)
 	}
 	for _, s := range claudeSessions {
 		aiSessionService.Store().Upsert(s)
@@ -232,7 +234,7 @@ func upsertClaudeSessions(projectPath string) error {
 func upsertAllClaudeSessions() error {
 	projects, err := ai.ScanClaudeProjects()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "upsertAllClaudeSessions: scanning projects")
 	}
 	for _, project := range projects {
 		sessions, scanErr := ai.ScanClaudeSessions(project)

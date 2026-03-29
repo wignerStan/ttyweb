@@ -2,6 +2,7 @@ package tmux
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"ttyweb/backend"
 )
@@ -47,7 +48,11 @@ func (f *TmuxFactory) ListSessions() (json.RawMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(sessions)
+	data, err := json.Marshal(sessions)
+	if err != nil {
+		return nil, fmt.Errorf("ListSessions: marshal: %w", err)
+	}
+	return data, nil
 }
 
 func (f *TmuxFactory) CreateSession(name string, command ...string) (string, error) {
@@ -59,7 +64,11 @@ func (f *TmuxFactory) GetSessionDetail(name string) (json.RawMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(detail)
+	data, err := json.Marshal(detail)
+	if err != nil {
+		return nil, fmt.Errorf("GetSessionDetail: marshal: %w", err)
+	}
+	return data, nil
 }
 
 func (f *TmuxFactory) KillSession(name string) error {

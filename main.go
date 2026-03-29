@@ -113,7 +113,10 @@ func loadConfig(configFile string) error {
 		configPath = config.DefaultConfigPath()
 	}
 	_, err := config.Load(configPath)
-	return err
+	if err != nil {
+		return fmt.Errorf("loadConfig: %w", err)
+	}
+	return nil
 }
 
 // resolveDBPath returns the SQLite database path, using defaults if empty.
@@ -164,7 +167,11 @@ func selectBackend(backendName string, session string, args []string) (server.Fa
 		if len(args) == 0 {
 			args = []string{defaultShell()}
 		}
-		return localcommand.NewFactory(args[0], args[1:], &localcommand.Options{})
+		factory, err := localcommand.NewFactory(args[0], args[1:], &localcommand.Options{})
+		if err != nil {
+			return nil, fmt.Errorf("selectBackend: local factory: %w", err)
+		}
+		return factory, nil
 
 	case "tmux":
 		if !commandExists("tmux") {

@@ -76,7 +76,10 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 		}
 	}
 
-	return messages, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("ParseClaudeConversation: scanning %q: %w", filePath, err)
+	}
+	return messages, nil
 }
 
 // isSkippableContent returns true for empty strings or Claude Code internal commands.
@@ -307,5 +310,8 @@ func ParseCodexConversation(filePath string) ([]ConversationMessage, error) {
 		}
 	}
 
-	return messages, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("ParseCodexConversation: scanning %q: %w", filePath, err)
+	}
+	return messages, nil
 }

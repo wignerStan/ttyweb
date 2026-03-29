@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -43,5 +44,8 @@ func AutoMigrate() error {
 		return nil
 	}
 
-	return db.AutoMigrate(models...)
+	if err := db.AutoMigrate(models...); err != nil {
+		return fmt.Errorf("AutoMigrate: %w", err)
+	}
+	return nil
 }

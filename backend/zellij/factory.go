@@ -43,7 +43,11 @@ func (f *ZellijFactory) ListSessions() (json.RawMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(sessions)
+	data, err := json.Marshal(sessions)
+	if err != nil {
+		return nil, fmt.Errorf("ListSessions: marshal: %w", err)
+	}
+	return data, nil
 }
 
 func (f *ZellijFactory) CreateSession(name string, command ...string) (string, error) {
@@ -71,7 +75,11 @@ func (f *ZellijFactory) GetSessionDetail(name string) (json.RawMessage, error) {
 		Session: *found,
 		Panes:   nil, // zellij doesn't expose pane listing via CLI easily
 	}
-	return json.Marshal(detail)
+	data, err := json.Marshal(detail)
+	if err != nil {
+		return nil, fmt.Errorf("GetSessionDetail: marshal: %w", err)
+	}
+	return data, nil
 }
 
 func (f *ZellijFactory) KillSession(name string) error {

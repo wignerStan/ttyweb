@@ -172,7 +172,11 @@ func BuildFirstFrame(config XunfeiConfig, params SpeechParams, audio string, seq
 		},
 	}
 
-	return json.Marshal(frame)
+	data, err := json.Marshal(frame)
+	if err != nil {
+		return nil, fmt.Errorf("BuildFirstFrame: marshal frame: %w", err)
+	}
+	return data, nil
 }
 
 // BuildMiddleFrame builds a middle (continuation) WebSocket frame with audio data.
@@ -190,7 +194,11 @@ func BuildMiddleFrame(audio string, seq int) ([]byte, error) {
 			},
 		},
 	}
-	return json.Marshal(frame)
+	data, err := json.Marshal(frame)
+	if err != nil {
+		return nil, fmt.Errorf("BuildMiddleFrame: marshal frame: %w", err)
+	}
+	return data, nil
 }
 
 // BuildLastFrame builds the final WebSocket frame signalling end of audio.
@@ -207,7 +215,11 @@ func BuildLastFrame(seq int) ([]byte, error) {
 			},
 		},
 	}
-	return json.Marshal(frame)
+	data, err := json.Marshal(frame)
+	if err != nil {
+		return nil, fmt.Errorf("BuildLastFrame: marshal frame: %w", err)
+	}
+	return data, nil
 }
 
 // xfyunResponse represents the top-level JSON response from Xunfei IAT v2.

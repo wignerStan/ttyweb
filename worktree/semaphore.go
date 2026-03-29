@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -28,7 +29,7 @@ func (s *OperationSemaphore) Acquire(ctx context.Context) (Guard, error) {
 	case s.sem <- struct{}{}:
 		return Guard{release: func() { <-s.sem }, once: &sync.Once{}}, nil
 	case <-ctx.Done():
-		return Guard{}, ctx.Err()
+		return Guard{}, fmt.Errorf("OperationSemaphore.Acquire: %w", ctx.Err())
 	}
 }
 

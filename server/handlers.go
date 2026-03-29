@@ -122,7 +122,11 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 		return errors.Wrapf(err, "failed to create webtty")
 	}
 
-	return tty.Run(ctx)
+	err = tty.Run(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "failed to run webtty")
+	}
+	return nil
 }
 
 // authenticateWS reads and validates the initial WebSocket message.

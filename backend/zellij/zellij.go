@@ -89,13 +89,21 @@ func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
 func (s *ZellijSlave) Read(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
-	return s.pty.Read(p)
+	n, err = s.pty.Read(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to read from zellij pty")
+	}
+	return n, nil
 }
 
 func (s *ZellijSlave) Write(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
-	return s.pty.Write(p)
+	n, err = s.pty.Write(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to write to zellij pty")
+	}
+	return n, nil
 }
 
 func (s *ZellijSlave) WindowTitleVariables() map[string]interface{} {
@@ -118,7 +126,11 @@ func (s *ZellijSlave) ResizeTerminal(width int, height int) error {
 		X:    0,
 		Y:    0,
 	}
-	return pty.Setsize(s.pty, &ws)
+	err := pty.Setsize(s.pty, &ws)
+	if err != nil {
+		return errors.Wrapf(err, "failed to resize zellij terminal")
+	}
+	return nil
 }
 
 func (s *ZellijSlave) Close() error {

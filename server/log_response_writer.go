@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"net"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 type logResponseWriter struct {
@@ -19,5 +21,9 @@ func (w *logResponseWriter) WriteHeader(status int) {
 func (w *logResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj, _ := w.ResponseWriter.(http.Hijacker)
 	w.status = http.StatusSwitchingProtocols
-	return hj.Hijack()
+	conn, rw, err := hj.Hijack()
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to hijack connection")
+	}
+	return conn, rw, nil
 }

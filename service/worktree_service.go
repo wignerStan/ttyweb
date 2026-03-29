@@ -142,7 +142,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 		return nil, errors.New("branch name is required")
 	}
 	if err := worktree.ValidateBranchName(branchName); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateWorktree: %w", err)
 	}
 
 	project, err := s.GetProject(projectID)
@@ -158,7 +158,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 
 	wtPath, err := worktree.CreateWorktree(ctx, project.Path, branchName, baseBranch, createBranch)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateWorktree: git worktree add: %w", err)
 	}
 
 	now := time.Now()
@@ -222,7 +222,7 @@ func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktre
 	defer unlock()
 
 	if err := worktree.RemoveWorktree(ctx, project.Path, record.Path, force); err != nil {
-		return err
+		return fmt.Errorf("RemoveWorktree: git worktree remove: %w", err)
 	}
 
 	s.mu.Lock()
@@ -305,7 +305,7 @@ func (s *WorktreeService) CommitWorktree(ctx context.Context, projectID, worktre
 	defer unlock()
 
 	if err := worktree.CommitWorktree(ctx, record.Path, message); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CommitWorktree: git commit: %w", err)
 	}
 
 	return s.RefreshWorktree(ctx, projectID, worktreeID)
@@ -344,7 +344,7 @@ func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject)
 
 	gitWorktrees, err := worktree.ListWorktrees(ctx, project.Path)
 	if err != nil {
-		return err
+		return fmt.Errorf("syncWorktrees: list worktrees: %w", err)
 	}
 
 	// Build map of existing DB worktrees by normalized path.

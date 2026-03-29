@@ -148,7 +148,7 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 		}
 	case <-cctx.Done():
 		_ = srv.Close()
-		err = cctx.Err()
+		err = errors.Wrapf(cctx.Err(), "server context cancelled")
 	}
 
 	conn := counter.count()

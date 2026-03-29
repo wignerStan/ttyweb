@@ -92,7 +92,11 @@ func SessionsJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(sessions)
+	data, err := json.Marshal(sessions)
+	if err != nil {
+		return nil, fmt.Errorf("SessionsJSON: marshal: %w", err)
+	}
+	return data, nil
 }
 
 // zellijOutput runs a zellij command and returns stdout.

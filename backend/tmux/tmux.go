@@ -100,13 +100,21 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 func (s *TmuxSlave) Read(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
-	return s.pty.Read(p)
+	n, err = s.pty.Read(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to read from tmux pty")
+	}
+	return n, nil
 }
 
 func (s *TmuxSlave) Write(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
-	return s.pty.Write(p)
+	n, err = s.pty.Write(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to write to tmux pty")
+	}
+	return n, nil
 }
 
 func (s *TmuxSlave) WindowTitleVariables() map[string]interface{} {
@@ -133,7 +141,7 @@ func (s *TmuxSlave) ResizeTerminal(width int, height int) error {
 		Y:    0,
 	}
 	if err := pty.Setsize(s.pty, &ws); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to resize tmux terminal")
 	}
 	// Also resize via tmux for accurate internal state
 	if s.pane != "" {

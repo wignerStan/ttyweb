@@ -110,8 +110,8 @@ func processSSEStream(ctx context.Context, body io.ReadCloser, callback func(tok
 	reader := bufio.NewReader(body)
 
 	for {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("processSSEStream: context cancelled: %w", err)
 		}
 
 		line, err := reader.ReadString('\n')

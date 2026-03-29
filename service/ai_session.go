@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -181,9 +182,17 @@ func (svc *AISessionService) GetConversation(id int) ([]ai.ConversationMessage, 
 
 	switch record.Type {
 	case string(ai.AssistantTypeClaudeCode):
-		return ai.ParseClaudeConversation(record.FilePath)
+		msgs, err := ai.ParseClaudeConversation(record.FilePath)
+		if err != nil {
+			return nil, fmt.Errorf("GetConversation: parse claude: %w", err)
+		}
+		return msgs, nil
 	case string(ai.AssistantTypeCodex):
-		return ai.ParseCodexConversation(record.FilePath)
+		msgs, err := ai.ParseCodexConversation(record.FilePath)
+		if err != nil {
+			return nil, fmt.Errorf("GetConversation: parse codex: %w", err)
+		}
+		return msgs, nil
 	default:
 		return nil, nil
 	}

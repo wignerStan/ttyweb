@@ -89,13 +89,21 @@ func New(command string, argv []string, headers map[string][]string, options ...
 func (lcmd *LocalCommand) Read(p []byte) (n int, err error) {
 	lcmd.ptyMu.Lock()
 	defer lcmd.ptyMu.Unlock()
-	return lcmd.pty.Read(p)
+	n, err = lcmd.pty.Read(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to read from pty")
+	}
+	return n, nil
 }
 
 func (lcmd *LocalCommand) Write(p []byte) (n int, err error) {
 	lcmd.ptyMu.Lock()
 	defer lcmd.ptyMu.Unlock()
-	return lcmd.pty.Write(p)
+	n, err = lcmd.pty.Write(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to write to pty")
+	}
+	return n, nil
 }
 
 func (lcmd *LocalCommand) Close() error {
@@ -131,10 +139,9 @@ func (lcmd *LocalCommand) ResizeTerminal(width int, height int) error {
 	}
 	err := pty.Setsize(lcmd.pty, &window)
 	if err != nil {
-		return err
-	} else {
-		return nil
+		return errors.Wrapf(err, "failed to resize terminal")
 	}
+	return nil
 }
 
 func (lcmd *LocalCommand) closeTimeoutC() <-chan time.Time {

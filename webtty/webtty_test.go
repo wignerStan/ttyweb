@@ -241,11 +241,11 @@ func newMockMaster() *mockMaster {
 }
 
 func (mm *mockMaster) Read(buf []byte) (int, error) {
-	return mm.masterToGottyReader.Read(buf)
+	return mm.masterToGottyReader.Read(buf) //nolint:wrapcheck // test helper: io.PipeReader.Read
 }
 
 func (mm *mockMaster) Write(buf []byte) (int, error) {
-	return mm.gottyToMasterWriter.Write(buf)
+	return mm.gottyToMasterWriter.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
 func newMockSlave() *mockSlave {
@@ -256,11 +256,11 @@ func newMockSlave() *mockSlave {
 }
 
 func (ms *mockSlave) Read(buf []byte) (int, error) {
-	return ms.slaveToGottyReader.Read(buf)
+	return ms.slaveToGottyReader.Read(buf) //nolint:wrapcheck // test helper: io.PipeReader.Read
 }
 
 func (ms *mockSlave) Write(buf []byte) (int, error) {
-	return ms.gottyToSlaveWriter.Write(buf)
+	return ms.gottyToSlaveWriter.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
 func (ms *mockSlave) WindowTitleVariables() map[string]interface{} {
@@ -334,7 +334,7 @@ func (m *eofReadMaster) Read(buf []byte) (int, error) {
 }
 
 func (m *eofReadMaster) Write(buf []byte) (int, error) {
-	return m.writeTo.Write(buf)
+	return m.writeTo.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
 // eofReadSlave is a mockSlave whose Read returns EOF immediately,
@@ -362,7 +362,7 @@ func (s *eofReadSlave) Read(buf []byte) (int, error) {
 }
 
 func (s *eofReadSlave) Write(buf []byte) (int, error) {
-	return s.writeTo.Write(buf)
+	return s.writeTo.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
 func (s *eofReadSlave) WindowTitleVariables() map[string]interface{} {
