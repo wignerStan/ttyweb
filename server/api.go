@@ -29,6 +29,10 @@ func (server *Server) sessionManager() backend.SessionManager {
 	return backend.NoSessionManager{}
 }
 
+// noteService returns the NoteService for notepad CRUD operations.
+func (server *Server) noteService() *service.NoteService {
+	return server.noteSvc
+}
 // setupAPIHandlers registers REST API routes on the given mux.
 func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	apiPrefix := pathPrefix + "api/"
@@ -82,6 +86,10 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	// Projects
 	mux.HandleFunc(apiPrefix+"projects", server.handleProjects)
 	mux.HandleFunc(apiPrefix+"projects/", server.handleProjectDetail)
+	// Notepad
+	mux.HandleFunc(apiPrefix+"notepad/reorder", server.handleNotepadReorder)
+	mux.HandleFunc(apiPrefix+"notepad", server.handleNotepad)
+	mux.HandleFunc(apiPrefix+"notepad/", server.handleNotepadDetail)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
