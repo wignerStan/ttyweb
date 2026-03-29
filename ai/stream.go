@@ -94,20 +94,24 @@ func StreamChatCompletion(
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		_ = resp.Body.Close()
 		return fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(respBody))
 	}
 
-	reader := bufio.NewReader(resp.Body)
+	return processSSEStream(ctx, resp.Body, callback)
+}
+
+// processSSEStream reads SSE events from body, invoking callback for each content delta.
+func processSSEStream(ctx context.Context, body io.ReadCloser, callback func(token string)) error {
+	defer func() { _ = body.Close() }()
+	reader := bufio.NewReader(body)
 
 	for {
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return ctx.Err()
-		default:
 		}
 
 		line, err := reader.ReadString('\n')
@@ -119,33 +123,30 @@ func StreamChatCompletion(
 		}
 
 		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		// SSE format: lines starting with "data: "
-		if !strings.HasPrefix(line, "data: ") {
+		if line == "" || !strings.HasPrefix(line, "data: ") {
 			continue
 		}
 
 		data := strings.TrimPrefix(line, "data: ")
 
-		// Stream end marker
 		if data == "[DONE]" {
 			return nil
 		}
 
-		var msg StreamMessage
-		if err := json.Unmarshal([]byte(data), &msg); err != nil {
-			// Skip malformed lines
-			continue
-		}
-
-		if len(msg.Choices) > 0 {
-			content := msg.Choices[0].Delta.Content
-			if content != "" {
-				callback(content)
-			}
+		if content := extractContent(data); content != "" {
+			callback(content)
 		}
 	}
+}
+
+// extractContent parses an SSE data payload and returns the delta content, or "" if none.
+func extractContent(data string) string {
+	var msg StreamMessage
+	if err := json.Unmarshal([]byte(data), &msg); err != nil {
+		return ""
+	}
+	if len(msg.Choices) > 0 {
+		return msg.Choices[0].Delta.Content
+	}
+	return ""
 }

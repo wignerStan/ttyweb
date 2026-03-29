@@ -37,6 +37,7 @@ type Server struct {
 	titleTemplate  *noesctmpl.Template
 	noteSvc        *service.NoteService
 	segmentService *service.TaskSegmentService
+	srvErrCh       chan error
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
@@ -95,6 +96,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 		titleTemplate:  titleTemplate,
 		noteSvc:        noteSvc,
 		segmentService: service.NewTaskSegmentService(database),
+		srvErrCh:       make(chan error, 1),
 	}, nil
 }
 
@@ -109,68 +111,25 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	}
 
 	counter := newCounter(time.Duration(server.options.Timeout) * time.Second)
+	path := server.normalizePath()
 
-	path := server.options.Path
-	if server.options.EnableRandomUrl {
-		path = "/" + randomstring.Generate(server.options.RandomUrlLength) + "/"
-	}
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
-	}
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
-	}
 	handlers := server.setupHandlers(cctx, cancel, path, counter)
 	srv, err := server.setupHTTPServer(handlers)
 	if err != nil {
 		return errors.Wrapf(err, "failed to setup an HTTP server")
 	}
 
-	if server.options.PermitWrite {
-		log.Printf("Permitting clients to write input to the PTY.")
-	}
-	if server.options.Once {
-		log.Printf("Once option is provided, accepting only one client")
-	}
+	server.logStartupInfo()
 
-	if server.options.Port == "0" {
-		log.Printf("Port number configured to `0`, choosing a random port")
-	}
 	hostPort := net.JoinHostPort(server.options.Address, server.options.Port)
 	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", hostPort)
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen at `%s`", hostPort)
 	}
 
-	scheme := "http"
-	if server.options.EnableTLS {
-		scheme = "https"
-	}
-	host, port, _ := net.SplitHostPort(listener.Addr().String())
-	log.Printf("HTTP server is listening at: %s", scheme+"://"+net.JoinHostPort(host, port)+path)
-	if server.options.Address == "0.0.0.0" {
-		for _, address := range listAddresses() {
-			log.Printf("Alternative URL: %s", scheme+"://"+net.JoinHostPort(address, port)+path)
-		}
-	}
+	server.logListenURLs(listener, path)
 
-	srvErr := make(chan error, 1)
-	go func() {
-		var serveErr error
-		if server.options.EnableTLS {
-			crtFile := homedir.Expand(server.options.TLSCrtFile)
-			keyFile := homedir.Expand(server.options.TLSKeyFile)
-			log.Printf("TLS crt file: %s", crtFile)
-			log.Printf("TLS key file: %s", keyFile)
-
-			serveErr = srv.ServeTLS(listener, crtFile, keyFile)
-		} else {
-			serveErr = srv.Serve(listener)
-		}
-		if serveErr != nil {
-			srvErr <- serveErr
-		}
-	}()
+	go server.serveBackground(srv, listener)
 
 	go func() {
 		select {
@@ -181,7 +140,7 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	}()
 
 	select {
-	case err = <-srvErr:
+	case err = <-server.srvErrCh:
 		if err == http.ErrServerClosed { // by graceful ctx
 			err = nil
 		} else {
@@ -199,6 +158,66 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	counter.wait()
 
 	return err
+}
+
+// normalizePath returns the URL path prefix, ensuring it starts and ends with "/".
+func (server *Server) normalizePath() string {
+	path := server.options.Path
+	if server.options.EnableRandomUrl {
+		path = "/" + randomstring.Generate(server.options.RandomUrlLength) + "/"
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	if !strings.HasSuffix(path, "/") {
+		path = path + "/"
+	}
+	return path
+}
+
+// logStartupInfo logs server configuration at startup.
+func (server *Server) logStartupInfo() {
+	if server.options.PermitWrite {
+		log.Printf("Permitting clients to write input to the PTY.")
+	}
+	if server.options.Once {
+		log.Printf("Once option is provided, accepting only one client")
+	}
+	if server.options.Port == "0" {
+		log.Printf("Port number configured to `0`, choosing a random port")
+	}
+}
+
+// logListenURLs logs the primary and alternative URLs after the listener is bound.
+func (server *Server) logListenURLs(listener net.Listener, path string) {
+	scheme := "http"
+	if server.options.EnableTLS {
+		scheme = "https"
+	}
+	host, port, _ := net.SplitHostPort(listener.Addr().String())
+	log.Printf("HTTP server is listening at: %s", scheme+"://"+net.JoinHostPort(host, port)+path)
+	if server.options.Address == "0.0.0.0" {
+		for _, address := range listAddresses() {
+			log.Printf("Alternative URL: %s", scheme+"://"+net.JoinHostPort(address, port)+path)
+		}
+	}
+}
+
+// serveBackground starts the HTTP server (plain or TLS) in a goroutine.
+func (server *Server) serveBackground(srv *http.Server, listener net.Listener) {
+	var serveErr error
+	if server.options.EnableTLS {
+		crtFile := homedir.Expand(server.options.TLSCrtFile)
+		keyFile := homedir.Expand(server.options.TLSKeyFile)
+		log.Printf("TLS crt file: %s", crtFile)
+		log.Printf("TLS key file: %s", keyFile)
+		serveErr = srv.ServeTLS(listener, crtFile, keyFile)
+	} else {
+		serveErr = srv.Serve(listener)
+	}
+	if serveErr != nil {
+		server.srvErrCh <- serveErr
+	}
 }
 
 func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFunc, pathPrefix string, counter *counter) http.Handler {

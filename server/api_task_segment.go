@@ -75,24 +75,7 @@ func (server *Server) handleSegmentDetail(w http.ResponseWriter, r *http.Request
 
 	// Route: PATCH /api/segments/{id}
 	if r.Method == http.MethodPatch {
-		var body struct {
-			TaskTitle  *string `json:"task_title"`
-			TaskStatus string  `json:"task_status"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeAPIError(w, http.StatusBadRequest, "invalid request body")
-			return
-		}
-		if body.TaskTitle == nil && body.TaskStatus == "" {
-			writeAPIError(w, http.StatusBadRequest, "task_title or task_status is required")
-			return
-		}
-		segment, err := server.segmentService.UpdateSegment(relative, body.TaskTitle, body.TaskStatus)
-		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
-			return
-		}
-		writeAPISuccess(w, segment)
+		server.handleSegmentPatch(w, r, relative)
 		return
 	}
 
@@ -108,6 +91,28 @@ func (server *Server) handleSegmentDetail(w http.ResponseWriter, r *http.Request
 	}
 
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+// handleSegmentPatch handles PATCH /api/segments/{id}.
+func (server *Server) handleSegmentPatch(w http.ResponseWriter, r *http.Request, id string) {
+	var body struct {
+		TaskTitle  *string `json:"task_title"`
+		TaskStatus string  `json:"task_status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.TaskTitle == nil && body.TaskStatus == "" {
+		writeAPIError(w, http.StatusBadRequest, "task_title or task_status is required")
+		return
+	}
+	segment, err := server.segmentService.UpdateSegment(id, body.TaskTitle, body.TaskStatus)
+	if err != nil {
+		writeAPIError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	writeAPISuccess(w, segment)
 }
 
 // handleSegmentSubRoute handles GET sub-routes for segments (detail, messages, commands).

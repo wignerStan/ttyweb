@@ -18,9 +18,15 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	ctx := context.Background()
 
 	const numWorktrees = 8
+	paths := stressCreateWorktrees(t, repo, repoLock, ctx, numWorktrees)
+	stressMixedOperations(t, sem, repo, ctx, numWorktrees, paths)
+	stressRemoveWorktrees(t, repo, repoLock, ctx, numWorktrees, paths)
+}
+
+func stressCreateWorktrees(t *testing.T, repo string, repoLock *RepoLock, ctx context.Context, numWorktrees int) []string {
+	t.Helper()
 	paths := make([]string, numWorktrees)
 
-	// Phase 1: Create all worktrees concurrently (serialized by repo lock).
 	var wg sync.WaitGroup
 	var createSuccess atomic.Int32
 
@@ -47,14 +53,17 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	}
 	wg.Wait()
 
-	if got := createSuccess.Load(); got != numWorktrees {
+	if got := createSuccess.Load(); got != int32(numWorktrees) {
 		t.Fatalf("created %d/%d worktrees", got, numWorktrees)
 	}
 
-	// Phase 2: Mixed status + commit operations concurrently.
-	// Per-worktree mutexes prevent concurrent commits to the same worktree,
-	// which would race on git's index.lock.
-	var wtMu [numWorktrees]sync.Mutex
+	return paths
+}
+
+func stressMixedOperations(t *testing.T, sem *OperationSemaphore, repo string, ctx context.Context, numWorktrees int, paths []string) {
+	t.Helper()
+	var wg sync.WaitGroup
+	var wtMu [8]sync.Mutex
 	var opsSuccess atomic.Int64
 	const numOps = 50
 
@@ -108,9 +117,13 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	if got := opsSuccess.Load(); got < int64(numOps)-5 {
 		t.Errorf("only %d/%d operations succeeded", got, numOps)
 	}
+}
 
-	// Phase 3: Remove all worktrees concurrently (serialized by repo lock).
+func stressRemoveWorktrees(t *testing.T, repo string, repoLock *RepoLock, ctx context.Context, numWorktrees int, paths []string) {
+	t.Helper()
+	var wg sync.WaitGroup
 	var removeSuccess atomic.Int32
+
 	for i := 0; i < numWorktrees; i++ {
 		wg.Add(1)
 		go func(idx int) {
@@ -134,7 +147,7 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	}
 	wg.Wait()
 
-	if got := removeSuccess.Load(); got != numWorktrees {
+	if got := removeSuccess.Load(); got != int32(numWorktrees) {
 		t.Errorf("removed %d/%d worktrees", got, numWorktrees)
 	}
 }
