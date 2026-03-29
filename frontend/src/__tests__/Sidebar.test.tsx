@@ -35,7 +35,7 @@ describe('Sidebar', () => {
   })
 
   it('renders Sessions header and new session input', () => {
-    global.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch
+    globalThis.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
@@ -45,7 +45,7 @@ describe('Sidebar', () => {
 
   it('fetches sessions on mount', async () => {
     const fetchMock = mockFetchSuccess(mockSessions)
-    global.fetch = fetchMock as unknown as typeof fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
@@ -55,7 +55,7 @@ describe('Sidebar', () => {
   })
 
   it('displays sessions from API', async () => {
-    global.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch
+    globalThis.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
@@ -66,7 +66,7 @@ describe('Sidebar', () => {
   })
 
   it('shows empty state when no sessions', async () => {
-    global.fetch = mockFetchSuccess([]) as unknown as typeof fetch
+    globalThis.fetch = mockFetchSuccess([]) as unknown as typeof fetch
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
@@ -76,7 +76,7 @@ describe('Sidebar', () => {
   })
 
   it('shows error message when fetch fails', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ success: false, error: 'connection failed' }),
@@ -91,7 +91,7 @@ describe('Sidebar', () => {
 
   it('allows typing in the new session input', async () => {
     const user = userEvent.setup()
-    global.fetch = mockFetchSuccess([]) as unknown as typeof fetch
+    globalThis.fetch = mockFetchSuccess([]) as unknown as typeof fetch
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
@@ -104,7 +104,7 @@ describe('Sidebar', () => {
   it('creates session via POST when Enter pressed in input', async () => {
     const user = userEvent.setup()
     const listMock = mockFetchSuccess(mockSessions)
-    global.fetch = vi.fn((_url: string | URL | Request) => {
+    globalThis.fetch = vi.fn((_url: string | URL | Request) => {
       return listMock() as ReturnType<typeof fetch>
     }) as unknown as typeof fetch
 
@@ -115,7 +115,7 @@ describe('Sidebar', () => {
     await user.keyboard('{Enter}')
 
     await waitFor(() => {
-      const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
+      const calls = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
       const postCall = calls.find(
         (c: unknown[]) => c[1] && (c[1] as Record<string, unknown>).method === 'POST',
       )
@@ -125,7 +125,7 @@ describe('Sidebar', () => {
   })
 
   it('shows attached badge for attached sessions', async () => {
-    global.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch
+    globalThis.fetch = mockFetchSuccess(mockSessions) as unknown as typeof fetch
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
@@ -137,7 +137,7 @@ describe('Sidebar', () => {
   it('expands session on click and shows pane details', async () => {
     const listMock = mockFetchSuccess(mockSessions)
     const detailMock = mockFetchSuccess(mockDetail)
-    global.fetch = vi.fn((_url: string | URL | Request) => {
+    globalThis.fetch = vi.fn((_url: string | URL | Request) => {
       if (String(_url).includes('sessions/session-1')) {
         return detailMock()
       }
