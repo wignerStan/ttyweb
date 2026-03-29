@@ -116,6 +116,8 @@ func GetSessionDetail(session string) (*SessionDetail, error) {
 }
 
 // CreateSession creates a new detached tmux session.
+// The command parameter is intentionally passed through to tmux —
+// this is a terminal emulator, arbitrary command execution is expected behavior.
 func CreateSession(name string, command ...string) (string, error) {
 	if name != "" {
 		if err := validate.SessionName(name); err != nil {
@@ -259,7 +261,7 @@ func SessionDetailJSON(name string) ([]byte, error) {
 
 // tmuxOutput runs a tmux command and returns stdout.
 func tmuxOutput(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: hardcoded binary, args validated upstream
+	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: tmux CLI wrapper — callers responsible for arg safety
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -271,7 +273,7 @@ func tmuxOutput(args ...string) (string, error) {
 
 // tmuxExec runs a tmux command (ignoring output).
 func tmuxExec(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: hardcoded binary, args validated upstream
+	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: tmux CLI wrapper — callers responsible for arg safety
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
