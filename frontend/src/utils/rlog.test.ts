@@ -83,7 +83,7 @@ describe('rlog', () => {
     rlog.info('test')
 
     const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
-    expect(body.ua).toBe('a'.repeat(80) + '\u2026')
+    expect(body.ua).toBe(`${'a'.repeat(80)}\u2026`)
     expect(body.ua.length).toBe(81)
   })
 

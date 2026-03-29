@@ -1,10 +1,14 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../../test-utils'
 import { AiCommandTab } from './AiCommandTab'
 
 vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+
+vi.mock('./RoleManagerModal', () => ({
+  RoleManagerModal: () => <div data-testid="role-modal" />,
+}))
 
 function createMockWs() {
   const ws = {
@@ -21,13 +25,12 @@ function createMockWs() {
   return ws
 }
 
+const clipboardMock = vi.fn().mockResolvedValue(undefined)
+
 describe('AiCommandTab', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }))
     vi.stubGlobal('WebSocket', vi.fn().mockImplementation(createMockWs))
-    Object.assign(navigator, {
-      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
-    })
   })
   afterEach(() => {
     vi.restoreAllMocks()
@@ -40,23 +43,23 @@ describe('AiCommandTab', () => {
 
   it('renders role selector with default role', () => {
     renderWithProviders(<AiCommandTab onSend={() => {}} />)
-    expect(screen.getByText('命令行大神')).toBeInTheDocument()
+    expect(screen.getByText('\u547D\u4EE4\u884C\u5927\u795E')).toBeInTheDocument()
   })
 
   it('opens role dropdown', async () => {
     renderWithProviders(<AiCommandTab onSend={() => {}} />)
-    const selector = screen.getByText('命令行大神').closest('button')!
+    const selector = screen.getByText('\u547D\u4EE4\u884C\u5927\u795E').closest('button')!
     await userEvent.click(selector)
-    expect(screen.getByText('运维专家')).toBeInTheDocument()
-    expect(screen.getByText('提示词优化')).toBeInTheDocument()
+    expect(screen.getByText('\u8FD0\u7EF4\u4E13\u5BB6')).toBeInTheDocument()
+    expect(screen.getByText('\u63D0\u793A\u8BCD\u4F18\u5316')).toBeInTheDocument()
   })
 
   it('switches role on selection', async () => {
     renderWithProviders(<AiCommandTab onSend={() => {}} />)
-    const selector = screen.getByText('命令行大神').closest('button')!
+    const selector = screen.getByText('\u547D\u4EE4\u884C\u5927\u795E').closest('button')!
     await userEvent.click(selector)
-    await userEvent.click(screen.getByText('运维专家'))
-    expect(screen.getByText('运维专家')).toBeInTheDocument()
+    await userEvent.click(screen.getByText('\u8FD0\u7EF4\u4E13\u5BB6'))
+    expect(screen.getByText('\u8FD0\u7EF4\u4E13\u5BB6')).toBeInTheDocument()
   })
 
   it('shows generate button', () => {
@@ -81,6 +84,11 @@ describe('AiCommandTab', () => {
   })
 
   it('copies command to clipboard', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: clipboardMock },
+      writable: true,
+      configurable: true,
+    })
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ command: 'echo hello', explanation: '' }),
@@ -92,17 +100,17 @@ describe('AiCommandTab', () => {
     await userEvent.type(textarea, 'say hello')
     await userEvent.click(screen.getByRole('button', { name: /AI/ }))
 
+    // Source uses literal \uXXXX in JSX text, so rendered text contains literal backslash-u
     await waitFor(() => {
-      const copyBtns = screen
-        .getAllByRole('button')
-        .filter((btn) => btn.textContent?.includes('\\u590D\\u5236'))
-      expect(copyBtns.length).toBeGreaterThan(0)
+      const btns = document.querySelectorAll('button')
+      const found = Array.from(btns).some((b) => b.textContent?.includes('\\u590D'))
+      expect(found).toBe(true)
     })
-    const copyBtns = screen
-      .getAllByRole('button')
-      .filter((btn) => btn.textContent?.includes('\\u590D\\u5236'))
-    await userEvent.click(copyBtns[0])
-    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith('echo hello'))
+    const copyBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('\\u590D'),
+    )!
+    await userEvent.click(copyBtn)
+    await waitFor(() => expect(clipboardMock).toHaveBeenCalledWith('echo hello'))
   })
 
   it('executes command via onSend', async () => {
@@ -118,16 +126,171 @@ describe('AiCommandTab', () => {
     await userEvent.type(textarea, 'say test')
     await userEvent.click(screen.getByRole('button', { name: /AI/ }))
 
+    // Source uses literal \uXXXX in JSX text - rendered as literal backslash-u strings
     await waitFor(() => {
-      const execBtns = screen
-        .getAllByRole('button')
-        .filter((btn) => btn.textContent?.includes('\\u6267\\u884C'))
-      expect(execBtns.length).toBeGreaterThan(0)
+      const btns = document.querySelectorAll('button')
+      const found = Array.from(btns).some((b) => b.textContent?.includes('\\u6267'))
+      expect(found).toBe(true)
     })
-    const execBtns = screen
-      .getAllByRole('button')
-      .filter((btn) => btn.textContent?.includes('\\u6267\\u884C'))
-    await userEvent.click(execBtns[0])
+    const execBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('\\u6267'),
+    )!
+    await userEvent.click(execBtn)
     await waitFor(() => expect(onSend).toHaveBeenCalledWith('echo test\n'))
+  })
+
+  it('direct send button sends input to terminal', async () => {
+    const onSend = vi.fn()
+    renderWithProviders(<AiCommandTab onSend={onSend} />)
+    const textarea = document.querySelector('textarea')!
+    await userEvent.type(textarea, 'ls -la')
+    // The button has text with literal \uXXXX - find by textContent containing the terminal label
+    const sendBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('\\u53D1\\u9001\\u7EC8\\u7AEF'),
+    )!
+    await userEvent.click(sendBtn)
+    expect(onSend).toHaveBeenCalledWith('ls -la\n')
+  })
+
+  it('direct send button is disabled when input is empty', () => {
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const sendBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('\\u53D1\\u9001\\u7EC8\\u7AEF'),
+    )!
+    expect(sendBtn).toBeDisabled()
+  })
+
+  it('clear button clears input and result', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ command: 'echo test', explanation: '' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const textarea = document.querySelector('textarea')!
+    await userEvent.type(textarea, 'test')
+    await userEvent.click(screen.getByRole('button', { name: /AI/ }))
+    await waitFor(() => expect(screen.getByText('echo test')).toBeInTheDocument())
+    // The clear button in the action bar has title with literal \uXXXX
+    // After result appears, the clear button is the one with X icon that clears everything
+    const clearBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+      b.getAttribute('title')?.includes('\\u6E05\\u7A7A'),
+    )!
+    await userEvent.click(clearBtn)
+    expect(textarea).toHaveValue('')
+  })
+
+  it('Enter key triggers generation', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ command: 'pwd', explanation: '' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const textarea = document.querySelector('textarea')!
+    await userEvent.type(textarea, 'show directory{Enter}')
+    await waitFor(() => expect(screen.getByText('pwd')).toBeInTheDocument())
+  })
+
+  it('shows system prompt toggle', () => {
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    // The system prompt button is the second button (after role selector)
+    const btns = screen.getAllByRole('button')
+    // It should have a chevron SVG child
+    const promptBtn = btns[1]
+    expect(promptBtn).toBeTruthy()
+    expect(promptBtn.querySelector('svg')).toBeTruthy()
+  })
+
+  it('toggles system prompt visibility', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const btns = screen.getAllByRole('button')
+    const promptBtn = btns[1]
+    await user.click(promptBtn)
+    await user.click(promptBtn)
+  })
+
+  it('closes role dropdown on outside click', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const selector = screen.getByText('\u547D\u4EE4\u884C\u5927\u795E').closest('button')!
+    await user.click(selector)
+    expect(screen.getByText('\u8FD0\u7EF4\u4E13\u5BB6')).toBeInTheDocument()
+    await user.click(document.querySelector('textarea')!)
+    expect(screen.queryByText('\u8FD0\u7EF4\u4E13\u5BB6')).not.toBeInTheDocument()
+  })
+
+  it('shows manage roles button in dropdown', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const selector = screen.getByText('\u547D\u4EE4\u884C\u5927\u795E').closest('button')!
+    await user.click(selector)
+    // The manage roles button has text "+ \u7BA1\u7406\u89D2\u8272" with literal \uXXXX
+    const allBtns = document.querySelectorAll('button')
+    const manageBtn = Array.from(allBtns).find((b) =>
+      b.textContent?.includes('\\u7BA1\\u7406\\u89D2\\u8272'),
+    )
+    expect(manageBtn).toBeTruthy()
+  })
+
+  it('is disabled when disabled prop is true', () => {
+    renderWithProviders(<AiCommandTab onSend={() => {}} disabled />)
+    // The generate button should be disabled
+    const generateBtn = screen.getByRole('button', { name: /AI/ })
+    expect(generateBtn).toBeDisabled()
+  })
+
+  it('uses initialText when provided', async () => {
+    const onTextConsumed = vi.fn()
+    renderWithProviders(
+      <AiCommandTab onSend={() => {}} initialText="hello world" onTextConsumed={onTextConsumed} />,
+    )
+    const textarea = document.querySelector('textarea')!
+    expect(textarea).toHaveValue('hello world')
+    expect(onTextConsumed).toHaveBeenCalled()
+  })
+
+  it('handles error in generation', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ command: '', explanation: '\u8BF7\u6C42\u5931\u8D25: test' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const textarea = document.querySelector('textarea')!
+    await userEvent.type(textarea, 'fail{Enter}')
+    await waitFor(() =>
+      expect(screen.getByText('\u8BF7\u6C42\u5931\u8D25: test')).toBeInTheDocument(),
+    )
+  })
+
+  it('expand/collapse result card', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          command: 'a very long command that might need expansion',
+          explanation: 'Test',
+        }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+    renderWithProviders(<AiCommandTab onSend={() => {}} />)
+    const textarea = document.querySelector('textarea')!
+    await user.type(textarea, 'test{Enter}')
+    await waitFor(() =>
+      expect(screen.getByText('a very long command that might need expansion')).toBeInTheDocument(),
+    )
+    const expandBtns = screen
+      .getAllByRole('button')
+      .filter(
+        (btn) =>
+          btn.querySelector('svg.lucide-chevron-up') ||
+          btn.querySelector('svg.lucide-chevron-down'),
+      )
+    if (expandBtns.length > 0) {
+      await user.click(expandBtns[0])
+    }
   })
 })

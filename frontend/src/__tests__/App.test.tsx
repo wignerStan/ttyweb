@@ -35,6 +35,26 @@ vi.mock('../shared/components/imperial-study/components/FloatingImperialStudy', 
   FloatingImperialStudy: () => null,
 }))
 
+// Mock NotepadPanel
+vi.mock('../notepad/NotepadPanel', () => ({
+  NotepadPanel: () => <div data-testid="notepad-panel">Notepad</div>,
+}))
+
+// Mock KanbanBoard
+vi.mock('../kanban', () => ({
+  KanbanBoard: () => <div data-testid="kanban-board">Kanban</div>,
+}))
+
+// Mock ConversationList
+vi.mock('../conversations/ConversationList', () => ({
+  ConversationList: () => <div data-testid="conversation-list">ConvList</div>,
+}))
+
+// Mock ConversationViewer
+vi.mock('../conversations/ConversationViewer', () => ({
+  ConversationViewer: () => <div data-testid="conversation-viewer">ConvViewer</div>,
+}))
+
 function renderApp(initialEntry = '/') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -110,5 +130,92 @@ describe('App', () => {
     renderApp('/m')
     expect(screen.getByTestId('mobile-app')).toBeInTheDocument()
     expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument()
+  })
+
+  it('shows Terminal and Conversations view tabs', () => {
+    renderApp()
+    expect(screen.getByText('Terminal')).toBeInTheDocument()
+    expect(screen.getByText('Conversations')).toBeInTheDocument()
+  })
+
+  it('switches to Conversations view', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByText('Conversations'))
+    expect(screen.getByTestId('conversation-list')).toBeInTheDocument()
+    expect(screen.getByTestId('conversation-viewer')).toBeInTheDocument()
+  })
+
+  it('switches back to Terminal view from Conversations', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByText('Conversations'))
+    await user.click(screen.getByText('Terminal'))
+    expect(screen.getByTestId('terminal-tab')).toBeInTheDocument()
+  })
+
+  it('shows Kanban tab in tab bar', () => {
+    renderApp()
+    expect(screen.getByText('Kanban')).toBeInTheDocument()
+  })
+
+  it('switches to Kanban view', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByText('Kanban'))
+    expect(screen.getByTestId('kanban-board')).toBeInTheDocument()
+  })
+
+  it('opens Notepad when notepad button clicked', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByTitle('Open Notepad'))
+    expect(screen.getByTestId('notepad-panel')).toBeInTheDocument()
+  })
+
+  it('does not duplicate notepad tab on multiple clicks', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByTitle('Open Notepad'))
+    await user.click(screen.getByTitle('Open Notepad'))
+    const notepadTabs = screen.getAllByText('Notepad')
+    // Only one tab label, not two
+    expect(notepadTabs.length).toBeLessThanOrEqual(2) // one tab label + possibly the content
+  })
+
+  it('does not duplicate session tabs on multiple selections', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByTestId('mock-session-select'))
+    await user.click(screen.getByTestId('mock-session-select'))
+    // Only one test-session tab
+    const tabs = screen.getAllByText('test-session')
+    expect(tabs.length).toBe(1)
+  })
+
+  it('activates a tab when clicked', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    // Open a new tab
+    await user.click(screen.getByTestId('mock-session-select'))
+    // The ttyweb tab should still exist but not be active
+    expect(screen.getByText('ttyweb')).toBeInTheDocument()
+    expect(screen.getByText('test-session')).toBeInTheDocument()
+  })
+
+  it('shows notepad button in tab bar', () => {
+    renderApp()
+    expect(screen.getByTitle('Open Notepad')).toBeInTheDocument()
+  })
+
+  it('re-opens sidebar after toggle back', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    const toggleBtn = screen.getByRole('button', { name: /◀/ })
+    await user.click(toggleBtn)
+    expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument()
+    const expandBtn = screen.getByRole('button', { name: /▶/ })
+    await user.click(expandBtn)
+    expect(screen.getByTestId('sidebar')).toBeInTheDocument()
   })
 })

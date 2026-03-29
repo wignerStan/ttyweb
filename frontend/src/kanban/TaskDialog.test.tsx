@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../test-utils'
@@ -81,5 +81,124 @@ describe('TaskDialog', () => {
     // Clear the field to remove tags
     fireEvent.change(tagsInput, { target: { value: '' } })
     expect(tagsInput).toHaveValue('')
+  })
+
+  it('calls onCreate for new task on submit', async () => {
+    const onCreate = vi.fn().mockResolvedValue(null)
+    renderWithProviders(<TaskDialog {...defaultProps} onCreate={onCreate} />)
+    const titleInput = screen.getByPlaceholderText('Task title')
+    fireEvent.change(titleInput, { target: { value: 'New task title' } })
+    const user = userEvent.setup()
+    await user.click(screen.getByText('Create Task'))
+    expect(onCreate).toHaveBeenCalledOnce()
+  })
+
+  it('shows title validation error when submitting empty title', async () => {
+    const onCreate = vi.fn().mockResolvedValue(null)
+    renderWithProviders(<TaskDialog {...defaultProps} onCreate={onCreate} />)
+    const form = screen.getByPlaceholderText('Task title').closest('form')!
+    fireEvent.submit(form)
+    expect(screen.getByText('Title is required')).toBeInTheDocument()
+    expect(onCreate).not.toHaveBeenCalled()
+  })
+
+  it('clears title error when user types a title', async () => {
+    renderWithProviders(<TaskDialog {...defaultProps} onCreate={vi.fn()} />)
+    const form = screen.getByPlaceholderText('Task title').closest('form')!
+    fireEvent.submit(form)
+    expect(screen.getByText('Title is required')).toBeInTheDocument()
+    const titleInput = screen.getByPlaceholderText('Task title')
+    fireEvent.change(titleInput, { target: { value: 'Now valid' } })
+    expect(screen.queryByText('Title is required')).not.toBeInTheDocument()
+  })
+
+  it('delete button calls onDelete', async () => {
+    const onDelete = vi.fn().mockResolvedValue(true)
+    renderWithProviders(<TaskDialog {...defaultProps} task={baseTask} onDelete={onDelete} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByText('Delete'))
+    expect(onDelete).toHaveBeenCalledWith('1')
+  })
+
+  it('calls onClose after successful delete', async () => {
+    const onClose = vi.fn()
+    const onDelete = vi.fn().mockResolvedValue(true)
+    renderWithProviders(
+      <TaskDialog {...defaultProps} task={baseTask} onDelete={onDelete} onClose={onClose} />,
+    )
+    const user = userEvent.setup()
+    await user.click(screen.getByText('Delete'))
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+  })
+
+  it('does not close after failed delete', async () => {
+    const onClose = vi.fn()
+    const onDelete = vi.fn().mockResolvedValue(false)
+    renderWithProviders(
+      <TaskDialog {...defaultProps} task={baseTask} onDelete={onDelete} onClose={onClose} />,
+    )
+    const user = userEvent.setup()
+    await user.click(screen.getByText('Delete'))
+    await waitFor(() => expect(onDelete).toHaveBeenCalled())
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('overlay click calls onClose', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(<TaskDialog {...defaultProps} onClose={onClose} />)
+    const overlay = document.querySelector('.task-dialog-overlay')!
+    await userEvent.click(overlay)
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('does not close on inner modal click', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(<TaskDialog {...defaultProps} onClose={onClose} />)
+    const modal = document.querySelector('.task-dialog')!
+    await userEvent.click(modal)
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('renders CommentThread in edit mode', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} task={baseTask} />)
+    expect(screen.getByTestId('comment-thread')).toBeInTheDocument()
+  })
+
+  it('does not render CommentThread in create mode', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} />)
+    expect(screen.queryByTestId('comment-thread')).not.toBeInTheDocument()
+  })
+
+  it('does not render Delete button in create mode', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} />)
+    expect(screen.queryByText('Delete')).not.toBeInTheDocument()
+  })
+
+  it('status and priority selects are rendered', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} />)
+    expect(screen.getByLabelText('Status')).toBeInTheDocument()
+    expect(screen.getByLabelText('Priority')).toBeInTheDocument()
+  })
+
+  it('due date input is rendered', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} />)
+    expect(screen.getByLabelText('Due Date')).toBeInTheDocument()
+  })
+
+  it('prefills due date in edit mode', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} task={baseTask} />)
+    expect(screen.getByDisplayValue('2026-06-01')).toBeInTheDocument()
+  })
+
+  it('Create Task button is disabled when title is empty', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} />)
+    const btn = screen.getByText('Create Task').closest('button')!
+    expect(btn).toBeDisabled()
+  })
+
+  it('prefills default status from defaultStatus prop', () => {
+    renderWithProviders(<TaskDialog {...defaultProps} defaultStatus="in_progress" />)
+    const statusSelect = screen.getByLabelText('Status') as HTMLSelectElement
+    expect(statusSelect.value).toBe('in_progress')
   })
 })
