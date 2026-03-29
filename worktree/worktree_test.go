@@ -95,7 +95,7 @@ func TestIsGitRepo(t *testing.T) {
 func TestListWorktrees(t *testing.T) {
 	repo := initTestRepo(t)
 
-	worktrees, err := ListWorktrees(repo)
+	worktrees, err := ListWorktrees(context.Background(), repo)
 	if err != nil {
 		t.Fatalf("ListWorktrees failed: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestListWorktrees(t *testing.T) {
 func TestCreateAndRemoveWorktree(t *testing.T) {
 	repo := initTestRepo(t)
 
-	wtPath, err := CreateWorktree(repo, "feature-test", "main", true)
+	wtPath, err := CreateWorktree(context.Background(), repo, "feature-test", "main", true)
 	if err != nil {
 		t.Fatalf("CreateWorktree failed: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestCreateAndRemoveWorktree(t *testing.T) {
 	}
 
 	// Verify it shows up in list.
-	worktrees, err := ListWorktrees(repo)
+	worktrees, err := ListWorktrees(context.Background(), repo)
 	if err != nil {
 		t.Fatalf("ListWorktrees after create failed: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestCreateAndRemoveWorktree(t *testing.T) {
 	}
 
 	// Remove it.
-	if err := RemoveWorktree(repo, wtPath, false); err != nil {
+	if err := RemoveWorktree(context.Background(), repo, wtPath, false); err != nil {
 		t.Fatalf("RemoveWorktree failed: %v", err)
 	}
 
@@ -169,7 +169,7 @@ func TestCreateWorktreeExistingBranch(t *testing.T) {
 	// Create a branch first.
 	mustRun(t, repo, "branch", "existing-branch")
 
-	wtPath, err := CreateWorktree(repo, "existing-branch", "main", false)
+	wtPath, err := CreateWorktree(context.Background(), repo, "existing-branch", "main", false)
 	if err != nil {
 		t.Fatalf("CreateWorktree with existing branch failed: %v", err)
 	}
@@ -179,14 +179,14 @@ func TestCreateWorktreeExistingBranch(t *testing.T) {
 	}
 
 	// Clean up.
-	_ = RemoveWorktree(repo, wtPath, false)
+	_ = RemoveWorktree(context.Background(), repo, wtPath, false)
 }
 
 func TestGetWorktreeStatus(t *testing.T) {
 	repo := initTestRepo(t)
 
 	// Clean repo should have all zeroes.
-	status, err := GetWorktreeStatus(repo)
+	status, err := GetWorktreeStatus(context.Background(), repo)
 	if err != nil {
 		t.Fatalf("GetWorktreeStatus failed: %v", err)
 	}
@@ -196,7 +196,7 @@ func TestGetWorktreeStatus(t *testing.T) {
 
 	// Make a modification.
 	mustWriteFile(t, filepath.Join(repo, "changed.txt"), "new content\n")
-	status, err = GetWorktreeStatus(repo)
+	status, err = GetWorktreeStatus(context.Background(), repo)
 	if err != nil {
 		t.Fatalf("GetWorktreeStatus after modification failed: %v", err)
 	}
@@ -210,12 +210,12 @@ func TestCommitWorktree(t *testing.T) {
 
 	// Write a new file and commit.
 	mustWriteFile(t, filepath.Join(repo, "test.txt"), "hello\n")
-	if err := CommitWorktree(repo, "add test file"); err != nil {
+	if err := CommitWorktree(context.Background(), repo, "add test file"); err != nil {
 		t.Fatalf("CommitWorktree failed: %v", err)
 	}
 
 	// Verify file is committed (status should be clean now).
-	status, err := GetWorktreeStatus(repo)
+	status, err := GetWorktreeStatus(context.Background(), repo)
 	if err != nil {
 		t.Fatalf("GetWorktreeStatus after commit failed: %v", err)
 	}
@@ -227,7 +227,7 @@ func TestCommitWorktree(t *testing.T) {
 func TestCommitWorktreeClean(t *testing.T) {
 	repo := initTestRepo(t)
 
-	err := CommitWorktree(repo, "should fail")
+	err := CommitWorktree(context.Background(), repo, "should fail")
 	if err == nil {
 		t.Fatal("expected error when committing clean tree")
 	}
@@ -236,7 +236,7 @@ func TestCommitWorktreeClean(t *testing.T) {
 func TestCommitWorktreeEmptyMessage(t *testing.T) {
 	repo := initTestRepo(t)
 
-	err := CommitWorktree(repo, "")
+	err := CommitWorktree(context.Background(), repo, "")
 	if err == nil {
 		t.Fatal("expected error for empty commit message")
 	}
@@ -245,7 +245,7 @@ func TestCommitWorktreeEmptyMessage(t *testing.T) {
 func TestSyncWorktrees(t *testing.T) {
 	repo := initTestRepo(t)
 
-	worktrees, err := ListWorktrees(repo)
+	worktrees, err := ListWorktrees(context.Background(), repo)
 	if err != nil {
 		t.Fatalf("ListWorktrees (sync) failed: %v", err)
 	}
@@ -258,7 +258,7 @@ func TestRemoveNonexistentWorktree(t *testing.T) {
 	repo := initTestRepo(t)
 
 	// Removing a nonexistent path should not error (prune handles it).
-	err := RemoveWorktree(repo, "/nonexistent/path/nowhere", false)
+	err := RemoveWorktree(context.Background(), repo, "/nonexistent/path/nowhere", false)
 	if err != nil {
 		t.Fatalf("RemoveWorktree nonexistent should not error, got: %v", err)
 	}
@@ -267,25 +267,25 @@ func TestRemoveNonexistentWorktree(t *testing.T) {
 func TestCreateWorktreeInvalidBranch(t *testing.T) {
 	repo := initTestRepo(t)
 
-	_, err := CreateWorktree(repo, "", "main", true)
+	_, err := CreateWorktree(context.Background(), repo, "", "main", true)
 	if err == nil {
 		t.Fatal("expected error for empty branch name")
 	}
 }
 
 func TestListWorktreesInvalidPath(t *testing.T) {
-	_, err := ListWorktrees("")
+	_, err := ListWorktrees(context.Background(), "")
 	if err == nil {
 		t.Fatal("expected error for empty path")
 	}
 
-	_, err = ListWorktrees("/nonexistent")
+	_, err = ListWorktrees(context.Background(), "/nonexistent")
 	// May not error depending on go-git behavior, but shouldn't panic.
 	_ = err
 }
 
 func TestGetWorktreeStatusInvalidPath(t *testing.T) {
-	_, err := GetWorktreeStatus("")
+	_, err := GetWorktreeStatus(context.Background(), "")
 	if err == nil {
 		t.Fatal("expected error for empty path")
 	}

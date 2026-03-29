@@ -4,6 +4,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -146,7 +147,7 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 		return nil, err
 	}
 
-	wtPath, err := worktree.CreateWorktree(project.Path, branchName, baseBranch, createBranch)
+	wtPath, err := worktree.CreateWorktree(context.Background(), project.Path, branchName, baseBranch, createBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 	}
 
 	// Populate initial status.
-	if status, err := worktree.GetWorktreeStatus(wtPath); err == nil {
+	if status, err := worktree.GetWorktreeStatus(context.Background(), wtPath); err == nil {
 		record = record.withStatus(status)
 	}
 
@@ -205,7 +206,7 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 		return errors.New("cannot remove main worktree")
 	}
 
-	if err := worktree.RemoveWorktree(project.Path, record.Path, force); err != nil {
+	if err := worktree.RemoveWorktree(context.Background(), project.Path, record.Path, force); err != nil {
 		return err
 	}
 
@@ -225,7 +226,7 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 		return nil, err
 	}
 
-	status, err := worktree.GetWorktreeStatus(record.Path)
+	status, err := worktree.GetWorktreeStatus(context.Background(), record.Path)
 	if err != nil {
 		return nil, fmt.Errorf("get worktree status: %w", err)
 	}
@@ -234,7 +235,7 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 	record.UpdatedAt = time.Now()
 
 	// Fetch updated commit info from git list.
-	infos, err := worktree.ListWorktrees(filepath.Dir(record.Path))
+	infos, err := worktree.ListWorktrees(context.Background(), filepath.Dir(record.Path))
 	if err == nil {
 		for _, info := range infos {
 			if worktree.EqualPath(info.Path, record.Path) {
@@ -277,7 +278,7 @@ func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) 
 		return nil, err
 	}
 
-	if err := worktree.CommitWorktree(record.Path, message); err != nil {
+	if err := worktree.CommitWorktree(context.Background(), record.Path, message); err != nil {
 		return nil, err
 	}
 
@@ -314,7 +315,7 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 func (s *WorktreeService) syncWorktrees(project *WtProject) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	gitWorktrees, err := worktree.ListWorktrees(project.Path)
+	gitWorktrees, err := worktree.ListWorktrees(context.Background(), project.Path)
 	if err != nil {
 		return err
 	}
