@@ -141,7 +141,7 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	}
 	defer slave.Close()
 
-	titleVars := server.titleVariables(
+	titleVars, err := server.titleVariables(
 		[]string{"server", "master", "slave"},
 		map[string]map[string]interface{}{
 			"server": server.options.TitleVariables,
@@ -151,6 +151,9 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 			"slave": slave.WindowTitleVariables(),
 		},
 	)
+	if err != nil {
+		return errors.Wrapf(err, "failed to build title variables")
+	}
 
 	titleBuf := new(bytes.Buffer)
 	err = server.titleTemplate.Execute(titleBuf, titleVars)
@@ -190,13 +193,13 @@ func (server *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 // titleVariables merges maps in a specified order.
 // varUnits are name-keyed maps, whose names will be iterated using order.
-func (server *Server) titleVariables(order []string, varUnits map[string]map[string]interface{}) map[string]interface{} {
+func (server *Server) titleVariables(order []string, varUnits map[string]map[string]interface{}) (map[string]interface{}, error) {
 	titleVars := map[string]interface{}{}
 
 	for _, name := range order {
 		vars, ok := varUnits[name]
 		if !ok {
-			panic("title variable name error")
+			return nil, errors.Errorf("title variable name error: %s not found", name)
 		}
 		for key, val := range vars {
 			titleVars[key] = val
@@ -208,5 +211,5 @@ func (server *Server) titleVariables(order []string, varUnits map[string]map[str
 		titleVars[name] = varUnits[name]
 	}
 
-	return titleVars
+	return titleVars, nil
 }

@@ -46,7 +46,7 @@ var indexHTML []byte
 func New(factory Factory, options *Options) (*Server, error) {
 	indexData, err := bindata.Fs.ReadFile("static/index.html")
 	if err != nil {
-		panic("index not found in bindata") // must be in bindata
+		return nil, errors.Wrap(err, "index not found in bindata")
 	}
 	if options.IndexFile != "" {
 		path := homedir.Expand(options.IndexFile)
@@ -128,7 +128,10 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	if !strings.HasSuffix(path, "/") {
 		path = path + "/"
 	}
-	handlers := server.setupHandlers(cctx, cancel, path, counter)
+	handlers, err := server.setupHandlers(cctx, cancel, path, counter)
+	if err != nil {
+		return errors.Wrapf(err, "failed to setup handlers")
+	}
 	srv, err := server.setupHTTPServer(handlers)
 	if err != nil {
 		return errors.Wrapf(err, "failed to setup an HTTP server")
@@ -208,12 +211,12 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	return err
 }
 
-func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFunc, pathPrefix string, counter *counter) http.Handler {
-	fs, err := fs.Sub(bindata.Fs, "static")
+func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFunc, pathPrefix string, counter *counter) (http.Handler, error) {
+	staticFS, err := fs.Sub(bindata.Fs, "static")
 	if err != nil {
-		log.Fatalf("failed to open static/ subdirectory of embedded filesystem: %v", err)
+		return nil, errors.Wrap(err, "failed to open static/ subdirectory of embedded filesystem")
 	}
-	staticFileHandler := http.FileServer(http.FS(fs))
+	staticFileHandler := http.FileServer(http.FS(staticFS))
 
 	var siteMux = http.NewServeMux()
 	siteMux.HandleFunc(pathPrefix, server.handleIndex)
@@ -239,7 +242,7 @@ func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFu
 		siteHandler = server.wrapBasicAuth(siteHandler, server.options.Credential)
 	}
 
-	return siteHandler
+	return siteHandler, nil
 }
 
 func (server *Server) setupHTTPServer(handler http.Handler) (*http.Server, error) {
