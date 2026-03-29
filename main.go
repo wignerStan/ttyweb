@@ -13,26 +13,29 @@ import (
 	"ttyweb/backend/localcommand"
 	"ttyweb/backend/tmux"
 	"ttyweb/backend/zellij"
+	"ttyweb/config"
 	"ttyweb/db"
 	"ttyweb/server"
 )
 
 func main() {
 	var (
-		addr      string
-		port      string
-		path      string
-		backend   string
-		cred      string
-		enableTLS bool
-		tlsCrt    string
-		tlsKey    string
-		write     bool
-		titleFmt  string
-		session   string
-		dbPath    string
+		configFile string
+		addr       string
+		port       string
+		path       string
+		backend    string
+		cred       string
+		enableTLS  bool
+		tlsCrt     string
+		tlsKey     string
+		write      bool
+		titleFmt   string
+		session    string
+		dbPath     string
 	)
 
+	flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
 	flag.StringVar(&addr, "addr", "0.0.0.0", "IP address to listen")
 	flag.StringVar(&port, "port", "8080", "Port number")
 	flag.StringVar(&path, "path", "/", "Base path")
@@ -63,6 +66,15 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
+
+	// Load configuration: explicit -config path, or default location.
+	configPath := configFile
+	if configPath == "" {
+		configPath = config.DefaultConfigPath()
+	}
+	if _, err := config.Load(configPath); err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
 	// Initialize database.
 	if dbPath == "" {
