@@ -431,8 +431,8 @@ func TestRunSlaveReadError(t *testing.T) {
 	// Drain init messages in background so sendInitializeMessage completes
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	err = dt.Run(ctx)
@@ -670,8 +670,8 @@ func TestInitializationWithReconnectWriteError(t *testing.T) {
 	// Drain the pipe so the first 2 writes don't block
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	slave := newMockSlave()
@@ -704,8 +704,8 @@ func TestInitializationWithPreferencesWriteError(t *testing.T) {
 	// Drain the pipe so the first 2 writes don't block
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	slave := newMockSlave()
@@ -739,7 +739,7 @@ func TestInitializationBufferSizeWriteError(t *testing.T) {
 	// Drain the pipe so the first write doesn't block
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	slave := newMockSlave()

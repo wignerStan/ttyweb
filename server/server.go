@@ -73,17 +73,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 			return matcher.MatchString(r.Header.Get("Origin"))
 		}
 	} else {
-		originChekcer = func(r *http.Request) bool {
-			origin := r.Header.Get("Origin")
-			if origin == "" {
-				return true
-			}
-			u, err := url.Parse(origin)
-			if err != nil {
-				return false
-			}
-			return u.Host == r.Host
-		}
+		originChekcer = defaultOriginChecker
 	}
 
 	database, err := db.GetDB()
@@ -277,4 +267,18 @@ func (server *Server) tlsConfig() (*tls.Config, error) {
 		ClientAuth: tls.RequireAndVerifyClientCert,
 	}
 	return tlsConfig, nil
+}
+
+// defaultOriginChecker allows WebSocket connections when Origin is empty
+// or when the Origin host matches the request host.
+func defaultOriginChecker(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	return u.Host == r.Host
 }

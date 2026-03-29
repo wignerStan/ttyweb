@@ -87,7 +87,7 @@ func TestSlave_WindowTitleVariables(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	vars := slave.WindowTitleVariables()
 	if vars["command"] != "zellij" {
@@ -108,7 +108,7 @@ func TestSlave_WindowTitleVariables_EmptySession(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	vars := slave.WindowTitleVariables()
 	if vars["command"] != "zellij" {
@@ -126,7 +126,7 @@ func TestSlave_ResizeTerminal(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	err = slave.ResizeTerminal(80, 24)
 	if err != nil {
@@ -141,7 +141,7 @@ func TestSlave_ReadWrite(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	// Write some data to the PTY
 	n, err := slave.Write([]byte("hello"))

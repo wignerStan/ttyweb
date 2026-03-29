@@ -158,7 +158,7 @@ func TestAddProject_PathIsFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create temp file: %v", err)
 	}
-	file.Close()
+	_ = file.Close()
 
 	_, err = svc.AddProject("file-project", file.Name())
 	if err != ErrInvalidProjectPath {

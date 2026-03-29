@@ -126,7 +126,7 @@ func TestNewTmuxSlave_WithSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	// Attach to it
 	slave, err := NewTmuxSlave(sessionName, "", WithCloseTimeout(1*time.Second))
@@ -172,7 +172,7 @@ func TestNewTmuxSlave_WithPane(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	// Get the current pane ID
 	paneID, err := CurrentPane(created)
@@ -314,7 +314,7 @@ func TestTmuxSlave_ResizeTerminal_WithPane(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	paneID, err := CurrentPane(created)
 	if err != nil {

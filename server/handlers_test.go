@@ -229,11 +229,12 @@ func TestGenerateHandleWS_OnceOption(t *testing.T) {
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
 
 	// First connection should succeed (WebSocket upgrade).
-	conn1, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn1, resp1, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("first dial failed: %v", err)
 	}
 	defer func() { _ = conn1.Close() }()
+	defer func() { _ = resp1.Body.Close() }()
 
 	// Wait for the first handler to process the connection and set the once flag.
 	time.Sleep(100 * time.Millisecond)
@@ -272,10 +273,11 @@ func TestProcessWSConn_InvalidJSON(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	// Send invalid JSON — processWSConn should reject.
@@ -321,10 +323,11 @@ func TestProcessWSConn_WrongAuthToken(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	// Send valid JSON but wrong auth token.
@@ -365,10 +368,11 @@ func TestProcessWSConn_NonTextMessage(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	// Send binary message instead of text.
@@ -416,10 +420,11 @@ func TestProcessWSConn_WithMockSlave(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	// Send valid auth with no arguments.
@@ -469,10 +474,11 @@ func TestProcessWSConn_PermitArguments_InvalidSession(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	// Send auth with an invalid session name (as a query string).
@@ -521,10 +527,11 @@ func TestProcessWSConn_PermitArguments_InvalidPane(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	// Send auth with an invalid pane ID (as a query string).
@@ -568,10 +575,11 @@ func TestProcessWSConn_FactoryError(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	err = conn.WriteMessage(websocket.TextMessage, []byte(`{"AuthToken":""}`))
@@ -660,10 +668,11 @@ func TestProcessWSConn_WithOptions(t *testing.T) {
 	defer ts.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial failed: %v", err)
 	}
+	defer func() { _ = wsResp.Body.Close() }()
 	defer func() { _ = conn.Close() }()
 
 	// Send valid auth.

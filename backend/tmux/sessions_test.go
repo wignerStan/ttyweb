@@ -305,7 +305,7 @@ func TestListPanes_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	panes, err := ListPanes(sessionName)
 	if err != nil {
@@ -336,7 +336,7 @@ func TestGetSessionDetail_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	detail, err := GetSessionDetail(sessionName)
 	if err != nil {
@@ -373,7 +373,7 @@ func TestSessionDetailJSON_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	data, err := SessionDetailJSON(sessionName)
 	if err != nil {
@@ -396,7 +396,7 @@ func TestSendKeys_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	paneID, err := CurrentPane(sessionName)
 	if err != nil {
@@ -417,7 +417,7 @@ func TestCapturePane_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	paneID, err := CurrentPane(sessionName)
 	if err != nil {
@@ -440,7 +440,7 @@ func TestResizePane_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	paneID, err := CurrentPane(sessionName)
 	if err != nil {
@@ -461,7 +461,7 @@ func TestNewWindow_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	// NewWindow should create a window and return a pane ID
 	paneID, err := NewWindow(sessionName, "test-win")
@@ -486,7 +486,7 @@ func TestCurrentPane_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	paneID, err := CurrentPane(sessionName)
 	if err != nil {
@@ -508,7 +508,7 @@ func TestCreateSession_EmptyName(t *testing.T) {
 		t.Error("CreateSession('') returned empty name")
 	}
 	// Clean up
-	KillSession(name)
+	_ = KillSession(name)
 }
 
 func TestCreateSession_WithCommand(t *testing.T) {

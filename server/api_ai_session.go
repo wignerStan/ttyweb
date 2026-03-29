@@ -198,27 +198,11 @@ func (server *Server) aiSessionConversationOrRefresh(w http.ResponseWriter, r *h
 // and upserts results into the store.
 func refreshSessionsFromDisk(projectPath string) error {
 	if projectPath != "" {
-		claudeSessions, err := ai.ScanClaudeSessions(projectPath)
-		if err != nil {
+		if err := upsertClaudeSessions(projectPath); err != nil {
 			return err
 		}
-		for _, s := range claudeSessions {
-			aiSessionService.Store().Upsert(s)
-		}
-	} else {
-		projects, err := ai.ScanClaudeProjects()
-		if err != nil {
-			return err
-		}
-		for _, project := range projects {
-			sessions, scanErr := ai.ScanClaudeSessions(project)
-			if scanErr != nil {
-				continue
-			}
-			for _, s := range sessions {
-				aiSessionService.Store().Upsert(s)
-			}
-		}
+	} else if err := upsertAllClaudeSessions(); err != nil {
+		return err
 	}
 
 	codexSessions, err := ai.ScanCodexSessions()
@@ -229,5 +213,35 @@ func refreshSessionsFromDisk(projectPath string) error {
 		aiSessionService.Store().Upsert(s)
 	}
 
+	return nil
+}
+
+// upsertClaudeSessions scans a single project path for Claude sessions.
+func upsertClaudeSessions(projectPath string) error {
+	claudeSessions, err := ai.ScanClaudeSessions(projectPath)
+	if err != nil {
+		return err
+	}
+	for _, s := range claudeSessions {
+		aiSessionService.Store().Upsert(s)
+	}
+	return nil
+}
+
+// upsertAllClaudeSessions scans all known Claude projects for sessions.
+func upsertAllClaudeSessions() error {
+	projects, err := ai.ScanClaudeProjects()
+	if err != nil {
+		return err
+	}
+	for _, project := range projects {
+		sessions, scanErr := ai.ScanClaudeSessions(project)
+		if scanErr != nil {
+			continue
+		}
+		for _, s := range sessions {
+			aiSessionService.Store().Upsert(s)
+		}
+	}
 	return nil
 }
