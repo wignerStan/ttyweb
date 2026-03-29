@@ -4,6 +4,10 @@ ttyweb
 # Test artifacts
 test-results/
 coverage/
+cover.out
+
+# Skill docs (auto-generated)
+docs/superpowers/
 
 # Frontend build
 frontend/dist/
