@@ -24,8 +24,6 @@ linters:
           deny:
             - pkg: io/ioutil
               desc: deprecated since Go 1.16, use io and os packages instead
-    goimports:
-      local-prefixes: ttyweb
 
 formatters:
   enable:
@@ -33,19 +31,19 @@ formatters:
     - goimports
   settings:
     goimports:
-      local-prefixes: ttyweb
+      local-prefixes:
+        - ttyweb
 
 severity:
-  default-severity: error
+  default: error
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude:
+    - _gen\.go
+    - bindata/
 
 run:
   timeout: 3m
   tests: true
-
-exclude:
-  - _gen\.go
-  - bindata/
