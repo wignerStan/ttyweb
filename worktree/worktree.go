@@ -85,7 +85,12 @@ func SetTestEnv(env []string) {
 
 // newGitCmd creates a git exec.Cmd with safe env defaults.
 func newGitCmd(dir string, args ...string) *exec.Cmd {
-	cmd := exec.CommandContext(context.Background(), "git", args...)
+	return newGitCmdContext(context.Background(), dir, args...)
+}
+
+// newGitCmdContext creates a git exec.Cmd with safe env defaults, honouring ctx for cancellation.
+func newGitCmdContext(ctx context.Context, dir string, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Env = append([]string(nil), gitCommandEnv...)
 
 	testEnvMu.RLock()
@@ -113,7 +118,7 @@ func IsGitRepo(path string) bool {
 // CreateWorktree creates a new worktree for the repo at repoPath, checking out
 // branchName. When createBranch is true, the branch is created from baseBranch
 // first. Returns the absolute path of the new worktree.
-func CreateWorktree(repoPath, branchName, baseBranch string, createBranch bool) (string, error) {
+func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string, createBranch bool) (string, error) {
 	repoPath = strings.TrimSpace(repoPath)
 	if repoPath == "" {
 		return "", errEmptyPath
@@ -136,7 +141,7 @@ func CreateWorktree(repoPath, branchName, baseBranch string, createBranch bool) 
 		if base == "" {
 			base = "main"
 		}
-		cmd := newGitCmd(absRepo, "branch", branchName, base)
+		cmd := newGitCmdContext(ctx, absRepo, "branch", branchName, base)
 		if out, err := cmd.CombinedOutput(); err != nil {
 			return "", fmt.Errorf("create branch failed: %s", strings.TrimSpace(string(out)))
 		}
@@ -149,11 +154,11 @@ func CreateWorktree(repoPath, branchName, baseBranch string, createBranch bool) 
 	}
 
 	// Add the worktree.
-	cmd := newGitCmd(absRepo, "worktree", "add", worktreePath, branchName)
+	cmd := newGitCmdContext(ctx, absRepo, "worktree", "add", worktreePath, branchName)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		// Clean up the branch if we just created it.
 		if createBranch {
-			_ = runGitCmd(absRepo, "branch", "-D", branchName)
+			_ = runGitCmdContext(ctx, absRepo, "branch", "-D", branchName)
 		}
 		return "", fmt.Errorf("add worktree failed: %s", strings.TrimSpace(string(out)))
 	}
@@ -162,7 +167,7 @@ func CreateWorktree(repoPath, branchName, baseBranch string, createBranch bool) 
 }
 
 // ListWorktrees enumerates all worktrees attached to the repository.
-func ListWorktrees(repoPath string) ([]WorktreeInfo, error) {
+func ListWorktrees(ctx context.Context, repoPath string) ([]WorktreeInfo, error) {
 	repoPath = strings.TrimSpace(repoPath)
 	if repoPath == "" {
 		return nil, errEmptyPath
@@ -174,9 +179,9 @@ func ListWorktrees(repoPath string) ([]WorktreeInfo, error) {
 	}
 
 	// Prune stale entries first.
-	_ = runGitCmd(absRepo, "worktree", "prune")
+	_ = runGitCmdContext(ctx, absRepo, "worktree", "prune")
 
-	cmd := newGitCmd(absRepo, "worktree", "list", "--porcelain")
+	cmd := newGitCmdContext(ctx, absRepo, "worktree", "list", "--porcelain")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("list worktrees failed: %s", strings.TrimSpace(string(output)))
@@ -195,7 +200,7 @@ func ListWorktrees(repoPath string) ([]WorktreeInfo, error) {
 }
 
 // RemoveWorktree removes a worktree. If force is true, --force is passed.
-func RemoveWorktree(repoPath, worktreePath string, force bool) error {
+func RemoveWorktree(ctx context.Context, repoPath, worktreePath string, force bool) error {
 	repoPath = strings.TrimSpace(repoPath)
 	if repoPath == "" {
 		return errEmptyPath
@@ -216,11 +221,11 @@ func RemoveWorktree(repoPath, worktreePath string, force bool) error {
 	}
 	args = append(args, worktreePath)
 
-	cmd := newGitCmd(absRepo, args...)
+	cmd := newGitCmdContext(ctx, absRepo, args...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		errMsg := strings.TrimSpace(string(out))
 		if strings.Contains(errMsg, "is not a working tree") || strings.Contains(errMsg, "not found") {
-			_ = runGitCmd(absRepo, "worktree", "prune")
+			_ = runGitCmdContext(ctx, absRepo, "worktree", "prune")
 			return nil
 		}
 		return fmt.Errorf("remove worktree failed: %s", errMsg)
@@ -229,7 +234,7 @@ func RemoveWorktree(repoPath, worktreePath string, force bool) error {
 }
 
 // GetWorktreeStatus returns the working-directory status of the worktree.
-func GetWorktreeStatus(worktreePath string) (*WorktreeStatus, error) {
+func GetWorktreeStatus(ctx context.Context, worktreePath string) (*WorktreeStatus, error) {
 	worktreePath = strings.TrimSpace(worktreePath)
 	if worktreePath == "" {
 		return nil, errors.New("worktree path is required")
@@ -241,7 +246,7 @@ func GetWorktreeStatus(worktreePath string) (*WorktreeStatus, error) {
 	}
 
 	// Try porcelain=v2 first for richer info.
-	if status, err := collectStatusPorcelain(absPath); err == nil {
+	if status, err := collectStatusPorcelainContext(ctx, absPath); err == nil {
 		return status, nil
 	}
 	// Fallback to go-git.
@@ -249,7 +254,7 @@ func GetWorktreeStatus(worktreePath string) (*WorktreeStatus, error) {
 }
 
 // CommitWorktree stages all changes and commits in the worktree.
-func CommitWorktree(worktreePath, message string) error {
+func CommitWorktree(ctx context.Context, worktreePath, message string) error {
 	worktreePath = strings.TrimSpace(worktreePath)
 	if worktreePath == "" {
 		return errors.New("worktree path is required")
@@ -264,10 +269,10 @@ func CommitWorktree(worktreePath, message string) error {
 		return fmt.Errorf("resolve worktree path: %w", err)
 	}
 
-	if err := runGitCmd(absPath, "add", "--all"); err != nil {
+	if err := runGitCmdContext(ctx, absPath, "add", "--all"); err != nil {
 		return fmt.Errorf("stage all: %w", err)
 	}
-	if err := runGitCmd(absPath, "commit", "-m", message); err != nil {
+	if err := runGitCmdContext(ctx, absPath, "commit", "-m", message); err != nil {
 		if strings.Contains(err.Error(), "nothing to commit") {
 			return errors.New("nothing to commit: working tree clean")
 		}
@@ -279,9 +284,20 @@ func CommitWorktree(worktreePath, message string) error {
 // --- internal helpers ---
 
 func runGitCmd(dir string, args ...string) error {
-	cmd := newGitCmd(dir, args...)
+	return runGitCmdContext(context.Background(), dir, args...)
+}
+
+// runGitCmdContext acquires a semaphore permit then runs a git command.
+func runGitCmdContext(ctx context.Context, dir string, args ...string) error {
+	guard, err := DefaultSemaphore().Acquire(ctx)
+	if err != nil {
+		return &OpError{Kind: KindCancelled, Path: dir, Detail: "semaphore acquire cancelled", Cause: err}
+	}
+	defer guard.Release()
+
+	cmd := newGitCmdContext(ctx, dir, args...)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("git %s failed: %s", strings.Join(args, " "), strings.TrimSpace(string(out)))
+		return &OpError{Kind: KindGitFailed, Path: dir, Detail: fmt.Sprintf("git %s failed: %s", strings.Join(args, " "), strings.TrimSpace(string(out))), Cause: err}
 	}
 	return nil
 }
@@ -377,7 +393,17 @@ func headCommitMessage(path string) string {
 }
 
 func collectStatusPorcelain(path string) (*WorktreeStatus, error) {
-	cmd := newGitCmd(path, "status", "--porcelain=2", "--branch")
+	return collectStatusPorcelainContext(context.Background(), path)
+}
+
+func collectStatusPorcelainContext(ctx context.Context, path string) (*WorktreeStatus, error) {
+	guard, err := DefaultSemaphore().Acquire(ctx)
+	if err != nil {
+		return nil, &OpError{Kind: KindCancelled, Path: path, Cause: err}
+	}
+	defer guard.Release()
+
+	cmd := newGitCmdContext(ctx, path, "status", "--porcelain=2", "--branch")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
