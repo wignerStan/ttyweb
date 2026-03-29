@@ -184,16 +184,7 @@ func (s *WorktreeService) ListWorktrees(projectID string) ([]WorktreeRecord, err
 	// Sync with git state first (takes its own lock).
 	_ = s.syncWorktrees(project)
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	var result []WorktreeRecord
-	for _, wt := range s.worktrees {
-		if wt.ProjectID == projectID {
-			result = append(result, wt)
-		}
-	}
-	return result, nil
+	return s.worktreesForProject(projectID), nil
 }
 
 // RemoveWorktree removes a worktree by ID.
@@ -204,17 +195,15 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 	}
 
 	s.mu.Lock()
-	record, ok := s.worktrees[worktreeID]
-	if !ok || record.ProjectID != projectID {
-		s.mu.Unlock()
-		return fmt.Errorf("worktree not found: %s", worktreeID)
+	record, err := s.getWorktreeLocked(worktreeID, projectID)
+	s.mu.Unlock()
+	if err != nil {
+		return err
 	}
 
 	if record.IsMain {
-		s.mu.Unlock()
 		return errors.New("cannot remove main worktree")
 	}
-	s.mu.Unlock()
 
 	if err := worktree.RemoveWorktree(project.Path, record.Path, force); err != nil {
 		return err
@@ -229,13 +218,12 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 
 // RefreshWorktree updates the status of a worktree from git.
 func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*WorktreeRecord, error) {
-	s.mu.Lock()
-	record, ok := s.worktrees[worktreeID]
-	if !ok || record.ProjectID != projectID {
-		s.mu.Unlock()
-		return nil, fmt.Errorf("worktree not found: %s", worktreeID)
+	s.mu.RLock()
+	record, err := s.getWorktreeLocked(worktreeID, projectID)
+	s.mu.RUnlock()
+	if err != nil {
+		return nil, err
 	}
-	s.mu.Unlock()
 
 	status, err := worktree.GetWorktreeStatus(record.Path)
 	if err != nil {
@@ -277,27 +265,17 @@ func (s *WorktreeService) SyncAllWorktrees(projectID string) ([]WorktreeRecord, 
 		return nil, err
 	}
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	var result []WorktreeRecord
-	for _, wt := range s.worktrees {
-		if wt.ProjectID == projectID {
-			result = append(result, wt)
-		}
-	}
-	return result, nil
+	return s.worktreesForProject(projectID), nil
 }
 
 // CommitWorktree stages all and commits in a worktree.
 func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) (*WorktreeRecord, error) {
-	s.mu.Lock()
-	record, ok := s.worktrees[worktreeID]
-	if !ok || record.ProjectID != projectID {
-		s.mu.Unlock()
-		return nil, fmt.Errorf("worktree not found: %s", worktreeID)
+	s.mu.RLock()
+	record, err := s.getWorktreeLocked(worktreeID, projectID)
+	s.mu.RUnlock()
+	if err != nil {
+		return nil, err
 	}
-	s.mu.Unlock()
 
 	if err := worktree.CommitWorktree(record.Path, message); err != nil {
 		return nil, err
@@ -308,7 +286,36 @@ func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) 
 
 // --- internal ---
 
+<<<<<<< HEAD
 func (s *WorktreeService) syncWorktrees(project *WtProject) error {
+=======
+// worktreesForProject returns all worktree records for the given project.
+// Caller must hold at least a read lock on s.mu.
+func (s *WorktreeService) worktreesForProject(projectID string) []WorktreeRecord {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make([]WorktreeRecord, 0)
+	for _, wt := range s.worktrees {
+		if wt.ProjectID == projectID {
+			result = append(result, wt)
+		}
+	}
+	return result
+}
+
+// getWorktreeLocked looks up a worktree by ID and validates project ownership.
+// Caller must hold s.mu (at least a read lock).
+func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (WorktreeRecord, error) {
+	record, ok := s.worktrees[worktreeID]
+	if !ok || record.ProjectID != projectID {
+		return WorktreeRecord{}, fmt.Errorf("worktree not found: %s", worktreeID)
+	}
+	return record, nil
+}
+
+func (s *WorktreeService) syncWorktrees(project *Project) error {
+>>>>>>> 91a556c (refactor: simplify PR #12 (git worktree management))
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	gitWorktrees, err := worktree.ListWorktrees(project.Path)

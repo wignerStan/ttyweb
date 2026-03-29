@@ -244,9 +244,9 @@ func TestCommitWorktreeEmptyMessage(t *testing.T) {
 func TestSyncWorktrees(t *testing.T) {
 	repo := initTestRepo(t)
 
-	worktrees, err := SyncWorktrees(repo)
+	worktrees, err := ListWorktrees(repo)
 	if err != nil {
-		t.Fatalf("SyncWorktrees failed: %v", err)
+		t.Fatalf("ListWorktrees (sync) failed: %v", err)
 	}
 	if len(worktrees) == 0 {
 		t.Error("expected at least one worktree after sync")

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -246,12 +247,6 @@ func GetWorktreeStatus(worktreePath string) (*WorktreeStatus, error) {
 	return collectStatusGoGit(absPath)
 }
 
-// SyncWorktrees re-lists worktrees from git, ensuring the returned slice
-// matches the current filesystem state.
-func SyncWorktrees(repoPath string) ([]WorktreeInfo, error) {
-	return ListWorktrees(repoPath)
-}
-
 // CommitWorktree stages all changes and commits in the worktree.
 func CommitWorktree(worktreePath, message string) error {
 	worktreePath = strings.TrimSpace(worktreePath)
@@ -454,15 +449,10 @@ func parseTrackedLine(status *WorktreeStatus, line string) {
 }
 
 func parseCount(token string) int {
-	v := strings.TrimSpace(token)
-	v = strings.TrimPrefix(v, "+")
-	v = strings.TrimPrefix(v, "-")
-	n := 0
-	for _, r := range v {
-		if r < '0' || r > '9' {
-			return 0
-		}
-		n = n*10 + int(r-'0')
+	token = strings.TrimLeft(strings.TrimSpace(token), "+-")
+	n, err := strconv.Atoi(token)
+	if err != nil {
+		return 0
 	}
 	return n
 }

@@ -143,8 +143,7 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 
 	switch r.Method {
 	case http.MethodDelete:
-		worktreeID := worktreePath
-		if err := wtService.RemoveWorktree(projectID, worktreeID, false); err != nil {
+		if err := wtService.RemoveWorktree(projectID, worktreePath, false); err != nil {
 			writeAPIError(w, http.StatusBadRequest, err.Error())
 			return
 		}
