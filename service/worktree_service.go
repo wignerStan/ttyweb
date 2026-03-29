@@ -198,7 +198,7 @@ func (s *WorktreeService) ListWorktrees(projectID string) ([]WorktreeRecord, err
 }
 
 // RemoveWorktree removes a worktree by ID.
-func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force bool) error {
+func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktreeID string, force bool) error {
 	project, err := s.GetProject(projectID)
 	if err != nil {
 		return err
@@ -215,7 +215,6 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 		return errors.New("cannot remove main worktree")
 	}
 
-	ctx := context.Background()
 	unlock := s.repoLock.Lock(project.Path, ctx)
 	if unlock == nil {
 		return context.Canceled
@@ -286,7 +285,7 @@ func (s *WorktreeService) SyncAllWorktrees(projectID string) ([]WorktreeRecord, 
 }
 
 // CommitWorktree stages all and commits in a worktree.
-func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) (*WorktreeRecord, error) {
+func (s *WorktreeService) CommitWorktree(ctx context.Context, projectID, worktreeID, message string) (*WorktreeRecord, error) {
 	s.mu.RLock()
 	record, err := s.getWorktreeLocked(worktreeID, projectID)
 	s.mu.RUnlock()
@@ -299,7 +298,6 @@ func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) 
 		return nil, err
 	}
 
-	ctx := context.Background()
 	unlock := s.repoLock.Lock(project.Path, ctx)
 	if unlock == nil {
 		return nil, context.Canceled
