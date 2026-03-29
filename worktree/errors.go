@@ -1,6 +1,5 @@
 package worktree
 
-
 // Operation error kinds.
 const (
 	KindWorktreeLocked = "worktree_locked"
@@ -42,6 +41,9 @@ func (e *OpError) Error() string {
 	msg := e.Kind + ": " + e.Path
 	if e.Detail != "" {
 		msg += " (" + e.Detail + ")"
+	}
+	if e.Cause != nil {
+		msg += ": " + e.Cause.Error()
 	}
 	return msg
 }
