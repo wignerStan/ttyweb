@@ -130,6 +130,7 @@ func TestConcurrentStatusAndCommit(t *testing.T) {
 	sem := NewOperationSemaphore(2)
 	var wg sync.WaitGroup
 	var statusErrors, commitErrors atomic.Int32
+	var wtMu sync.Mutex // serializes writes to the same worktree
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
@@ -147,10 +148,11 @@ func TestConcurrentStatusAndCommit(t *testing.T) {
 			if idx%2 == 0 {
 				testFile := filepath.Join(wtPath, "race-"+string(rune('0'+idx))+".txt")
 				_ = os.WriteFile(testFile, []byte("data\n"), 0o644)
-				if err := CommitWorktree(ctx, wtPath, "race commit"); err != nil {
-					if !strings.Contains(err.Error(), "nothing to commit") {
-						commitErrors.Add(1)
-					}
+				wtMu.Lock()
+				err := CommitWorktree(ctx, wtPath, "race commit")
+				wtMu.Unlock()
+				if err != nil && !strings.Contains(err.Error(), "nothing to commit") {
+					commitErrors.Add(1)
 				}
 			} else {
 				if _, err := GetWorktreeStatus(ctx, wtPath); err != nil {
