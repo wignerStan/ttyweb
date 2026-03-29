@@ -35,7 +35,8 @@ type Server struct {
 
 	upgrader      *websocket.Upgrader
 	titleTemplate *noesctmpl.Template
-	noteSvc       *service.NoteService
+	noteSvc        *service.NoteService
+	segmentService  *service.TaskSegmentService
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
@@ -102,7 +103,8 @@ func New(factory Factory, options *Options) (*Server, error) {
 			CheckOrigin:     originChekcer,
 		},
 		titleTemplate: titleTemplate,
-		noteSvc:       noteSvc,
+		noteSvc:        noteSvc,
+		segmentService:  service.NewTaskSegmentService(database),
 	}, nil
 }
 
