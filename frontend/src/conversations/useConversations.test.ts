@@ -51,7 +51,7 @@ describe('useConversations', () => {
     })
 
     expect(result.current.sessions).toHaveLength(2)
-    expect(result.current.sessions[0].title).toBe('Test Session')
+    expect(result.current.sessions[0]!.title).toBe('Test Session')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/ai/sessions', {
       headers: { Authorization: 'Basic dGVzdDp0ZXN0' },
     })
@@ -195,7 +195,7 @@ describe('useConversation', () => {
     })
 
     expect(result.current.messages).toHaveLength(2)
-    expect(result.current.messages[0].role).toBe('user')
+    expect(result.current.messages[0]!.role).toBe('user')
     expect(globalThis.fetch).toHaveBeenCalledWith('/api/ai/sessions/sess-1/conversation', {
       headers: { Authorization: 'Basic dGVzdDp0ZXN0' },
     })
@@ -233,14 +233,14 @@ describe('useConversation', () => {
 
     await waitFor(() => {
       expect(result.current.messages).toHaveLength(1)
-      expect(result.current.messages[0].content).toBe('first')
+      expect(result.current.messages[0]!.content).toBe('first')
     })
 
     await rerender({ id: 'sess-2' })
 
     await waitFor(() => {
       expect(result.current.messages).toHaveLength(1)
-      expect(result.current.messages[0].content).toBe('second')
+      expect(result.current.messages[0]!.content).toBe('second')
     })
   })
 
@@ -326,7 +326,7 @@ describe('useConversation', () => {
     })
 
     expect(lastEndpoint).toContain('/refresh')
-    expect(result.current.messages[0].content).toBe('refreshed data')
+    expect(result.current.messages[0]!.content).toBe('refreshed data')
   })
 
   it('should set default error when refresh fails without error field', async () => {

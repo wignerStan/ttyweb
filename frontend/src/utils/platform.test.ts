@@ -227,7 +227,7 @@ describe('platform', () => {
     })
 
     it('should return true for standalone display-mode match', () => {
-      delete (navigator as Record<string, unknown>).standalone
+      delete (navigator as unknown as Record<string, unknown>).standalone
       window.matchMedia = vi.fn().mockImplementation((query: string) => ({
         matches: query === '(display-mode: standalone)',
       }))
@@ -236,7 +236,7 @@ describe('platform', () => {
     })
 
     it('should return true for fullscreen display-mode match', () => {
-      delete (navigator as Record<string, unknown>).standalone
+      delete (navigator as unknown as Record<string, unknown>).standalone
       window.matchMedia = vi.fn().mockImplementation((query: string) => ({
         matches: query === '(display-mode: fullscreen)',
       }))
@@ -245,14 +245,14 @@ describe('platform', () => {
     })
 
     it('should return false when neither standalone nor fullscreen', () => {
-      delete (navigator as Record<string, unknown>).standalone
+      delete (navigator as unknown as Record<string, unknown>).standalone
       window.matchMedia = vi.fn().mockReturnValue({ matches: false })
 
       expect(isStandalonePWA()).toBe(false)
     })
 
     it('should handle missing matchMedia', () => {
-      delete (navigator as Record<string, unknown>).standalone
+      delete (navigator as unknown as Record<string, unknown>).standalone
       window.matchMedia = undefined as unknown as typeof window.matchMedia
 
       expect(isStandalonePWA()).toBe(false)

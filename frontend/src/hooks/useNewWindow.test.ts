@@ -290,7 +290,7 @@ describe('useNewWindow', () => {
       await result.current.createWindow('session')
     })
 
-    const createCall = mockFetch.mock.calls[1]
-    expect(createCall[1].headers.Authorization).toBe('Basic dGVzdDp0ZXN0')
+    const createCall = mockFetch.mock.calls[1]!
+    expect(createCall[1]!.headers.Authorization).toBe('Basic dGVzdDp0ZXN0')
   })
 })

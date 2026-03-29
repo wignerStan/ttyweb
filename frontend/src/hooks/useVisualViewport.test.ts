@@ -34,15 +34,15 @@ describe('useVisualViewport', () => {
     vi.spyOn(window, 'addEventListener').mockImplementation(
       (event: string, handler: EventListenerOrEventListenerObject) => {
         if (event === 'orientationchange') {
-          listeners[event].push(handler as EventListener)
+          listeners[event]!.push(handler as EventListener)
         }
       },
     )
     vi.spyOn(window, 'removeEventListener').mockImplementation(
       (event: string, handler: EventListenerOrEventListenerObject) => {
         if (event === 'orientationchange') {
-          const idx = listeners[event].indexOf(handler as EventListener)
-          if (idx >= 0) listeners[event].splice(idx, 1)
+          const idx = listeners[event]!.indexOf(handler as EventListener)
+          if (idx >= 0) listeners[event]!.splice(idx, 1)
         }
       },
     )
@@ -78,7 +78,7 @@ describe('useVisualViewport', () => {
     // Simulate keyboard closing: viewport grows from 500 to 790
     vv.height = 790
     const resizeEvent = new Event('resize')
-    vv._listeners.resize.forEach((fn) => fn(resizeEvent))
+    vv._listeners.resize!.forEach((fn) => fn(resizeEvent))
 
     expect(rootEl.style.getPropertyValue('--app-height')).toBe('790px')
     expect(rootEl.style.getPropertyValue('--vvh')).toBe('790px')
@@ -95,7 +95,7 @@ describe('useVisualViewport', () => {
 
     // Keyboard opens: viewport drops from 800 to 400 (diff = 400 > 150 threshold)
     vv.height = 400
-    vv._listeners.resize.forEach((fn) => fn(new Event('resize')))
+    vv._listeners.resize!.forEach((fn) => fn(new Event('resize')))
 
     // --app-height should remain at 800 (frozen), but --vvh and --vv-offset should update
     expect(rootEl.style.getPropertyValue('--app-height')).toBe('800px')
@@ -111,7 +111,7 @@ describe('useVisualViewport', () => {
 
     // Small change: 800 -> 799 (diff = 1 < 3 jitter threshold)
     vv.height = 799
-    vv._listeners.resize.forEach((fn) => fn(new Event('resize')))
+    vv._listeners.resize!.forEach((fn) => fn(new Event('resize')))
 
     expect(rootEl.style.getPropertyValue('--app-height')).toBe('800px')
   })
@@ -124,7 +124,7 @@ describe('useVisualViewport', () => {
 
     // Large change via scroll
     vv.height = 600
-    vv._listeners.scroll.forEach((fn) => fn(new Event('scroll')))
+    vv._listeners.scroll!.forEach((fn) => fn(new Event('scroll')))
 
     // diff = 200 > 150 threshold -> freeze
     expect(rootEl.style.getPropertyValue('--app-height')).toBe('800px')
@@ -140,7 +140,7 @@ describe('useVisualViewport', () => {
 
     // Simulate orientation change
     vv.height = 780
-    listeners.orientationchange.forEach((fn) => fn(new Event('orientationchange')))
+    listeners.orientationchange!.forEach((fn) => fn(new Event('orientationchange')))
 
     // Before timeout -- height should still be old value
     expect(rootEl.style.getPropertyValue('--app-height')).toBe('800px')

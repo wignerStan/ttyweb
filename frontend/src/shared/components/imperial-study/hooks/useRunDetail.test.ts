@@ -65,8 +65,8 @@ describe('useRunDetail', () => {
 
   it('clears state when runId is null', async () => {
     vi.stubGlobal('fetch', mockFetchRun(mockRun, { events: [] }))
-    const { result, rerender } = renderHook(({ id }) => useRunDetail(id), {
-      initialProps: { id: 'run-123' },
+    const { result, rerender } = renderHook(({ id }: { id: string | null }) => useRunDetail(id), {
+      initialProps: { id: 'run-123' as string | null },
     })
     await waitFor(() => expect(result.current.run).toBeTruthy())
     rerender({ id: null })

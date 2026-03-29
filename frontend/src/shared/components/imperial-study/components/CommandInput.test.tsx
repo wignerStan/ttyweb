@@ -155,7 +155,7 @@ describe('CommandInput', () => {
     const input = screen.getByPlaceholderText(/Enter command/)
     await userEvent.type(input, 'test{Control>}{Enter}{/Control}')
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
-    const callArgs = JSON.parse(fetchMock.mock.calls[0][1].body)
+    const callArgs = JSON.parse(fetchMock.mock.calls[0]![1]!.body)
     expect(callArgs.params).toEqual({ pane_target: 'main:0:0' })
   })
 

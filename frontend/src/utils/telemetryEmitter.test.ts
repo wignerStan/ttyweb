@@ -47,7 +47,9 @@ describe('telemetryEmitter', () => {
       emitter.flush()
       expect(fetchMock).toHaveBeenCalledTimes(1)
 
-      const [, options] = fetchMock.mock.calls[0]
+      const callArgs = fetchMock.mock.calls[0]
+      expect(callArgs).toBeDefined()
+      const [, options] = callArgs!
       const body = JSON.parse(options.body)
       expect(body.events).toHaveLength(2)
       expect(body.events[0].event).toBe('mobile-onData')
@@ -65,7 +67,9 @@ describe('telemetryEmitter', () => {
       emitter.flush()
 
       expect(fetchMock).toHaveBeenCalledTimes(1)
-      const [, options] = fetchMock.mock.calls[0]
+      const callArgs = fetchMock.mock.calls[0]
+      expect(callArgs).toBeDefined()
+      const [, options] = callArgs!
       expect(options.method).toBe('POST')
       const body = JSON.parse(options.body)
       expect(body.events).toHaveLength(1)
@@ -135,9 +139,11 @@ describe('telemetryEmitter', () => {
       emitter.emit('mobile-onData', { data: longData })
       emitter.flush()
 
-      const [, options] = fetchMock.mock.calls[0]
+      const callArgs = fetchMock.mock.calls[0]
+      expect(callArgs).toBeDefined()
+      const [, options] = callArgs!
       const body = JSON.parse(options.body)
-      const sentData = body.events[0].data as string
+      const sentData = body.events[0]!.data as string
       expect(sentData.length).toBeLessThan(200)
       expect(sentData).toContain('[truncated]')
 

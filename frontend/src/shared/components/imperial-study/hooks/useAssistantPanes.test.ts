@@ -43,11 +43,11 @@ describe('useAssistantPanes', () => {
     })
 
     expect(result.current.messages).toHaveLength(2)
-    expect(result.current.messages[0].role).toBe('user')
-    expect(result.current.messages[1].role).toBe('assistant')
+    expect(result.current.messages[0]!.role).toBe('user')
+    expect(result.current.messages[1]!.role).toBe('assistant')
 
     await waitFor(() => expect(result.current.streaming).toBe(false))
-    expect(result.current.messages[1].content).toBe('hello world')
+    expect(result.current.messages[1]!.content).toBe('hello world')
   })
 
   it('clearMessages resets state', async () => {
@@ -75,7 +75,7 @@ describe('useAssistantPanes', () => {
       result.current.sendMessage('hi', 'chat')
     })
     await waitFor(() => expect(result.current.streaming).toBe(false))
-    expect(result.current.messages[1].error).toBe('HTTP 500')
+    expect(result.current.messages[1]!.error).toBe('HTTP 500')
   })
 
   it('handles reasoning events', async () => {
@@ -91,7 +91,7 @@ describe('useAssistantPanes', () => {
       result.current.sendMessage('hi', 'chat')
     })
     await waitFor(() => expect(result.current.streaming).toBe(false))
-    expect(result.current.messages[1].reasoning).toBe('think')
-    expect(result.current.messages[1].content).toBe('answer')
+    expect(result.current.messages[1]!.reasoning).toBe('think')
+    expect(result.current.messages[1]!.content).toBe('answer')
   })
 })

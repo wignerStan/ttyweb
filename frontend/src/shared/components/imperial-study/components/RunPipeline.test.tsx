@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { PipelineRun } from '../types'
+import type { ActivityEvent, PipelineRun } from '../types'
 import { RunPipeline } from './RunPipeline'
 
 const baseRun: PipelineRun = {
@@ -15,7 +15,7 @@ const baseRun: PipelineRun = {
   startedAt: Date.now(),
 }
 
-const events = [
+const events: ActivityEvent[] = [
   {
     id: '1',
     study_id: 's1',

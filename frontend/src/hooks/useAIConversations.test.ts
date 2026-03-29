@@ -289,7 +289,7 @@ describe('useAIConversations', () => {
     const { result, rerender } = renderHook(
       ({ paneKey }: { paneKey: string | null }) => useAIConversations(paneKey),
       {
-        initialProps: { paneKey: 'pane1' },
+        initialProps: { paneKey: 'pane1' as string | null },
       },
     )
 

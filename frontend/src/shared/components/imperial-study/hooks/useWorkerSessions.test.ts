@@ -59,6 +59,6 @@ describe('useWorkerSessions', () => {
     await act(async () => {
       await result.current.refetch()
     })
-    expect(result.current.workers[0].state).toBe('busy')
+    expect(result.current.workers[0]!.state).toBe('busy')
   })
 })

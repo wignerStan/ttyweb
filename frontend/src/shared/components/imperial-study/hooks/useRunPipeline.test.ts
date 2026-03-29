@@ -35,8 +35,8 @@ describe('useRunPipeline', () => {
     const { result } = renderHook(() => useRunPipeline())
     expect(fetch).toHaveBeenCalledWith('/api/butler/dashboard/runs?limit=5', expect.any(Object))
     await waitFor(() => expect(result.current.runs).toHaveLength(1))
-    expect(result.current.runs[0].run_id).toBe('r1')
-    expect(result.current.runs[0].stage).toBe('processing')
+    expect(result.current.runs[0]!.run_id).toBe('r1')
+    expect(result.current.runs[0]!.stage).toBe('processing')
   })
 
   it('computes activeRun from non-terminal runs', async () => {
@@ -54,7 +54,7 @@ describe('useRunPipeline', () => {
     act(() => {
       result.current.dispatch('new intent', routing, 'r2', 't2')
     })
-    expect(result.current.runs[0].run_id).toBe('r2')
+    expect(result.current.runs[0]!.run_id).toBe('r2')
     expect(result.current.runs).toHaveLength(2)
   })
 
