@@ -185,14 +185,14 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 }
 
 // ListWorktrees returns worktrees for a project, syncing with git state first.
-func (s *WorktreeService) ListWorktrees(projectID string) ([]WorktreeRecord, error) {
+func (s *WorktreeService) ListWorktrees(ctx context.Context, projectID string) ([]WorktreeRecord, error) {
 	project, err := s.GetProject(projectID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Sync with git state first (takes its own lock).
-	_ = s.syncWorktrees(project)
+	_ = s.syncWorktrees(ctx, project)
 
 	return s.worktreesForProject(projectID), nil
 }
@@ -233,7 +233,7 @@ func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktre
 }
 
 // RefreshWorktree updates the status of a worktree from git.
-func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*WorktreeRecord, error) {
+func (s *WorktreeService) RefreshWorktree(ctx context.Context, projectID, worktreeID string) (*WorktreeRecord, error) {
 	s.mu.RLock()
 	record, err := s.getWorktreeLocked(worktreeID, projectID)
 	s.mu.RUnlock()
@@ -241,7 +241,7 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 		return nil, err
 	}
 
-	status, err := worktree.GetWorktreeStatus(context.Background(), record.Path)
+	status, err := worktree.GetWorktreeStatus(ctx, record.Path)
 	if err != nil {
 		return nil, fmt.Errorf("get worktree status: %w", err)
 	}
@@ -250,7 +250,7 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 	record.UpdatedAt = time.Now()
 
 	// Fetch updated commit info from git list.
-	infos, err := worktree.ListWorktrees(context.Background(), filepath.Dir(record.Path))
+	infos, err := worktree.ListWorktrees(ctx, filepath.Dir(record.Path))
 	if err == nil {
 		for _, info := range infos {
 			if worktree.EqualPath(info.Path, record.Path) {
@@ -271,13 +271,13 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 }
 
 // SyncAllWorktrees syncs all worktrees for a project.
-func (s *WorktreeService) SyncAllWorktrees(projectID string) ([]WorktreeRecord, error) {
+func (s *WorktreeService) SyncAllWorktrees(ctx context.Context, projectID string) ([]WorktreeRecord, error) {
 	project, err := s.GetProject(projectID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.syncWorktrees(project); err != nil {
+	if err := s.syncWorktrees(ctx, project); err != nil {
 		return nil, err
 	}
 
@@ -308,7 +308,7 @@ func (s *WorktreeService) CommitWorktree(ctx context.Context, projectID, worktre
 		return nil, err
 	}
 
-	return s.RefreshWorktree(projectID, worktreeID)
+	return s.RefreshWorktree(ctx, projectID, worktreeID)
 }
 
 // --- internal ---
@@ -338,11 +338,11 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 	return record, nil
 }
 
-func (s *WorktreeService) syncWorktrees(project *WtProject) error {
+func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	gitWorktrees, err := worktree.ListWorktrees(context.Background(), project.Path)
+	gitWorktrees, err := worktree.ListWorktrees(ctx, project.Path)
 	if err != nil {
 		return err
 	}

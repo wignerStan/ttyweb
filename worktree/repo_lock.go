@@ -2,8 +2,8 @@ package worktree
 
 import (
 	"context"
-	"runtime"
 	"sync"
+	"time"
 )
 
 // RepoLock serializes write operations on the same repository while allowing
@@ -43,7 +43,7 @@ func (rl *RepoLock) Lock(path string, ctx context.Context) func() {
 		if entry.mu.TryLock() {
 			return entry.mu.Unlock
 		}
-		runtime.Gosched()
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 
@@ -61,7 +61,7 @@ func (rl *RepoLock) RLock(path string, ctx context.Context) func() {
 		if entry.mu.TryRLock() {
 			return entry.mu.RUnlock
 		}
-		runtime.Gosched()
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 

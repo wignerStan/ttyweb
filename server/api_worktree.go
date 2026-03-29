@@ -86,7 +86,7 @@ func handleWorktreeProjects(w http.ResponseWriter, r *http.Request) {
 func handleWorktreeList(w http.ResponseWriter, r *http.Request, projectID string) {
 	switch r.Method {
 	case http.MethodGet:
-		worktrees, err := wtService.ListWorktrees(projectID)
+		worktrees, err := wtService.ListWorktrees(r.Context(), projectID)
 		if err != nil {
 			writeAPIError(w, http.StatusBadRequest, err.Error())
 			return
@@ -123,7 +123,7 @@ func handleWorktreeList(w http.ResponseWriter, r *http.Request, projectID string
 func handleWorktreeSync(w http.ResponseWriter, r *http.Request, projectID string) {
 	switch r.Method {
 	case http.MethodPost:
-		worktrees, err := wtService.SyncAllWorktrees(projectID)
+		worktrees, err := wtService.SyncAllWorktrees(r.Context(), projectID)
 		if err != nil {
 			writeAPIError(w, http.StatusBadRequest, err.Error())
 			return
@@ -160,7 +160,7 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 
 		switch action {
 		case "refresh":
-			record, err := wtService.RefreshWorktree(projectID, worktreeID)
+			record, err := wtService.RefreshWorktree(r.Context(), projectID, worktreeID)
 			if err != nil {
 				writeAPIError(w, http.StatusBadRequest, err.Error())
 				return

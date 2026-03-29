@@ -153,13 +153,12 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 	if createBranch {
 		base := strings.TrimSpace(baseBranch)
 		if base == "" {
-			base = resolveDefaultBranch(absRepo)
+			base = resolveDefaultBranch(ctx, absRepo)
 		}
 		if base == "" {
 			base = "main"
 		}
-		cmd := newGitCmdContext(ctx, absRepo, "branch", branchName, base)
-		if out, err := cmd.CombinedOutput(); err != nil {
+		if out, err := runGitCmdWithOutput(ctx, absRepo, "branch", branchName, base); err != nil {
 			return "", fmt.Errorf("create branch failed: %s", strings.TrimSpace(string(out)))
 		}
 	}
@@ -171,8 +170,7 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 	}
 
 	// Add the worktree.
-	cmd := newGitCmdContext(ctx, absRepo, "worktree", "add", worktreePath, branchName)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	if out, err := runGitCmdWithOutput(ctx, absRepo, "worktree", "add", worktreePath, branchName); err != nil {
 		// Clean up the branch if we just created it.
 		if createBranch {
 			_ = runGitCmdContext(ctx, absRepo, "branch", "-D", branchName)
@@ -198,8 +196,7 @@ func ListWorktrees(ctx context.Context, repoPath string) ([]WorktreeInfo, error)
 	// Prune stale entries first.
 	_ = runGitCmdContext(ctx, absRepo, "worktree", "prune")
 
-	cmd := newGitCmdContext(ctx, absRepo, "worktree", "list", "--porcelain")
-	output, err := cmd.CombinedOutput()
+	output, err := runGitCmdWithOutput(ctx, absRepo, "worktree", "list", "--porcelain")
 	if err != nil {
 		return nil, fmt.Errorf("list worktrees failed: %s", strings.TrimSpace(string(output)))
 	}
@@ -210,7 +207,7 @@ func ListWorktrees(ctx context.Context, repoPath string) ([]WorktreeInfo, error)
 			infos[i].IsMain = true
 		}
 		// Fetch head commit message.
-		infos[i].HeadMessage = headCommitMessage(infos[i].Path)
+		infos[i].HeadMessage = headCommitMessage(ctx, infos[i].Path)
 	}
 
 	return infos, nil
@@ -238,8 +235,7 @@ func RemoveWorktree(ctx context.Context, repoPath, worktreePath string, force bo
 	}
 	args = append(args, worktreePath)
 
-	cmd := newGitCmdContext(ctx, absRepo, args...)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	if out, err := runGitCmdWithOutput(ctx, absRepo, args...); err != nil {
 		errMsg := strings.TrimSpace(string(out))
 		if strings.Contains(errMsg, "is not a working tree") || strings.Contains(errMsg, "not found") {
 			_ = runGitCmdContext(ctx, absRepo, "worktree", "prune")
@@ -319,6 +315,22 @@ func runGitCmdContext(ctx context.Context, dir string, args ...string) error {
 	return nil
 }
 
+// runGitCmdWithOutput acquires a semaphore permit then runs a git command, returning its output.
+func runGitCmdWithOutput(ctx context.Context, dir string, args ...string) ([]byte, error) {
+	guard, err := DefaultSemaphore().Acquire(ctx)
+	if err != nil {
+		return nil, &OpError{Kind: KindCancelled, Path: dir, Detail: "semaphore acquire cancelled", Cause: err}
+	}
+	defer guard.Release()
+
+	cmd := newGitCmdContext(ctx, dir, args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return out, &OpError{Kind: KindGitFailed, Path: dir, Detail: fmt.Sprintf("git %s failed: %s", strings.Join(args, " "), strings.TrimSpace(string(out))), Cause: err}
+	}
+	return out, nil
+}
+
 func sanitizeBranchName(branch string) string {
 	replacer := strings.NewReplacer(
 		"/", "__",
@@ -333,10 +345,9 @@ func sanitizeBranchName(branch string) string {
 	return replacer.Replace(strings.TrimSpace(branch))
 }
 
-func resolveDefaultBranch(repoPath string) string {
+func resolveDefaultBranch(ctx context.Context, repoPath string) string {
 	for _, name := range []string{"main", "master", "develop"} {
-		cmd := newGitCmd(repoPath, "rev-parse", "--verify", "--quiet", "refs/heads/"+name)
-		if err := cmd.Run(); err == nil {
+		if _, err := runGitCmdWithOutput(ctx, repoPath, "rev-parse", "--verify", "--quiet", "refs/heads/"+name); err == nil {
 			return name
 		}
 	}
@@ -400,9 +411,8 @@ func EqualPath(a, b string) bool {
 	return cleanA == cleanB
 }
 
-func headCommitMessage(path string) string {
-	cmd := newGitCmd(path, "log", "-1", "--pretty=format:%s")
-	out, err := cmd.Output()
+func headCommitMessage(ctx context.Context, path string) string {
+	out, err := runGitCmdWithOutput(ctx, path, "log", "-1", "--pretty=format:%s")
 	if err != nil || len(out) == 0 {
 		return ""
 	}
