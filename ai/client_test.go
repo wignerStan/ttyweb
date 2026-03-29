@@ -74,7 +74,7 @@ func TestChatCompletion_Success(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
@@ -100,7 +100,7 @@ func TestChatCompletion_EmptyContent(t *testing.T) {
 				},
 			},
 		}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
@@ -114,7 +114,7 @@ func TestChatCompletion_EmptyContent(t *testing.T) {
 func TestChatCompletion_NoChoices(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := chatResponse{Choices: nil}
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
@@ -128,7 +128,7 @@ func TestChatCompletion_NoChoices(t *testing.T) {
 func TestChatCompletion_APIError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"error": map[string]string{"message": "invalid API key"},
 		})
 	}))
@@ -144,7 +144,7 @@ func TestChatCompletion_APIError(t *testing.T) {
 func TestChatCompletion_ContextCancelled(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
-		json.NewEncoder(w).Encode(chatResponse{})
+		_ = json.NewEncoder(w).Encode(chatResponse{})
 	}))
 	defer srv.Close()
 
@@ -161,7 +161,7 @@ func TestChatCompletion_ContextCancelled(t *testing.T) {
 func TestChatCompletion_InvalidJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("not json"))
+		_, _ = w.Write([]byte("not json"))
 	}))
 	defer srv.Close()
 

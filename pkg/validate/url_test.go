@@ -16,11 +16,11 @@ func TestIsPrivateIP(t *testing.T) {
 		{"172.16.0.1", true},
 		{"172.31.255.255", true},
 		{"172.15.255.255", false}, // just below 172.16
-		{"172.32.0.0", false},    // just above 172.31
+		{"172.32.0.0", false},     // just above 172.31
 		{"192.168.0.1", true},
 		{"192.168.255.255", true},
 		{"192.167.255.255", false}, // just below 192.168
-		{"192.169.0.0", false},    // just above 192.168
+		{"192.169.0.0", false},     // just above 192.168
 
 		// Loopback
 		{"127.0.0.1", true},
@@ -30,7 +30,7 @@ func TestIsPrivateIP(t *testing.T) {
 		{"169.254.0.1", true},
 		{"169.254.255.255", true},
 		{"169.253.255.255", false}, // just below
-		{"169.255.0.0", false},    // just above
+		{"169.255.0.0", false},     // just above
 
 		// Public IPs
 		{"8.8.8.8", false},

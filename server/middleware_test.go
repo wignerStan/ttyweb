@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
@@ -8,9 +9,11 @@ import (
 )
 
 // newTestServer creates a minimal Server for testing middleware methods.
+// It resets the global MemoryStore to ensure test isolation.
 func newTestServer() *Server {
+	store = NewMemoryStore()
 	return &Server{
-		options: &Options{},
+		options: &Options{Path: "/"},
 	}
 }
 
@@ -20,16 +23,16 @@ func TestWrapHeaders_SetsSecurityHeaders(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
 	headers := map[string]string{
-		"Server":              "GoTTY",
+		"Server":                 "GoTTY",
 		"X-Content-Type-Options": "nosniff",
-		"X-Frame-Options":     "DENY",
-		"Referrer-Policy":     "no-referrer",
-	"Permissions-Policy":  "camera=(), geolocation=()",
+		"X-Frame-Options":        "DENY",
+		"Referrer-Policy":        "no-referrer",
+		"Permissions-Policy":     "camera=(), geolocation=()",
 	}
 
 	for name, expected := range headers {
@@ -48,7 +51,7 @@ func TestWrapBasicAuth_ValidCredentials(t *testing.T) {
 	}), credential)
 
 	auth := base64.StdEncoding.EncodeToString([]byte(credential))
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Basic "+auth)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -66,7 +69,7 @@ func TestWrapBasicAuth_InvalidCredentials(t *testing.T) {
 	}), credential)
 
 	auth := base64.StdEncoding.EncodeToString([]byte("wrong:creds"))
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Basic "+auth)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -83,7 +86,7 @@ func TestWrapBasicAuth_MissingHeader(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}), credential)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
@@ -105,7 +108,7 @@ func TestWrapBasicAuth_MalformedHeader(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}), credential)
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Basic not-valid-base64!!!")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -123,7 +126,7 @@ func TestWrapLogger_LogsRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/test-path", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/test-path", nil)
 	req.RemoteAddr = "192.168.1.1:12345"
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)

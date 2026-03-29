@@ -129,10 +129,10 @@ func TestLogWatcher_DetectsUpdatedSession(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := f.WriteString(`{"type":"user","message":{"role":"user","content":"Follow up"},"timestamp":"2025-12-01T10:01:00Z","sessionId":"update-session"}` + "\n"); err != nil {
-		f.Close()
+		_ = f.Close()
 		t.Fatal(err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	// Wait for the update event.
 	select {

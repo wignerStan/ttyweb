@@ -9,9 +9,9 @@ func TestExpand(t *testing.T) {
 	home := os.Getenv("HOME")
 
 	tests := []struct {
-		name    string
-		input   string
-		want    string
+		name  string
+		input string
+		want  string
 	}{
 		{
 			name:  "tilde slash expands to home",

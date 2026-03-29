@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,7 +33,7 @@ func initTestRepo(t *testing.T) string {
 func mustRun(t *testing.T, dir, name string, args ...string) {
 	t.Helper()
 	// Prepend "git" since all calls pass git subcommands.
-	cmd := exec.Command("git", append([]string{name}, args...)...)
+	cmd := exec.CommandContext(context.Background(), "git", append([]string{name}, args...)...)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {

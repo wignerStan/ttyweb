@@ -61,7 +61,7 @@ func TestWriteFromSlaveCommand(t *testing.T) {
 	// Simulate the slave (the process being run by GoTTY)
 	// echoing "foobar"
 	message := []byte("foobar")
-	mSlave.slaveToGottyWriter.Write(message)
+	_, _ = mSlave.slaveToGottyWriter.Write(message)
 
 	// And then make sure it makes it way to the client
 	// through the websocket as an output message
@@ -100,7 +100,7 @@ func TestWriteFromFrontend(t *testing.T) {
 
 	// simulate input from frontend...
 	message := []byte("1hello\n") // line buffered canonical mode
-	mMaster.masterToGottyWriter.Write(message)
+	_, _ = mMaster.masterToGottyWriter.Write(message)
 
 	// ...and make sure it makes it through to the slave intact
 	readBuf := make([]byte, 1024)
@@ -211,7 +211,7 @@ func prepareSUT(t *testing.T, wg *sync.WaitGroup, options ...Option) (*mockMaste
 	wg.Add(1)
 	go func() {
 		wg.Done()
-		dt.Run(ctx)
+		_ = dt.Run(ctx)
 	}()
 	return mMaster, mSlave, dt, cancel
 }
@@ -239,11 +239,6 @@ func newMockMaster() *mockMaster {
 	return rv
 }
 
-func (mm *mockMaster) close() {
-	mm.masterToGottyWriter.Close()
-	mm.gottyToMasterReader.Close()
-}
-
 func (mm *mockMaster) Read(buf []byte) (int, error) {
 	return mm.masterToGottyReader.Read(buf)
 }
@@ -257,11 +252,6 @@ func newMockSlave() *mockSlave {
 	rv.gottyToSlaveReader, rv.gottyToSlaveWriter = io.Pipe()
 	rv.slaveToGottyReader, rv.slaveToGottyWriter = io.Pipe()
 	return rv
-}
-
-func (ms *mockSlave) close() {
-	ms.slaveToGottyWriter.Close()
-	ms.gottyToSlaveReader.Close()
 }
 
 func (ms *mockSlave) Read(buf []byte) (int, error) {

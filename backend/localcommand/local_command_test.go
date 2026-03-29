@@ -33,6 +33,16 @@ func TestNewFactory(t *testing.T) {
 	}
 }
 
+func TestFactoryName(t *testing.T) {
+	factory, err := NewFactory("/bin/cat", []string{}, &Options{})
+	if err != nil {
+		t.Fatalf("NewFactory() returned error: %v", err)
+	}
+	if factory.Name() != "local command" {
+		t.Fatalf("expected 'local command', got %q", factory.Name())
+	}
+}
+
 func TestFactoryNew(t *testing.T) {
 	factory, err := NewFactory("/bin/cat", []string{}, &Options{})
 	if err != nil {

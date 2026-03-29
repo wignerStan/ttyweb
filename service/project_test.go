@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,7 +32,7 @@ func initGitRepo(t *testing.T, path string) {
 
 func runGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(context.Background(), "git", args...)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -160,7 +161,7 @@ func TestAddProject_RelativePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get cwd: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() { _ = os.Chdir(originalDir) }()
 
 	if err := os.Chdir(parentDir); err != nil {
 		t.Fatalf("chdir: %v", err)
@@ -568,7 +569,7 @@ func TestSyncProject_NotFound(t *testing.T) {
 	}
 }
 
-func TestGenerateID(t *testing.T) {
+func TestGenerateID_InProjectContext(t *testing.T) {
 	id1, err := generateID()
 	if err != nil {
 		t.Fatalf("generateID: %v", err)

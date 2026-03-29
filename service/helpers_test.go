@@ -22,3 +22,18 @@ func setupTestDB(t *testing.T) *gorm.DB {
 
 	return db
 }
+
+func TestGenerateID_Unique(t *testing.T) {
+	t.Parallel()
+	ids := make(map[string]bool, 100)
+	for i := 0; i < 100; i++ {
+		id, err := generateID()
+		if err != nil {
+			t.Fatalf("generateID failed: %v", err)
+		}
+		if ids[id] {
+			t.Fatalf("duplicate ID generated: %s", id)
+		}
+		ids[id] = true
+	}
+}

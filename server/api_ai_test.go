@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -56,7 +57,7 @@ func TestHandleAICommand_IgnoresHeadersAndQueryParams(t *testing.T) {
 	body := aiCommandRequest{Prompt: "list files"}
 	bodyBytes, _ := json.Marshal(body)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/command?api_url=http://evil.example.com&api_key=stolen-key&model=evil-model", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/command?api_url=http://evil.example.com&api_key=stolen-key&model=evil-model", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-LLM-Api-URL", "http://evil.example.com")
 	req.Header.Set("X-LLM-Api-Key", "stolen-key")
@@ -115,7 +116,7 @@ func TestHandleAICommand_EnvVarTakesPrecedence(t *testing.T) {
 	body := aiCommandRequest{Prompt: "list files", Role: "cli-expert"}
 	bodyBytes, _ := json.Marshal(body)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/command?api_key=attacker-key", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/command?api_key=attacker-key", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-LLM-Api-Key", "attacker-key")
 
@@ -160,7 +161,7 @@ func TestHandleAICommand_ErrorSanitization(t *testing.T) {
 	body := aiCommandRequest{Prompt: "test prompt"}
 	bodyBytes, _ := json.Marshal(body)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/command", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/command", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 
 	rec := httptest.NewRecorder()
@@ -191,7 +192,7 @@ func TestHandleAICommand_ErrorSanitization(t *testing.T) {
 func TestHandleAICommand_InvalidMethod(t *testing.T) {
 	srv := &Server{}
 
-	req := httptest.NewRequest(http.MethodGet, "/api/ai/command", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/command", nil)
 	rec := httptest.NewRecorder()
 	srv.handleAICommand(rec, req)
 
@@ -207,7 +208,7 @@ func TestHandleAICommand_EmptyPrompt(t *testing.T) {
 	body := aiCommandRequest{Prompt: ""}
 	bodyBytes, _ := json.Marshal(body)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/command", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/command", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	srv.handleAICommand(rec, req)
@@ -221,7 +222,7 @@ func TestHandleAICommand_EmptyPrompt(t *testing.T) {
 func TestHandleAICommand_InvalidBody(t *testing.T) {
 	srv := &Server{}
 
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/command", strings.NewReader("not json"))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/command", strings.NewReader("not json"))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	srv.handleAICommand(rec, req)
@@ -235,8 +236,8 @@ func TestHandleAICommand_InvalidBody(t *testing.T) {
 // LLM_MODEL env vars are not set, the handler uses the built-in defaults.
 func TestHandleAICommand_DefaultsWhenEnvUnset(t *testing.T) {
 	// Clear the env vars to test defaults.
-	os.Unsetenv("LLM_API_URL")
-	os.Unsetenv("LLM_MODEL")
+	_ = os.Unsetenv("LLM_API_URL")
+	_ = os.Unsetenv("LLM_MODEL")
 	// Set a bad key so we get a 500 (proving the defaults were used for the URL).
 	t.Setenv("LLM_API_KEY", "some-key")
 
@@ -245,7 +246,7 @@ func TestHandleAICommand_DefaultsWhenEnvUnset(t *testing.T) {
 	body := aiCommandRequest{Prompt: "test"}
 	bodyBytes, _ := json.Marshal(body)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/command", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/command", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 
 	rec := httptest.NewRecorder()

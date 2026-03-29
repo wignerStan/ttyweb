@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -64,7 +65,7 @@ func TestButlerTarget_PortOnly(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestIsSSERequest_True(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/stream", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/stream", nil)
 	req.Header.Set("Accept", "text/event-stream")
 
 	if !isSSERequest(req) {
@@ -73,7 +74,7 @@ func TestIsSSERequest_True(t *testing.T) {
 }
 
 func TestIsSSERequest_False(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/data", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/data", nil)
 	req.Header.Set("Accept", "application/json")
 
 	if isSSERequest(req) {
@@ -82,7 +83,7 @@ func TestIsSSERequest_False(t *testing.T) {
 }
 
 func TestIsSSERequest_EmptyAccept(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/data", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/data", nil)
 
 	if isSSERequest(req) {
 		t.Error("isSSERequest() should return false when Accept header is empty")
@@ -90,7 +91,7 @@ func TestIsSSERequest_EmptyAccept(t *testing.T) {
 }
 
 func TestIsSSERequest_MultipleAcceptValues(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/stream", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/stream", nil)
 	req.Header.Set("Accept", "application/json, text/event-stream")
 
 	if !isSSERequest(req) {
@@ -158,7 +159,7 @@ func TestHandleButlerProxy_NormalGET(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "ok",
 		})
 	}))
@@ -173,7 +174,7 @@ func TestHandleButlerProxy_NormalGET(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/status", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/status", nil)
 	rec := httptest.NewRecorder()
 
 	srv.handleButlerProxy(rec, req)
@@ -209,7 +210,7 @@ func TestHandleButlerProxy_NormalPOST(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"created": true,
 		})
 	}))
@@ -221,7 +222,7 @@ func TestHandleButlerProxy_NormalPOST(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/butler/resources", strings.NewReader(`{"key":"value"}`))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/butler/resources", strings.NewReader(`{"key":"value"}`))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
@@ -248,7 +249,7 @@ func TestHandleButlerProxy_ForwardsQueryParams(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 	}))
 	defer upstream.Close()
 
@@ -258,7 +259,7 @@ func TestHandleButlerProxy_ForwardsQueryParams(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/search?foo=bar&baz=1", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/search?foo=bar&baz=1", nil)
 	rec := httptest.NewRecorder()
 
 	srv.handleButlerProxy(rec, req)
@@ -275,7 +276,7 @@ func TestHandleButlerProxy_NormalUpstreamError(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/status", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/status", nil)
 	rec := httptest.NewRecorder()
 
 	srv.handleButlerProxy(rec, req)
@@ -321,7 +322,7 @@ func TestHandleButlerProxy_SSEStream(t *testing.T) {
 			"data: hello\n\n",
 			"data: world\n\n",
 		} {
-			w.Write([]byte(event))
+			_, _ = w.Write([]byte(event))
 			flusher.Flush()
 		}
 	}))
@@ -333,7 +334,7 @@ func TestHandleButlerProxy_SSEStream(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/stream", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/stream", nil)
 	req.Header.Set("Accept", "text/event-stream")
 	rec := httptest.NewRecorder()
 
@@ -371,7 +372,7 @@ func TestHandleButlerProxy_SSEUpstreamError(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/stream", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/stream", nil)
 	req.Header.Set("Accept", "text/event-stream")
 	rec := httptest.NewRecorder()
 
@@ -399,7 +400,7 @@ func TestHandleButlerProxy_PathTraversal(t *testing.T) {
 	// The hardened proxy rejects path traversal before reaching upstream.
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/../../../etc/passwd", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/../../../etc/passwd", nil)
 	rec := httptest.NewRecorder()
 
 	srv.handleButlerProxy(rec, req)
@@ -429,7 +430,7 @@ func TestHandleButlerProxy_HopByHopHeadersStripped(t *testing.T) {
 		w.Header().Set("X-Request-Id", "upstream-123")
 		w.Header().Set("Connection", "close") // should be stripped on response
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 	}))
 	defer upstream.Close()
 
@@ -439,7 +440,7 @@ func TestHandleButlerProxy_HopByHopHeadersStripped(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/test", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/test", nil)
 	req.Header.Set("Connection", "keep-alive")
 	req.Header.Set("Transfer-Encoding", "chunked")
 	req.Header.Set("Keep-Alive", "timeout=5")
@@ -473,7 +474,7 @@ func TestHandleButlerProxy_ForwardsCustomHeaders(t *testing.T) {
 		receivedAuth = r.Header.Get("Authorization")
 		receivedXRequestID = r.Header.Get("X-Request-Id")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 	}))
 	defer upstream.Close()
 
@@ -483,7 +484,7 @@ func TestHandleButlerProxy_ForwardsCustomHeaders(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/test", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/test", nil)
 	req.Header.Set("Authorization", "Bearer test-token")
 	req.Header.Set("X-Request-Id", "req-123")
 	rec := httptest.NewRecorder()
@@ -506,7 +507,7 @@ func TestHandleButlerProxy_UpstreamNotFound(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"error": "not found",
 		})
 	}))
@@ -518,7 +519,7 @@ func TestHandleButlerProxy_UpstreamNotFound(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/nonexistent", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/nonexistent", nil)
 	rec := httptest.NewRecorder()
 
 	srv.handleButlerProxy(rec, req)
@@ -539,7 +540,7 @@ func TestHandleButlerProxy_UpstreamNotFound(t *testing.T) {
 func TestHandleButlerProxy_UpstreamInternalServerError(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("internal server error"))
+		_, _ = w.Write([]byte("internal server error"))
 	}))
 	defer upstream.Close()
 
@@ -549,7 +550,7 @@ func TestHandleButlerProxy_UpstreamInternalServerError(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/error", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/error", nil)
 	rec := httptest.NewRecorder()
 
 	srv.handleButlerProxy(rec, req)
@@ -570,7 +571,7 @@ func TestHandleButlerProxy_SSEForwardsContentType(t *testing.T) {
 
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("data: done\n\n"))
+		_, _ = w.Write([]byte("data: done\n\n"))
 	}))
 	defer upstream.Close()
 
@@ -580,7 +581,7 @@ func TestHandleButlerProxy_SSEForwardsContentType(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/butler/stream", strings.NewReader(`{"cmd":"run"}`))
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/butler/stream", strings.NewReader(`{"cmd":"run"}`))
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
@@ -618,7 +619,7 @@ func TestHandleButlerProxy_UpstreamTimeout(t *testing.T) {
 
 	srv := newTestServer()
 
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/slow", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/slow", nil)
 	rec := httptest.NewRecorder()
 
 	srv.handleButlerProxy(rec, req)
@@ -718,7 +719,7 @@ func TestHandleButlerProxy_PathTraversalReturns400(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, tt.path, nil)
 			rec := httptest.NewRecorder()
 			srv.handleButlerProxy(rec, req)
 
@@ -742,7 +743,7 @@ func TestHandleButlerProxy_ValidPathReachesProxy(t *testing.T) {
 
 	// A valid path should attempt to connect to the upstream (which will fail
 	// since there is no real upstream), returning 502 Bad Gateway.
-	req := httptest.NewRequest(http.MethodGet, "/api/butler/status", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/butler/status", nil)
 	rec := httptest.NewRecorder()
 	srv.handleButlerProxy(rec, req)
 
@@ -762,7 +763,7 @@ func TestHandleButlerProxy_BodySizeLimitRejectsOversizedPayload(t *testing.T) {
 	// Create a body larger than the 1 MB limit.
 	oversized := strings.NewReader(string(make([]byte, butlerMaxRequestBodyBytes+1)))
 
-	req := httptest.NewRequest(http.MethodPost, "/api/butler/data", oversized)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/butler/data", oversized)
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	srv.handleButlerProxy(rec, req)

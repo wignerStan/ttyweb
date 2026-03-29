@@ -22,7 +22,7 @@ func TestSetEncoding(t *testing.T) {
 
 	// Send input with null codec (default) — should pass through
 	nullMessage := []byte("1hello\n")
-	mMaster.masterToGottyWriter.Write(nullMessage)
+	_, _ = mMaster.masterToGottyWriter.Write(nullMessage)
 	readBuf := make([]byte, 1024)
 	n, err := mSlave.gottyToSlaveReader.Read(readBuf)
 	if err != nil {
@@ -34,12 +34,12 @@ func TestSetEncoding(t *testing.T) {
 
 	// Switch to base64 encoding
 	encMessage := []byte("4base64")
-	mMaster.masterToGottyWriter.Write(encMessage)
+	_, _ = mMaster.masterToGottyWriter.Write(encMessage)
 
 	// Send input that is now base64 encoded
 	b64Input := base64.StdEncoding.EncodeToString([]byte("world"))
 	base64Message := []byte("1" + b64Input)
-	mMaster.masterToGottyWriter.Write(base64Message)
+	_, _ = mMaster.masterToGottyWriter.Write(base64Message)
 
 	n, err = mSlave.gottyToSlaveReader.Read(readBuf)
 	if err != nil {
@@ -51,11 +51,11 @@ func TestSetEncoding(t *testing.T) {
 
 	// Switch back to null encoding
 	encMessage = []byte("4null")
-	mMaster.masterToGottyWriter.Write(encMessage)
+	_, _ = mMaster.masterToGottyWriter.Write(encMessage)
 
 	// Send input with null codec again
 	nullMessage2 := []byte("1direct\n")
-	mMaster.masterToGottyWriter.Write(nullMessage2)
+	_, _ = mMaster.masterToGottyWriter.Write(nullMessage2)
 
 	n, err = mSlave.gottyToSlaveReader.Read(readBuf)
 	if err != nil {
@@ -82,7 +82,7 @@ func TestUnknownMessageType(t *testing.T) {
 
 	// Send a message with an unknown type byte '9'
 	message := []byte("9unknown")
-	mMaster.masterToGottyWriter.Write(message)
+	_, _ = mMaster.masterToGottyWriter.Write(message)
 
 	// The Run loop should return an error for the unknown message type
 	// Wait for the goroutine to finish
@@ -103,11 +103,11 @@ func TestPermitWriteFalse(t *testing.T) {
 
 	// Send input from master — should be ignored since permitWrite is false
 	message := []byte("1hello\n")
-	mMaster.masterToGottyWriter.Write(message)
+	_, _ = mMaster.masterToGottyWriter.Write(message)
 
 	// Close slave's read pipe to unblock the slave-read goroutine in Run
 	// then cancel and wait
-	mSlave.slaveToGottyWriter.Close()
+	_ = mSlave.slaveToGottyWriter.Close()
 	cancel()
 	wg.Wait()
 
@@ -145,7 +145,7 @@ func TestMalformedResize(t *testing.T) {
 
 	// Send a resize message with invalid JSON
 	message := []byte("3{invalid-json}\n")
-	mMaster.masterToGottyWriter.Write(message)
+	_, _ = mMaster.masterToGottyWriter.Write(message)
 
 	// The malformed JSON should cause an error, which terminates the Run loop
 	// Wait for completion without hanging
@@ -196,7 +196,7 @@ func TestContextCancellationMidSession(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		dt.Run(ctx)
+		_ = dt.Run(ctx)
 		wg.Done()
 	}()
 

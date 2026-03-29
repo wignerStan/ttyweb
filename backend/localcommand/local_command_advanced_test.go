@@ -28,7 +28,7 @@ func TestWindowTitleVariables(t *testing.T) {
 			if err != nil {
 				t.Skipf("skipping: PTY not available: %v", err)
 			}
-			defer lcmd.Close()
+			defer func() { _ = lcmd.Close() }()
 
 			vars := lcmd.WindowTitleVariables()
 
@@ -92,7 +92,7 @@ func TestResizeTerminal(t *testing.T) {
 			if err != nil {
 				t.Skipf("skipping: PTY not available: %v", err)
 			}
-			defer lcmd.Close()
+			defer func() { _ = lcmd.Close() }()
 
 			err = lcmd.ResizeTerminal(tt.width, tt.height)
 			if err != nil {
