@@ -1,0 +1,122 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`NotepadPanel snapshot > renders panel with notes 1`] = `
+<div>
+  <div
+    class="notepad-panel"
+  >
+    <div
+      class="notepad-tab-bar"
+    >
+      <div
+        aria-selected="false"
+        class="notepad-bar-tab "
+        role="tab"
+        tabindex="0"
+      >
+        <span
+          class="notepad-bar-tab-label"
+        >
+          Meeting Notes
+        </span>
+        <button
+          aria-label="Close Meeting Notes"
+          class="notepad-bar-tab-close"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-x"
+            fill="none"
+            height="12"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="12"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        aria-selected="false"
+        class="notepad-bar-tab "
+        role="tab"
+        tabindex="0"
+      >
+        <span
+          class="notepad-bar-tab-label"
+        >
+          Ideas
+        </span>
+        <button
+          aria-label="Close Ideas"
+          class="notepad-bar-tab-close"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-x"
+            fill="none"
+            height="12"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="12"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <button
+        aria-label="New note"
+        class="notepad-add-btn"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-plus"
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="14"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12h14"
+          />
+          <path
+            d="M12 5v14"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="notepad-content"
+    >
+      <div
+        class="notepad-empty"
+      >
+        Select a note from the tabs above.
+      </div>
+    </div>
+  </div>
+</div>
+`;

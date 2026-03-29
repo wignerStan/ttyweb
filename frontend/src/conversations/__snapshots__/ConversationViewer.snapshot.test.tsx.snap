@@ -1,0 +1,81 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ConversationViewer snapshot > renders conversation with messages 1`] = `
+<div>
+  <div
+    class="conv-viewer-container"
+  >
+    <div
+      class="conv-viewer-header"
+    >
+      <button
+        class="conv-viewer-header-btn"
+      >
+        ◀ Back
+      </button>
+      <span
+        class="conv-viewer-header-title"
+      >
+        Test Session
+      </span>
+      <span
+        class="conv-viewer-header-session-info"
+      >
+        claude-3-opus
+      </span>
+      <button
+        class="conv-viewer-header-btn"
+        title="Refresh conversation"
+      >
+        <span
+          class=""
+        >
+          ↻
+        </span>
+      </button>
+    </div>
+    <div
+      class="conv-viewer-body"
+    >
+      <div
+        class="conv-msg conv-msg--user"
+      >
+        <div
+          class="conv-msg-role"
+        >
+          user
+        </div>
+        <div
+          class="conv-msg-content"
+        >
+          How do I run tests?
+        </div>
+        <div
+          class="conv-msg-timestamp"
+        >
+          06:00 PM
+        </div>
+      </div>
+      <div
+        class="conv-msg conv-msg--assistant"
+      >
+        <div
+          class="conv-msg-role"
+        >
+          assistant
+        </div>
+        <div
+          class="conv-msg-content"
+        >
+          Run \`make test\` from the project root.
+        </div>
+        <div
+          class="conv-msg-timestamp"
+        >
+          06:00 PM
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
