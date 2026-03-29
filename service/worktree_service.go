@@ -152,6 +152,9 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 
 	ctx := context.Background()
 	unlock := s.repoLock.Lock(project.Path, ctx)
+	if unlock == nil {
+		return nil, context.Canceled
+	}
 	defer unlock()
 
 	wtPath, err := worktree.CreateWorktree(ctx, project.Path, branchName, baseBranch, createBranch)
@@ -215,6 +218,9 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 
 	ctx := context.Background()
 	unlock := s.repoLock.Lock(project.Path, ctx)
+	if unlock == nil {
+		return context.Canceled
+	}
 	defer unlock()
 
 	if err := worktree.RemoveWorktree(ctx, project.Path, record.Path, force); err != nil {
@@ -296,6 +302,9 @@ func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) 
 
 	ctx := context.Background()
 	unlock := s.repoLock.Lock(project.Path, ctx)
+	if unlock == nil {
+		return nil, context.Canceled
+	}
 	defer unlock()
 
 	if err := worktree.CommitWorktree(ctx, record.Path, message); err != nil {

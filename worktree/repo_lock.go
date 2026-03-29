@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"context"
+	"runtime"
 	"sync"
 )
 
@@ -22,27 +23,20 @@ func NewRepoLock() *RepoLock {
 }
 
 // Lock acquires an exclusive (write) lock for the repository at path.
-// Returns an unlock function. The caller must invoke it when done.
+// Returns an unlock function, or nil if ctx is cancelled before the lock is acquired.
 func (rl *RepoLock) Lock(path string, ctx context.Context) func() {
 	entry := rl.getEntry(path)
-	entry.mu.Lock()
-	return entry.mu.Unlock
-}
-
-// LockContext acquires an exclusive lock, respecting context cancellation.
-func (rl *RepoLock) LockContext(path string, ctx context.Context) (func(), error) {
-	rl.mu.Lock()
-	entry := rl.getOrCreateEntry(path)
-	rl.mu.Unlock()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+		if entry.mu.TryLock() {
+			return entry.mu.Unlock
+		}
+		runtime.Gosched()
 	}
-
-	entry.mu.Lock()
-	return entry.mu.Unlock, nil
 }
 
 // RLock acquires a shared (read) lock for the repository at path.
