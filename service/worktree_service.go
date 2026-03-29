@@ -137,7 +137,7 @@ func (s *WorktreeService) GetProject(id string) (*WtProject, error) {
 // --- Worktree operations ---
 
 // CreateWorktree creates a new worktree for a project and persists it.
-func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch string, createBranch bool) (*WorktreeRecord, error) {
+func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchName, baseBranch string, createBranch bool) (*WorktreeRecord, error) {
 	if branchName = strings.TrimSpace(branchName); branchName == "" {
 		return nil, errors.New("branch name is required")
 	}
@@ -150,7 +150,6 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 		return nil, err
 	}
 
-	ctx := context.Background()
 	unlock := s.repoLock.Lock(project.Path, ctx)
 	if unlock == nil {
 		return nil, context.Canceled
@@ -174,7 +173,7 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 	}
 
 	// Populate initial status.
-	if status, err := worktree.GetWorktreeStatus(context.Background(), wtPath); err == nil {
+	if status, err := worktree.GetWorktreeStatus(ctx, wtPath); err == nil {
 		record = record.withStatus(status)
 	}
 
@@ -342,15 +341,13 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 }
 
 func (s *WorktreeService) syncWorktrees(project *WtProject) error {
-	// Phase 1: Run git I/O without holding the service lock.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	gitWorktrees, err := worktree.ListWorktrees(context.Background(), project.Path)
 	if err != nil {
 		return err
 	}
-
-	// Phase 2: Update in-memory state under lock.
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	// Build map of existing DB worktrees by normalized path.
 	dbByPath := make(map[string]string)
