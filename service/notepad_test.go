@@ -9,7 +9,7 @@ import (
 )
 
 // setupTestDB creates an in-memory SQLite database with auto-migration.
-func setupTestDB(t *testing.T) *gorm.DB {
+func setupNotepadTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
@@ -22,7 +22,7 @@ func setupTestDB(t *testing.T) *gorm.DB {
 }
 
 func TestCreateNote(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	note, err := svc.CreateNote("Test Note", "Hello world")
@@ -50,7 +50,7 @@ func TestCreateNote(t *testing.T) {
 }
 
 func TestCreateNote_WithProjectID(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	note, err := svc.CreateNote("Project Note", "content", WithProjectID("proj-123"))
@@ -63,7 +63,7 @@ func TestCreateNote_WithProjectID(t *testing.T) {
 }
 
 func TestCreateNote_WithOrderIndex(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	note, err := svc.CreateNote("Ordered Note", "content", WithOrderIndex(5.5))
@@ -76,7 +76,7 @@ func TestCreateNote_WithOrderIndex(t *testing.T) {
 }
 
 func TestCreateNote_EmptyName(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	_, err := svc.CreateNote("", "content")
@@ -89,7 +89,7 @@ func TestCreateNote_EmptyName(t *testing.T) {
 }
 
 func TestListNotes_Global(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	_, _ = svc.CreateNote("Note A", "a", WithOrderIndex(1))
@@ -113,7 +113,7 @@ func TestListNotes_Global(t *testing.T) {
 }
 
 func TestListNotes_ByProjectID(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	_, _ = svc.CreateNote("Global", "g")
@@ -132,7 +132,7 @@ func TestListNotes_ByProjectID(t *testing.T) {
 }
 
 func TestListNotes_Empty(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	notes, err := svc.ListNotes(nil)
@@ -145,7 +145,7 @@ func TestListNotes_Empty(t *testing.T) {
 }
 
 func TestGetNote(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	created, _ := svc.CreateNote("Get Me", "findable")
@@ -160,7 +160,7 @@ func TestGetNote(t *testing.T) {
 }
 
 func TestGetNote_NotFound(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	_, err := svc.GetNote("nonexistent-id")
@@ -173,7 +173,7 @@ func TestGetNote_NotFound(t *testing.T) {
 }
 
 func TestUpdateNote(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	created, _ := svc.CreateNote("Original", "original content")
@@ -193,7 +193,7 @@ func TestUpdateNote(t *testing.T) {
 }
 
 func TestUpdateNote_PartialName(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	created, _ := svc.CreateNote("Original", "keep this")
@@ -212,7 +212,7 @@ func TestUpdateNote_PartialName(t *testing.T) {
 }
 
 func TestUpdateNote_PartialContent(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	created, _ := svc.CreateNote("Keep Name", "old")
@@ -231,7 +231,7 @@ func TestUpdateNote_PartialContent(t *testing.T) {
 }
 
 func TestUpdateNote_NoChanges(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	created, _ := svc.CreateNote("No Change", "same")
@@ -246,7 +246,7 @@ func TestUpdateNote_NoChanges(t *testing.T) {
 }
 
 func TestUpdateNote_EmptyName(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	created, _ := svc.CreateNote("Valid", "content")
@@ -259,7 +259,7 @@ func TestUpdateNote_EmptyName(t *testing.T) {
 }
 
 func TestUpdateNote_NotFound(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	newName := "Ghost"
@@ -273,7 +273,7 @@ func TestUpdateNote_NotFound(t *testing.T) {
 }
 
 func TestDeleteNote(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	created, _ := svc.CreateNote("Delete Me", "gone")
@@ -290,7 +290,7 @@ func TestDeleteNote(t *testing.T) {
 }
 
 func TestDeleteNote_NotFound(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	err := svc.DeleteNote("nonexistent-id")
@@ -303,7 +303,7 @@ func TestDeleteNote_NotFound(t *testing.T) {
 }
 
 func TestReorderNotes(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	a, _ := svc.CreateNote("A", "a", WithOrderIndex(0))
@@ -335,7 +335,7 @@ func TestReorderNotes(t *testing.T) {
 }
 
 func TestReorderNotes_Empty(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	err := svc.ReorderNotes(nil)
@@ -345,7 +345,7 @@ func TestReorderNotes_Empty(t *testing.T) {
 }
 
 func TestReorderNotes_NotFound(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupNotepadTestDB(t)
 	svc := NewNoteService(db)
 
 	err := svc.ReorderNotes([]NoteReorder{

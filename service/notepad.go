@@ -1,10 +1,7 @@
 package service
 
 import (
-	"crypto/rand"
-
 	"ttyweb/db"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -15,6 +12,7 @@ import (
 func init() {
 	db.RegisterModel(&NotePad{})
 }
+
 // ErrNotFound is returned when a note cannot be found by ID.
 var ErrNotFound = errors.New("note not found")
 

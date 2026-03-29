@@ -10,6 +10,7 @@ import (
 	"ttyweb/backend"
 	"ttyweb/db"
 	"ttyweb/pkg/validate"
+	"ttyweb/service"
 )
 
 // apiResponse is a standard envelope for API responses.
