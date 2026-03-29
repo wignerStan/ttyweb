@@ -82,8 +82,8 @@ func TestLogWatcher_DetectsNewClaudeSession(t *testing.T) {
 	// Wait for the watcher to detect the new file.
 	select {
 	case event := <-events:
-		if event.Type != AISessionEventNew {
-			t.Errorf("expected event type %q, got %q", AISessionEventNew, event.Type)
+		if event.Type != SessionEventNew {
+			t.Errorf("expected event type %q, got %q", SessionEventNew, event.Type)
 		}
 		if event.Session.SessionID != "new-session" {
 			t.Errorf("expected session ID %q, got %q", "new-session", event.Session.SessionID)
@@ -137,8 +137,8 @@ func TestLogWatcher_DetectsUpdatedSession(t *testing.T) {
 	// Wait for the update event.
 	select {
 	case event := <-events:
-		if event.Type != AISessionEventUpdated {
-			t.Errorf("expected event type %q, got %q", AISessionEventUpdated, event.Type)
+		if event.Type != SessionEventUpdated {
+			t.Errorf("expected event type %q, got %q", SessionEventUpdated, event.Type)
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("timed out waiting for update event")
@@ -182,8 +182,8 @@ func TestLogWatcher_DetectsCompletedSession(t *testing.T) {
 	// Wait for the completed event.
 	select {
 	case event := <-events:
-		if event.Type != AISessionEventCompleted {
-			t.Errorf("expected event type %q, got %q", AISessionEventCompleted, event.Type)
+		if event.Type != SessionEventCompleted {
+			t.Errorf("expected event type %q, got %q", SessionEventCompleted, event.Type)
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("timed out waiting for completed event")

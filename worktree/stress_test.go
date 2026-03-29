@@ -18,12 +18,12 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	ctx := context.Background()
 
 	const numWorktrees = 8
-	paths := stressCreateWorktrees(t, repo, repoLock, ctx, numWorktrees)
-	stressMixedOperations(t, sem, repo, ctx, numWorktrees, paths)
-	stressRemoveWorktrees(t, repo, repoLock, ctx, numWorktrees, paths)
+	paths := stressCreateWorktrees(ctx, t, repo, repoLock, numWorktrees)
+	stressMixedOperations(ctx, t, sem, repo, numWorktrees, paths)
+	stressRemoveWorktrees(ctx, t, repo, repoLock, numWorktrees, paths)
 }
 
-func stressCreateWorktrees(t *testing.T, repo string, repoLock *RepoLock, ctx context.Context, numWorktrees int) []string {
+func stressCreateWorktrees(ctx context.Context, t *testing.T, repo string, repoLock *RepoLock, numWorktrees int) []string {
 	t.Helper()
 	paths := make([]string, numWorktrees)
 
@@ -34,7 +34,7 @@ func stressCreateWorktrees(t *testing.T, repo string, repoLock *RepoLock, ctx co
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
-			unlock := repoLock.Lock(repo, ctx)
+			unlock := repoLock.Lock(ctx, repo)
 			if unlock == nil {
 				t.Errorf("CreateWorktree %d: repo lock cancelled", idx)
 				return
@@ -60,7 +60,7 @@ func stressCreateWorktrees(t *testing.T, repo string, repoLock *RepoLock, ctx co
 	return paths
 }
 
-func stressMixedOperations(t *testing.T, sem *OperationSemaphore, repo string, ctx context.Context, numWorktrees int, paths []string) {
+func stressMixedOperations(ctx context.Context, t *testing.T, sem *OperationSemaphore, repo string, numWorktrees int, paths []string) {
 	t.Helper()
 	var wg sync.WaitGroup
 	var wtMu [8]sync.Mutex
@@ -119,7 +119,7 @@ func stressMixedOperations(t *testing.T, sem *OperationSemaphore, repo string, c
 	}
 }
 
-func stressRemoveWorktrees(t *testing.T, repo string, repoLock *RepoLock, ctx context.Context, numWorktrees int, paths []string) {
+func stressRemoveWorktrees(ctx context.Context, t *testing.T, repo string, repoLock *RepoLock, numWorktrees int, paths []string) {
 	t.Helper()
 	var wg sync.WaitGroup
 	var removeSuccess atomic.Int32
@@ -131,7 +131,7 @@ func stressRemoveWorktrees(t *testing.T, repo string, repoLock *RepoLock, ctx co
 			opCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
 
-			unlock := repoLock.Lock(repo, opCtx)
+			unlock := repoLock.Lock(opCtx, repo)
 			if unlock == nil {
 				t.Errorf("RemoveWorktree %d: repo lock cancelled", idx)
 				return

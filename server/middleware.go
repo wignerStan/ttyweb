@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (server *Server) wrapLogger(handler http.Handler) http.Handler {
+func (_ *Server) wrapLogger(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rw := &logResponseWriter{w, 200}
 		handler.ServeHTTP(rw, r)
@@ -16,7 +16,7 @@ func (server *Server) wrapLogger(handler http.Handler) http.Handler {
 	})
 }
 
-func (server *Server) wrapHeaders(handler http.Handler) http.Handler {
+func (_ *Server) wrapHeaders(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// todo add version
 		w.Header().Set("Server", "GoTTY")
@@ -28,7 +28,7 @@ func (server *Server) wrapHeaders(handler http.Handler) http.Handler {
 	})
 }
 
-func (server *Server) wrapBasicAuth(handler http.Handler, credential string) http.Handler {
+func (_ *Server) wrapBasicAuth(handler http.Handler, credential string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 

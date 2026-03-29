@@ -75,11 +75,6 @@ func main() {
 	if err := db.Init(dbPath); err != nil {
 		log.Printf("warning: database initialization failed: %v", err)
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Printf("warning: database close failed: %v", err)
-		}
-	}()
 
 	options := buildOptions(addr, port, path, backend, cred, titleFmt, write, enableTLS, tlsCrt, tlsKey)
 
@@ -92,6 +87,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}
+
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("warning: database close failed: %v", err)
+		}
+	}()
 
 	gracefulCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -138,7 +139,7 @@ func buildOptions(addr, port, path, backendName, cred, titleFmt string, write bo
 		PermitWrite:     write,
 		TitleFormat:     titleFmt,
 		PermitArguments: backendName == "local",
-		TitleVariables: map[string]interface{}{
+		TitleVariables: map[string]any{
 			"hostname": hostname(),
 		},
 	}

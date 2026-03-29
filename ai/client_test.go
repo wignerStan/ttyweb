@@ -128,7 +128,7 @@ func TestChatCompletion_NoChoices(t *testing.T) {
 func TestChatCompletion_APIError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"error": map[string]string{"message": "invalid API key"},
 		})
 	}))

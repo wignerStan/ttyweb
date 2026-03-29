@@ -263,7 +263,7 @@ func (ms *mockSlave) Write(buf []byte) (int, error) {
 	return ms.gottyToSlaveWriter.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
-func (ms *mockSlave) WindowTitleVariables() map[string]interface{} {
+func (_ *mockSlave) WindowTitleVariables() map[string]any {
 	return nil
 }
 
@@ -329,7 +329,7 @@ func newEOFReadMaster() *eofReadMaster {
 	return &eofReadMaster{writeTo: w}
 }
 
-func (m *eofReadMaster) Read(buf []byte) (int, error) {
+func (_ *eofReadMaster) Read(buf []byte) (int, error) {
 	return 0, io.EOF
 }
 
@@ -357,7 +357,7 @@ func newEOFReadSlave() *eofReadSlave {
 	return &eofReadSlave{writeTo: w}
 }
 
-func (s *eofReadSlave) Read(buf []byte) (int, error) {
+func (_ *eofReadSlave) Read(buf []byte) (int, error) {
 	return 0, io.EOF
 }
 
@@ -365,11 +365,11 @@ func (s *eofReadSlave) Write(buf []byte) (int, error) {
 	return s.writeTo.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
-func (s *eofReadSlave) WindowTitleVariables() map[string]interface{} {
+func (_ *eofReadSlave) WindowTitleVariables() map[string]any {
 	return nil
 }
 
-func (s *eofReadSlave) ResizeTerminal(columns int, rows int) error {
+func (_ *eofReadSlave) ResizeTerminal(columns int, rows int) error {
 	return nil
 }
 

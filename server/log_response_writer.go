@@ -13,11 +13,13 @@ type logResponseWriter struct {
 	status int
 }
 
+// WriteHeader records the status code before writing it.
 func (w *logResponseWriter) WriteHeader(status int) {
 	w.status = status
 	w.ResponseWriter.WriteHeader(status)
 }
 
+// Hijack implements http.Hijacker for WebSocket upgrades.
 func (w *logResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj, _ := w.ResponseWriter.(http.Hijacker)
 	w.status = http.StatusSwitchingProtocols

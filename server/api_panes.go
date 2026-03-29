@@ -6,7 +6,7 @@ import (
 )
 
 // handlePaneStatus handles GET (all pane statuses) and PUT (update pane status).
-func (server *Server) handlePaneStatus(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handlePaneStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {

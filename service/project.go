@@ -34,8 +34,8 @@ type UpdateProjectRequest struct {
 
 // toUpdates converts the non-nil fields of the request into a GORM updates
 // map. Only fields explicitly set in the request will be included.
-func (r *UpdateProjectRequest) toUpdates() map[string]interface{} {
-	updates := make(map[string]interface{})
+func (r *UpdateProjectRequest) toUpdates() map[string]any {
+	updates := make(map[string]any)
 	if r.Name != nil {
 		updates["name"] = *r.Name
 	}
@@ -130,8 +130,8 @@ type ProjectService struct {
 }
 
 // NewProjectService creates a new ProjectService backed by the given GORM database.
-func NewProjectService(db *gorm.DB) *ProjectService {
-	return &ProjectService{db: db}
+func NewProjectService(database *gorm.DB) *ProjectService {
+	return &ProjectService{db: database}
 }
 
 // AddProject creates a new project after validating the path exists and is a git repo.
@@ -215,7 +215,7 @@ func (s *ProjectService) UpdateProject(id string, req UpdateProjectRequest) (*Pr
 // updateProjectFields applies a GORM updates map to a project. This is an
 // internal method used by both UpdateProject (user-facing, whitelisted) and
 // SyncProject (system-facing, sets remote_url/default_branch/last_sync_at).
-func (s *ProjectService) updateProjectFields(id string, updates map[string]interface{}) (*Project, error) {
+func (s *ProjectService) updateProjectFields(id string, updates map[string]any) (*Project, error) {
 	var project Project
 	if err := s.db.Where("id = ?", id).First(&project).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -263,7 +263,7 @@ func (s *ProjectService) SyncProject(id string) (*Project, error) {
 		return nil, fmt.Errorf("detect default branch: %w", err)
 	}
 
-	updates := map[string]interface{}{
+	updates := map[string]any{
 		"remote_url":     remoteURL,
 		"default_branch": defaultBranch,
 		"last_sync_at":   time.Now().UTC(),

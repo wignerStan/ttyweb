@@ -67,8 +67,8 @@ type NoteService struct {
 }
 
 // NewNoteService creates a new NoteService backed by the given database.
-func NewNoteService(db *gorm.DB) *NoteService {
-	return &NoteService{db: db}
+func NewNoteService(database *gorm.DB) *NoteService {
+	return &NoteService{db: database}
 }
 
 // CreateNote creates a new note with the given name and content.
@@ -144,7 +144,7 @@ func (s *NoteService) UpdateNote(id string, name *string, content *string) (*Not
 		return nil, err
 	}
 
-	updates := map[string]interface{}{}
+	updates := map[string]any{}
 	if name != nil {
 		if *name == "" {
 			return nil, errors.New("name must not be empty")

@@ -26,9 +26,9 @@ type AISessionRecord struct {
 	FileSize              int64
 }
 
-// toRecord converts an ai.AISession to an AISessionRecord with the given ID.
+// toRecord converts an ai.Session to an AISessionRecord with the given ID.
 // If session.SessionStartedAt is zero, it falls back to FileModTime.
-func toRecord(id int, session ai.AISession) AISessionRecord {
+func toRecord(id int, session *ai.Session) AISessionRecord {
 	startedAt := session.SessionStartedAt
 	if startedAt.IsZero() {
 		startedAt = session.FileModTime
@@ -66,11 +66,12 @@ func NewAISessionStore() *AISessionStore {
 }
 
 // Upsert adds or updates a session record.
-func (s *AISessionStore) Upsert(session ai.AISession) AISessionRecord {
+func (s *AISessionStore) Upsert(session *ai.Session) AISessionRecord {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for i, existing := range s.records {
+	for i := range s.records {
+		existing := &s.records[i]
 		if existing.SessionID == session.SessionID && existing.Type == session.Type {
 			updated := toRecord(existing.ID, session)
 			s.records[i] = updated
@@ -90,11 +91,12 @@ func (s *AISessionStore) List(projectPath string) []AISessionRecord {
 	defer s.mu.RUnlock()
 
 	filtered := make([]AISessionRecord, 0, len(s.records))
-	for _, r := range s.records {
+	for i := range s.records {
+		r := &s.records[i]
 		if projectPath != "" && r.ProjectPath != projectPath {
 			continue
 		}
-		filtered = append(filtered, r)
+		filtered = append(filtered, *r)
 	}
 
 	sort.Slice(filtered, func(i, j int) bool {
@@ -120,9 +122,9 @@ func (s *AISessionStore) GetByID(id int) (AISessionRecord, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	for _, r := range s.records {
-		if r.ID == id {
-			return r, true
+	for i := range s.records {
+		if s.records[i].ID == id {
+			return s.records[i], true
 		}
 	}
 	return AISessionRecord{}, false
@@ -135,9 +137,9 @@ func (s *AISessionStore) DeleteMissingFiles(existingPaths map[string]bool) int {
 
 	removed := 0
 	kept := make([]AISessionRecord, 0, len(s.records))
-	for _, r := range s.records {
-		if existingPaths[r.FilePath] {
-			kept = append(kept, r)
+	for i := range s.records {
+		if existingPaths[s.records[i].FilePath] {
+			kept = append(kept, s.records[i])
 		} else {
 			removed++
 		}
@@ -211,7 +213,7 @@ func (svc *AISessionService) RefreshSession(id int) ([]ai.ConversationMessage, e
 		return nil, err
 	}
 	if len(sessions) > 0 {
-		svc.store.Upsert(sessions[0])
+		svc.store.Upsert(&sessions[0])
 	}
 
 	return svc.GetConversation(id)
@@ -222,16 +224,16 @@ func (svc *AISessionService) CleanupStaleSessions() int {
 	allSessions := scanAllSessions()
 
 	existing := make(map[string]bool, len(allSessions))
-	for _, s := range allSessions {
-		existing[s.FilePath] = true
+	for i := range allSessions {
+		existing[allSessions[i].FilePath] = true
 	}
 
 	return svc.store.DeleteMissingFiles(existing)
 }
 
 // scanAllSessions scans both Claude and Codex session directories.
-func scanAllSessions() []ai.AISession {
-	var allSessions []ai.AISession
+func scanAllSessions() []ai.Session {
+	var allSessions []ai.Session
 
 	projects, err := ai.ScanClaudeProjects()
 	if err == nil {
@@ -253,11 +255,11 @@ func scanAllSessions() []ai.AISession {
 
 // scanSessionByFilePath re-scans all session directories and returns the
 // session whose file path matches, or an empty slice if not found.
-func scanSessionByFilePath(filePath string) ([]ai.AISession, error) {
+func scanSessionByFilePath(filePath string) ([]ai.Session, error) {
 	allSessions := scanAllSessions()
-	for _, s := range allSessions {
-		if s.FilePath == filePath {
-			return []ai.AISession{s}, nil
+	for i := range allSessions {
+		if allSessions[i].FilePath == filePath {
+			return []ai.Session{allSessions[i]}, nil
 		}
 	}
 	return nil, nil

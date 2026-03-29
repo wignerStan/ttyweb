@@ -6,8 +6,11 @@ import "strings"
 type AssistantType string
 
 const (
+	// AssistantTypeUnknown represents an undetermined assistant type.
 	AssistantTypeUnknown    AssistantType = ""
+	// AssistantTypeClaudeCode represents a Claude Code assistant.
 	AssistantTypeClaudeCode AssistantType = "claude_code"
+	// AssistantTypeCodex represents a Codex assistant.
 	AssistantTypeCodex      AssistantType = "codex"
 )
 

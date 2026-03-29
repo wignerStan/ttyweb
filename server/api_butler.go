@@ -132,7 +132,7 @@ func (server *Server) handleButlerProxy(w http.ResponseWriter, r *http.Request) 
 // and piping bytes directly without buffering. No timeout is applied so that
 // long-lived SSE streams are not interrupted. The request context is propagated
 // so that client disconnections cancel the upstream request.
-func (server *Server) proxySSE(w http.ResponseWriter, r *http.Request, targetURL, target string) {
+func (_ *Server) proxySSE(w http.ResponseWriter, r *http.Request, targetURL, target string) {
 	log.Printf("[Butler Proxy] SSE request: %s %s -> %s", r.Method, r.URL.Path, targetURL)
 
 	proxyReq, err := http.NewRequestWithContext(r.Context(), r.Method, targetURL, r.Body)
@@ -196,7 +196,7 @@ func (server *Server) proxySSE(w http.ResponseWriter, r *http.Request, targetURL
 // 60s request timeout, and a 1 MB body size limit. The request context is
 // propagated so that client disconnections cancel the upstream request.
 // Response headers are filtered through an allowlist.
-func (server *Server) proxyNormal(w http.ResponseWriter, r *http.Request, targetURL, target string) {
+func (_ *Server) proxyNormal(w http.ResponseWriter, r *http.Request, targetURL, target string) {
 	log.Printf("[Butler Proxy] %s %s -> %s", r.Method, r.URL.Path, targetURL)
 
 	limitedBody := http.MaxBytesReader(w, r.Body, butlerMaxRequestBodyBytes)

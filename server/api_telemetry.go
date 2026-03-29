@@ -16,7 +16,7 @@ func (server *Server) handleTelemetry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Events []map[string]interface{} `json:"events"`
+		Events []map[string]any `json:"events"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid request body")

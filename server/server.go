@@ -163,14 +163,14 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 // normalizePath returns the URL path prefix, ensuring it starts and ends with "/".
 func (server *Server) normalizePath() string {
 	path := server.options.Path
-	if server.options.EnableRandomUrl {
-		path = "/" + randomstring.Generate(server.options.RandomUrlLength) + "/"
+	if server.options.EnableRandomURL {
+		path = "/" + randomstring.Generate(server.options.RandomURLLength) + "/"
 	}
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
 	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
+		path += "/"
 	}
 	return path
 }
@@ -221,11 +221,11 @@ func (server *Server) serveBackground(srv *http.Server, listener net.Listener) {
 }
 
 func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFunc, pathPrefix string, counter *counter) http.Handler {
-	fs, err := fs.Sub(bindata.Fs, "static")
+	staticFS, err := fs.Sub(bindata.Fs, "static")
 	if err != nil {
 		log.Fatalf("failed to open static/ subdirectory of embedded filesystem: %v", err)
 	}
-	staticFileHandler := http.FileServer(http.FS(fs))
+	staticFileHandler := http.FileServer(http.FS(staticFS))
 
 	var siteMux = http.NewServeMux()
 	siteMux.HandleFunc(pathPrefix, server.handleIndex)

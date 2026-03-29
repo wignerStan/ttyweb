@@ -8,7 +8,7 @@ import (
 )
 
 // handleRoles handles GET (list) and POST (create) for AI roles.
-func (server *Server) handleRoles(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleRoles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {
@@ -100,7 +100,7 @@ func (server *Server) handleRoleDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleDefaultRoles returns the built-in default AI roles.
-func (server *Server) handleDefaultRoles(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleDefaultRoles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {

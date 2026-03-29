@@ -8,7 +8,7 @@ import (
 )
 
 // handleTmuxConfig returns the tmux prefix key configuration.
-func (server *Server) handleTmuxConfig(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleTmuxConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
@@ -16,14 +16,14 @@ func (server *Server) handleTmuxConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAPISuccess(w, map[string]interface{}{
+	writeAPISuccess(w, map[string]any{
 		"code":  "\u0002",
 		"label": "Ctrl+B",
 	})
 }
 
 // handleQuickDirs returns quick-access directories (stub).
-func (server *Server) handleQuickDirs(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleQuickDirs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
@@ -31,8 +31,8 @@ func (server *Server) handleQuickDirs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAPISuccess(w, map[string]interface{}{
-		"dirs": []interface{}{},
+	writeAPISuccess(w, map[string]any{
+		"dirs": []any{},
 	})
 }
 
@@ -152,7 +152,7 @@ func (server *Server) handleTmuxTree(w http.ResponseWriter, r *http.Request) {
 
 	sm := server.sessionManager()
 	if !sm.IsAvailable() {
-		writeAPISuccess(w, []interface{}{})
+		writeAPISuccess(w, []any{})
 		return
 	}
 
@@ -228,7 +228,7 @@ func (server *Server) handleTmuxTree(w http.ResponseWriter, r *http.Request) {
 		tree = []tmuxTreeSession{}
 	}
 
-	writeAPISuccess(w, map[string]interface{}{
+	writeAPISuccess(w, map[string]any{
 		"sessions": tree,
 	})
 }
@@ -278,7 +278,7 @@ func (server *Server) handleTmuxSendKeys(w http.ResponseWriter, r *http.Request)
 }
 
 // handleTmuxPaneMode returns the current pane mode (stub).
-func (server *Server) handleTmuxPaneMode(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleTmuxPaneMode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {

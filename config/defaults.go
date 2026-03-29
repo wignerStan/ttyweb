@@ -23,7 +23,7 @@ func DefaultConfigPath() string {
 func DefaultConfig() *Config {
 	return &Config{
 		LLM: LLMConfig{
-			ApiURL: "https://api.openai.com/v1/chat/completions",
+			APIURL: "https://api.openai.com/v1/chat/completions",
 			Model:  "gpt-4o",
 		},
 		Butler: ButlerConfig{

@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// Generate returns a cryptographically random string of the given length.
 func Generate(length int) string {
 	const base = 36
 	size := big.NewInt(base)

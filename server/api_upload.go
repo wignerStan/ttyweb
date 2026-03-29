@@ -15,7 +15,7 @@ const uploadDir = "/tmp/ttyweb-uploads"
 // handleUpload handles POST multipart file uploads.
 // Accepts a "file" field in the form, saves to /tmp/ttyweb-uploads/,
 // and returns {filename, path, size, type}.
-func (server *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
@@ -69,7 +69,7 @@ func (server *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		contentType = "application/octet-stream"
 	}
 
-	writeAPISuccess(w, map[string]interface{}{
+	writeAPISuccess(w, map[string]any{
 		"filename": header.Filename,
 		"path":     destPath,
 		"size":     written,

@@ -33,12 +33,20 @@ type SessionManager interface {
 // NoSessionManager is returned by backends that don't support session management.
 type NoSessionManager struct{}
 
-func (NoSessionManager) IsAvailable() bool                               { return false }
-func (NoSessionManager) ListSessions() (json.RawMessage, error)          { return nil, nil }
+// IsAvailable returns false for backends without session management.
+func (NoSessionManager) IsAvailable() bool { return false }
+
+// ListSessions returns nil for backends without session management.
+func (NoSessionManager) ListSessions() (json.RawMessage, error) { return nil, nil }
+
+// CreateSession returns an error for backends without session management.
 func (NoSessionManager) CreateSession(string, ...string) (string, error) { return "", ErrNotSupported }
+
+// GetSessionDetail returns an error for backends without session management.
 func (NoSessionManager) GetSessionDetail(string) (json.RawMessage, error) {
 	return nil, ErrNotSupported
 }
+// KillSession returns an error for backends without session management.
 func (NoSessionManager) KillSession(string) error { return ErrNotSupported }
 
 // ErrNotSupported indicates the backend doesn't support this operation.

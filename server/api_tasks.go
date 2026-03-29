@@ -8,7 +8,7 @@ import (
 )
 
 // handleTasks handles GET (list tasks with pagination).
-func (server *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
@@ -20,7 +20,7 @@ func (server *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 
 	tasks, total := store.ListTasks(page, limit)
-	writeAPISuccess(w, map[string]interface{}{
+	writeAPISuccess(w, map[string]any{
 		"tasks": tasks,
 		"total": total,
 		"page":  page,
@@ -47,7 +47,7 @@ func (server *Server) handleTaskDetail(w http.ResponseWriter, r *http.Request) {
 				TaskID  string                 `json:"task_id"`
 				PaneKey string                 `json:"pane_key"`
 				Event   string                 `json:"event"`
-				Data    map[string]interface{} `json:"data"`
+				Data    map[string]any `json:"data"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 				writeAPIError(w, http.StatusBadRequest, "invalid request body")
@@ -61,7 +61,7 @@ func (server *Server) handleTaskDetail(w http.ResponseWriter, r *http.Request) {
 				writeAPIError(w, http.StatusBadRequest, "event is required")
 				return
 			}
-			created := store.AddTaskEvent(TaskEvent{
+			created := store.AddTaskEvent(&TaskEvent{
 				TaskID:  body.TaskID,
 				PaneKey: body.PaneKey,
 				Event:   body.Event,

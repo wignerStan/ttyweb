@@ -10,7 +10,7 @@ import (
 )
 
 // handleProjects handles GET (list) and POST (create) for projects.
-func (server *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	svc, err := projectService()
@@ -147,7 +147,7 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 }
 
 // handleProjectSync handles POST /api/projects/:id/sync.
-func (server *Server) handleProjectSync(w http.ResponseWriter, r *http.Request, id string) {
+func (_ *Server) handleProjectSync(w http.ResponseWriter, r *http.Request, id string) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

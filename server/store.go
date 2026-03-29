@@ -44,7 +44,7 @@ type TaskEvent struct {
 	PaneKey   string                 `json:"pane_key"`
 	Timestamp time.Time              `json:"ts"`
 	Event     string                 `json:"event"`
-	Data      map[string]interface{} `json:"data,omitempty"`
+	Data      map[string]any `json:"data,omitempty"`
 	Completed bool                   `json:"completed"`
 }
 
@@ -97,6 +97,7 @@ func builtinRoles() []AiRole {
 
 // --- Profile CRUD ---
 
+// ListProfiles returns all stored profiles.
 func (s *MemoryStore) ListProfiles() []Profile {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -105,6 +106,7 @@ func (s *MemoryStore) ListProfiles() []Profile {
 	return result
 }
 
+// CreateProfile adds a new profile and returns it.
 func (s *MemoryStore) CreateProfile(p Profile) Profile {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -114,6 +116,7 @@ func (s *MemoryStore) CreateProfile(p Profile) Profile {
 	return p
 }
 
+// UpdateProfile updates an existing profile by ID.
 func (s *MemoryStore) UpdateProfile(id int, p Profile) (Profile, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -127,6 +130,7 @@ func (s *MemoryStore) UpdateProfile(id int, p Profile) (Profile, error) {
 	return Profile{}, fmt.Errorf("profile not found")
 }
 
+// DeleteProfile removes a profile by ID.
 func (s *MemoryStore) DeleteProfile(id int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -141,6 +145,7 @@ func (s *MemoryStore) DeleteProfile(id int) error {
 
 // --- Group CRUD ---
 
+// ListGroups returns session groups, optionally filtered by profile key.
 func (s *MemoryStore) ListGroups(profileKey string) []SessionGroup {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -158,6 +163,7 @@ func (s *MemoryStore) ListGroups(profileKey string) []SessionGroup {
 	return filtered
 }
 
+// CreateGroup adds a new session group and returns it.
 func (s *MemoryStore) CreateGroup(g SessionGroup) SessionGroup {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -167,6 +173,7 @@ func (s *MemoryStore) CreateGroup(g SessionGroup) SessionGroup {
 	return g
 }
 
+// UpdateGroup updates an existing group by ID.
 func (s *MemoryStore) UpdateGroup(id int, g SessionGroup) (SessionGroup, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -180,6 +187,7 @@ func (s *MemoryStore) UpdateGroup(id int, g SessionGroup) (SessionGroup, error) 
 	return SessionGroup{}, fmt.Errorf("group not found")
 }
 
+// DeleteGroup removes a group by ID.
 func (s *MemoryStore) DeleteGroup(id int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -194,6 +202,7 @@ func (s *MemoryStore) DeleteGroup(id int) error {
 
 // --- Snippet CRUD ---
 
+// ListSnippets returns all stored snippets.
 func (s *MemoryStore) ListSnippets() []Snippet {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -202,6 +211,7 @@ func (s *MemoryStore) ListSnippets() []Snippet {
 	return result
 }
 
+// CreateSnippet adds a new snippet and returns it.
 func (s *MemoryStore) CreateSnippet(sn Snippet) Snippet {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -210,6 +220,7 @@ func (s *MemoryStore) CreateSnippet(sn Snippet) Snippet {
 	return sn
 }
 
+// UpdateSnippet updates an existing snippet by index.
 func (s *MemoryStore) UpdateSnippet(index int, sn Snippet) (Snippet, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -221,6 +232,7 @@ func (s *MemoryStore) UpdateSnippet(index int, sn Snippet) (Snippet, error) {
 	return sn, nil
 }
 
+// DeleteSnippet removes a snippet by index.
 func (s *MemoryStore) DeleteSnippet(index int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -237,6 +249,7 @@ func (s *MemoryStore) DeleteSnippet(index int) error {
 
 // --- AiRole CRUD ---
 
+// ListRoles returns all stored AI roles.
 func (s *MemoryStore) ListRoles() []AiRole {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -245,6 +258,7 @@ func (s *MemoryStore) ListRoles() []AiRole {
 	return result
 }
 
+// CreateRole adds a new AI role and returns it.
 func (s *MemoryStore) CreateRole(r AiRole) AiRole {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -254,6 +268,7 @@ func (s *MemoryStore) CreateRole(r AiRole) AiRole {
 	return r
 }
 
+// UpdateRole updates an existing AI role by ID.
 func (s *MemoryStore) UpdateRole(id int, r AiRole) (AiRole, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -267,6 +282,7 @@ func (s *MemoryStore) UpdateRole(id int, r AiRole) (AiRole, error) {
 	return AiRole{}, fmt.Errorf("role not found")
 }
 
+// DeleteRole removes an AI role by ID.
 func (s *MemoryStore) DeleteRole(id int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -281,6 +297,7 @@ func (s *MemoryStore) DeleteRole(id int) error {
 
 // --- Task CRUD ---
 
+// ListTasks returns task events with pagination.
 func (s *MemoryStore) ListTasks(page, limit int) ([]TaskEvent, int) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -304,7 +321,8 @@ func (s *MemoryStore) ListTasks(page, limit int) ([]TaskEvent, int) {
 	return result, total
 }
 
-func (s *MemoryStore) AddTaskEvent(t TaskEvent) TaskEvent {
+// AddTaskEvent appends a new task event and returns it.
+func (s *MemoryStore) AddTaskEvent(t *TaskEvent) TaskEvent {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	t.ID = s.nextTaskID
@@ -312,10 +330,11 @@ func (s *MemoryStore) AddTaskEvent(t TaskEvent) TaskEvent {
 	if t.Timestamp.IsZero() {
 		t.Timestamp = time.Now()
 	}
-	s.tasks = append(s.tasks, t)
-	return t
+	s.tasks = append(s.tasks, *t)
+	return *t
 }
 
+// CompleteTask marks a task as completed.
 func (s *MemoryStore) CompleteTask(id int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -330,6 +349,7 @@ func (s *MemoryStore) CompleteTask(id int) error {
 	return fmt.Errorf("task not found")
 }
 
+// GetTaskEventsByPane returns task events for a given pane.
 func (s *MemoryStore) GetTaskEventsByPane(paneKey string) []TaskEvent {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -344,6 +364,7 @@ func (s *MemoryStore) GetTaskEventsByPane(paneKey string) []TaskEvent {
 
 // --- Pane Status ---
 
+// GetPaneStatuses returns all stored pane statuses.
 func (s *MemoryStore) GetPaneStatuses() map[string]string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -354,6 +375,7 @@ func (s *MemoryStore) GetPaneStatuses() map[string]string {
 	return result
 }
 
+// SetPaneStatus stores the status for a pane.
 func (s *MemoryStore) SetPaneStatus(paneKey, status string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

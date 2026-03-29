@@ -79,7 +79,7 @@ func GenerateAuthURL(config XunfeiConfig) (string, error) {
 	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
 	authOrigin := fmt.Sprintf(
-		`api_key="%s", algorithm="hmac-sha256", headers="host date request-line", signature="%s"`,
+		`api_key=%q, algorithm="hmac-sha256", headers="host date request-line", signature=%q`,
 		config.APIKey, signature,
 	)
 	authorization := base64.StdEncoding.EncodeToString([]byte(authOrigin))
@@ -112,7 +112,7 @@ type xfyunFrameHeader struct {
 
 // xfyunFrameParams holds IAT-specific parameters.
 type xfyunFrameParams struct {
-	IAT map[string]interface{} `json:"iat"`
+	IAT map[string]any `json:"iat"`
 }
 
 // xfyunFramePayload wraps the audio payload.
@@ -139,7 +139,7 @@ func BuildFirstFrame(config XunfeiConfig, params SpeechParams, audio string, seq
 		return nil, fmt.Errorf("xunfei config is incomplete")
 	}
 
-	iatParams := map[string]interface{}{
+	iatParams := map[string]any{
 		"domain":   params.Domain,
 		"language": params.Language,
 		"accent":   params.Accent,

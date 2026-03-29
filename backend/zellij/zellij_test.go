@@ -7,7 +7,7 @@ import (
 
 func TestWithCloseSignal(t *testing.T) {
 	t.Parallel()
-	var slave ZellijSlave
+	var slave Slave
 	opt := WithCloseSignal(9)
 	opt(&slave)
 	if slave.closeSignal != 9 {
@@ -17,7 +17,7 @@ func TestWithCloseSignal(t *testing.T) {
 
 func TestWithCloseTimeout(t *testing.T) {
 	t.Parallel()
-	var slave ZellijSlave
+	var slave Slave
 	opt := WithCloseTimeout(5 * time.Second)
 	opt(&slave)
 	if slave.closeTimeout != 5*time.Second {
@@ -27,7 +27,7 @@ func TestWithCloseTimeout(t *testing.T) {
 
 func TestCloseTimeoutC_Positive(t *testing.T) {
 	t.Parallel()
-	slave := &ZellijSlave{closeTimeout: 1 * time.Millisecond}
+	slave := &Slave{closeTimeout: 1 * time.Millisecond}
 	ch := slave.closeTimeoutC()
 	select {
 	case <-ch:
@@ -38,7 +38,7 @@ func TestCloseTimeoutC_Positive(t *testing.T) {
 
 func TestCloseTimeoutC_Negative(t *testing.T) {
 	t.Parallel()
-	slave := &ZellijSlave{closeTimeout: -1 * time.Second}
+	slave := &Slave{closeTimeout: -1 * time.Second}
 	ch := slave.closeTimeoutC()
 	select {
 	case <-ch:

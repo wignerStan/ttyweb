@@ -19,7 +19,7 @@ func TestRepoLock_MutualExclusion(t *testing.T) {
 	done := make(chan string, 2)
 
 	go func() {
-		unlock := rl.Lock(path, context.Background())
+		unlock := rl.Lock(context.Background(), path)
 		mu.Lock()
 		order = append(order, "writer1-start")
 		mu.Unlock()
@@ -33,7 +33,7 @@ func TestRepoLock_MutualExclusion(t *testing.T) {
 
 	go func() {
 		time.Sleep(5 * time.Millisecond)
-		unlock := rl.Lock(path, context.Background())
+		unlock := rl.Lock(context.Background(), path)
 		mu.Lock()
 		order = append(order, "writer2-start")
 		mu.Unlock()
@@ -67,8 +67,8 @@ func TestRepoLock_DifferentRepos(t *testing.T) {
 	rl := NewRepoLock()
 
 	ctx := context.Background()
-	unlock1 := rl.Lock("/repo/a", ctx)
-	unlock2 := rl.Lock("/repo/b", ctx)
+	unlock1 := rl.Lock(ctx, "/repo/a")
+	unlock2 := rl.Lock(ctx, "/repo/b")
 
 	unlock1()
 	unlock2()
@@ -80,14 +80,14 @@ func TestRepoLock_LockRespectsContext(t *testing.T) {
 	rl := NewRepoLock()
 	path := "/repo/locked"
 
-	unlock := rl.Lock(path, context.Background())
+	unlock := rl.Lock(context.Background(), path)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	done := make(chan struct{})
 	go func() {
-		unlockFn := rl.Lock(path, ctx)
+		unlockFn := rl.Lock(ctx, path)
 		if unlockFn != nil {
 			t.Error("expected nil unlock from cancelled context")
 		}
@@ -108,12 +108,12 @@ func TestRepoLock_Remove(t *testing.T) {
 	rl := NewRepoLock()
 	path := "/repo/test"
 
-	unlock := rl.Lock(path, context.Background())
+	unlock := rl.Lock(context.Background(), path)
 	unlock()
 
 	rl.Remove(path)
 
-	unlock2 := rl.Lock(path, context.Background())
+	unlock2 := rl.Lock(context.Background(), path)
 	unlock2()
 
 	if len(rl.locks) != 1 {
@@ -127,13 +127,13 @@ func TestRepoLock_RLockRespectsContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Acquire write lock to block readers.
-	unlock := rl.Lock("/test/path", context.Background())
+	unlock := rl.Lock(context.Background(), "/test/path")
 	defer unlock()
 
 	// Cancel context before RLock can succeed.
 	cancel()
 
-	unlockRL := rl.RLock("/test/path", ctx)
+	unlockRL := rl.RLock(ctx, "/test/path")
 	if unlockRL != nil {
 		t.Error("expected nil unlock func when context is cancelled")
 	}
@@ -146,8 +146,8 @@ func TestRepoLock_RLockConcurrency(t *testing.T) {
 	path := "/repo/main"
 
 	ctx := context.Background()
-	unlock1 := rl.RLock(path, ctx)
-	unlock2 := rl.RLock(path, ctx)
+	unlock1 := rl.RLock(ctx, path)
+	unlock2 := rl.RLock(ctx, path)
 
 	unlock1()
 	unlock2()

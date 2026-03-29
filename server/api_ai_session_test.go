@@ -53,7 +53,7 @@ func TestNewAISessionResponse(t *testing.T) {
 		FileSize:              2048,
 	}
 
-	resp := newAISessionResponse(r)
+	resp := newAISessionResponse(&r)
 
 	if resp.ID != 1 {
 		t.Fatalf("expected ID 1, got %d", resp.ID)
@@ -98,7 +98,7 @@ func TestNewAISessionResponse_NoLastMessage(t *testing.T) {
 		FileModTime:      now,
 	}
 
-	resp := newAISessionResponse(r)
+	resp := newAISessionResponse(&r)
 	if resp.LastMessageAt != nil {
 		t.Fatalf("expected nil LastMessageAt, got %v", resp.LastMessageAt)
 	}
@@ -437,7 +437,7 @@ func TestHandleAISessionSubroute_Detail_MethodNotAllowed(t *testing.T) {
 func TestHandleAISessionSubroute_Conversation_Success(t *testing.T) {
 	// Insert a session and get its conversation.
 	now := time.Now()
-	record := aiSessionService.Store().Upsert(ai.AISession{
+	record := aiSessionService.Store().Upsert(&ai.Session{
 		SessionID:             "conv-sess",
 		Type:                  "claude",
 		FilePath:              "/tmp/test-conv.jsonl",

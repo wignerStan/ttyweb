@@ -262,7 +262,7 @@ func TestParsePorcelainStatus_ConflictInTrackedLine(t *testing.T) {
 
 func TestParseTrackedLine_Short(t *testing.T) {
 	t.Parallel()
-	status := &WorktreeStatus{}
+	status := &Status{}
 	parseTrackedLine(status, "1")
 	if status.Staged != 0 || status.Modified != 0 || status.Conflicts != 0 {
 		t.Errorf("short line should not modify status, got: %+v", status)
@@ -271,7 +271,7 @@ func TestParseTrackedLine_Short(t *testing.T) {
 
 func TestParseTrackedLine_SingleXY(t *testing.T) {
 	t.Parallel()
-	status := &WorktreeStatus{}
+	status := &Status{}
 	// fields[1] = "M" (only one char, len < 2)
 	parseTrackedLine(status, "1 M")
 	if status.Staged != 0 || status.Modified != 0 {
@@ -281,7 +281,7 @@ func TestParseTrackedLine_SingleXY(t *testing.T) {
 
 func TestParseTrackedLine_Unmodified(t *testing.T) {
 	t.Parallel()
-	status := &WorktreeStatus{}
+	status := &Status{}
 	// ".." means no change in either area.
 	parseTrackedLine(status, "1 .. file.txt")
 	if status.Staged != 0 || status.Modified != 0 {
@@ -291,7 +291,7 @@ func TestParseTrackedLine_Unmodified(t *testing.T) {
 
 func TestParseTrackedLine_WorktreeConflict(t *testing.T) {
 	t.Parallel()
-	status := &WorktreeStatus{}
+	status := &Status{}
 	parseTrackedLine(status, "1 .U file.txt")
 	if status.Conflicts != 1 {
 		t.Errorf("expected conflicts=1 for worktree conflict, got %d", status.Conflicts)
@@ -300,7 +300,7 @@ func TestParseTrackedLine_WorktreeConflict(t *testing.T) {
 
 func TestParseStatusHeader_Empty(t *testing.T) {
 	t.Parallel()
-	status := &WorktreeStatus{Ahead: 5, Behind: 3}
+	status := &Status{Ahead: 5, Behind: 3}
 	parseStatusHeader(status, "")
 	if status.Ahead != 5 || status.Behind != 3 {
 		t.Errorf("empty header should not modify status, got: %+v", status)
@@ -309,7 +309,7 @@ func TestParseStatusHeader_Empty(t *testing.T) {
 
 func TestParseStatusHeader_UnknownKey(t *testing.T) {
 	t.Parallel()
-	status := &WorktreeStatus{Ahead: 5, Behind: 3}
+	status := &Status{Ahead: 5, Behind: 3}
 	parseStatusHeader(status, "unknown.key value")
 	if status.Ahead != 5 || status.Behind != 3 {
 		t.Errorf("unknown key should not modify status, got: %+v", status)
@@ -318,7 +318,7 @@ func TestParseStatusHeader_UnknownKey(t *testing.T) {
 
 func TestParseStatusHeader_BranchAb_InsufficientFields(t *testing.T) {
 	t.Parallel()
-	status := &WorktreeStatus{Ahead: 5, Behind: 3}
+	status := &Status{Ahead: 5, Behind: 3}
 	// Only 2 fields: "branch.ab" and "+3", missing behind count.
 	parseStatusHeader(status, "branch.ab +3")
 	if status.Ahead != 5 || status.Behind != 3 {

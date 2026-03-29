@@ -51,7 +51,7 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 
 		var msgContent struct {
 			Role    string      `json:"role"`
-			Content interface{} `json:"content"`
+			Content any `json:"content"`
 		}
 		if err := json.Unmarshal(entry.Message, &msgContent); err != nil {
 			continue
@@ -91,7 +91,7 @@ func isSkippableContent(text string) bool {
 
 // parseClaudeUserContent extracts messages from Claude user content.
 // Content can be a plain string or an array of content blocks (including tool results).
-func parseClaudeUserContent(content interface{}, ts time.Time) []ConversationMessage {
+func parseClaudeUserContent(content any, ts time.Time) []ConversationMessage {
 	switch v := content.(type) {
 	case string:
 		text := strings.TrimSpace(v)
@@ -103,7 +103,7 @@ func parseClaudeUserContent(content interface{}, ts time.Time) []ConversationMes
 			Content:   text,
 			Timestamp: ts,
 		}}
-	case []interface{}:
+	case []any:
 		if hasClaudeToolResultInBlocks(v) {
 			return parseClaudeToolResultBlocks(v, ts)
 		}
@@ -122,7 +122,7 @@ func parseClaudeUserContent(content interface{}, ts time.Time) []ConversationMes
 }
 
 // parseClaudeAssistantContent extracts messages from Claude assistant content.
-func parseClaudeAssistantContent(content interface{}, ts time.Time) ConversationMessage {
+func parseClaudeAssistantContent(content any, ts time.Time) ConversationMessage {
 	msg := ConversationMessage{
 		Role:      "assistant",
 		Timestamp: ts,
@@ -131,9 +131,9 @@ func parseClaudeAssistantContent(content interface{}, ts time.Time) Conversation
 	switch v := content.(type) {
 	case string:
 		msg.Content = strings.TrimSpace(v)
-	case []interface{}:
+	case []any:
 		for _, block := range v {
-			blockMap, ok := block.(map[string]interface{})
+			blockMap, ok := block.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -162,9 +162,9 @@ func parseClaudeAssistantContent(content interface{}, ts time.Time) Conversation
 }
 
 // hasClaudeToolResultInBlocks checks if content blocks contain tool_result blocks.
-func hasClaudeToolResultInBlocks(blocks []interface{}) bool {
+func hasClaudeToolResultInBlocks(blocks []any) bool {
 	for _, block := range blocks {
-		blockMap, ok := block.(map[string]interface{})
+		blockMap, ok := block.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -176,10 +176,10 @@ func hasClaudeToolResultInBlocks(blocks []interface{}) bool {
 }
 
 // parseClaudeToolResultBlocks extracts tool result messages from content blocks.
-func parseClaudeToolResultBlocks(blocks []interface{}, ts time.Time) []ConversationMessage {
+func parseClaudeToolResultBlocks(blocks []any, ts time.Time) []ConversationMessage {
 	messages := make([]ConversationMessage, 0, len(blocks))
 	for _, block := range blocks {
-		blockMap, ok := block.(map[string]interface{})
+		blockMap, ok := block.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -206,14 +206,14 @@ func parseClaudeToolResultBlocks(blocks []interface{}, ts time.Time) []Conversat
 }
 
 // renderClaudeBlocksToText converts content blocks to plain text.
-func renderClaudeBlocksToText(content interface{}) string {
+func renderClaudeBlocksToText(content any) string {
 	switch v := content.(type) {
 	case string:
 		return v
-	case []interface{}:
+	case []any:
 		var parts []string
 		for _, block := range v {
-			blockMap, ok := block.(map[string]interface{})
+			blockMap, ok := block.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -225,7 +225,7 @@ func renderClaudeBlocksToText(content interface{}) string {
 			}
 		}
 		return strings.Join(parts, "\n")
-	case map[string]interface{}:
+	case map[string]any:
 		if text, ok := v["text"].(string); ok {
 			return text
 		}

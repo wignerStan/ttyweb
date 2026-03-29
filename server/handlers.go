@@ -181,7 +181,7 @@ func (server *Server) parseInitArguments(init *InitMessage) (url.Values, error) 
 func (server *Server) renderTitle(conn *websocket.Conn, slave Slave) (*bytes.Buffer, error) {
 	titleVars := server.titleVariables(
 		[]string{"server", "master", "slave"},
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"server": server.options.TitleVariables,
 			"master": {
 				"remote_addr": conn.RemoteAddr(),
@@ -215,15 +215,15 @@ func (server *Server) webttyOptions(title []byte) []webtty.Option {
 	return opts
 }
 
-func (server *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (_ *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write(indexHTML)
 }
 
 // titleVariables merges maps in a specified order.
 // varUnits are name-keyed maps, whose names will be iterated using order.
-func (server *Server) titleVariables(order []string, varUnits map[string]map[string]interface{}) map[string]interface{} {
-	titleVars := map[string]interface{}{}
+func (_ *Server) titleVariables(order []string, varUnits map[string]map[string]any) map[string]any {
+	titleVars := map[string]any{}
 
 	for _, name := range order {
 		vars, ok := varUnits[name]

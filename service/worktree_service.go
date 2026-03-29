@@ -49,7 +49,7 @@ type WorktreeRecord struct {
 type WorktreeService struct {
 	mu        sync.RWMutex
 	projects  map[string]WtProject
-	worktrees map[string]WorktreeRecord
+	worktrees map[string]*WorktreeRecord
 	nextID    atomic.Int64
 	repoLock  *worktree.RepoLock
 }
@@ -58,7 +58,7 @@ type WorktreeService struct {
 func NewWorktreeService() *WorktreeService {
 	return &WorktreeService{
 		projects:  make(map[string]WtProject),
-		worktrees: make(map[string]WorktreeRecord),
+		worktrees: make(map[string]*WorktreeRecord),
 		repoLock:  worktree.NewRepoLock(),
 	}
 }
@@ -150,7 +150,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 		return nil, err
 	}
 
-	unlock := s.repoLock.Lock(project.Path, ctx)
+	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
 		return nil, context.Canceled
 	}
@@ -178,7 +178,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 	}
 
 	s.mu.Lock()
-	s.worktrees[record.ID] = record
+	s.worktrees[record.ID] = &record
 	s.mu.Unlock()
 
 	return &record, nil
@@ -215,7 +215,7 @@ func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktre
 		return errors.New("cannot remove main worktree")
 	}
 
-	unlock := s.repoLock.Lock(project.Path, ctx)
+	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
 		return context.Canceled
 	}
@@ -264,7 +264,7 @@ func (s *WorktreeService) RefreshWorktree(ctx context.Context, projectID, worktr
 	}
 
 	s.mu.Lock()
-	s.worktrees[worktreeID] = record
+	s.worktrees[worktreeID] = &record
 	s.mu.Unlock()
 
 	return &record, nil
@@ -298,7 +298,7 @@ func (s *WorktreeService) CommitWorktree(ctx context.Context, projectID, worktre
 		return nil, err
 	}
 
-	unlock := s.repoLock.Lock(project.Path, ctx)
+	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
 		return nil, context.Canceled
 	}
@@ -320,9 +320,9 @@ func (s *WorktreeService) worktreesForProject(projectID string) []WorktreeRecord
 	defer s.mu.RUnlock()
 
 	result := make([]WorktreeRecord, 0)
-	for _, wt := range s.worktrees {
-		if wt.ProjectID == projectID {
-			result = append(result, wt)
+	for i := range s.worktrees {
+		if s.worktrees[i].ProjectID == projectID {
+			result = append(result, *s.worktrees[i])
 		}
 	}
 	return result
@@ -335,7 +335,7 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 	if !ok || record.ProjectID != projectID {
 		return WorktreeRecord{}, fmt.Errorf("worktree not found: %s", worktreeID)
 	}
-	return record, nil
+	return *record, nil
 }
 
 func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject) error {
@@ -382,7 +382,7 @@ func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject)
 				CreatedAt:         now,
 				UpdatedAt:         now,
 			}
-			s.worktrees[record.ID] = record
+			s.worktrees[record.ID] = &record
 		}
 	}
 
@@ -403,7 +403,7 @@ func normalizePath(p string) string {
 }
 
 // withStatus returns a new WorktreeRecord with status fields populated.
-func (r WorktreeRecord) withStatus(status *worktree.WorktreeStatus) WorktreeRecord {
+func (r *WorktreeRecord) withStatus(status *worktree.Status) WorktreeRecord {
 	return WorktreeRecord{
 		ID:                r.ID,
 		ProjectID:         r.ProjectID,

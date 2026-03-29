@@ -136,13 +136,13 @@ func TestBuildFirstFrame_Valid(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(frame, &parsed); err != nil {
 		t.Fatalf("frame is not valid JSON: %v", err)
 	}
 
 	// Check header status = 0
-	header := parsed["header"].(map[string]interface{})
+	header := parsed["header"].(map[string]any)
 	if int(header["status"].(float64)) != 0 {
 		t.Errorf("expected header status 0, got %v", header["status"])
 	}
@@ -151,15 +151,15 @@ func TestBuildFirstFrame_Valid(t *testing.T) {
 	}
 
 	// Check payload audio status = 0
-	payload := parsed["payload"].(map[string]interface{})
-	audio := payload["audio"].(map[string]interface{})
+	payload := parsed["payload"].(map[string]any)
+	audio := payload["audio"].(map[string]any)
 	if int(audio["status"].(float64)) != 0 {
 		t.Errorf("expected audio status 0, got %v", audio["status"])
 	}
 
 	// Check IAT parameters exist
-	param := parsed["parameter"].(map[string]interface{})
-	iat := param["iat"].(map[string]interface{})
+	param := parsed["parameter"].(map[string]any)
+	iat := param["iat"].(map[string]any)
 	if iat["language"] != "zh_cn" {
 		t.Errorf("expected language zh_cn, got %v", iat["language"])
 	}
@@ -178,13 +178,13 @@ func TestBuildFirstFrame_WithHotwords(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(frame, &parsed); err != nil {
 		t.Fatalf("frame is not valid JSON: %v", err)
 	}
 
-	param := parsed["parameter"].(map[string]interface{})
-	iat := param["iat"].(map[string]interface{})
+	param := parsed["parameter"].(map[string]any)
+	iat := param["iat"].(map[string]any)
 	if iat["dhw"] != "utf-8;hello|world" {
 		t.Errorf("expected dhw, got %v", iat["dhw"])
 	}
@@ -200,13 +200,13 @@ func TestBuildFirstFrame_WithAudio(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(frame, &parsed); err != nil {
 		t.Fatalf("frame is not valid JSON: %v", err)
 	}
 
-	payload := parsed["payload"].(map[string]interface{})
-	audio := payload["audio"].(map[string]interface{})
+	payload := parsed["payload"].(map[string]any)
+	audio := payload["audio"].(map[string]any)
 	if audio["audio"] != audioB64 {
 		t.Errorf("audio data mismatch")
 	}
@@ -222,18 +222,18 @@ func TestBuildMiddleFrame(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(frame, &parsed); err != nil {
 		t.Fatalf("frame is not valid JSON: %v", err)
 	}
 
-	header := parsed["header"].(map[string]interface{})
+	header := parsed["header"].(map[string]any)
 	if int(header["status"].(float64)) != 1 {
 		t.Errorf("expected header status 1, got %v", header["status"])
 	}
 
-	payload := parsed["payload"].(map[string]interface{})
-	audio := payload["audio"].(map[string]interface{})
+	payload := parsed["payload"].(map[string]any)
+	audio := payload["audio"].(map[string]any)
 	if int(audio["status"].(float64)) != 1 {
 		t.Errorf("expected audio status 1, got %v", audio["status"])
 	}
@@ -250,18 +250,18 @@ func TestBuildLastFrame(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(frame, &parsed); err != nil {
 		t.Fatalf("frame is not valid JSON: %v", err)
 	}
 
-	header := parsed["header"].(map[string]interface{})
+	header := parsed["header"].(map[string]any)
 	if int(header["status"].(float64)) != 2 {
 		t.Errorf("expected header status 2, got %v", header["status"])
 	}
 
-	payload := parsed["payload"].(map[string]interface{})
-	audio := payload["audio"].(map[string]interface{})
+	payload := parsed["payload"].(map[string]any)
+	audio := payload["audio"].(map[string]any)
 	if int(audio["status"].(float64)) != 2 {
 		t.Errorf("expected audio status 2, got %v", audio["status"])
 	}

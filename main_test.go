@@ -70,7 +70,7 @@ func TestHostnameIsString(t *testing.T) {
 	t.Parallel()
 	got := hostname()
 	// Hostname should be a non-empty printable string.
-	if len(got) == 0 || strings.TrimSpace(got) != got {
+	if got == "" || strings.TrimSpace(got) != got {
 		t.Errorf("hostname() = %q, want a clean hostname string", got)
 	}
 }

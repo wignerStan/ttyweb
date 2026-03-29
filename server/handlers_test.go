@@ -35,15 +35,15 @@ func (m *mockSlave) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (m *mockSlave) WindowTitleVariables() map[string]interface{} {
-	return map[string]interface{}{"command": "mock", "hostname": "test"}
+func (_ *mockSlave) WindowTitleVariables() map[string]any {
+	return map[string]any{"command": "mock", "hostname": "test"}
 }
 
-func (m *mockSlave) ResizeTerminal(columns int, rows int) error {
+func (_ *mockSlave) ResizeTerminal(columns int, rows int) error {
 	return nil
 }
 
-func (m *mockSlave) Close() error {
+func (_ *mockSlave) Close() error {
 	return nil
 }
 
@@ -61,8 +61,8 @@ func (f *mockSlaveFactory) New(params map[string][]string, headers map[string][]
 // errorFactory always returns an error from New.
 type errorFactory struct{}
 
-func (f *errorFactory) Name() string { return "error-factory" }
-func (f *errorFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
+func (_ *errorFactory) Name() string { return "error-factory" }
+func (_ *errorFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
 	return nil, errors.New("factory error")
 }
 
@@ -107,7 +107,7 @@ func TestHandleIndex_Method(t *testing.T) {
 func TestTitleVariables_MergeOrder(t *testing.T) {
 	srv := newTestServer()
 	order := []string{"a", "b"}
-	varUnits := map[string]map[string]interface{}{
+	varUnits := map[string]map[string]any{
 		"a": {"key1": "val1", "key2": "val2"},
 		"b": {"key2": "override", "key3": "val3"},
 	}
@@ -133,7 +133,7 @@ func TestTitleVariables_MergeOrder(t *testing.T) {
 func TestTitleVariables_SingleSource(t *testing.T) {
 	srv := newTestServer()
 	order := []string{"only"}
-	varUnits := map[string]map[string]interface{}{
+	varUnits := map[string]map[string]any{
 		"only": {"key": "value"},
 	}
 	result := srv.titleVariables(order, varUnits)

@@ -25,11 +25,11 @@ func TestAISessionService_GetSessions(t *testing.T) {
 	store := svc.Store()
 	now := time.Now()
 
-	store.Upsert(ai.AISession{
+	store.Upsert(&ai.Session{
 		SessionID: "s1", Type: "claude_code",
 		ProjectPath: "/proj/a", FilePath: "/path/1.jsonl", FileModTime: now,
 	})
-	store.Upsert(ai.AISession{
+	store.Upsert(&ai.Session{
 		SessionID: "s2", Type: "claude_code",
 		ProjectPath: "/proj/b", FilePath: "/path/2.jsonl", FileModTime: now,
 	})
@@ -48,7 +48,7 @@ func TestAISessionService_GetSession(t *testing.T) {
 	t.Parallel()
 
 	svc := NewAISessionService()
-	record := svc.Store().Upsert(ai.AISession{
+	record := svc.Store().Upsert(&ai.Session{
 		SessionID: "gs", Type: "codex",
 		FilePath: "/path/gs.jsonl", FileModTime: time.Now(),
 	})
@@ -84,7 +84,7 @@ func TestAISessionService_GetConversation_UnknownType(t *testing.T) {
 	t.Parallel()
 
 	svc := NewAISessionService()
-	svc.Store().Upsert(ai.AISession{
+	svc.Store().Upsert(&ai.Session{
 		SessionID: "unknown-type", Type: "unknown_assistant",
 		FilePath: "/path/unknown.jsonl", FileModTime: time.Now(),
 	})
@@ -111,7 +111,7 @@ func TestAISessionService_GetConversation_ClaudeCode(t *testing.T) {
 	}
 
 	svc := NewAISessionService()
-	record := svc.Store().Upsert(ai.AISession{
+	record := svc.Store().Upsert(&ai.Session{
 		SessionID:   "conv-test",
 		Type:        string(ai.AssistantTypeClaudeCode),
 		FilePath:    jsonlPath,
@@ -146,7 +146,7 @@ func TestAISessionService_GetConversation_Codex(t *testing.T) {
 	}
 
 	svc := NewAISessionService()
-	record := svc.Store().Upsert(ai.AISession{
+	record := svc.Store().Upsert(&ai.Session{
 		SessionID:   "codex-conv-test",
 		Type:        string(ai.AssistantTypeCodex),
 		FilePath:    jsonlPath,
@@ -172,7 +172,7 @@ func TestAISessionService_GetConversation_NonexistentFile(t *testing.T) {
 	t.Parallel()
 
 	svc := NewAISessionService()
-	svc.Store().Upsert(ai.AISession{
+	svc.Store().Upsert(&ai.Session{
 		SessionID:   "no-file",
 		Type:        string(ai.AssistantTypeClaudeCode),
 		FilePath:    "/nonexistent/path/session.jsonl",
@@ -209,7 +209,7 @@ func TestAISessionService_RefreshSession_WithFile(t *testing.T) {
 	}
 
 	svc := NewAISessionService()
-	record := svc.Store().Upsert(ai.AISession{
+	record := svc.Store().Upsert(&ai.Session{
 		SessionID:   "refresh-test",
 		Type:        string(ai.AssistantTypeClaudeCode),
 		FilePath:    jsonlPath,

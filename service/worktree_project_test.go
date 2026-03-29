@@ -232,7 +232,7 @@ func TestWithStatus(t *testing.T) {
 		IsMain: true, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 
-	status := &worktree.WorktreeStatus{
+	status := &worktree.Status{
 		Ahead: 2, Behind: 1, Modified: 3,
 		Staged: 4, Untracked: 5, Conflicts: 1,
 	}

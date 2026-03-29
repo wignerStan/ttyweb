@@ -10,8 +10,8 @@ import (
 func TestDefaultConfigValues(t *testing.T) {
 	cfg := DefaultConfig()
 
-	if cfg.LLM.ApiURL != "https://api.openai.com/v1/chat/completions" {
-		t.Errorf("unexpected default LLM.ApiURL: %s", cfg.LLM.ApiURL)
+	if cfg.LLM.APIURL != "https://api.openai.com/v1/chat/completions" {
+		t.Errorf("unexpected default LLM.APIURL: %s", cfg.LLM.APIURL)
 	}
 	if cfg.LLM.Model != "gpt-4o" {
 		t.Errorf("unexpected default LLM.Model: %s", cfg.LLM.Model)
@@ -60,11 +60,11 @@ func TestLoadFromJSON(t *testing.T) {
 		t.Fatalf("Load failed: %v", err)
 	}
 
-	if cfg.LLM.ApiKey != "test-key" {
-		t.Errorf("LLM.ApiKey = %q, want %q", cfg.LLM.ApiKey, "test-key")
+	if cfg.LLM.APIKey != "test-key" {
+		t.Errorf("LLM.APIKey = %q, want %q", cfg.LLM.APIKey, "test-key")
 	}
-	if cfg.LLM.ApiURL != "https://example.com/v1/chat" {
-		t.Errorf("LLM.ApiURL = %q, want %q", cfg.LLM.ApiURL, "https://example.com/v1/chat")
+	if cfg.LLM.APIURL != "https://example.com/v1/chat" {
+		t.Errorf("LLM.APIURL = %q, want %q", cfg.LLM.APIURL, "https://example.com/v1/chat")
 	}
 	if cfg.LLM.Model != "my-model" {
 		t.Errorf("LLM.Model = %q, want %q", cfg.LLM.Model, "my-model")
@@ -75,11 +75,11 @@ func TestLoadFromJSON(t *testing.T) {
 	if cfg.Xunfei.AppID != "xf-app" {
 		t.Errorf("Xunfei.AppID = %q, want %q", cfg.Xunfei.AppID, "xf-app")
 	}
-	if cfg.Xunfei.ApiKey != "xf-key" {
-		t.Errorf("Xunfei.ApiKey = %q, want %q", cfg.Xunfei.ApiKey, "xf-key")
+	if cfg.Xunfei.APIKey != "xf-key" {
+		t.Errorf("Xunfei.APIKey = %q, want %q", cfg.Xunfei.APIKey, "xf-key")
 	}
-	if cfg.Xunfei.ApiSecret != "xf-secret" {
-		t.Errorf("Xunfei.ApiSecret = %q, want %q", cfg.Xunfei.ApiSecret, "xf-secret")
+	if cfg.Xunfei.APISecret != "xf-secret" {
+		t.Errorf("Xunfei.APISecret = %q, want %q", cfg.Xunfei.APISecret, "xf-secret")
 	}
 	if cfg.Butler.Host != "butler-host" {
 		t.Errorf("Butler.Host = %q, want %q", cfg.Butler.Host, "butler-host")
@@ -116,12 +116,12 @@ func TestEnvVarOverrides(t *testing.T) {
 		envVal string
 		get    func(*Config) string
 	}{
-		{"LLM_API_KEY", "LLM_API_KEY", "env-api-key", func(c *Config) string { return c.LLM.ApiKey }},
-		{"LLM_API_URL", "LLM_API_URL", "https://env.example.com/v1", func(c *Config) string { return c.LLM.ApiURL }},
+		{"LLM_API_KEY", "LLM_API_KEY", "env-api-key", func(c *Config) string { return c.LLM.APIKey }},
+		{"LLM_API_URL", "LLM_API_URL", "https://env.example.com/v1", func(c *Config) string { return c.LLM.APIURL }},
 		{"LLM_MODEL", "LLM_MODEL", "env-model", func(c *Config) string { return c.LLM.Model }},
 		{"XFYUN_APP_ID", "XFYUN_APP_ID", "env-app-id", func(c *Config) string { return c.Xunfei.AppID }},
-		{"XFYUN_API_KEY", "XFYUN_API_KEY", "env-xf-key", func(c *Config) string { return c.Xunfei.ApiKey }},
-		{"XFYUN_API_SECRET", "XFYUN_API_SECRET", "env-xf-secret", func(c *Config) string { return c.Xunfei.ApiSecret }},
+		{"XFYUN_API_KEY", "XFYUN_API_KEY", "env-xf-key", func(c *Config) string { return c.Xunfei.APIKey }},
+		{"XFYUN_API_SECRET", "XFYUN_API_SECRET", "env-xf-secret", func(c *Config) string { return c.Xunfei.APISecret }},
 		{"BUTLER_HOST", "BUTLER_HOST", "env-butler-host", func(c *Config) string { return c.Butler.Host }},
 		{"BUTLER_PORT", "BUTLER_PORT", "9999", func(c *Config) string { return c.Butler.Port }},
 	}
@@ -157,8 +157,8 @@ func TestEnvVarOverridesJSONValues(t *testing.T) {
 		t.Fatalf("Load failed: %v", err)
 	}
 
-	if cfg.LLM.ApiKey != "override-key" {
-		t.Errorf("LLM.ApiKey = %q, want env override %q", cfg.LLM.ApiKey, "override-key")
+	if cfg.LLM.APIKey != "override-key" {
+		t.Errorf("LLM.APIKey = %q, want env override %q", cfg.LLM.APIKey, "override-key")
 	}
 	if cfg.LLM.Model != "json-model" {
 		t.Errorf("LLM.Model = %q, want JSON value %q (not overridden)", cfg.LLM.Model, "json-model")
@@ -212,8 +212,8 @@ func TestLoadEmptyFile(t *testing.T) {
 		t.Fatalf("Load failed for empty JSON: %v", err)
 	}
 	// Empty JSON object should preserve defaults.
-	if cfg.LLM.ApiURL != "https://api.openai.com/v1/chat/completions" {
-		t.Errorf("expected default LLM.ApiURL, got %q", cfg.LLM.ApiURL)
+	if cfg.LLM.APIURL != "https://api.openai.com/v1/chat/completions" {
+		t.Errorf("expected default LLM.APIURL, got %q", cfg.LLM.APIURL)
 	}
 }
 

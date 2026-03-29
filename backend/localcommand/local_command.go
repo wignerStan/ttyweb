@@ -14,10 +14,13 @@ import (
 )
 
 const (
+	// DefaultCloseSignal is the signal sent to close the command process.
 	DefaultCloseSignal  = syscall.SIGINT
+	// DefaultCloseTimeout is the default duration before force-killing the process.
 	DefaultCloseTimeout = 10 * time.Second
 )
 
+// LocalCommand is a backend.Slave that wraps a local command with a PTY.
 type LocalCommand struct {
 	command string
 	argv    []string
@@ -31,6 +34,7 @@ type LocalCommand struct {
 	ptyMu     sync.Mutex
 }
 
+// New creates a new LocalCommand that runs the given command in a PTY.
 func New(command string, argv []string, headers map[string][]string, options ...Option) (*LocalCommand, error) {
 	cmd := exec.CommandContext(context.Background(), command, argv...)
 
@@ -43,11 +47,10 @@ func New(command string, argv []string, headers map[string][]string, options ...
 	// Replace hyphen with underscore and make them all upper case
 	for key, values := range headers {
 		h := "HTTP_" + strings.ReplaceAll(strings.ToUpper(key), "-", "_") + "=" + strings.Join(values, ",")
-		// log.Printf("Adding header: %s", h)
 		cmd.Env = append(cmd.Env, h)
 	}
 
-	pty, err := pty.Start(cmd)
+	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		// todo close cmd?
 		return nil, errors.Wrapf(err, "failed to start command `%s`", command)
@@ -62,7 +65,7 @@ func New(command string, argv []string, headers map[string][]string, options ...
 		closeTimeout: DefaultCloseTimeout,
 
 		cmd:       cmd,
-		pty:       pty,
+		pty:       ptmx,
 		ptyClosed: ptyClosed,
 	}
 
@@ -106,6 +109,7 @@ func (lcmd *LocalCommand) Write(p []byte) (n int, err error) {
 	return n, nil
 }
 
+// Close terminates the command process.
 func (lcmd *LocalCommand) Close() error {
 	if lcmd.cmd != nil && lcmd.cmd.Process != nil {
 		_ = lcmd.cmd.Process.Signal(lcmd.closeSignal)
@@ -120,14 +124,16 @@ func (lcmd *LocalCommand) Close() error {
 	}
 }
 
-func (lcmd *LocalCommand) WindowTitleVariables() map[string]interface{} {
-	return map[string]interface{}{
+// WindowTitleVariables returns template variables for the window title.
+func (lcmd *LocalCommand) WindowTitleVariables() map[string]any {
+	return map[string]any{
 		"command": lcmd.command,
 		"argv":    lcmd.argv,
 		"pid":     lcmd.cmd.Process.Pid,
 	}
 }
 
+// ResizeTerminal resizes the PTY to the given dimensions.
 func (lcmd *LocalCommand) ResizeTerminal(width int, height int) error {
 	lcmd.ptyMu.Lock()
 	defer lcmd.ptyMu.Unlock()

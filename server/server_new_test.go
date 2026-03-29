@@ -354,8 +354,8 @@ func TestRun_WithRandomURL(t *testing.T) {
 	srv, err := New(factory, &Options{
 		Path:            "/",
 		Port:            "0",
-		EnableRandomUrl: true,
-		RandomUrlLength: 8,
+		EnableRandomURL: true,
+		RandomURLLength: 8,
 		TitleFormat:     "{{ .server.Version }}",
 	})
 	if err != nil {

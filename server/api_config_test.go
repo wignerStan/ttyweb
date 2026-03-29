@@ -20,7 +20,7 @@ func TestHandleConfig_GET(t *testing.T) {
 
 	var resp struct {
 		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)

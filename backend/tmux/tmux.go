@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TmuxSlave is a tmux session attached via PTY.
+// Slave is a tmux session attached via PTY.
 // It implements server.Slave interface from ttyweb/server.
-type TmuxSlave struct {
+type Slave struct {
 	pty     *os.File
 	cmd     *exec.Cmd
 	session string
@@ -28,19 +28,19 @@ type TmuxSlave struct {
 	ptyMu     sync.Mutex
 }
 
-// Option configures TmuxSlave behavior.
-type Option func(*TmuxSlave)
+// Option configures Slave behavior.
+type Option func(*Slave)
 
 // WithCloseSignal sets the signal sent on close.
 func WithCloseSignal(sig syscall.Signal) Option {
-	return func(s *TmuxSlave) {
+	return func(s *Slave) {
 		s.closeSignal = sig
 	}
 }
 
 // WithCloseTimeout sets how long to wait before SIGKILL.
 func WithCloseTimeout(d time.Duration) Option {
-	return func(s *TmuxSlave) {
+	return func(s *Slave) {
 		s.closeTimeout = d
 	}
 }
@@ -48,15 +48,16 @@ func WithCloseTimeout(d time.Duration) Option {
 // NewTmuxSlave creates a PTY attached to a tmux session.
 // If session is empty, creates a new session.
 // If pane is empty, attaches to the current pane.
-func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, error) {
+func NewTmuxSlave(session string, pane string, options ...Option) (*Slave, error) {
 	args := []string{"tmux"}
-	if session == "" {
+	switch {
+	case session == "":
 		// Create new session
 		args = append(args, "new-session", "-A", "-s", "ttyweb")
-	} else if pane != "" {
+	case pane != "":
 		// Attach to specific pane
 		args = append(args, "attach-session", "-t", pane)
-	} else {
+	default:
 		// Attach to session (current window)
 		args = append(args, "attach-session", "-t", session)
 	}
@@ -70,7 +71,7 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 	}
 	ptyClosed := make(chan struct{})
 
-	slave := &TmuxSlave{
+	slave := &Slave{
 		session:      session,
 		pane:         pane,
 		closeSignal:  syscall.SIGHUP,
@@ -97,7 +98,7 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 	return slave, nil
 }
 
-func (s *TmuxSlave) Read(p []byte) (n int, err error) {
+func (s *Slave) Read(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
 	n, err = s.pty.Read(p)
@@ -107,7 +108,7 @@ func (s *TmuxSlave) Read(p []byte) (n int, err error) {
 	return n, nil
 }
 
-func (s *TmuxSlave) Write(p []byte) (n int, err error) {
+func (s *Slave) Write(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
 	n, err = s.pty.Write(p)
@@ -117,8 +118,9 @@ func (s *TmuxSlave) Write(p []byte) (n int, err error) {
 	return n, nil
 }
 
-func (s *TmuxSlave) WindowTitleVariables() map[string]interface{} {
-	vars := map[string]interface{}{
+// WindowTitleVariables returns template variables for the window title.
+func (s *Slave) WindowTitleVariables() map[string]any {
+	vars := map[string]any{
 		"command": "tmux",
 	}
 	if s.session != "" {
@@ -131,7 +133,8 @@ func (s *TmuxSlave) WindowTitleVariables() map[string]interface{} {
 	return vars
 }
 
-func (s *TmuxSlave) ResizeTerminal(width int, height int) error {
+// ResizeTerminal resizes the PTY to the given dimensions.
+func (s *Slave) ResizeTerminal(width int, height int) error {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
 	ws := pty.Winsize{
@@ -151,7 +154,8 @@ func (s *TmuxSlave) ResizeTerminal(width int, height int) error {
 	return nil
 }
 
-func (s *TmuxSlave) Close() error {
+// Close terminates the tmux session attachment.
+func (s *Slave) Close() error {
 	if s.cmd != nil && s.cmd.Process != nil {
 		_ = s.cmd.Process.Signal(s.closeSignal)
 	}
@@ -165,7 +169,7 @@ func (s *TmuxSlave) Close() error {
 	}
 }
 
-func (s *TmuxSlave) closeTimeoutC() <-chan time.Time {
+func (s *Slave) closeTimeoutC() <-chan time.Time {
 	if s.closeTimeout >= 0 {
 		return time.After(s.closeTimeout)
 	}

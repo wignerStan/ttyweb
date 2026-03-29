@@ -50,9 +50,9 @@ func deleteReq(t *testing.T, handler http.HandlerFunc, path string) *httptest.Re
 	return rec
 }
 
-func decodeResp(t *testing.T, rec *httptest.ResponseRecorder) map[string]interface{} {
+func decodeResp(t *testing.T, rec *httptest.ResponseRecorder) map[string]any {
 	t.Helper()
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.NewDecoder(rec.Body).Decode(&m); err != nil {
 		t.Fatalf("decode JSON: %v", err)
 	}
@@ -73,15 +73,15 @@ func TestIntegration_ProfileLifecycle(t *testing.T) {
 	rec := postJSON(t, srv.handleProfiles, "/api/profiles",
 		`{"profile_key":"integ-prof","name":"Original","sort_order":1}`)
 	assertStatus(t, rec, http.StatusOK)
-	id := int(decodeResp(t, rec)["data"].(map[string]interface{})["id"].(float64))
+	id := int(decodeResp(t, rec)["data"].(map[string]any)["id"].(float64))
 
 	// Verify in list
 	rec = getJSON(t, srv.handleProfiles, "/api/profiles")
 	assertStatus(t, rec, http.StatusOK)
-	data := decodeResp(t, rec)["data"].([]interface{})
+	data := decodeResp(t, rec)["data"].([]any)
 	found := false
 	for _, item := range data {
-		if int(item.(map[string]interface{})["id"].(float64)) == id {
+		if int(item.(map[string]any)["id"].(float64)) == id {
 			found = true
 		}
 	}
@@ -94,7 +94,7 @@ func TestIntegration_ProfileLifecycle(t *testing.T) {
 		`{"profile_key":"integ-prof","name":"Updated","sort_order":5}`)
 	assertStatus(t, rec, http.StatusOK)
 	resp := decodeResp(t, rec)
-	if resp["data"].(map[string]interface{})["name"] != "Updated" {
+	if resp["data"].(map[string]any)["name"] != "Updated" {
 		t.Fatal("name not updated")
 	}
 
@@ -114,12 +114,12 @@ func TestIntegration_GroupLifecycle(t *testing.T) {
 	rec := postJSON(t, srv.handleGroups, "/api/groups",
 		`{"group_name":"integ-grp","sort_order":1,"profile_key":"pk-integ"}`)
 	assertStatus(t, rec, http.StatusOK)
-	id := int(decodeResp(t, rec)["data"].(map[string]interface{})["id"].(float64))
+	id := int(decodeResp(t, rec)["data"].(map[string]any)["id"].(float64))
 
 	// Filter by profile_key
 	rec = getJSON(t, srv.handleGroups, "/api/groups?profile_key=pk-integ")
 	assertStatus(t, rec, http.StatusOK)
-	items := decodeResp(t, rec)["data"].([]interface{})
+	items := decodeResp(t, rec)["data"].([]any)
 	if len(items) != 1 {
 		t.Fatalf("expected 1 group, got %d", len(items))
 	}
@@ -143,7 +143,7 @@ func TestIntegration_SnippetLifecycle(t *testing.T) {
 	rec := postJSON(t, srv.handleSnippets, "/api/snippets",
 		`{"name":"integ-snip","command":"echo hi"}`)
 	assertStatus(t, rec, http.StatusOK)
-	idx := int(decodeResp(t, rec)["data"].(map[string]interface{})["index"].(float64))
+	idx := int(decodeResp(t, rec)["data"].(map[string]any)["index"].(float64))
 
 	// Verify in list
 	rec = getJSON(t, srv.handleSnippets, "/api/snippets")
@@ -168,12 +168,12 @@ func TestIntegration_RoleLifecycle(t *testing.T) {
 	rec := postJSON(t, srv.handleRoles, "/api/roles",
 		`{"name":"IntegRole","description":"test","system_prompt":"Be precise"}`)
 	assertStatus(t, rec, http.StatusOK)
-	id := int(decodeResp(t, rec)["data"].(map[string]interface{})["id"].(float64))
+	id := int(decodeResp(t, rec)["data"].(map[string]any)["id"].(float64))
 
 	// List should have 7 builtin + 1 custom
 	rec = getJSON(t, srv.handleRoles, "/api/roles")
 	assertStatus(t, rec, http.StatusOK)
-	if len(decodeResp(t, rec)["data"].([]interface{})) != 8 {
+	if len(decodeResp(t, rec)["data"].([]any)) != 8 {
 		t.Fatal("expected 8 roles total")
 	}
 
@@ -196,12 +196,12 @@ func TestIntegration_TaskEventFlow(t *testing.T) {
 	rec := postJSON(t, srv.handleTaskDetail, "/api/tasks/events",
 		`{"task_id":"itask","pane_key":"ipane","event":"user_message","data":{"text":"hi"}}`)
 	assertStatus(t, rec, http.StatusOK)
-	id := int(decodeResp(t, rec)["data"].(map[string]interface{})["id"].(float64))
+	id := int(decodeResp(t, rec)["data"].(map[string]any)["id"].(float64))
 
 	// Verify total in list
 	rec = getJSON(t, srv.handleTasks, "/api/tasks")
 	assertStatus(t, rec, http.StatusOK)
-	if decodeResp(t, rec)["data"].(map[string]interface{})["total"] != float64(1) {
+	if decodeResp(t, rec)["data"].(map[string]any)["total"] != float64(1) {
 		t.Fatal("expected total 1")
 	}
 
@@ -225,7 +225,7 @@ func TestIntegration_SessionEndpoints(t *testing.T) {
 	// GET /api/backends — returns availability
 	rec = getJSON(t, srv.handleListBackends, "/api/backends")
 	assertStatus(t, rec, http.StatusOK)
-	if len(decodeResp(t, rec)["data"].([]interface{})) != 3 {
+	if len(decodeResp(t, rec)["data"].([]any)) != 3 {
 		t.Fatal("expected 3 backends")
 	}
 }
@@ -239,7 +239,7 @@ func TestIntegration_AuthEndpoints(t *testing.T) {
 	if !resp["success"].(bool) {
 		t.Fatal("expected success")
 	}
-	data := resp["data"].(map[string]interface{})
+	data := resp["data"].(map[string]any)
 	if !data["authenticated"].(bool) {
 		t.Fatal("expected authenticated=true")
 	}
@@ -260,7 +260,7 @@ func TestIntegration_PaneStatusFlow(t *testing.T) {
 	// Verify pane in status list
 	rec = getJSON(t, srv.handlePaneStatus, "/api/panes/status")
 	assertStatus(t, rec, http.StatusOK)
-	data := decodeResp(t, rec)["data"].(map[string]interface{})
+	data := decodeResp(t, rec)["data"].(map[string]any)
 	if data["ipane-status"] != "running" {
 		t.Fatalf("expected pane status 'running', got %v", data["ipane-status"])
 	}

@@ -17,8 +17,8 @@ import (
 	goGit "github.com/go-git/go-git/v5"
 )
 
-// WorktreeInfo describes a single worktree in a repository.
-type WorktreeInfo struct {
+// Info describes a single worktree in a repository.
+type Info struct {
 	Path        string `json:"path"`
 	Branch      string `json:"branch"`
 	IsMain      bool   `json:"isMain"`
@@ -26,8 +26,8 @@ type WorktreeInfo struct {
 	HeadMessage string `json:"headMessage,omitempty"`
 }
 
-// WorktreeStatus holds counts describing the state of a worktree.
-type WorktreeStatus struct {
+// Status holds counts describing the state of a worktree.
+type Status struct {
 	Ahead     int `json:"ahead"`
 	Behind    int `json:"behind"`
 	Modified  int `json:"modified"`
@@ -182,7 +182,7 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 }
 
 // ListWorktrees enumerates all worktrees attached to the repository.
-func ListWorktrees(ctx context.Context, repoPath string) ([]WorktreeInfo, error) {
+func ListWorktrees(ctx context.Context, repoPath string) ([]Info, error) {
 	repoPath = strings.TrimSpace(repoPath)
 	if repoPath == "" {
 		return nil, errEmptyPath
@@ -247,7 +247,7 @@ func RemoveWorktree(ctx context.Context, repoPath, worktreePath string, force bo
 }
 
 // GetWorktreeStatus returns the working-directory status of the worktree.
-func GetWorktreeStatus(ctx context.Context, worktreePath string) (*WorktreeStatus, error) {
+func GetWorktreeStatus(ctx context.Context, worktreePath string) (*Status, error) {
 	worktreePath = strings.TrimSpace(worktreePath)
 	if worktreePath == "" {
 		return nil, errors.New("worktree path is required")
@@ -354,16 +354,16 @@ func resolveDefaultBranch(ctx context.Context, repoPath string) string {
 	return ""
 }
 
-func parseWorktreeList(output string) []WorktreeInfo {
+func parseWorktreeList(output string) []Info {
 	lines := strings.Split(output, "\n")
-	result := make([]WorktreeInfo, 0)
-	var current WorktreeInfo
+	result := make([]Info, 0)
+	var current Info
 
 	flush := func() {
 		if current.Path != "" {
 			result = append(result, current)
 		}
-		current = WorktreeInfo{}
+		current = Info{}
 	}
 
 	for _, raw := range lines {
@@ -419,11 +419,11 @@ func headCommitMessage(ctx context.Context, path string) string {
 	return strings.TrimSpace(string(out))
 }
 
-func collectStatusPorcelain(path string) (*WorktreeStatus, error) {
+func collectStatusPorcelain(path string) (*Status, error) {
 	return collectStatusPorcelainContext(context.Background(), path)
 }
 
-func collectStatusPorcelainContext(ctx context.Context, path string) (*WorktreeStatus, error) {
+func collectStatusPorcelainContext(ctx context.Context, path string) (*Status, error) {
 	guard, err := DefaultSemaphore().Acquire(ctx)
 	if err != nil {
 		return nil, &OpError{Kind: KindCancelled, Path: path, Cause: err}
@@ -438,12 +438,12 @@ func collectStatusPorcelainContext(ctx context.Context, path string) (*WorktreeS
 	return parsePorcelainStatus(string(output)), nil
 }
 
-func parsePorcelainStatus(output string) *WorktreeStatus {
+func parsePorcelainStatus(output string) *Status {
 	if strings.TrimSpace(output) == "" {
-		return &WorktreeStatus{}
+		return &Status{}
 	}
 
-	status := &WorktreeStatus{}
+	status := &Status{}
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -466,13 +466,12 @@ func parsePorcelainStatus(output string) *WorktreeStatus {
 	return status
 }
 
-func parseStatusHeader(status *WorktreeStatus, line string) {
+func parseStatusHeader(status *Status, line string) {
 	fields := strings.Fields(line)
 	if len(fields) == 0 {
 		return
 	}
-	switch fields[0] {
-	case "branch.ab":
+	if fields[0] == "branch.ab" {
 		if len(fields) >= 3 {
 			status.Ahead = parseCount(fields[1])
 			status.Behind = parseCount(fields[2])
@@ -480,7 +479,7 @@ func parseStatusHeader(status *WorktreeStatus, line string) {
 	}
 }
 
-func parseTrackedLine(status *WorktreeStatus, line string) {
+func parseTrackedLine(status *Status, line string) {
 	fields := strings.Fields(line)
 	if len(fields) < 2 {
 		return
@@ -511,7 +510,7 @@ func parseCount(token string) int {
 	return n
 }
 
-func collectStatusGoGit(path string) (*WorktreeStatus, error) {
+func collectStatusGoGit(path string) (*Status, error) {
 	repo, err := goGit.PlainOpen(path)
 	if err != nil {
 		return nil, fmt.Errorf("collectStatusGoGit: open repo: %w", err)
@@ -527,7 +526,7 @@ func collectStatusGoGit(path string) (*WorktreeStatus, error) {
 		return nil, fmt.Errorf("collectStatusGoGit: get status: %w", err)
 	}
 
-	status := &WorktreeStatus{}
+	status := &Status{}
 	for _, fs := range snap {
 		if fs.Staging == goGit.Untracked || fs.Worktree == goGit.Untracked {
 			status.Untracked++
