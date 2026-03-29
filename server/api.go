@@ -90,6 +90,9 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"notepad/reorder", server.handleNotepadReorder)
 	mux.HandleFunc(apiPrefix+"notepad", server.handleNotepad)
 	mux.HandleFunc(apiPrefix+"notepad/", server.handleNotepadDetail)
+	// Task Segments
+	mux.HandleFunc(apiPrefix+"segments", server.handleSegments)
+	mux.HandleFunc(apiPrefix+"segments/", server.handleSegmentDetail)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
