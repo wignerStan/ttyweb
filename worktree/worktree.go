@@ -65,8 +65,25 @@ var (
 	testEnvMu       sync.RWMutex
 )
 
+// FilterGitEnv removes git repository discovery variables from env.
+// This prevents child git processes from discovering the parent repo.
+func FilterGitEnv(env []string) []string {
+	filtered := make([]string, 0, len(env))
+	for _, e := range env {
+		key, _, _ := strings.Cut(e, "=")
+		switch key {
+		case "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY",
+			"GIT_INDEX_FILE", "GIT_ALTERNATE_OBJECT_DIRECTORIES":
+			// Skip variables that cause git to discover a parent repo.
+		default:
+			filtered = append(filtered, e)
+		}
+	}
+	return filtered
+}
+
 func buildGitCommandEnv() []string {
-	env := os.Environ()
+	env := FilterGitEnv(os.Environ())
 	env = append(env,
 		"GIT_TERMINAL_PROMPT=0",
 		"GIT_MERGE_AUTOEDIT=no",

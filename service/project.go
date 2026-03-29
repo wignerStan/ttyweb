@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"ttyweb/db"
+	"ttyweb/worktree"
 )
 
 func init() {
@@ -55,6 +56,7 @@ func (r *UpdateProjectRequest) toUpdates() map[string]interface{} {
 func runGitCommand(dir string, args ...string) (string, error) {
 	cmd := exec.CommandContext(context.Background(), "git", args...)
 	cmd.Dir = dir
+	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("git %v: %w", args, err)

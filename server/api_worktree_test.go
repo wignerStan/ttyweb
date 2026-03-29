@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"testing"
+
+	"ttyweb/worktree"
 )
 
 func TestHandleWorktreeProjects_GET(t *testing.T) {
@@ -205,6 +208,7 @@ func createRealGitRepo(t *testing.T) string {
 	dir := t.TempDir()
 	cmd := exec.CommandContext(context.Background(), "git", "init")
 	cmd.Dir = dir
+	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git init failed: %v; output: %s", err, out)
 	}
@@ -373,6 +377,7 @@ func TestHandleWorktreeList_POST_CreateWorktree(t *testing.T) {
 	runGit := func(args ...string) {
 		cmd := exec.CommandContext(context.Background(), "git", args...)
 		cmd.Dir = gitDir
+		cmd.Env = worktree.FilterGitEnv(os.Environ())
 		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("git %v failed: %v; output: %s", args, err, out)
 		}

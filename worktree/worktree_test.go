@@ -35,6 +35,7 @@ func mustRun(t *testing.T, dir, name string, args ...string) {
 	// Prepend "git" since all calls pass git subcommands.
 	cmd := exec.CommandContext(context.Background(), "git", append([]string{name}, args...)...)
 	cmd.Dir = dir
+	cmd.Env = FilterGitEnv(os.Environ())
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("%s %s failed: %s\n%s", name, strings.Join(args, " "), err, string(out))
