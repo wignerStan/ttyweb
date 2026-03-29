@@ -199,7 +199,7 @@ describe('AiCommandTab', () => {
     // It should have a chevron SVG child
     const promptBtn = btns[1]
     expect(promptBtn).toBeTruthy()
-    expect(promptBtn.querySelector('svg')).toBeTruthy()
+    expect(promptBtn!.querySelector('svg')).toBeTruthy()
   })
 
   it('toggles system prompt visibility', async () => {
@@ -207,8 +207,9 @@ describe('AiCommandTab', () => {
     renderWithProviders(<AiCommandTab onSend={() => {}} />)
     const btns = screen.getAllByRole('button')
     const promptBtn = btns[1]
-    await user.click(promptBtn)
-    await user.click(promptBtn)
+    expect(promptBtn).toBeTruthy()
+    await user.click(promptBtn!)
+    await user.click(promptBtn!)
   })
 
   it('closes role dropdown on outside click', async () => {
@@ -290,7 +291,8 @@ describe('AiCommandTab', () => {
           btn.querySelector('svg.lucide-chevron-down'),
       )
     if (expandBtns.length > 0) {
-      await user.click(expandBtns[0])
+      expect(expandBtns[0]).toBeTruthy()
+      await user.click(expandBtns[0]!)
     }
   })
 })

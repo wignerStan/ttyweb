@@ -97,7 +97,8 @@ describe('RoleManagerModal', () => {
     )
 
     const editButtons = screen.getAllByTitle('编辑')
-    await userEvent.click(editButtons[0])
+    expect(editButtons[0]).toBeTruthy()
+    await userEvent.click(editButtons[0]!)
     await userEvent.type(screen.getByPlaceholderText('名称'), ' Updated')
     await userEvent.click(screen.getByText('保存'))
 
@@ -118,7 +119,8 @@ describe('RoleManagerModal', () => {
     )
 
     const deleteButtons = screen.getAllByTitle('删除')
-    await userEvent.click(deleteButtons[0])
+    expect(deleteButtons[0]).toBeTruthy()
+    await userEvent.click(deleteButtons[0]!)
 
     await waitFor(() =>
       expect(delMock).toHaveBeenCalledWith(

@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createRef } from 'react'
+import type { Mock } from 'vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { VoiceInput, type VoiceInputHandle } from './VoiceInput'
 
@@ -75,7 +76,14 @@ function setupMocks() {
     currentMockWS = createMockWebSocket()
     return currentMockWS
   }
-  const MockWSConstructor = vi.fn(MockWebSocket)
+  const MockWSConstructor = vi.fn(MockWebSocket) as Mock<
+    (this: Record<string, unknown>) => MockWS
+  > & {
+    OPEN: number
+    CLOSED: number
+    CONNECTING: number
+    CLOSING: number
+  }
   MockWSConstructor.OPEN = 1
   MockWSConstructor.CLOSED = 3
   MockWSConstructor.CONNECTING = 0
@@ -99,10 +107,10 @@ function cleanupMocks() {
 }
 
 describe('VoiceInput', () => {
-  let onText: ReturnType<typeof vi.fn>
+  let onText: Mock<(text: string) => void>
 
   beforeEach(() => {
-    onText = vi.fn()
+    onText = vi.fn<(text: string) => void>()
   })
 
   afterEach(() => {
@@ -795,7 +803,12 @@ describe('VoiceInput', () => {
       currentMockWS = createMockWebSocket()
       return currentMockWS
     }
-    const wsCtor = vi.fn(MockWebSocket)
+    const wsCtor = vi.fn(MockWebSocket) as Mock<(this: Record<string, unknown>) => MockWS> & {
+      OPEN: number
+      CLOSED: number
+      CONNECTING: number
+      CLOSING: number
+    }
     wsCtor.OPEN = 1
     wsCtor.CLOSED = 3
     wsCtor.CONNECTING = 0
@@ -1024,7 +1037,12 @@ describe('VoiceInput', () => {
       currentMockWS = createMockWebSocket()
       return currentMockWS
     }
-    const wsCtor2 = vi.fn(MockWebSocket)
+    const wsCtor2 = vi.fn(MockWebSocket) as Mock<(this: Record<string, unknown>) => MockWS> & {
+      OPEN: number
+      CLOSED: number
+      CONNECTING: number
+      CLOSING: number
+    }
     wsCtor2.OPEN = 1
     wsCtor2.CLOSED = 3
     wsCtor2.CONNECTING = 0
@@ -1085,7 +1103,12 @@ describe('VoiceInput', () => {
       currentMockWS = createMockWebSocket()
       return currentMockWS
     }
-    const wsCtor3 = vi.fn(MockWebSocket)
+    const wsCtor3 = vi.fn(MockWebSocket) as Mock<(this: Record<string, unknown>) => MockWS> & {
+      OPEN: number
+      CLOSED: number
+      CONNECTING: number
+      CLOSING: number
+    }
     wsCtor3.OPEN = 1
     wsCtor3.CLOSED = 3
     wsCtor3.CONNECTING = 0
@@ -1138,7 +1161,7 @@ describe('VoiceInput', () => {
     })
 
     // Verify WebSocket was called with URL containing /ws/speech and auth token
-    const wsConstructor = globalThis.WebSocket as ReturnType<typeof vi.fn>
+    const wsConstructor = globalThis.WebSocket as unknown as Mock
     expect(wsConstructor).toHaveBeenCalledWith(expect.stringContaining('/ws/speech'))
     expect(wsConstructor).toHaveBeenCalledWith(expect.stringContaining('Bearer%20test-token'))
   })

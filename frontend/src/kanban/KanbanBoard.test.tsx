@@ -1,3 +1,4 @@
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,7 +9,7 @@ import type { KanbanStatus, KanbanTask } from './types'
 // DndContext mock — captures callbacks so we can invoke them in tests
 // ---------------------------------------------------------------------------
 type DndHandler = (...args: unknown[]) => unknown
-const dndCallbacks: Record<string, DndHandler> = {}
+const dndCallbacks: Record<string, DndHandler | undefined> = {}
 
 vi.mock('@dnd-kit/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@dnd-kit/core')>()
@@ -20,13 +21,19 @@ vi.mock('@dnd-kit/core', async (importOriginal) => {
       onDragEnd,
       ...rest
     }: Record<string, unknown>) {
-      dndCallbacks.onDragStart = onDragStart as DndHandler
-      dndCallbacks.onDragEnd = onDragEnd as DndHandler
+      const onStart = onDragStart as DndHandler | undefined
+      const onEnd = onDragEnd as DndHandler | undefined
+      dndCallbacks.onDragStart = onStart
+      dndCallbacks.onDragEnd = onEnd
       const { DndContext: RealDndContext } = actual
       // Use real DndContext but it won't get pointer events in jsdom,
       // so we rely on captured callbacks.
       return (
-        <RealDndContext {...rest} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        <RealDndContext
+          {...rest}
+          onDragStart={onStart as ((event: DragStartEvent) => void) | undefined}
+          onDragEnd={onEnd as ((event: DragEndEvent) => void) | undefined}
+        >
           {children as React.ReactNode}
         </RealDndContext>
       )
@@ -46,8 +53,6 @@ const defaultMockReturn = {
   updateTask: vi.fn(),
   moveTask: vi.fn(),
   deleteTask: vi.fn(),
-  fetchComments: vi.fn(),
-  createComment: vi.fn(),
 }
 
 let mockHookReturn = { ...defaultMockReturn }
@@ -115,8 +120,6 @@ vi.mock('./TaskDialog', () => ({
     onCreate,
     onDelete,
     onClose,
-    fetchComments,
-    createComment,
   }: Record<string, unknown>) {
     if (!open) return null
     return (
@@ -190,7 +193,9 @@ const doneTask = makeTask({ id: 't3', title: 'Deploy', status: 'done', order_ind
 
 /** Helper to find a mock column by status */
 function getColumnByStatus(container: HTMLElement, status: KanbanStatus): HTMLElement {
-  const col = container.querySelector(`[data-testid="task-column"][data-status="${status}"]`)
+  const col = container.querySelector(
+    `[data-testid="task-column"][data-status="${status}"]`,
+  ) as HTMLElement | null
   if (!col) throw new Error(`Column with status "${status}" not found`)
   return col
 }
@@ -208,8 +213,6 @@ describe('KanbanBoard', () => {
       updateTask: vi.fn(),
       moveTask: vi.fn(),
       deleteTask: vi.fn(),
-      fetchComments: vi.fn(),
-      createComment: vi.fn(),
     }
   })
 
@@ -598,7 +601,7 @@ describe('KanbanBoard', () => {
       // Invoke the captured onDragStart
       expect(dndCallbacks.onDragStart).toBeDefined()
       act(() => {
-        dndCallbacks.onDragStart({ active: { id: 't1' } })
+        dndCallbacks.onDragStart!({ active: { id: 't1' } })
       })
 
       // The callback was captured and could be invoked without error
@@ -615,7 +618,7 @@ describe('KanbanBoard', () => {
 
       // Simulate drag end: drag t1 from todo onto in_progress column header
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: { id: 'in_progress' },
         })
@@ -633,7 +636,7 @@ describe('KanbanBoard', () => {
 
       // Drag t1 onto t2 (which is in in_progress)
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: { id: 't2' },
         })
@@ -650,7 +653,7 @@ describe('KanbanBoard', () => {
       render(<KanbanBoard />)
 
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: null,
         })
@@ -668,7 +671,7 @@ describe('KanbanBoard', () => {
 
       // Drag t1 onto itself (same column, same id)
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: { id: 't1' },
         })
@@ -686,7 +689,7 @@ describe('KanbanBoard', () => {
 
       // Drag a non-existent task
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 'nonexistent' },
           over: { id: 't1' },
         })
@@ -712,7 +715,7 @@ describe('KanbanBoard', () => {
       // overIndex = -1, newIndex = targetColumnTasks.length = 1
       // orderIndex = last.order_index + 1000 = 3000
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: { id: 'in_progress' },
         })
@@ -739,7 +742,7 @@ describe('KanbanBoard', () => {
       // Since newIndex === 0 && targetColumnTasks.length > 0:
       //   orderIndex = targetColumnTasks[0].order_index - 1000 = 2000 - 1000 = 1000
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: { id: 't2' },
         })
@@ -759,7 +762,7 @@ describe('KanbanBoard', () => {
 
       // Drop t1 between t2 and t3 in in_progress column
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: { id: 't3' },
         })
@@ -779,12 +782,12 @@ describe('KanbanBoard', () => {
 
       // Start drag
       act(() => {
-        dndCallbacks.onDragStart({ active: { id: 't1' } })
+        dndCallbacks.onDragStart!({ active: { id: 't1' } })
       })
 
       // End drag
       act(() => {
-        dndCallbacks.onDragEnd({
+        dndCallbacks.onDragEnd!({
           active: { id: 't1' },
           over: { id: 'in_progress' },
         })

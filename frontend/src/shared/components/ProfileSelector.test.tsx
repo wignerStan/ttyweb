@@ -12,6 +12,9 @@ const profiles: Profile[] = [
   { id: 2, profile_key: 'dev', name: 'Dev', sort_order: 1 },
 ]
 
+const defaultProfile = profiles[0]!
+const devProfile = profiles[1]!
+
 const noop = () => {}
 
 function mockFetchJSON(data: unknown) {
@@ -28,7 +31,7 @@ describe('ProfileSelector', () => {
   })
 
   it('renders current profile name', async () => {
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />)
+    renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
   })
 
@@ -38,7 +41,7 @@ describe('ProfileSelector', () => {
   })
 
   it('opens and closes dropdown', async () => {
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />)
+    renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -51,17 +54,19 @@ describe('ProfileSelector', () => {
     const onChange = vi.fn()
     renderWithProviders(<ProfileSelector currentProfile={null} onProfileChange={onChange} />)
     await waitFor(() => expect(onChange).toHaveBeenCalled())
-    expect(onChange).toHaveBeenCalledWith(profiles[0])
+    expect(onChange).toHaveBeenCalledWith(defaultProfile)
   })
 
   it('selects a profile', async () => {
     const onChange = vi.fn()
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={onChange} />)
+    renderWithProviders(
+      <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
+    )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
     await userEvent.click(screen.getByText('Dev'))
-    expect(onChange).toHaveBeenCalledWith(profiles[1])
+    expect(onChange).toHaveBeenCalledWith(devProfile)
   })
 
   it('creates a new profile', async () => {
@@ -73,7 +78,9 @@ describe('ProfileSelector', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     const onChange = vi.fn()
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={onChange} />)
+    renderWithProviders(
+      <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
+    )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -89,7 +96,7 @@ describe('ProfileSelector', () => {
     renderWithProviders(
       <div>
         <div data-testid="outside">outside</div>
-        <ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />
+        <ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />
       </div>,
     )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
@@ -101,7 +108,7 @@ describe('ProfileSelector', () => {
   })
 
   it('shows active check mark on current profile', async () => {
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />)
+    renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -116,7 +123,9 @@ describe('ProfileSelector', () => {
     fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({}) })
     vi.stubGlobal('fetch', fetchMock)
     const onChange = vi.fn()
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={onChange} />)
+    renderWithProviders(
+      <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
+    )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -130,7 +139,7 @@ describe('ProfileSelector', () => {
     const confirmBtn = editSection.querySelector('.btn-confirm')!
     await userEvent.click(confirmBtn)
     await waitFor(() => expect(onChange).toHaveBeenCalled())
-    const updated = onChange.mock.calls[0][0]
+    const updated = onChange.mock.calls[0]![0] as Profile
     expect(updated.name).toBe('Renamed')
   })
 
@@ -140,7 +149,7 @@ describe('ProfileSelector', () => {
     fetchMock.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
     vi.stubGlobal('fetch', fetchMock)
     const onChange = vi.fn()
-    renderWithProviders(<ProfileSelector currentProfile={profiles[1]} onProfileChange={onChange} />)
+    renderWithProviders(<ProfileSelector currentProfile={devProfile} onProfileChange={onChange} />)
     await waitFor(() => expect(screen.getByText('Dev')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -153,7 +162,7 @@ describe('ProfileSelector', () => {
     // Only provide 1 profile so the delete button is disabled
     const singleProfile = [profiles[0]]
     vi.stubGlobal('fetch', mockFetchJSON({ profiles: singleProfile }))
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />)
+    renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -165,7 +174,7 @@ describe('ProfileSelector', () => {
   it('does not delete when confirm is cancelled', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     const onChange = vi.fn()
-    renderWithProviders(<ProfileSelector currentProfile={profiles[1]} onProfileChange={onChange} />)
+    renderWithProviders(<ProfileSelector currentProfile={devProfile} onProfileChange={onChange} />)
     await waitFor(() => expect(screen.getByText('Dev')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -174,7 +183,7 @@ describe('ProfileSelector', () => {
   })
 
   it('cancel creation closes the input', async () => {
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />)
+    renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -184,7 +193,7 @@ describe('ProfileSelector', () => {
   })
 
   it('create profile button is disabled when name is empty', async () => {
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />)
+    renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -195,7 +204,9 @@ describe('ProfileSelector', () => {
 
   it('does not create profile with empty name', async () => {
     const onChange = vi.fn()
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={onChange} />)
+    renderWithProviders(
+      <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
+    )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -206,7 +217,7 @@ describe('ProfileSelector', () => {
   })
 
   it('Escape key closes creation input', async () => {
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={noop} />)
+    renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
@@ -225,7 +236,9 @@ describe('ProfileSelector', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     const onChange = vi.fn()
-    renderWithProviders(<ProfileSelector currentProfile={profiles[0]} onProfileChange={onChange} />)
+    renderWithProviders(
+      <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
+    )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
     const header = document.querySelector('.profile-current')!
     await userEvent.click(header)
