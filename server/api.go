@@ -93,6 +93,8 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	// Task Segments
 	mux.HandleFunc(apiPrefix+"segments", server.handleSegments)
 	mux.HandleFunc(apiPrefix+"segments/", server.handleSegmentDetail)
+	// Worktree
+	setupWorktreeRoutes(mux, apiPrefix)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
