@@ -291,6 +291,6 @@ describe('useNewWindow', () => {
     })
 
     const createCall = mockFetch.mock.calls[1]!
-    expect(createCall[1]!.headers.Authorization).toBe('Basic dGVzdDp0ZXN0')
+    expect((createCall[1]?.headers as Record<string, string>)?.Authorization).toBe('Basic dGVzdDp0ZXN0')
   })
 })
