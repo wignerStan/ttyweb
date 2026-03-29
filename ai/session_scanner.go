@@ -26,7 +26,8 @@ type AISession struct {
 }
 
 // EncodeProjectPath converts a filesystem path to Claude Code's directory naming convention.
-// Colons, slashes, underscores, and non-ASCII characters are replaced with dashes.
+// Colons, slashes, and non-ASCII characters are replaced with dashes.
+// Underscores are preserved to avoid collisions (e.g., /my_project vs /my-project).
 func EncodeProjectPath(path string) string {
 	path = filepath.Clean(path)
 	// Explicitly convert backslashes to forward slashes (works on all OSes,
@@ -37,7 +38,7 @@ func EncodeProjectPath(path string) string {
 	var result strings.Builder
 	for _, r := range path {
 		switch {
-		case r == ':' || r == '/' || r == '_':
+		case r == ':' || r == '/':
 			result.WriteRune('-')
 		case r > 127:
 			result.WriteRune('-')

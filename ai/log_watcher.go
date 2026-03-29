@@ -34,6 +34,7 @@ type LogWatcher struct {
 	cancel      context.CancelFunc
 	done        chan struct{}
 	started     bool // true after Watch() is called
+	stopped     bool // true after Stop() closes the events channel
 }
 
 // NewLogWatcher creates a new LogWatcher for the given project path.
@@ -68,8 +69,14 @@ func (w *LogWatcher) Watch() <-chan AISessionEvent {
 }
 
 // Stop terminates the polling goroutine and closes the event channel.
+// Safe to call multiple times.
 func (w *LogWatcher) Stop() {
 	w.mu.Lock()
+	if w.stopped {
+		w.mu.Unlock()
+		return
+	}
+	w.stopped = true
 	wasStarted := w.started
 	if w.cancel != nil {
 		w.cancel()

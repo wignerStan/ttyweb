@@ -2,11 +2,15 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"ttyweb/backend"
+	"ttyweb/db"
 	"ttyweb/pkg/validate"
+	"ttyweb/service"
 )
 
 // apiResponse is a standard envelope for API responses.
@@ -25,6 +29,10 @@ func (server *Server) sessionManager() backend.SessionManager {
 	return backend.NoSessionManager{}
 }
 
+// noteService returns the NoteService for notepad CRUD operations.
+func (server *Server) noteService() *service.NoteService {
+	return server.noteSvc
+}
 // setupAPIHandlers registers REST API routes on the given mux.
 func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	apiPrefix := pathPrefix + "api/"
@@ -75,6 +83,13 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"log", server.handleLog)
 	// Butler
 	mux.HandleFunc(apiPrefix+"butler/", server.handleButlerProxy)
+	// Projects
+	mux.HandleFunc(apiPrefix+"projects", server.handleProjects)
+	mux.HandleFunc(apiPrefix+"projects/", server.handleProjectDetail)
+	// Notepad
+	mux.HandleFunc(apiPrefix+"notepad/reorder", server.handleNotepadReorder)
+	mux.HandleFunc(apiPrefix+"notepad", server.handleNotepad)
+	mux.HandleFunc(apiPrefix+"notepad/", server.handleNotepadDetail)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
@@ -221,4 +236,27 @@ func writeAPIError(w http.ResponseWriter, code int, message string) {
 	w.WriteHeader(code)
 	resp := apiResponse{Success: false, Error: message}
 	json.NewEncoder(w).Encode(resp)
+}
+
+// projectService returns a lazily-initialized ProjectService backed by SQLite.
+// Returns an error if the database cannot be opened.
+var (
+	projectServiceOnce     sync.Once
+	projectServiceInstance *service.ProjectService
+	projectServiceErr      error
+)
+
+func projectService() (*service.ProjectService, error) {
+	projectServiceOnce.Do(func() {
+		gormDB, err := db.GetDB()
+		if err != nil {
+			projectServiceErr = fmt.Errorf("get project database: %w", err)
+			return
+		}
+		projectServiceInstance = service.NewProjectService(gormDB)
+	})
+	if projectServiceErr != nil {
+		return nil, projectServiceErr
+	}
+	return projectServiceInstance, nil
 }
