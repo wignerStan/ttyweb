@@ -4,12 +4,16 @@ import { Sidebar } from './components/Sidebar';
 import { TerminalTab } from './components/TerminalTab';
 import { KanbanBoard } from './kanban';
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy';
+import { NotepadPanel } from './notepad/NotepadPanel';
 import MobileApp from './mobile/MobileApp';
+
+const NOTEPAD_TAB_ID = '__notepad__';
 
 interface Tab {
   id: string;
   session: string;
   pane: string;
+  type?: 'terminal' | 'notepad';
 }
 
 type ViewMode = 'terminal' | 'kanban';
@@ -21,24 +25,35 @@ function DesktopLayout() {
   const [viewMode, setViewMode] = useState<ViewMode>('terminal');
   const [imperialStudyOpen, setImperialStudyOpen] = useState(true);
 
+  const openNotepad = useCallback(() => {
+    setTabs((prev) => {
+      if (prev.some((t) => t.id === NOTEPAD_TAB_ID)) return prev;
+      return [...prev, { id: NOTEPAD_TAB_ID, type: 'notepad' as const, session: '', pane: '' }];
+    });
+    setViewMode('terminal');
+    setActiveTabId(NOTEPAD_TAB_ID);
+  }, []);
+
   const openTab = useCallback((session: string, pane?: string) => {
     const id = pane ? `${session}:${pane}` : session;
     setTabs((prev) => {
       if (prev.some((t) => t.id === id)) return prev;
       return [...prev, { id, session, pane: pane ?? '' }];
     });
+    setViewMode('terminal');
     setActiveTabId(id);
   }, []);
 
   const closeTab = useCallback((tabId: string) => {
-    setTabs((prev) => {
-      const next = prev.filter((t) => t.id !== tabId);
-      if (activeTabId === tabId && next.length > 0) {
-        setActiveTabId(next[next.length - 1]?.id ?? null);
-      }
-      return next;
-    });
-  }, [activeTabId]);
+    setTabs((prev) => prev.filter((t) => t.id !== tabId));
+  }, []);
+
+  // Auto-select last tab when active tab is removed
+  useEffect(() => {
+    if (activeTabId && !tabs.some((t) => t.id === activeTabId)) {
+      setActiveTabId(tabs.length > 0 ? tabs[tabs.length - 1]!.id : null);
+    }
+  }, [tabs, activeTabId]);
 
   // Open default tab on mount
   useEffect(() => {
@@ -77,16 +92,18 @@ function DesktopLayout() {
                 setActiveTabId(tab.id);
               }}
             >
-              <span style={styles.tabLabel}>{tab.id}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeTab(tab.id);
-                }}
-                style={styles.tabClose}
-              >
-                \u00D7
-              </button>
+              <span style={styles.tabLabel}>{tab.type === 'notepad' ? 'Notepad' : tab.id}</span>
+              {tab.id !== NOTEPAD_TAB_ID && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeTab(tab.id);
+                  }}
+                  style={styles.tabClose}
+                >
+                  \u00D7
+                </button>
+              )}
             </div>
           ))}
           <div
@@ -98,18 +115,20 @@ function DesktopLayout() {
           >
             <span style={styles.tabLabel}>Kanban</span>
           </div>
+          <button onClick={openNotepad} style={styles.notepadBtn} title="Open Notepad">
+            <span style={{ fontSize: '14px' }}>{'\u270E'}</span>
+          </button>
         </div>
         <div style={styles.terminalArea}>
           {viewMode === 'kanban' ? (
             <KanbanBoard />
           ) : (
-            activeTab && (
-              <TerminalTab
-                key={activeTab.id}
-                session={activeTab.session}
-                pane={activeTab.pane}
-              />
-            )
+            <>
+              {activeTab && activeTab.type === 'notepad' && <NotepadPanel key={NOTEPAD_TAB_ID} />}
+              {activeTab && activeTab.type === 'terminal' && (
+                <TerminalTab key={activeTab.id} session={activeTab.session} pane={activeTab.pane} />
+              )}
+            </>
           )}
         </div>
       </div>
@@ -191,6 +210,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     lineHeight: '1',
     padding: '0',
+  },
+  notepadBtn: {
+    background: 'none',
+    border: '1px solid #3b4261',
+    color: '#565f89',
+    cursor: 'pointer',
+    fontSize: '12px',
+    padding: '2px 8px',
+    marginLeft: '4px',
+    borderRadius: '2px',
+    display: 'flex',
+    alignItems: 'center',
   },
   terminalArea: {
     flex: 1,
