@@ -67,20 +67,11 @@ func main() {
 
 	args := flag.Args()
 
-	// Load configuration: explicit -config path, or default location.
-	configPath := configFile
-	if configPath == "" {
-		configPath = config.DefaultConfigPath()
-	}
-	if _, err := config.Load(configPath); err != nil {
+	if err := loadConfig(configFile); err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	// Initialize database.
-	if dbPath == "" {
-		dbOpts := db.DefaultOptions()
-		dbPath = dbOpts.Path
-	}
+	dbPath = resolveDBPath(dbPath)
 	if err := db.Init(dbPath); err != nil {
 		log.Printf("warning: database initialization failed: %v", err)
 	}
@@ -90,58 +81,9 @@ func main() {
 		}
 	}()
 
-	options := &server.Options{
-		Address:         addr,
-		Port:            port,
-		Path:            path,
-		PermitWrite:     write,
-		TitleFormat:     titleFmt,
-		PermitArguments: backend == "local",
-		TitleVariables: map[string]interface{}{
-			"hostname": hostname(),
-		},
-	}
+	options := buildOptions(addr, port, path, backend, cred, titleFmt, write, enableTLS, tlsCrt, tlsKey)
 
-	if cred != "" {
-		options.EnableBasicAuth = true
-		options.Credential = cred
-	}
-	if enableTLS {
-		options.EnableTLS = true
-		if tlsCrt != "" {
-			options.TLSCrtFile = tlsCrt
-		}
-		if tlsKey != "" {
-			options.TLSKeyFile = tlsKey
-		}
-	}
-
-	var factory server.Factory
-	var err error
-
-	switch backend {
-	case "local":
-		if len(args) == 0 {
-			args = []string{defaultShell()}
-		}
-		factory, err = localcommand.NewFactory(args[0], args[1:], &localcommand.Options{})
-
-	case "tmux":
-		if !commandExists("tmux") {
-			log.Fatal("tmux not found in PATH")
-		}
-		factory = tmux.NewFactory(session)
-
-	case "zellij":
-		if !commandExists("zellij") {
-			log.Fatal("zellij not found in PATH")
-		}
-		factory = zellij.NewFactory(session)
-
-	default:
-		log.Fatalf("unknown backend: %s", backend)
-	}
-
+	factory, err := selectBackend(backend, session, args)
 	if err != nil {
 		log.Fatalf("failed to create backend: %v", err)
 	}
@@ -164,6 +106,83 @@ func main() {
 
 	if err := srv.Run(ctx, server.WithGracefullContext(context.Background())); err != nil {
 		log.Printf("Server exited: %v", err)
+	}
+}
+
+// loadConfig loads configuration from explicit path or default location.
+func loadConfig(configFile string) error {
+	configPath := configFile
+	if configPath == "" {
+		configPath = config.DefaultConfigPath()
+	}
+	_, err := config.Load(configPath)
+	return err
+}
+
+// resolveDBPath returns the SQLite database path, using defaults if empty.
+func resolveDBPath(dbPath string) string {
+	if dbPath == "" {
+		dbOpts := db.DefaultOptions()
+		return dbOpts.Path
+	}
+	return dbPath
+}
+
+// buildOptions constructs server.Options from CLI flags.
+// Extracted from main() for testability.
+func buildOptions(addr, port, path, backendName, cred, titleFmt string, write bool, enableTLS bool, tlsCrt, tlsKey string) *server.Options {
+	options := &server.Options{
+		Address:         addr,
+		Port:            port,
+		Path:            path,
+		PermitWrite:     write,
+		TitleFormat:     titleFmt,
+		PermitArguments: backendName == "local",
+		TitleVariables: map[string]interface{}{
+			"hostname": hostname(),
+		},
+	}
+
+	if cred != "" {
+		options.EnableBasicAuth = true
+		options.Credential = cred
+	}
+	if enableTLS {
+		options.EnableTLS = true
+		if tlsCrt != "" {
+			options.TLSCrtFile = tlsCrt
+		}
+		if tlsKey != "" {
+			options.TLSKeyFile = tlsKey
+		}
+	}
+
+	return options
+}
+
+// selectBackend creates a server.Factory for the named backend.
+func selectBackend(backendName string, session string, args []string) (server.Factory, error) {
+	switch backendName {
+	case "local":
+		if len(args) == 0 {
+			args = []string{defaultShell()}
+		}
+		return localcommand.NewFactory(args[0], args[1:], &localcommand.Options{})
+
+	case "tmux":
+		if !commandExists("tmux") {
+			return nil, fmt.Errorf("tmux not found in PATH")
+		}
+		return tmux.NewFactory(session), nil
+
+	case "zellij":
+		if !commandExists("zellij") {
+			return nil, fmt.Errorf("zellij not found in PATH")
+		}
+		return zellij.NewFactory(session), nil
+
+	default:
+		return nil, fmt.Errorf("unknown backend: %s", backendName)
 	}
 }
 

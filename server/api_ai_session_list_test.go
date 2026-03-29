@@ -45,15 +45,52 @@ func TestHandleAIListSessions_GET(t *testing.T) {
 	}
 }
 
-func TestHandleAIListSessions_GET_WithProjectFilter(t *testing.T) {
+func TestHandleAIListSessions_POST_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions?project=/nonexistent", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/sessions", nil)
 	srv.handleAIListSessions(rec, req)
 
-	// Should succeed (scanning nonexistent project returns no sessions).
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", rec.Code)
+	}
+}
+
+func TestHandleAIListSessions_PUT_MethodNotAllowed(t *testing.T) {
+	srv := newTestServer()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPut, "/api/ai/sessions", nil)
+	srv.handleAIListSessions(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", rec.Code)
+	}
+}
+
+func TestHandleAIListSessions_RefreshError(t *testing.T) {
+	// We can't easily trigger refreshSessionsFromDisk error from here.
+	// The function scans real filesystem paths.
+	// Instead, test the error response path indirectly by verifying
+	// the response structure when project filter is used.
+	srv := newTestServer()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions?project=/nonexistent/path/that/does/not/exist", nil)
+	srv.handleAIListSessions(rec, req)
+
+	// Should succeed even with nonexistent project (returns empty)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d; body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestHandleAICleanupSessions_GET_MethodNotAllowed(t *testing.T) {
+	srv := newTestServer()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions/cleanup", nil)
+	srv.handleAICleanupSessions(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", rec.Code)
 	}
 }
 

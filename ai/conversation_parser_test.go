@@ -461,3 +461,56 @@ func writeTempJSONL(t *testing.T, content string) string {
 	}
 	return file
 }
+
+func TestParseClaudeConversation_NonMapBlockInAssistantContent(t *testing.T) {
+	content := `{"type":"assistant","message":{"role":"assistant","content":["not_a_map",{"type":"text","text":"hi"}]},"timestamp":"2025-12-01T10:30:00.000Z","sessionId":"s1"}
+`
+	file := writeTempJSONL(t, content)
+	messages, err := ParseClaudeConversation(file)
+	if err != nil {
+		t.Fatalf("ParseClaudeConversation() error = %v", err)
+	}
+	if len(messages) != 1 {
+		t.Fatalf("got %d messages, want 1", len(messages))
+	}
+	if messages[0].Content != "hi" {
+		t.Errorf("content = %q, want %q", messages[0].Content, "hi")
+	}
+}
+
+func TestParseClaudeConversation_NonMapBlockInToolResultContent(t *testing.T) {
+	content := `{"type":"user","message":{"role":"user","content":["not_a_map",{"type":"tool_result","tool_use_id":"t1","content":"result"}]},"timestamp":"2025-12-01T10:30:00.000Z","sessionId":"s1"}
+`
+	file := writeTempJSONL(t, content)
+	messages, err := ParseClaudeConversation(file)
+	if err != nil {
+		t.Fatalf("ParseClaudeConversation() error = %v", err)
+	}
+	if len(messages) != 1 {
+		t.Fatalf("got %d messages, want 1", len(messages))
+	}
+	if messages[0].Role != "user" {
+		t.Errorf("role = %q, want %q", messages[0].Role, "user")
+	}
+	if len(messages[0].ToolResult) != 1 {
+		t.Fatalf("got %d tool results, want 1", len(messages[0].ToolResult))
+	}
+}
+
+func TestParseClaudeConversation_SkippableUserContent(t *testing.T) {
+	content := `{"type":"user","message":{"role":"user","content":[{"type":"text","text":"<command-1>ls</command-1>"}]},"timestamp":"2025-12-01T10:30:00.000Z","sessionId":"s1"}
+{"type":"assistant","message":{"role":"assistant","content":"files listed"},"timestamp":"2025-12-01T10:30:01.000Z","sessionId":"s1"}
+`
+	file := writeTempJSONL(t, content)
+	messages, err := ParseClaudeConversation(file)
+	if err != nil {
+		t.Fatalf("ParseClaudeConversation() error = %v", err)
+	}
+	// The command-tagged user content should be skipped.
+	if len(messages) != 1 {
+		t.Fatalf("got %d messages, want 1 (command-tagged user msg skipped)", len(messages))
+	}
+	if messages[0].Role != "assistant" {
+		t.Errorf("message[0].role = %q, want %q", messages[0].Role, "assistant")
+	}
+}

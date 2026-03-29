@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"sync"
 	"syscall"
 	"time"
 
@@ -20,6 +21,7 @@ type ZellijSlave struct {
 	closeSignal  syscall.Signal
 	closeTimeout time.Duration
 	ptyClosed    chan struct{}
+	ptyMu        sync.Mutex
 }
 
 // Option configures ZellijSlave behavior.
@@ -73,7 +75,9 @@ func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
 
 	go func() {
 		defer func() {
+			slave.ptyMu.Lock()
 			_ = slave.pty.Close()
+			slave.ptyMu.Unlock()
 			close(slave.ptyClosed)
 		}()
 		_ = slave.cmd.Wait()
@@ -83,10 +87,14 @@ func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
 }
 
 func (s *ZellijSlave) Read(p []byte) (n int, err error) {
+	s.ptyMu.Lock()
+	defer s.ptyMu.Unlock()
 	return s.pty.Read(p)
 }
 
 func (s *ZellijSlave) Write(p []byte) (n int, err error) {
+	s.ptyMu.Lock()
+	defer s.ptyMu.Unlock()
 	return s.pty.Write(p)
 }
 
@@ -102,6 +110,8 @@ func (s *ZellijSlave) WindowTitleVariables() map[string]interface{} {
 }
 
 func (s *ZellijSlave) ResizeTerminal(width int, height int) error {
+	s.ptyMu.Lock()
+	defer s.ptyMu.Unlock()
 	ws := pty.Winsize{
 		Rows: uint16(height),
 		Cols: uint16(width),

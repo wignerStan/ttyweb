@@ -171,6 +171,7 @@ func TestAssistantType_DisplayName(t *testing.T) {
 		{AssistantTypeClaudeCode, "Claude Code"},
 		{AssistantTypeCodex, "OpenAI Codex"},
 		{AssistantTypeUnknown, ""},
+		{AssistantType("custom_type"), "custom_type"},
 	}
 
 	for _, tt := range tests {

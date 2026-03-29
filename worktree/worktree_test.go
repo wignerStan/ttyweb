@@ -292,6 +292,240 @@ func TestGetWorktreeStatusInvalidPath(t *testing.T) {
 	}
 }
 
+func TestCreateWorktree_EmptyPath(t *testing.T) {
+	_, err := CreateWorktree(context.Background(), "", "feature-1", "main", true)
+	if err == nil {
+		t.Fatal("expected error for empty repo path")
+	}
+	if err.Error() != "path is required" {
+		t.Errorf("expected 'path is required', got %q", err.Error())
+	}
+}
+
+func TestCreateWorktree_InvalidBranch(t *testing.T) {
+	repo := initTestRepo(t)
+
+	_, err := CreateWorktree(context.Background(), repo, "invalid branch!", "main", true)
+	if err == nil {
+		t.Fatal("expected error for branch with spaces and special chars")
+	}
+}
+
+func TestCreateWorktree_WithCreateBranch(t *testing.T) {
+	repo := initTestRepo(t)
+
+	wtPath, err := CreateWorktree(context.Background(), repo, "new-feature", "main", true)
+	if err != nil {
+		t.Fatalf("CreateWorktree with createBranch failed: %v", err)
+	}
+
+	// Verify the worktree path exists.
+	if _, err := os.Stat(wtPath); err != nil {
+		t.Fatalf("worktree path does not exist: %s: %v", wtPath, err)
+	}
+
+	// Verify the branch was created from main.
+	worktrees, err := ListWorktrees(context.Background(), repo)
+	if err != nil {
+		t.Fatalf("ListWorktrees failed: %v", err)
+	}
+	var found bool
+	for _, wt := range worktrees {
+		if wt.Branch == "new-feature" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("created branch not found in worktree list")
+	}
+
+	// Clean up.
+	_ = RemoveWorktree(context.Background(), repo, wtPath, false)
+}
+
+func TestCreateWorktree_ExistingBranch(t *testing.T) {
+	repo := initTestRepo(t)
+
+	// Pre-create a branch so createBranch=true should fail.
+	mustRun(t, repo, "branch", "pre-existing")
+
+	_, err := CreateWorktree(context.Background(), repo, "pre-existing", "main", true)
+	if err == nil {
+		t.Fatal("expected error when branch already exists and createBranch is true")
+	}
+
+	// But createBranch=false should work.
+	wtPath, err := CreateWorktree(context.Background(), repo, "pre-existing", "main", false)
+	if err != nil {
+		t.Fatalf("CreateWorktree with existing branch and createBranch=false failed: %v", err)
+	}
+	_ = RemoveWorktree(context.Background(), repo, wtPath, false)
+}
+
+func TestRemoveWorktree_EmptyPath(t *testing.T) {
+	err := RemoveWorktree(context.Background(), "", "/some/path", false)
+	if err == nil {
+		t.Fatal("expected error for empty repo path")
+	}
+	if err.Error() != "path is required" {
+		t.Errorf("expected 'path is required', got %q", err.Error())
+	}
+}
+
+func TestRemoveWorktree_EmptyWorktreePath(t *testing.T) {
+	repo := initTestRepo(t)
+
+	err := RemoveWorktree(context.Background(), repo, "", false)
+	if err == nil {
+		t.Fatal("expected error for empty worktree path")
+	}
+	if err.Error() != "worktree path is required" {
+		t.Errorf("expected 'worktree path is required', got %q", err.Error())
+	}
+}
+
+func TestRemoveWorktree_NotFound(t *testing.T) {
+	repo := initTestRepo(t)
+
+	// Removing a nonexistent worktree path should not error (prune handles it).
+	err := RemoveWorktree(context.Background(), repo, filepath.Join(repo, "nonexistent-wt"), false)
+	if err != nil {
+		t.Fatalf("RemoveWorktree nonexistent should not error, got: %v", err)
+	}
+}
+
+func TestGetWorktreeStatus_EmptyPath(t *testing.T) {
+	_, err := GetWorktreeStatus(context.Background(), "")
+	if err == nil {
+		t.Fatal("expected error for empty path")
+	}
+	if err.Error() != "worktree path is required" {
+		t.Errorf("expected 'worktree path is required', got %q", err.Error())
+	}
+}
+
+func TestGetWorktreeStatus_WithChanges(t *testing.T) {
+	repo := initTestRepo(t)
+
+	// Create an untracked file.
+	mustWriteFile(t, filepath.Join(repo, "newfile.txt"), "hello\n")
+	status, err := GetWorktreeStatus(context.Background(), repo)
+	if err != nil {
+		t.Fatalf("GetWorktreeStatus failed: %v", err)
+	}
+	if status.Untracked < 1 {
+		t.Errorf("expected at least 1 untracked file, got untracked=%d", status.Untracked)
+	}
+}
+
+func TestGetWorktreeStatus_CleanRepo(t *testing.T) {
+	repo := initTestRepo(t)
+
+	status, err := GetWorktreeStatus(context.Background(), repo)
+	if err != nil {
+		t.Fatalf("GetWorktreeStatus failed: %v", err)
+	}
+	if status.Modified != 0 || status.Staged != 0 || status.Untracked != 0 || status.Conflicts != 0 {
+		t.Errorf("clean repo should have zero status, got: %+v", status)
+	}
+}
+
+func TestCommitWorktree_EmptyPath(t *testing.T) {
+	err := CommitWorktree(context.Background(),"", "some message")
+	if err == nil {
+		t.Fatal("expected error for empty path")
+	}
+	if err.Error() != "worktree path is required" {
+		t.Errorf("expected 'worktree path is required', got %q", err.Error())
+	}
+}
+
+func TestCommitWorktree_EmptyMessage(t *testing.T) {
+	dir := t.TempDir()
+	err := CommitWorktree(context.Background(),dir, "")
+	if err == nil {
+		t.Fatal("expected error for empty message")
+	}
+	if err.Error() != "commit message is required" {
+		t.Errorf("expected 'commit message is required', got %q", err.Error())
+	}
+}
+
+func TestCommitWorktree_Success(t *testing.T) {
+	repo := initTestRepo(t)
+
+	// Create and stage a new file.
+	mustWriteFile(t, filepath.Join(repo, "success.txt"), "data\n")
+	mustRun(t, repo, "add", "success.txt")
+
+	err := CommitWorktree(context.Background(),repo, "add success file")
+	if err != nil {
+		t.Fatalf("CommitWorktree failed: %v", err)
+	}
+
+	// Verify the repo is clean.
+	status, err := GetWorktreeStatus(context.Background(), repo)
+	if err != nil {
+		t.Fatalf("GetWorktreeStatus after commit failed: %v", err)
+	}
+	if status.Untracked != 0 || status.Modified != 0 || status.Staged != 0 {
+		t.Errorf("expected clean status after commit, got: %+v", status)
+	}
+}
+
+func TestCommitWorktree_NothingToCommit(t *testing.T) {
+	repo := initTestRepo(t)
+
+	err := CommitWorktree(context.Background(),repo, "should fail - clean tree")
+	if err == nil {
+		t.Fatal("expected error when committing clean tree")
+	}
+	if err.Error() != "nothing to commit: working tree clean" {
+		t.Errorf("expected 'nothing to commit: working tree clean', got %q", err.Error())
+	}
+}
+
+func TestFilterGitEnv(t *testing.T) {
+	env := []string{
+		"HOME=/home/user",
+		"GIT_DIR=/some/repo/.git",
+		"PATH=/usr/bin",
+		"GIT_WORK_TREE=/some/repo",
+		"GIT_COMMON_DIR=/some/repo/.git/objects",
+		"GIT_OBJECT_DIRECTORY=/some/repo/.git/objects",
+		"GIT_INDEX_FILE=/some/repo/.git/index",
+		"GIT_ALTERNATE_OBJECT_DIRECTORIES=/alt/objects",
+		"GIT_TERMINAL_PROMPT=0",
+	}
+	filtered := FilterGitEnv(env)
+
+	for _, e := range filtered {
+		key, _, _ := strings.Cut(e, "=")
+		switch key {
+		case "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY",
+			"GIT_INDEX_FILE", "GIT_ALTERNATE_OBJECT_DIRECTORIES":
+			t.Errorf("expected %s to be filtered out, got %q", key, e)
+		}
+	}
+
+	expected := []string{"HOME=/home/user", "PATH=/usr/bin", "GIT_TERMINAL_PROMPT=0"}
+	if len(filtered) != len(expected) {
+		t.Errorf("expected %d entries, got %d: %v", len(expected), len(filtered), filtered)
+	}
+	for _, want := range expected {
+		found := false
+		for _, got := range filtered {
+			if got == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected %q in filtered env", want)
+		}
+	}
+}
+
 func TestSanitizeBranchName(t *testing.T) {
 	tests := []struct {
 		input string

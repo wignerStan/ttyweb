@@ -303,3 +303,99 @@ func TestSpeechSessionRun_StopWithoutXunfeiConn(t *testing.T) {
 	// Close to exit.
 	_ = conn.Close()
 }
+
+// TestCloseBoth_WithXunfeiConn tests that closeBoth closes both connections
+// when xunfeiConn is set.
+func TestCloseBoth_WithXunfeiConn(t *testing.T) {
+	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+
+	// Create two WebSocket servers.
+	srv1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+		<-r.Context().Done()
+	}))
+	defer srv1.Close()
+
+	srv2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+		<-r.Context().Done()
+	}))
+	defer srv2.Close()
+
+	wsURL1 := "ws" + strings.TrimPrefix(srv1.URL, "http")
+	conn1, _, err := websocket.DefaultDialer.Dial(wsURL1, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn1.Close() }()
+
+	wsURL2 := "ws" + strings.TrimPrefix(srv2.URL, "http")
+	conn2, _, err := websocket.DefaultDialer.Dial(wsURL2, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn2.Close() }()
+
+	sess := &speechSession{
+		clientConn: conn1,
+		xunfeiConn: conn2,
+		done:       make(chan struct{}),
+	}
+
+	sess.closeBoth()
+
+	// Verify done channel is closed.
+	select {
+	case <-sess.done:
+		// Good.
+	default:
+		t.Error("expected done channel to be closed")
+	}
+
+	// Verify connections are nil after close.
+	if sess.xunfeiConn != nil {
+		t.Error("expected xunfeiConn to be nil after closeBoth")
+	}
+	if sess.clientConn != nil {
+		t.Error("expected clientConn to be nil after closeBoth")
+	}
+}
+
+// TestCloseBoth_Idempotent tests that calling closeBoth twice does not panic.
+func TestCloseBoth_Idempotent(t *testing.T) {
+	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	sess := &speechSession{
+		clientConn: conn,
+		done:       make(chan struct{}),
+	}
+
+	// Call twice — should not panic.
+	sess.closeBoth()
+	sess.closeBoth()
+}

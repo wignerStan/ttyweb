@@ -133,6 +133,41 @@ func TestAISessionService_GetConversation_ClaudeCode(t *testing.T) {
 	}
 }
 
+func TestAISessionService_GetConversation_Codex(t *testing.T) {
+	t.Parallel()
+
+	content := `{"timestamp":"2025-12-01T10:30:00.000Z","type":"event_msg","payload":{"type":"user_message","message":"Hello Codex"}}
+{"timestamp":"2025-12-01T10:30:01.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Hello from Codex!"}}
+`
+	tmpDir := t.TempDir()
+	jsonlPath := filepath.Join(tmpDir, "codex-session.jsonl")
+	if err := os.WriteFile(jsonlPath, []byte(content), 0o644); err != nil {
+		t.Fatalf("write jsonl: %v", err)
+	}
+
+	svc := NewAISessionService()
+	record := svc.Store().Upsert(ai.AISession{
+		SessionID:   "codex-conv-test",
+		Type:        string(ai.AssistantTypeCodex),
+		FilePath:    jsonlPath,
+		FileModTime: time.Now(),
+	})
+
+	msgs, err := svc.GetConversation(record.ID)
+	if err != nil {
+		t.Fatalf("GetConversation Codex: %v", err)
+	}
+	if len(msgs) != 2 {
+		t.Fatalf("expected 2 messages, got %d", len(msgs))
+	}
+	if msgs[0].Role != "user" {
+		t.Errorf("expected first role 'user', got %q", msgs[0].Role)
+	}
+	if msgs[1].Role != "assistant" {
+		t.Errorf("expected second role 'assistant', got %q", msgs[1].Role)
+	}
+}
+
 func TestAISessionService_GetConversation_NonexistentFile(t *testing.T) {
 	t.Parallel()
 

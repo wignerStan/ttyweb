@@ -166,18 +166,19 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 
 	srvErr := make(chan error, 1)
 	go func() {
+		var serveErr error
 		if server.options.EnableTLS {
 			crtFile := homedir.Expand(server.options.TLSCrtFile)
 			keyFile := homedir.Expand(server.options.TLSKeyFile)
 			log.Printf("TLS crt file: %s", crtFile)
 			log.Printf("TLS key file: %s", keyFile)
 
-			err = srv.ServeTLS(listener, crtFile, keyFile)
+			serveErr = srv.ServeTLS(listener, crtFile, keyFile)
 		} else {
-			err = srv.Serve(listener)
+			serveErr = srv.Serve(listener)
 		}
-		if err != nil {
-			srvErr <- err
+		if serveErr != nil {
+			srvErr <- serveErr
 		}
 	}()
 

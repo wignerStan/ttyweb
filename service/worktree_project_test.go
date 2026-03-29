@@ -60,6 +60,30 @@ func TestWorktreeService_ListProjects_Empty(t *testing.T) {
 	}
 }
 
+func TestWorktreeService_ListProjects_NonEmpty(t *testing.T) {
+	t.Parallel()
+
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	p1, err := svc.AddProject(repoDir)
+	if err != nil {
+		t.Fatalf("AddProject: %v", err)
+	}
+
+	projects := svc.ListProjects()
+	if len(projects) != 1 {
+		t.Fatalf("expected 1 project, got %d", len(projects))
+	}
+	if projects[0].ID != p1.ID {
+		t.Errorf("expected ID %q, got %q", p1.ID, projects[0].ID)
+	}
+	if projects[0].Name != p1.Name {
+		t.Errorf("expected name %q, got %q", p1.Name, projects[0].Name)
+	}
+}
+
 func TestWorktreeService_AddProject(t *testing.T) {
 	t.Parallel()
 

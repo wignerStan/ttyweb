@@ -88,7 +88,7 @@ func (s *AISessionStore) List(projectPath string) []AISessionRecord {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var filtered []AISessionRecord
+	filtered := make([]AISessionRecord, 0, len(s.records))
 	for _, r := range s.records {
 		if projectPath != "" && r.ProjectPath != projectPath {
 			continue

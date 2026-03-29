@@ -141,6 +141,23 @@ func TestChatCompletion_APIError(t *testing.T) {
 	}
 }
 
+func TestChatCompletion_ErrorField(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := chatResponse{
+			Error: &chatError{Message: "rate limit exceeded"},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	client := NewClient("test-key", srv.URL, "test-model")
+	_, err := client.ChatCompletion(context.Background(), "sys", "user")
+	if err == nil {
+		t.Fatal("expected error for API error field, got nil")
+	}
+}
+
 func TestChatCompletion_ContextCancelled(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)

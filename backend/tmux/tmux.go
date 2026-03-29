@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -24,6 +25,7 @@ type TmuxSlave struct {
 	closeTimeout time.Duration
 
 	ptyClosed chan struct{}
+	ptyMu     sync.Mutex
 }
 
 // Option configures TmuxSlave behavior.
@@ -84,7 +86,9 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 
 	go func() {
 		defer func() {
+			slave.ptyMu.Lock()
 			_ = slave.pty.Close()
+			slave.ptyMu.Unlock()
 			close(slave.ptyClosed)
 		}()
 		_ = slave.cmd.Wait()
@@ -94,10 +98,14 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 }
 
 func (s *TmuxSlave) Read(p []byte) (n int, err error) {
+	s.ptyMu.Lock()
+	defer s.ptyMu.Unlock()
 	return s.pty.Read(p)
 }
 
 func (s *TmuxSlave) Write(p []byte) (n int, err error) {
+	s.ptyMu.Lock()
+	defer s.ptyMu.Unlock()
 	return s.pty.Write(p)
 }
 
@@ -116,6 +124,8 @@ func (s *TmuxSlave) WindowTitleVariables() map[string]interface{} {
 }
 
 func (s *TmuxSlave) ResizeTerminal(width int, height int) error {
+	s.ptyMu.Lock()
+	defer s.ptyMu.Unlock()
 	ws := pty.Winsize{
 		Rows: uint16(height),
 		Cols: uint16(width),

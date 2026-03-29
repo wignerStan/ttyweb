@@ -2,9 +2,13 @@ package service
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
+
+	"ttyweb/worktree"
 )
 
 func TestWorktreeService_ConcurrentCreateDifferentProjects(t *testing.T) {
@@ -125,5 +129,210 @@ func TestWorktreeService_RemoveWorktree_MainBranch(t *testing.T) {
 	err = svc.RemoveWorktree(context.Background(), proj.ID, mainWT.ID, false)
 	if err == nil {
 		t.Fatal("expected error when removing main worktree")
+	}
+	if err.Error() != "cannot remove main worktree" {
+		t.Errorf("expected 'cannot remove main worktree', got %q", err.Error())
+	}
+}
+
+func TestWorktreeService_RemoveWorktree_NotFound(t *testing.T) {
+	t.Parallel()
+
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+
+	err := svc.RemoveWorktree(context.Background(), project.ID, "nonexistent-wt", false)
+	if err == nil {
+		t.Fatal("expected error for nonexistent worktree")
+	}
+}
+
+func TestWorktreeService_RemoveWorktree_ProjectNotFound(t *testing.T) {
+	t.Parallel()
+
+	svc := NewWorktreeService()
+	err := svc.RemoveWorktree(context.Background(), "nonexistent-proj", "nonexistent-wt", false)
+	if err == nil {
+		t.Fatal("expected error for nonexistent project")
+	}
+}
+
+func TestWorktreeService_RefreshWorktree(t *testing.T) {
+	t.Parallel()
+
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+	wt, _ := svc.CreateWorktree(context.Background(), project.ID, "refresh-me", "main", true)
+
+	refreshed, err := svc.RefreshWorktree(context.Background(), project.ID, wt.ID)
+	if err != nil {
+		t.Fatalf("RefreshWorktree: %v", err)
+	}
+	if refreshed.ID != wt.ID {
+		t.Errorf("expected ID %q, got %q", wt.ID, refreshed.ID)
+	}
+	if refreshed.UpdatedAt.IsZero() {
+		t.Error("expected UpdatedAt to be set after refresh")
+	}
+}
+
+func TestWorktreeService_RefreshWorktree_NotFound(t *testing.T) {
+	t.Parallel()
+
+	svc := NewWorktreeService()
+	_, err := svc.RefreshWorktree(context.Background(), "nonexistent-proj", "nonexistent-wt")
+	if err == nil {
+		t.Fatal("expected error for nonexistent worktree")
+	}
+}
+
+func TestWorktreeService_SyncAllWorktrees(t *testing.T) {
+	t.Parallel()
+
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+
+	worktrees, err := svc.SyncAllWorktrees(context.Background(), project.ID)
+	if err != nil {
+		t.Fatalf("SyncAllWorktrees: %v", err)
+	}
+	if len(worktrees) < 1 {
+		t.Fatalf("expected at least 1 worktree (main), got %d", len(worktrees))
+	}
+
+	var foundMain bool
+	for _, w := range worktrees {
+		if w.IsMain {
+			foundMain = true
+			break
+		}
+	}
+	if !foundMain {
+		t.Error("expected to find main worktree after sync")
+	}
+}
+
+func TestWorktreeService_SyncAllWorktrees_ProjectNotFound(t *testing.T) {
+	t.Parallel()
+
+	svc := NewWorktreeService()
+	_, err := svc.SyncAllWorktrees(context.Background(), "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for nonexistent project")
+	}
+}
+
+func TestWorktreeService_CommitWorktree(t *testing.T) {
+	t.Parallel()
+
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+	wt, _ := svc.CreateWorktree(context.Background(), project.ID, "commit-wt", "main", true)
+
+	// Create a file in the worktree to commit.
+	testFile := filepath.Join(wt.Path, "test.txt")
+	if err := os.WriteFile(testFile, []byte("test content"), 0o644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	record, err := svc.CommitWorktree(context.Background(), project.ID, wt.ID, "test commit")
+	if err != nil {
+		t.Fatalf("CommitWorktree: %v", err)
+	}
+	if record.HeadCommit == "" {
+		t.Error("expected non-empty HeadCommit after commit")
+	}
+}
+
+func TestWorktreeService_RemoveWorktree_Success(t *testing.T) {
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+	wt, _ := svc.CreateWorktree(context.Background(), project.ID, "remove-me", "main", true)
+
+	err := svc.RemoveWorktree(context.Background(), project.ID, wt.ID, false)
+	if err != nil {
+		t.Fatalf("RemoveWorktree: %v", err)
+	}
+
+	// Verify it's gone from the list.
+	wts, err := svc.ListWorktrees(context.Background(), project.ID)
+	if err != nil {
+		t.Fatalf("ListWorktrees after remove: %v", err)
+	}
+	for _, w := range wts {
+		if w.ID == wt.ID {
+			t.Error("removed worktree should not appear in list")
+		}
+	}
+}
+
+func TestWorktreeService_SyncAllWorktrees_UpdatesExisting(t *testing.T) {
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+
+	// First sync populates the worktree map (insert path).
+	wts1, err := svc.SyncAllWorktrees(context.Background(), project.ID)
+	if err != nil {
+		t.Fatalf("SyncAllWorktrees (1st): %v", err)
+	}
+	if len(wts1) == 0 {
+		t.Fatal("expected at least 1 worktree after first sync")
+	}
+
+	// Make a commit so HEAD changes, then re-sync (update path).
+	commitFile := filepath.Join(repoDir, "sync-test.txt")
+	if err := os.WriteFile(commitFile, []byte("data\n"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if err := worktree.CommitWorktree(context.Background(), repoDir, "sync test commit"); err != nil {
+		t.Fatalf("CommitWorktree: %v", err)
+	}
+
+	wts2, err := svc.SyncAllWorktrees(context.Background(), project.ID)
+	if err != nil {
+		t.Fatalf("SyncAllWorktrees (2nd): %v", err)
+	}
+	if len(wts2) != len(wts1) {
+		t.Errorf("expected %d worktrees after re-sync, got %d", len(wts1), len(wts2))
+	}
+
+	// Verify the head commit was updated.
+	for _, wt := range wts2 {
+		if wt.IsMain && wt.HeadCommit == "" {
+			t.Error("expected non-empty HeadCommit for main worktree after re-sync")
+		}
+	}
+}
+
+func TestWorktreeService_CommitWorktree_NotFound(t *testing.T) {
+	t.Parallel()
+
+	repoDir := t.TempDir()
+	initTestGitRepo(t, repoDir)
+
+	svc := NewWorktreeService()
+	project, _ := svc.AddProject(repoDir)
+
+	_, err := svc.CommitWorktree(context.Background(), project.ID, "nonexistent-wt", "test commit")
+	if err == nil {
+		t.Fatal("expected error for nonexistent worktree")
 	}
 }

@@ -149,6 +149,33 @@ func TestAddProject_NonGitRepo(t *testing.T) {
 	}
 }
 
+func TestAddProject_PathIsFile(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewProjectService(db)
+
+	// Create a regular file (not a directory).
+	file, err := os.CreateTemp("", "testfile-*")
+	if err != nil {
+		t.Fatalf("create temp file: %v", err)
+	}
+	file.Close()
+
+	_, err = svc.AddProject("file-project", file.Name())
+	if err != ErrInvalidProjectPath {
+		t.Errorf("expected ErrInvalidProjectPath for file path, got %v", err)
+	}
+}
+
+func TestAddProject_NonexistentPath(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewProjectService(db)
+
+	_, err := svc.AddProject("ghost", "/nonexistent/path/that/does/not/exist")
+	if err != ErrInvalidProjectPath {
+		t.Errorf("expected ErrInvalidProjectPath for nonexistent path, got %v", err)
+	}
+}
+
 func TestAddProject_RelativePath(t *testing.T) {
 	db := setupTestDB(t)
 	svc := NewProjectService(db)
@@ -569,6 +596,32 @@ func TestSyncProject_NotFound(t *testing.T) {
 	_, err := svc.SyncProject("nonexistent")
 	if err != ErrProjectNotFound {
 		t.Errorf("expected ErrProjectNotFound, got %v", err)
+	}
+}
+
+func TestSyncProject_DetachedHead(t *testing.T) {
+	db := setupTestDB(t)
+	svc := NewProjectService(db)
+
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+
+	// Put repo in detached HEAD state.
+	runGit(t, repoDir, "checkout", "--detach", "HEAD")
+
+	project, err := svc.AddProject("detached", repoDir)
+	if err != nil {
+		t.Fatalf("AddProject: %v", err)
+	}
+
+	synced, err := svc.SyncProject(project.ID)
+	if err != nil {
+		t.Fatalf("SyncProject: %v", err)
+	}
+
+	// gitDefaultBranch should fall back to "main" for detached HEAD.
+	if synced.DefaultBranch != "main" {
+		t.Errorf("expected default branch 'main' for detached HEAD, got %q", synced.DefaultBranch)
 	}
 }
 

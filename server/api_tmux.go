@@ -172,7 +172,7 @@ func (server *Server) handleTmuxTree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tree []tmuxTreeSession
+	tree := make([]tmuxTreeSession, 0, len(sessions))
 	for _, sess := range sessions {
 		// Get session detail (includes panes).
 		detailRaw, err := sm.GetSessionDetail(sess.Name)

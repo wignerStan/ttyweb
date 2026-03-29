@@ -25,7 +25,7 @@ func ListSessions() ([]Session, error) {
 	}
 
 	// zellij list-sessions outputs one session name per line
-	var sessions []Session
+	sessions := make([]Session, 0)
 	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
