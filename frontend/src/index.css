@@ -4,7 +4,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -12,7 +14,9 @@ html, body, #root {
 }
 
 @supports (height: 100dvh) {
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100dvh;
   }
 }

@@ -46,7 +46,7 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ai-stream] WebSocket upgrade failed: %v", err)
 		return
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Set a read deadline so connections that never send data are cleaned up.
 	if err := conn.SetReadDeadline(time.Now().Add(readTimeout)); err != nil {
@@ -61,7 +61,7 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Clear the read deadline after the initial message is received.
-	conn.SetReadDeadline(time.Time{})
+	_ = conn.SetReadDeadline(time.Time{})
 
 	var req struct {
 		Role      string `json:"role"`
@@ -76,7 +76,8 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 
 	// Verify authentication credential using constant-time comparison,
 	// matching the pattern in processWSConn (handlers.go).
-	if subtle.ConstantTimeCompare([]byte(req.AuthToken), []byte(server.options.Credential)) != 1 {
+	cred := []byte(server.options.Credential)
+	if subtle.ConstantTimeCompare([]byte(req.AuthToken), cred) != 1 {
 		sendWSStreamError(conn, "authentication failed")
 		log.Printf("[ai-stream] Authentication failed from %s", r.RemoteAddr)
 		return
@@ -178,4 +179,3 @@ func envOrDefault(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

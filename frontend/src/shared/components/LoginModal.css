@@ -14,10 +14,10 @@
   background: var(--zinc-900);
   border: 1px solid var(--zinc-800);
   border-radius: 16px;
-  box-shadow: 
-    0 0 0 1px rgba(255,255,255,0.03),
-    0 24px 64px rgba(0,0,0,0.5),
-    0 8px 24px rgba(0,0,0,0.3);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .login-header {
@@ -64,7 +64,9 @@
   border: 1px solid var(--zinc-700);
   border-radius: 8px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .login-field input::placeholder {
@@ -101,7 +103,11 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s, background 0.15s;
+  transition:
+    transform 0.1s,
+    box-shadow 0.15s,
+    opacity 0.15s,
+    background 0.15s;
 }
 
 .login-submit:hover:not(:disabled) {

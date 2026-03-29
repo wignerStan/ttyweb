@@ -44,7 +44,7 @@ func (server *Server) wrapBasicAuth(handler http.Handler, credential string) htt
 			return
 		}
 
-		if subtle.ConstantTimeCompare([]byte(credential), []byte(payload)) != 1 {
+		if subtle.ConstantTimeCompare([]byte(credential), payload) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="GoTTY"`)
 			http.Error(w, "authorization failed", http.StatusUnauthorized)
 			return

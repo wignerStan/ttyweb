@@ -1,42 +1,39 @@
-import type { CSSProperties } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Calendar, AlertTriangle } from 'lucide-react';
-import type { KanbanTask } from './types';
-import { getTagColorClass } from './tagColors';
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { AlertTriangle, Calendar } from 'lucide-react'
+import type { CSSProperties } from 'react'
+import { getTagColorClass } from './tagColors'
+import type { KanbanTask } from './types'
 
 interface TaskCardProps {
-  task: KanbanTask;
-  onSelect: (task: KanbanTask) => void;
+  task: KanbanTask
+  onSelect: (task: KanbanTask) => void
 }
 
-const PRIORITY_CONFIG: Record<
-  number,
-  { label: string; className: string }
-> = {
+const PRIORITY_CONFIG: Record<number, { label: string; className: string }> = {
   1: { label: 'Low', className: 'task-card__priority--low' },
   2: { label: 'Med', className: 'task-card__priority--medium' },
   3: { label: 'High', className: 'task-card__priority--high' },
   4: { label: 'Crit', className: 'task-card__priority--critical' },
   5: { label: 'Urg', className: 'task-card__priority--critical' },
-} as const;
+} as const
 
-const DEFAULT_PRIORITY = { label: '?', className: 'task-card__priority--medium' };
+const DEFAULT_PRIORITY = { label: '?', className: 'task-card__priority--medium' }
 
 function getPriorityConfig(level: number) {
-  return PRIORITY_CONFIG[level] ?? DEFAULT_PRIORITY;
+  return PRIORITY_CONFIG[level] ?? DEFAULT_PRIORITY
 }
 
 function formatDueDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 function isOverdue(dateStr: string): boolean {
-  const due = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return due < today;
+  const due = new Date(dateStr)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return due < today
 }
 
 function TaskCard({ task, onSelect }: TaskCardProps) {
@@ -48,16 +45,16 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id })
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
-  };
+  }
 
-  const priority = getPriorityConfig(task.priority);
-  const dueDate = task.due_date;
+  const priority = getPriorityConfig(task.priority)
+  const dueDate = task.due_date
 
   return (
     <div
@@ -91,17 +88,15 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
 
       {dueDate && (
         <div className="task-card__footer">
-          <span
-            className={`task-card__due ${isOverdue(dueDate) ? 'task-card__due--overdue' : ''}`}
-          >
+          <span className={`task-card__due ${isOverdue(dueDate) ? 'task-card__due--overdue' : ''}`}>
             {isOverdue(dueDate) ? <AlertTriangle size={10} /> : <Calendar size={10} />}
             {formatDueDate(dueDate)}
           </span>
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export { TaskCard };
-export type { TaskCardProps };
+export type { TaskCardProps }
+export { TaskCard }

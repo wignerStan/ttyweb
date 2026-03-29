@@ -91,12 +91,12 @@ func main() {
 	}()
 
 	options := &server.Options{
-		Address:             addr,
-		Port:                port,
-		Path:                path,
-		PermitWrite:         write,
-		TitleFormat:         titleFmt,
-		PermitArguments:     backend == "local",
+		Address:         addr,
+		Port:            port,
+		Path:            path,
+		PermitWrite:     write,
+		TitleFormat:     titleFmt,
+		PermitArguments: backend == "local",
 		TitleVariables: map[string]interface{}{
 			"hostname": hostname(),
 		},

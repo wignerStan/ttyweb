@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
-import { X, ChevronDown, ChevronRight, Bot, Briefcase } from 'lucide-react'
-import { Task, PaneStatus, AiConversation } from '../../types'
-import { TaskCard } from './TaskCard'
-import { LogAccordion } from './LogAccordion'
+import { Bot, Briefcase, ChevronDown, ChevronRight, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAIConversations } from '../../hooks/useAIConversations'
+import type { AiConversation, PaneStatus, Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
+import { LogAccordion } from './LogAccordion'
+import { TaskCard } from './TaskCard'
 import './PaneDetails.css'
 
 interface Props {
@@ -41,30 +41,30 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
       <div className="conv-card-header" onClick={() => hasReply && setExpanded(!expanded)}>
         <div className="conv-card-left">
           <span className={`conv-status-dot ${conv.conv_status}`} />
-          <span className="conv-user-msg">
-            {conv.user_message || '—'}
-          </span>
+          <span className="conv-user-msg">{conv.user_message || '—'}</span>
         </div>
         <div className="conv-card-right">
           <span className="conv-time">{formatRelativeTime(conv.started_at)}</span>
-          {hasReply && (
-            expanded
-              ? <ChevronDown size={12} className="conv-chevron" />
-              : <ChevronRight size={12} className="conv-chevron" />
-          )}
+          {hasReply &&
+            (expanded ? (
+              <ChevronDown size={12} className="conv-chevron" />
+            ) : (
+              <ChevronRight size={12} className="conv-chevron" />
+            ))}
         </div>
       </div>
 
       <div className="conv-card-meta">
         <span className={`conv-badge ${conv.conv_status}`}>
-          {conv.conv_status === 'in_progress' ? 'running'
-            : conv.conv_status === 'failed' ? 'failed'
-            : conv.conv_status === 'waiting' ? 'waiting'
-            : conv.conv_status}
+          {conv.conv_status === 'in_progress'
+            ? 'running'
+            : conv.conv_status === 'failed'
+              ? 'failed'
+              : conv.conv_status === 'waiting'
+                ? 'waiting'
+                : conv.conv_status}
         </span>
-        <span className="conv-duration">
-          {formatDuration(conv.started_at, conv.completed_at)}
-        </span>
+        <span className="conv-duration">{formatDuration(conv.started_at, conv.completed_at)}</span>
       </div>
 
       {conv.conv_status === 'in_progress' && (
@@ -101,7 +101,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     return {
       session: parts.slice(0, -2).join(':') || '—',
       window: parts[parts.length - 2] || '—',
-      pane: parts[parts.length - 1] || '—'
+      pane: parts[parts.length - 1] || '—',
     }
   }
 
@@ -111,14 +111,13 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch(`/api/panes/${encodeURIComponent(paneKey)}/tasks`, {
-        headers
+        headers,
       })
       const data = await res.json()
       setTasks(data.tasks || [])
-    } catch (err) {
-      console.error('Failed to fetch tasks:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -129,19 +128,17 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch(
         `/api/panes/status?profile_key=${encodeURIComponent(profileKey)}&paneKey=${encodeURIComponent(paneKey)}`,
-        { headers }
+        { headers },
       )
       const data = await res.json()
       const panes = data.panes || []
       if (panes.length > 0) {
         setStatus(panes[0].status)
       }
-    } catch (err) {
-      console.error('Failed to fetch status:', err)
-    }
+    } catch (_err) {}
   }, [paneKey, profileKey])
 
   useEffect(() => {
@@ -155,26 +152,24 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       await fetch(`/api/tasks/${taskId}/complete`, {
         method: 'POST',
-        headers
+        headers,
       })
       fetchTasks()
-    } catch (err) {
-      console.error('Failed to complete task:', err)
-    }
+    } catch (_err) {}
   }
 
   if (!paneKey) return null
 
   const { session, window: win, pane } = parsePaneKey(paneKey)
 
-    const sortedConversations = [...aiConversations].sort((a, b) => b.started_at - a.started_at)
-  const runningCount = aiConversations.filter(c => c.conv_status === 'in_progress').length
+  const sortedConversations = [...aiConversations].sort((a, b) => b.started_at - a.started_at)
+  const runningCount = aiConversations.filter((c) => c.conv_status === 'in_progress').length
 
   const allTasks = tasks
-  const currentTask = allTasks.find(t => t.task_status === 'in_progress')
+  const currentTask = allTasks.find((t) => t.task_status === 'in_progress')
 
   return (
     <div className="pane-details-container">
@@ -182,7 +177,11 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
         <div className="drawer-header-left">
           <h2 className="drawer-title">Execution History</h2>
           <span className="drawer-pane-badge">
-            {session}<span className="badge-sep">:</span>{win}<span className="badge-sep">:</span>{pane}
+            {session}
+            <span className="badge-sep">:</span>
+            {win}
+            <span className="badge-sep">:</span>
+            {pane}
           </span>
         </div>
         <button className="drawer-close" onClick={onClose}>
@@ -198,11 +197,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
               <span className="conv-section-title">Tasks</span>
               <span className="conv-count-badge">{aiConversations.length}</span>
             </div>
-            {runningCount > 0 && (
-              <span className="conv-running-badge">
-                {runningCount} running
-              </span>
-            )}
+            {runningCount > 0 && <span className="conv-running-badge">{runningCount} running</span>}
           </div>
 
           {convLoading && aiConversations.length === 0 ? (
@@ -215,7 +210,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
             </div>
           ) : (
             <div className="conv-list">
-              {sortedConversations.map(conv => (
+              {sortedConversations.map((conv) => (
                 <ConversationCard key={conv.conversation_id} conv={conv} />
               ))}
             </div>
@@ -231,8 +226,8 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
             >
               <div className="task-list">
                 {allTasks
-                  .filter(t => t.task_status === "in_progress")
-                  .map(task => (
+                  .filter((t) => t.task_status === 'in_progress')
+                  .map((task) => (
                     <TaskCard
                       key={task.id}
                       task={task}
@@ -241,8 +236,8 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
                     />
                   ))}
                 {allTasks
-                  .filter(t => t.task_status === "completed")
-                  .map(task => (
+                  .filter((t) => t.task_status === 'completed')
+                  .map((task) => (
                     <TaskCard key={task.id} task={task} />
                   ))}
               </div>

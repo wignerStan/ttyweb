@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
-import { X, Plus, Pencil, Trash2 } from 'lucide-react'
-import { getAuthHeader } from '../../utils/auth'
+import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import type { AiRole } from '../../types'
+import { getAuthHeader } from '../../utils/auth'
 import './RoleManagerModal.css'
 
 interface RoleFormData {
@@ -15,7 +15,16 @@ interface RoleFormData {
   apiUrl: string
 }
 
-const emptyForm: RoleFormData = { id: '', emoji: '', label: '', desc: '', prompt: '', suffix: '', model: '', apiUrl: '' }
+const emptyForm: RoleFormData = {
+  id: '',
+  emoji: '',
+  label: '',
+  desc: '',
+  prompt: '',
+  suffix: '',
+  model: '',
+  apiUrl: '',
+}
 
 interface RoleManagerModalProps {
   open: boolean
@@ -29,51 +38,61 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
   const [isCreating, setIsCreating] = useState(false)
   const [showLlmConfig, setShowLlmConfig] = useState(false)
 
-  const handleSaveRole = useCallback(async (form: RoleFormData) => {
-    try {
-      const method = isCreating ? 'POST' : 'PUT'
-      const url = isCreating ? '/api/roles' : `/api/roles/${form.id}`
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+  const handleSaveRole = useCallback(
+    async (form: RoleFormData) => {
+      try {
+        const method = isCreating ? 'POST' : 'PUT'
+        const url = isCreating ? '/api/roles' : `/api/roles/${form.id}`
+        const auth = getAuthHeader()
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (auth) headers.Authorization = auth
 
-      const body: Record<string, string> = {
-        name: form.label,
-        description: form.desc,
-        system_prompt: form.prompt,
-      }
-      if (form.suffix) body['suffix'] = form.suffix
-      if (form.model) body['model'] = form.model
-      if (form.apiUrl) body['api_url'] = form.apiUrl
+        const body: Record<string, string> = {
+          name: form.label,
+          description: form.desc,
+          system_prompt: form.prompt,
+        }
+        if (form.suffix) body.suffix = form.suffix
+        if (form.model) body.model = form.model
+        if (form.apiUrl) body.api_url = form.apiUrl
 
-      const res = await fetch(url, {
-        method,
-        headers,
-        body: JSON.stringify(body)
-      })
-      if (res.ok) {
-        await onRolesChanged()
-        setEditingRole(null)
-        setIsCreating(false)
-        setShowLlmConfig(false)
+        const res = await fetch(url, {
+          method,
+          headers,
+          body: JSON.stringify(body),
+        })
+        if (res.ok) {
+          await onRolesChanged()
+          setEditingRole(null)
+          setIsCreating(false)
+          setShowLlmConfig(false)
+        }
+      } catch {
+        /* ignore */
       }
-    } catch { /* ignore */ }
-  }, [isCreating, onRolesChanged])
+    },
+    [isCreating, onRolesChanged],
+  )
 
-  const handleDeleteRole = useCallback(async (id: string) => {
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch(`/api/roles/${id}`, {
-        method: 'DELETE',
-        headers
-      })
-      if (res.ok) {
-        await onRolesChanged()
+  const handleDeleteRole = useCallback(
+    async (id: string) => {
+      try {
+        const auth = getAuthHeader()
+        const headers: Record<string, string> = {}
+        if (auth) headers.Authorization = auth
+        const res = await fetch(`/api/roles/${id}`, {
+          method: 'DELETE',
+          headers,
+        })
+        if (res.ok) {
+          await onRolesChanged()
+        }
+      } catch {
+        /* ignore */
       }
-    } catch { /* ignore */ }
-  }, [onRolesChanged])
+    },
+    [onRolesChanged],
+  )
 
   const handleStartCreate = useCallback(() => {
     setEditingRole({ ...emptyForm })
@@ -104,11 +123,11 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
 
   if (!open) return null
 
-  const customRoles = roles.filter(r => r.isCustom)
+  const customRoles = roles.filter((r) => r.isCustom)
 
   return (
     <div className="role-modal-overlay" onClick={onClose}>
-      <div className="role-modal" onClick={e => e.stopPropagation()}>
+      <div className="role-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="role-modal-header">
           <span className="role-modal-title">自定义角色</span>
@@ -123,7 +142,7 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
             <div className="role-modal-empty">暂无自定义角色</div>
           )}
 
-          {customRoles.map(r => (
+          {customRoles.map((r) => (
             <div key={r.id} className="role-modal-item">
               <div className="role-modal-item-info">
                 <span className="role-modal-item-emoji">{r.emoji}</span>
@@ -171,7 +190,7 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
                 <input
                   placeholder="ID (英文)"
                   value={editingRole.id}
-                  onChange={e => setEditingRole({ ...editingRole, id: e.target.value })}
+                  onChange={(e) => setEditingRole({ ...editingRole, id: e.target.value })}
                   className="role-modal-input"
                 />
               )}
@@ -179,13 +198,13 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
                 <input
                   placeholder="Emoji"
                   value={editingRole.emoji}
-                  onChange={e => setEditingRole({ ...editingRole, emoji: e.target.value })}
+                  onChange={(e) => setEditingRole({ ...editingRole, emoji: e.target.value })}
                   className="role-modal-input role-modal-input-emoji"
                 />
                 <input
                   placeholder="名称"
                   value={editingRole.label}
-                  onChange={e => setEditingRole({ ...editingRole, label: e.target.value })}
+                  onChange={(e) => setEditingRole({ ...editingRole, label: e.target.value })}
                   className="role-modal-input"
                   style={{ flex: 1 }}
                 />
@@ -193,20 +212,20 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
               <input
                 placeholder="描述"
                 value={editingRole.desc}
-                onChange={e => setEditingRole({ ...editingRole, desc: e.target.value })}
+                onChange={(e) => setEditingRole({ ...editingRole, desc: e.target.value })}
                 className="role-modal-input"
               />
               <textarea
                 placeholder="系统提示词"
                 value={editingRole.prompt}
-                onChange={e => setEditingRole({ ...editingRole, prompt: e.target.value })}
+                onChange={(e) => setEditingRole({ ...editingRole, prompt: e.target.value })}
                 rows={4}
                 className="role-modal-textarea"
               />
               <textarea
                 placeholder="后缀提示词"
                 value={editingRole.suffix}
-                onChange={e => setEditingRole({ ...editingRole, suffix: e.target.value })}
+                onChange={(e) => setEditingRole({ ...editingRole, suffix: e.target.value })}
                 rows={2}
                 className="role-modal-textarea"
               />
@@ -225,13 +244,13 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
                   <input
                     placeholder="模型 (例如: gpt-4, claude-3)"
                     value={editingRole.model}
-                    onChange={e => setEditingRole({ ...editingRole, model: e.target.value })}
+                    onChange={(e) => setEditingRole({ ...editingRole, model: e.target.value })}
                     className="role-modal-input"
                   />
                   <input
                     placeholder="API URL (例如: https://api.openai.com/v1)"
                     value={editingRole.apiUrl}
-                    onChange={e => setEditingRole({ ...editingRole, apiUrl: e.target.value })}
+                    onChange={(e) => setEditingRole({ ...editingRole, apiUrl: e.target.value })}
                     className="role-modal-input"
                   />
                   <div className="role-modal-llm-hint">

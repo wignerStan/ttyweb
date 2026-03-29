@@ -85,9 +85,9 @@ func GenerateAuthURL(config XunfeiConfig) (string, error) {
 	authorization := base64.StdEncoding.EncodeToString([]byte(authOrigin))
 
 	u := url.URL{
-		Scheme:   "wss",
-		Host:     xfyunHost,
-		Path:     xfyunPath,
+		Scheme: "wss",
+		Host:   xfyunHost,
+		Path:   xfyunPath,
 		RawQuery: fmt.Sprintf("authorization=%s&date=%s&host=%s",
 			url.QueryEscape(authorization),
 			url.QueryEscape(date),
@@ -122,13 +122,13 @@ type xfyunFramePayload struct {
 
 // xfyunAudioPayload describes the audio encoding and data.
 type xfyunAudioPayload struct {
-	Encoding    string `json:"encoding"`
-	SampleRate  int    `json:"sample_rate"`
-	Channels    int    `json:"channels"`
-	BitDepth    int    `json:"bit_depth"`
-	Seq         int    `json:"seq"`
-	Status      int    `json:"status"`
-	Audio       string `json:"audio"`
+	Encoding   string `json:"encoding"`
+	SampleRate int    `json:"sample_rate"`
+	Channels   int    `json:"channels"`
+	BitDepth   int    `json:"bit_depth"`
+	Seq        int    `json:"seq"`
+	Status     int    `json:"status"`
+	Audio      string `json:"audio"`
 }
 
 // BuildFirstFrame builds the first WebSocket frame with IAT parameters.
@@ -157,7 +157,7 @@ func BuildFirstFrame(config XunfeiConfig, params SpeechParams, audio string, seq
 	}
 
 	frame := xfyunFrame{
-		Header: xfyunFrameHeader{AppID: config.AppID, Status: 0},
+		Header:    xfyunFrameHeader{AppID: config.AppID, Status: 0},
 		Parameter: xfyunFrameParams{IAT: iatParams},
 		Payload: xfyunFramePayload{
 			Audio: xfyunAudioPayload{
@@ -212,7 +212,7 @@ func BuildLastFrame(seq int) ([]byte, error) {
 
 // xfyunResponse represents the top-level JSON response from Xunfei IAT v2.
 type xfyunResponse struct {
-	Header  xfyunResponseHeader  `json:"header"`
+	Header  xfyunResponseHeader   `json:"header"`
 	Payload *xfyunResponsePayload `json:"payload,omitempty"`
 }
 
@@ -235,11 +235,11 @@ type xfyunResultPayload struct {
 
 // xfyunTextData is the decoded inner JSON from the result text field.
 type xfyunTextData struct {
-	SN  int           `json:"sn"`
-	LS  bool          `json:"ls"`
-	PGS string        `json:"pgs"`
-	RG  []int         `json:"rg"`
-	WS  []xfyunWord   `json:"ws"`
+	SN  int         `json:"sn"`
+	LS  bool        `json:"ls"`
+	PGS string      `json:"pgs"`
+	RG  []int       `json:"rg"`
+	WS  []xfyunWord `json:"ws"`
 }
 
 // xfyunWord is a word slot in the recognition result.

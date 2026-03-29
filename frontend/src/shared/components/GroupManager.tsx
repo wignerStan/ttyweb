@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { Plus, Check, X, Pencil, Trash2, ArrowRight } from 'lucide-react'
-import { TmuxSession, SessionGroup } from '../../types'
+import { ArrowRight, Check, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { SessionGroup, TmuxSession } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
 import './GroupManager.css'
 
@@ -20,9 +20,22 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const fetchGroups = useCallback(async () => {
+    try {
+      const auth = getAuthHeader()
+      const headers: Record<string, string> = {}
+      if (auth) headers.Authorization = auth
+      const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, {
+        headers,
+      })
+      const data = await res.json()
+      setGroups(data.groups || [])
+    } catch (_err) {}
+  }, [profileKey])
+
   useEffect(() => {
     if (profileKey) fetchGroups()
-  }, [profileKey])
+  }, [profileKey, fetchGroups])
 
   useEffect(() => {
     if (isCreating && inputRef.current) {
@@ -30,35 +43,20 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     }
   }, [isCreating])
 
-  const fetchGroups = async () => {
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, {
-        headers
-      })
-      const data = await res.json()
-      setGroups(data.groups || [])
-    } catch (err) {
-      console.error('Failed to fetch groups:', err)
-    }
-  }
-
   const createGroup = async () => {
     if (!newGroupName.trim() || loading) return
     setLoading(true)
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch('/api/groups', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           profile_key: profileKey,
-          group_name: newGroupName.trim()
-        })
+          group_name: newGroupName.trim(),
+        }),
       })
       const data = await res.json()
       if (data.id) {
@@ -66,15 +64,14 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
           id: data.id,
           group_name: data.group_name,
           sort_order: groups.length,
-          session_count: 0
+          session_count: 0,
         }
         setGroups([...groups, newGroup])
         setNewGroupName('')
         setIsCreating(false)
         onGroupsChanged()
       }
-    } catch (err) {
-      console.error('Failed to create group:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -86,39 +83,37 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       await fetch(`/api/groups/${id}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ group_name: editName.trim() })
+        body: JSON.stringify({ group_name: editName.trim() }),
       })
-      setGroups(groups.map(g => g.id === id ? { ...g, group_name: editName.trim() } : g))
+      setGroups(groups.map((g) => (g.id === id ? { ...g, group_name: editName.trim() } : g)))
       setEditingId(null)
       onGroupsChanged()
-    } catch (err) {
-      console.error('Failed to update group:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
   }
 
   const deleteGroup = async (id: number) => {
-    const group = groups.find(g => g.id === id)
+    const group = groups.find((g) => g.id === id)
     if (!group || loading) return
     if (!confirm(`Delete group "${group.group_name}"?`)) return
     setLoading(true)
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       await fetch(`/api/groups/${id}`, {
         method: 'DELETE',
-        headers
+        headers,
       })
-      setGroups(groups.filter(g => g.id !== id))
+      setGroups(groups.filter((g) => g.id !== id))
       onGroupsChanged()
-    } catch (err) {
-      console.error('Failed to delete group:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -129,17 +124,16 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       await fetch(`/api/sessions/${encodeURIComponent(sessionName)}/group`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ profile_key: profileKey, group_id: groupId })
+        body: JSON.stringify({ profile_key: profileKey, group_id: groupId }),
       })
       setAssigningSession(null)
       fetchGroups()
       onGroupsChanged()
-    } catch (err) {
-      console.error('Failed to assign session:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -169,13 +163,17 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
             ref={inputRef}
             type="text"
             value={newGroupName}
-            onChange={e => setNewGroupName(e.target.value)}
-            onKeyDown={e => handleKeyDown(e, createGroup)}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, createGroup)}
             placeholder="Group name..."
             className="group-input"
             disabled={loading}
           />
-          <button onClick={createGroup} disabled={loading || !newGroupName.trim()} className="btn-sm btn-confirm">
+          <button
+            onClick={createGroup}
+            disabled={loading || !newGroupName.trim()}
+            className="btn-sm btn-confirm"
+          >
             <Check size={12} />
           </button>
           <button onClick={() => setIsCreating(false)} className="btn-sm btn-cancel">
@@ -185,20 +183,17 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
       )}
 
       <div className="group-list">
-        {groups.length === 0 && !isCreating && (
-          <div className="group-empty">No groups yet</div>
-        )}
-        {groups.map(group => (
+        {groups.length === 0 && !isCreating && <div className="group-empty">No groups yet</div>}
+        {groups.map((group) => (
           <div key={group.id} className="group-item">
             {editingId === group.id ? (
               <div className="group-edit-row">
                 <input
                   type="text"
                   value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  onKeyDown={e => handleKeyDown(e, () => updateGroup(group.id))}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, () => updateGroup(group.id))}
                   className="group-input"
-                  autoFocus
                   disabled={loading}
                 />
                 <button
@@ -244,22 +239,23 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
       <div className="session-assign-section">
         <div className="section-label">Assign Sessions</div>
         <div className="session-list">
-          {sessions.map(session => (
+          {sessions.map((session) => (
             <div key={session.sessionId} className="session-row">
               <span className="session-name">{session.sessionName}</span>
               {assigningSession === session.sessionName ? (
                 <select
                   className="group-select"
-                  onChange={e => {
+                  onChange={(e) => {
                     const val = e.target.value
                     assignSessionToGroup(session.sessionName, val ? parseInt(val, 10) : null)
                   }}
-                  autoFocus
                   onBlur={() => setAssigningSession(null)}
                 >
                   <option value="">Ungrouped</option>
-                  {groups.map(g => (
-                    <option key={g.id} value={g.id}>{g.group_name}</option>
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.group_name}
+                    </option>
                   ))}
                 </select>
               ) : (
@@ -273,9 +269,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
               )}
             </div>
           ))}
-          {sessions.length === 0 && (
-            <div className="session-empty">No sessions available</div>
-          )}
+          {sessions.length === 0 && <div className="session-empty">No sessions available</div>}
         </div>
       </div>
     </div>

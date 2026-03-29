@@ -1,5 +1,5 @@
-import type { ConversationMessage as ConversationMessageType, ToolResultBlock } from './types'
 import { ToolResultInline } from './ToolResultInline'
+import type { ConversationMessage as ConversationMessageType, ToolResultBlock } from './types'
 
 interface ConversationMessageProps {
   message: ConversationMessageType
@@ -7,7 +7,7 @@ interface ConversationMessageProps {
 
 function findToolResult(
   toolResults: ToolResultBlock[] | undefined,
-  toolUseId: string
+  toolUseId: string,
 ): ToolResultBlock | undefined {
   if (!toolResults) return undefined
   return toolResults.find((tr) => tr.tool_use_id === toolUseId)
@@ -16,7 +16,7 @@ function findToolResult(
 function formatTimestamp(ts: string): string {
   try {
     const date = new Date(ts)
-    if (isNaN(date.getTime())) return ''
+    if (Number.isNaN(date.getTime())) return ''
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   } catch {
     return ''
@@ -26,7 +26,8 @@ function formatTimestamp(ts: string): string {
 function formatToolInputSummary(name: string, input: Record<string, unknown>): string {
   if (name === 'Bash' || name === 'bash') {
     const cmd = input.command
-    if (typeof cmd === 'string') return `[${name}: ${cmd.length > 80 ? cmd.slice(0, 77) + '...' : cmd}]`
+    if (typeof cmd === 'string')
+      return `[${name}: ${cmd.length > 80 ? `${cmd.slice(0, 77)}...` : cmd}]`
   }
   if (name === 'Read' || name === 'Edit' || name === 'Write') {
     const fp = input.file_path
@@ -57,13 +58,7 @@ export function ConversationMessage({ message }: ConversationMessageProps) {
               )
             }
             // Show expandable tool result
-            return (
-              <ToolResultInline
-                key={tu.id}
-                toolUse={tu}
-                toolResult={result}
-              />
-            )
+            return <ToolResultInline key={tu.id} toolUse={tu} toolResult={result} />
           })}
         </div>
       )}

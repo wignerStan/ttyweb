@@ -10,10 +10,10 @@ import (
 
 // Config holds all application configuration sections.
 type Config struct {
-	LLM     LLMConfig     `json:"llm"`
-	Xunfei  XunfeiConfig  `json:"xfyun"`
-	Butler  ButlerConfig  `json:"butler"`
-	DB      DBConfig      `json:"db"`
+	LLM      LLMConfig      `json:"llm"`
+	Xunfei   XunfeiConfig   `json:"xfyun"`
+	Butler   ButlerConfig   `json:"butler"`
+	DB       DBConfig       `json:"db"`
 	Worktree WorktreeConfig `json:"worktree"`
 }
 
@@ -27,8 +27,8 @@ type LLMConfig struct {
 
 // XunfeiConfig holds credentials for Xunfei speech recognition.
 type XunfeiConfig struct {
-	AppID    string `json:"appId"`
-	ApiKey   string `json:"apiKey"`
+	AppID     string `json:"appId"`
+	ApiKey    string `json:"apiKey"`
 	ApiSecret string `json:"apiSecret"`
 }
 

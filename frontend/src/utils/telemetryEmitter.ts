@@ -44,7 +44,7 @@ function postEventsBeacon(events: MobileTelemetryEvent[]): void {
   try {
     navigator.sendBeacon(
       getEndpointUrl(),
-      new Blob([JSON.stringify({ events })], { type: 'application/json' })
+      new Blob([JSON.stringify({ events })], { type: 'application/json' }),
     )
   } catch {
     // noop
@@ -101,7 +101,7 @@ export function createTelemetryEmitter(paneId: string): TelemetryEmitter {
     }
 
     if (typeof entry.data === 'string' && entry.data.length > 100) {
-      entry.data = (entry.data as string).substring(0, 100) + '...[truncated]'
+      entry.data = `${(entry.data as string).substring(0, 100)}...[truncated]`
     }
 
     batch.push(entry)

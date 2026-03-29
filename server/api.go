@@ -29,10 +29,6 @@ func (server *Server) sessionManager() backend.SessionManager {
 	return backend.NoSessionManager{}
 }
 
-// noteService returns the NoteService for notepad CRUD operations.
-func (server *Server) noteService() *service.NoteService {
-	return server.noteSvc
-}
 // setupAPIHandlers registers REST API routes on the given mux.
 func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	apiPrefix := pathPrefix + "api/"
@@ -236,13 +232,13 @@ func writeAPISuccess(w http.ResponseWriter, data interface{}) {
 
 func writeAPISuccessRaw(w http.ResponseWriter, data json.RawMessage) {
 	resp := apiResponse{Success: true, Data: data}
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 func writeAPIError(w http.ResponseWriter, code int, message string) {
 	w.WriteHeader(code)
 	resp := apiResponse{Success: false, Error: message}
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 }
 
 // projectService returns a lazily-initialized ProjectService backed by SQLite.
@@ -250,20 +246,20 @@ func writeAPIError(w http.ResponseWriter, code int, message string) {
 var (
 	projectServiceOnce     sync.Once
 	projectServiceInstance *service.ProjectService
-	projectServiceErr      error
+	errProjectService      error
 )
 
 func projectService() (*service.ProjectService, error) {
 	projectServiceOnce.Do(func() {
 		gormDB, err := db.GetDB()
 		if err != nil {
-			projectServiceErr = fmt.Errorf("get project database: %w", err)
+			errProjectService = fmt.Errorf("get project database: %w", err)
 			return
 		}
 		projectServiceInstance = service.NewProjectService(gormDB)
 	})
-	if projectServiceErr != nil {
-		return nil, projectServiceErr
+	if errProjectService != nil {
+		return nil, errProjectService
 	}
 	return projectServiceInstance, nil
 }

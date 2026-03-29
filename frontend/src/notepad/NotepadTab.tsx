@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Pencil, Check } from 'lucide-react'
+import { Check, Pencil } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Note } from './useNotepad'
 
 interface NotepadTabProps {
@@ -46,7 +46,7 @@ export function NotepadTab({ note, onUpdate }: NotepadTabProps) {
         setEditingTitle(false)
       }
     },
-    [handleTitleSave, note.name]
+    [handleTitleSave, note.name],
   )
 
   const handleContentChange = useCallback(
@@ -55,7 +55,7 @@ export function NotepadTab({ note, onUpdate }: NotepadTabProps) {
       setContent(newContent)
       onUpdate(note.id, { content: newContent }, 500)
     },
-    [note.id, onUpdate]
+    [note.id, onUpdate],
   )
 
   const handleContentBlur = useCallback(() => {

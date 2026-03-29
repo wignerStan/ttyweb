@@ -4,11 +4,11 @@ import "time"
 
 // ConversationMessage represents a single message in an AI conversation.
 type ConversationMessage struct {
-	Role       string           `json:"role"`
-	Content    string           `json:"content"`
-	ToolUse    []ToolUseBlock   `json:"toolUse,omitempty"`
+	Role       string            `json:"role"`
+	Content    string            `json:"content"`
+	ToolUse    []ToolUseBlock    `json:"toolUse,omitempty"`
 	ToolResult []ToolResultBlock `json:"toolResult,omitempty"`
-	Timestamp  time.Time        `json:"timestamp"`
+	Timestamp  time.Time         `json:"timestamp"`
 }
 
 // ToolUseBlock represents a tool invocation by the AI assistant.

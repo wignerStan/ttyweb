@@ -2,8 +2,23 @@
  * Keyboard avoidance hook for mobile devices
  * Uses VisualViewport API to detect keyboard and adjust layout
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { isMobile, getKeyboardMetrics, type KeyboardMetrics } from '../utils/platform'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+declare global {
+  interface Window {
+    __keyboardMetrics?: () => {
+      keyboardVisible: boolean
+      keyboardHeightPx: number
+      keyboardSpacerHeightPx: number
+      visualViewportHeight: number
+      visualViewportWidth: number
+      layoutHeight: number
+      layoutWidth: number
+    }
+  }
+}
+
+import { getKeyboardMetrics, isMobile, type KeyboardMetrics } from '../utils/platform'
 import { isDebugEnabled } from '../utils/telemetry'
 
 export interface KeyboardAvoiderState {
@@ -26,13 +41,13 @@ const DEBOUNCE_MS = 100
 /**
  * Hook that provides keyboard avoidance state for mobile devices
  * Returns container styles that adjust padding when keyboard appears
- * 
+ *
  * @param enabled - Whether to enable keyboard avoidance (default: true on mobile)
  * @param accessoryHeight - Reserved height for bottom accessory bar (default: 0)
  */
 export function useKeyboardAvoider(
   enabled: boolean = true,
-  accessoryHeight: number = 0
+  accessoryHeight: number = 0,
 ): KeyboardAvoiderState {
   const [metrics, setMetrics] = useState<KeyboardMetrics>(() => getKeyboardMetrics())
   const debounceRef = useRef<number | null>(null)
@@ -44,7 +59,7 @@ export function useKeyboardAvoider(
 
   const updateMetrics = useCallback(() => {
     if (!enabledRef.current) return
-    
+
     const newMetrics = getKeyboardMetrics()
     setMetrics((prev: KeyboardMetrics) => {
       if (
@@ -64,48 +79,48 @@ export function useKeyboardAvoider(
     debounceRef.current = window.setTimeout(updateMetrics, DEBOUNCE_MS)
   }, [updateMetrics])
 
-   useEffect(() => {
-     if (!enabledRef.current || typeof window === 'undefined') {
-       return
-     }
+  useEffect(() => {
+    if (!enabledRef.current || typeof window === 'undefined') {
+      return
+    }
 
-     updateMetrics()
+    updateMetrics()
 
-     const vv = window.visualViewport
-     if (vv) {
-       vv.addEventListener('resize', debouncedUpdate)
-       vv.addEventListener('scroll', debouncedUpdate)
-     }
+    const vv = window.visualViewport
+    if (vv) {
+      vv.addEventListener('resize', debouncedUpdate)
+      vv.addEventListener('scroll', debouncedUpdate)
+    }
 
-     window.addEventListener('resize', debouncedUpdate)
+    window.addEventListener('resize', debouncedUpdate)
 
-     // Expose debug-only window helper for Playwright to read keyboard metrics
-     if (isDebugEnabled() && isMobile()) {
-       (window as any).__keyboardMetrics = () => ({
-         keyboardVisible: metrics.isKeyboardVisible,
-         keyboardHeightPx: metrics.keyboardHeight,
-         keyboardSpacerHeightPx: metrics.isKeyboardVisible ? metrics.keyboardHeight : 0,
-         visualViewportHeight: vv?.height ?? window.innerHeight,
-         visualViewportWidth: vv?.width ?? window.innerWidth,
-         layoutHeight: window.innerHeight,
-         layoutWidth: window.innerWidth,
-       })
-     }
+    // Expose debug-only window helper for Playwright to read keyboard metrics
+    if (isDebugEnabled() && isMobile()) {
+      window.__keyboardMetrics = () => ({
+        keyboardVisible: metrics.isKeyboardVisible,
+        keyboardHeightPx: metrics.keyboardHeight,
+        keyboardSpacerHeightPx: metrics.isKeyboardVisible ? metrics.keyboardHeight : 0,
+        visualViewportHeight: vv?.height ?? window.innerHeight,
+        visualViewportWidth: vv?.width ?? window.innerWidth,
+        layoutHeight: window.innerHeight,
+        layoutWidth: window.innerWidth,
+      })
+    }
 
-     return () => {
-       if (debounceRef.current) {
-         clearTimeout(debounceRef.current)
-       }
-       if (vv) {
-         vv.removeEventListener('resize', debouncedUpdate)
-         vv.removeEventListener('scroll', debouncedUpdate)
-       }
-       window.removeEventListener('resize', debouncedUpdate)
-       if (isDebugEnabled() && isMobile()) {
-         delete (window as any).__keyboardMetrics
-       }
-     }
-   }, [debouncedUpdate, updateMetrics, metrics])
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+      if (vv) {
+        vv.removeEventListener('resize', debouncedUpdate)
+        vv.removeEventListener('scroll', debouncedUpdate)
+      }
+      window.removeEventListener('resize', debouncedUpdate)
+      if (isDebugEnabled() && isMobile()) {
+        delete window.__keyboardMetrics
+      }
+    }
+  }, [debouncedUpdate, updateMetrics, metrics])
 
   const containerStyle: React.CSSProperties = enabledRef.current
     ? {
@@ -119,9 +134,8 @@ export function useKeyboardAvoider(
       }
     : {}
 
-  const keyboardSpacerHeightPx = enabledRef.current && metrics.isKeyboardVisible 
-    ? metrics.keyboardHeight 
-    : 0
+  const keyboardSpacerHeightPx =
+    enabledRef.current && metrics.isKeyboardVisible ? metrics.keyboardHeight : 0
 
   return {
     keyboardHeight: metrics.keyboardHeight,

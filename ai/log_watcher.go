@@ -10,8 +10,8 @@ import (
 type AISessionEventType string
 
 const (
-	AISessionEventNew      AISessionEventType = "new"
-	AISessionEventUpdated  AISessionEventType = "updated"
+	AISessionEventNew       AISessionEventType = "new"
+	AISessionEventUpdated   AISessionEventType = "updated"
 	AISessionEventCompleted AISessionEventType = "completed"
 )
 

@@ -1,6 +1,7 @@
 package zellij
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"syscall"
@@ -13,12 +14,12 @@ import (
 // ZellijSlave is a zellij session attached via PTY.
 // It implements server.Slave interface from ttyweb/server.
 type ZellijSlave struct {
-	pty         *os.File
-	cmd         *exec.Cmd
-	session     string
-	closeSignal syscall.Signal
+	pty          *os.File
+	cmd          *exec.Cmd
+	session      string
+	closeSignal  syscall.Signal
 	closeTimeout time.Duration
-	ptyClosed   chan struct{}
+	ptyClosed    chan struct{}
 }
 
 // Option configures ZellijSlave behavior.
@@ -48,7 +49,7 @@ func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
 		args = append(args, "attach", session)
 	}
 
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.CommandContext(context.Background(), args[0], args[1:]...)
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 
 	ptyFile, err := pty.Start(cmd)
@@ -72,10 +73,10 @@ func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
 
 	go func() {
 		defer func() {
-			slave.pty.Close()
+			_ = slave.pty.Close()
 			close(slave.ptyClosed)
 		}()
-		slave.cmd.Wait()
+		_ = slave.cmd.Wait()
 	}()
 
 	return slave, nil
@@ -112,14 +113,14 @@ func (s *ZellijSlave) ResizeTerminal(width int, height int) error {
 
 func (s *ZellijSlave) Close() error {
 	if s.cmd != nil && s.cmd.Process != nil {
-		s.cmd.Process.Signal(s.closeSignal)
+		_ = s.cmd.Process.Signal(s.closeSignal)
 	}
 	for {
 		select {
 		case <-s.ptyClosed:
 			return nil
 		case <-s.closeTimeoutC():
-			s.cmd.Process.Signal(syscall.SIGKILL)
+			_ = s.cmd.Process.Signal(syscall.SIGKILL)
 		}
 	}
 }

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, ChevronUp, Plus, Check, X, Pencil, Trash2 } from 'lucide-react'
-import { Profile } from '../../types'
+import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Profile } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
 import './ProfileSelector.css'
 
@@ -20,9 +20,23 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const fetchProfiles = useCallback(async () => {
+    try {
+      const auth = getAuthHeader()
+      const headers: Record<string, string> = {}
+      if (auth) headers.Authorization = auth
+      const res = await fetch('/api/profiles', { headers })
+      const data = await res.json()
+      setProfiles(data.profiles || [])
+      if (!currentProfile && data.profiles?.length > 0) {
+        onProfileChange(data.profiles[0])
+      }
+    } catch (_err) {}
+  }, [currentProfile, onProfileChange])
+
   useEffect(() => {
     fetchProfiles()
-  }, [])
+  }, [fetchProfiles])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -41,35 +55,23 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     }
   }, [isCreating])
 
-  const fetchProfiles = async () => {
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch('/api/profiles', { headers })
-      const data = await res.json()
-      setProfiles(data.profiles || [])
-      if (!currentProfile && data.profiles?.length > 0) {
-        onProfileChange(data.profiles[0])
-      }
-    } catch (err) {
-      console.error('Failed to fetch profiles:', err)
-    }
-  }
-
   const createProfile = async () => {
     if (!newName.trim() || loading) return
     setLoading(true)
     try {
       const name = newName.trim()
-      const profile_key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `profile-${Date.now()}`
+      const profile_key =
+        name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || `profile-${Date.now()}`
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch('/api/profiles', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ name, profile_key })
+        body: JSON.stringify({ name, profile_key }),
       })
       const data = await res.json()
       if (data.id) {
@@ -77,15 +79,14 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
           id: data.id,
           profile_key: data.profile_key,
           name: data.name,
-          sort_order: profiles.length
+          sort_order: profiles.length,
         }
         setProfiles([...profiles, newProfile])
         onProfileChange(newProfile)
         setNewName('')
         setIsCreating(false)
       }
-    } catch (err) {
-      console.error('Failed to create profile:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -97,20 +98,19 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       await fetch(`/api/profiles/${currentProfile.id}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ name: editName.trim() })
+        body: JSON.stringify({ name: editName.trim() }),
       })
-      const updated = profiles.map(p =>
-        p.id === currentProfile.id ? { ...p, name: editName.trim() } : p
+      const updated = profiles.map((p) =>
+        p.id === currentProfile.id ? { ...p, name: editName.trim() } : p,
       )
       setProfiles(updated)
       onProfileChange({ ...currentProfile, name: editName.trim() })
       setIsEditing(false)
-    } catch (err) {
-      console.error('Failed to update profile:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -123,17 +123,16 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       await fetch(`/api/profiles/${currentProfile.id}`, {
         method: 'DELETE',
-        headers
+        headers,
       })
-      const remaining = profiles.filter(p => p.id !== currentProfile.id)
+      const remaining = profiles.filter((p) => p.id !== currentProfile.id)
       setProfiles(remaining)
       onProfileChange(remaining[0]!)
       setIsEditing(false)
-    } catch (err) {
-      console.error('Failed to delete profile:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -159,7 +158,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
       {isOpen && (
         <div className="profile-dropdown">
           <div className="profile-list">
-            {profiles.map(profile => (
+            {profiles.map((profile) => (
               <div
                 key={profile.id}
                 className={`profile-item ${profile.id === currentProfile?.id ? 'active' : ''}`}
@@ -181,13 +180,17 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
                   ref={inputRef}
                   type="text"
                   value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  onKeyDown={e => handleKeyDown(e, createProfile)}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, createProfile)}
                   placeholder="Profile name..."
                   className="profile-input"
                   disabled={loading}
                 />
-                <button onClick={createProfile} disabled={loading || !newName.trim()} className="btn-confirm">
+                <button
+                  onClick={createProfile}
+                  disabled={loading || !newName.trim()}
+                  className="btn-confirm"
+                >
                   <Check size={14} />
                 </button>
                 <button onClick={() => setIsCreating(false)} className="btn-cancel">
@@ -208,13 +211,17 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
                   <input
                     type="text"
                     value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    onKeyDown={e => handleKeyDown(e, updateProfile)}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, updateProfile)}
                     placeholder="Rename profile..."
                     className="profile-input"
                     disabled={loading}
                   />
-                  <button onClick={updateProfile} disabled={loading || !editName.trim()} className="btn-confirm">
+                  <button
+                    onClick={updateProfile}
+                    disabled={loading || !editName.trim()}
+                    className="btn-confirm"
+                  >
                     <Check size={14} />
                   </button>
                   <button onClick={() => setIsEditing(false)} className="btn-cancel">

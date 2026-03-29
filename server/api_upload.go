@@ -36,7 +36,7 @@ func (server *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, "file field required: "+err.Error())
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Ensure upload directory exists.
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
@@ -55,7 +55,7 @@ func (server *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusInternalServerError, "failed to create file: "+err.Error())
 		return
 	}
-	defer dst.Close()
+	defer func() { _ = dst.Close() }()
 
 	written, err := io.Copy(dst, file)
 	if err != nil {

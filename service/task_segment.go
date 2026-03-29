@@ -268,5 +268,3 @@ func (s *TaskSegmentService) AddCommandRecord(segmentID, command string, exitCod
 func yearMonth(t time.Time) (int, int) {
 	return t.Year(), int(t.Month())
 }
-
-

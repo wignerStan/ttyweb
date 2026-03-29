@@ -1,10 +1,10 @@
-import { RefreshCw, X, Settings, LogOut } from 'lucide-react'
-import { TmuxSession, Profile, SessionGroup } from '../types'
-import { ProfileSelector } from '../shared/components/ProfileSelector'
-import { GroupManager } from '../shared/components/GroupManager'
-import { TmuxTree } from '../shared/components/TmuxTree'
-import { TaskStatBadges } from '../shared/components/TaskStatBadges'
+import { LogOut, RefreshCw, Settings, X } from 'lucide-react'
 import { useState } from 'react'
+import { GroupManager } from '../shared/components/GroupManager'
+import { ProfileSelector } from '../shared/components/ProfileSelector'
+import { TaskStatBadges } from '../shared/components/TaskStatBadges'
+import { TmuxTree } from '../shared/components/TmuxTree'
+import type { Profile, SessionGroup, TmuxSession } from '../types'
 
 interface Props {
   open: boolean
@@ -44,7 +44,7 @@ export function MobileDrawer({
 
   const handlePaneStatusClick = (paneKey: string) => {
     onPaneStatusClick?.(paneKey)
-    onClose()  // close drawer, right panel will open
+    onClose() // close drawer, right panel will open
   }
 
   return (
@@ -59,28 +59,13 @@ export function MobileDrawer({
           >
             <Settings size={18} />
           </button>
-          <button
-            className="mobile-drawer-btn"
-            onClick={onRefresh}
-            type="button"
-            title="Refresh"
-          >
+          <button className="mobile-drawer-btn" onClick={onRefresh} type="button" title="Refresh">
             <RefreshCw size={18} />
           </button>
-          <button
-            className="mobile-drawer-btn"
-            onClick={onLogout}
-            type="button"
-            title="Sign out"
-          >
+          <button className="mobile-drawer-btn" onClick={onLogout} type="button" title="Sign out">
             <LogOut size={16} />
           </button>
-          <button
-            className="mobile-drawer-btn"
-            onClick={onClose}
-            type="button"
-            title="Close"
-          >
+          <button className="mobile-drawer-btn" onClick={onClose} type="button" title="Close">
             <X size={18} />
           </button>
         </div>
@@ -88,10 +73,7 @@ export function MobileDrawer({
 
       <div className="mobile-drawer-content">
         <div className="mobile-drawer-profile">
-          <ProfileSelector
-            currentProfile={currentProfile}
-            onProfileChange={onProfileChange}
-          />
+          <ProfileSelector currentProfile={currentProfile} onProfileChange={onProfileChange} />
         </div>
 
         {/* Task stat badges — compact, always visible */}

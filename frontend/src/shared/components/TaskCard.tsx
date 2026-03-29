@@ -1,4 +1,4 @@
-import { Task } from '../../types'
+import type { Task } from '../../types'
 
 interface Props {
   task: Task
@@ -15,7 +15,7 @@ export function TaskCard({ task, isCurrent = false, onComplete, onSelect }: Prop
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })
   }
 

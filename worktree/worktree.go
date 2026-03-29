@@ -3,6 +3,7 @@
 package worktree
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -18,21 +19,21 @@ import (
 
 // WorktreeInfo describes a single worktree in a repository.
 type WorktreeInfo struct {
-	Path       string `json:"path"`
-	Branch     string `json:"branch"`
-	IsMain     bool   `json:"isMain"`
-	HeadCommit string `json:"headCommit"`
+	Path        string `json:"path"`
+	Branch      string `json:"branch"`
+	IsMain      bool   `json:"isMain"`
+	HeadCommit  string `json:"headCommit"`
 	HeadMessage string `json:"headMessage,omitempty"`
 }
 
 // WorktreeStatus holds counts describing the state of a worktree.
 type WorktreeStatus struct {
-	Ahead      int `json:"ahead"`
-	Behind     int `json:"behind"`
-	Modified   int `json:"modified"`
-	Staged     int `json:"staged"`
-	Untracked  int `json:"untracked"`
-	Conflicts  int `json:"conflicts"`
+	Ahead     int `json:"ahead"`
+	Behind    int `json:"behind"`
+	Modified  int `json:"modified"`
+	Staged    int `json:"staged"`
+	Untracked int `json:"untracked"`
+	Conflicts int `json:"conflicts"`
 }
 
 var (
@@ -84,7 +85,7 @@ func SetTestEnv(env []string) {
 
 // newGitCmd creates a git exec.Cmd with safe env defaults.
 func newGitCmd(dir string, args ...string) *exec.Cmd {
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(context.Background(), "git", args...)
 	cmd.Env = append([]string(nil), gitCommandEnv...)
 
 	testEnvMu.RLock()
@@ -400,12 +401,12 @@ func parsePorcelainStatus(output string) *WorktreeStatus {
 			parseStatusHeader(status, strings.TrimSpace(line[2:]))
 			continue
 		}
-		switch {
-		case line[0] == '?':
+		switch line[0] {
+		case '?':
 			status.Untracked++
-		case line[0] == '1' || line[0] == '2':
+		case '1', '2':
 			parseTrackedLine(status, line)
-		case line[0] == 'u':
+		case 'u':
 			status.Conflicts++
 		}
 	}
@@ -486,6 +487,8 @@ func collectStatusGoGit(path string) (*WorktreeStatus, error) {
 		switch fs.Worktree {
 		case goGit.Modified, goGit.Added, goGit.Deleted, goGit.Renamed:
 			status.Modified++
+		case goGit.Unmodified, goGit.Untracked, goGit.Copied, goGit.UpdatedButUnmerged:
+			// handled above or no-op
 		}
 		if fs.Staging != goGit.Unmodified && fs.Staging != goGit.Untracked {
 			status.Staged++
@@ -493,4 +496,3 @@ func collectStatusGoGit(path string) (*WorktreeStatus, error) {
 	}
 	return status, nil
 }
-

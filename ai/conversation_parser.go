@@ -28,7 +28,7 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var messages []ConversationMessage
 	for scanner.Scan() {
@@ -189,9 +189,9 @@ func parseClaudeToolResultBlocks(blocks []interface{}, ts time.Time) []Conversat
 
 		contentText := renderClaudeBlocksToText(blockMap["content"])
 		messages = append(messages, ConversationMessage{
-			Role:       "user",
-			Content:    contentText,
-			Timestamp:  ts,
+			Role:      "user",
+			Content:   contentText,
+			Timestamp: ts,
 			ToolResult: []ToolResultBlock{{
 				ToolUseID: toolUseID,
 				Content:   contentText,
@@ -243,7 +243,7 @@ func ParseCodexConversation(filePath string) ([]ConversationMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var messages []ConversationMessage
 	for scanner.Scan() {

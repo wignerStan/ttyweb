@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ToolUseBlock, ToolResultBlock } from './types'
+import type { ToolResultBlock, ToolUseBlock } from './types'
 
 interface ToolResultInlineProps {
   toolUse: ToolUseBlock
@@ -57,9 +57,7 @@ export function ToolResultInline({ toolUse, toolResult }: ToolResultInlineProps)
         <span className="conv-tool-result-name">{toolUse.name}</span>
         {inputSummary && <span className="conv-tool-result-input">{inputSummary}</span>}
       </div>
-      {expanded && (
-        <div className="conv-tool-result-output">{output}</div>
-      )}
+      {expanded && <div className="conv-tool-result-output">{output}</div>}
     </div>
   )
 }

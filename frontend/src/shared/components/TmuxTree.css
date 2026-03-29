@@ -84,7 +84,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .refresh-btn:hover {
@@ -113,7 +115,6 @@
   white-space: nowrap;
   flex: 1;
 }
-
 
 /* Session-level status summary */
 .session-status-summary {
@@ -189,7 +190,9 @@
   padding: 1px 2px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
 }
 
 .window-row:hover .window-rename-btn {
@@ -240,7 +243,7 @@
 
 .pane-id {
   color: var(--zinc-400);
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-size: 11px;
 }
 
@@ -261,7 +264,9 @@
   padding: 0 2px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,7 +333,6 @@
   background: var(--zinc-800);
 }
 
-
 .rebuild-btn {
   background: none;
   border: none;
@@ -336,7 +340,9 @@
   padding: 2px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -455,7 +461,9 @@
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--zinc-800);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3);
   border: 1px solid var(--zinc-700);
   pointer-events: none;
 }

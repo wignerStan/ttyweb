@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react'
-import { Plus, Trash2, Play } from 'lucide-react'
+import { Play, Plus, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
 
 interface Snippet {
@@ -22,27 +22,31 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch('/api/snippets', { headers })
       if (res.ok) {
         const data = await res.json()
         setSnippets(data.snippets || [])
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, [])
 
-  useEffect(() => { fetchSnippets() }, [fetchSnippets])
+  useEffect(() => {
+    fetchSnippets()
+  }, [fetchSnippets])
 
   const handleAdd = useCallback(async () => {
     if (!newName.trim() || !newCommand.trim()) return
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch('/api/snippets', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ name: newName.trim(), command: newCommand.trim() })
+        body: JSON.stringify({ name: newName.trim(), command: newCommand.trim() }),
       })
       if (res.ok) {
         setNewName('')
@@ -50,24 +54,40 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
         setShowForm(false)
         await fetchSnippets()
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }, [newName, newCommand, fetchSnippets])
 
-  const handleDelete = useCallback(async (index: number) => {
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch(`/api/snippets?index=${index}`, {
-        method: 'DELETE',
-        headers
-      })
-      if (res.ok) await fetchSnippets()
-    } catch { /* non-critical */ }
-  }, [fetchSnippets])
+  const handleDelete = useCallback(
+    async (index: number) => {
+      try {
+        const auth = getAuthHeader()
+        const headers: Record<string, string> = {}
+        if (auth) headers.Authorization = auth
+        const res = await fetch(`/api/snippets?index=${index}`, {
+          method: 'DELETE',
+          headers,
+        })
+        if (res.ok) await fetchSnippets()
+      } catch {
+        /* non-critical */
+      }
+    },
+    [fetchSnippets],
+  )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '8px', gap: '6px', overflow: 'auto' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        padding: '8px',
+        gap: '6px',
+        overflow: 'auto',
+      }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ color: '#abb2bf', fontSize: '13px', fontWeight: 600 }}>命令片段</span>
         <button
@@ -91,19 +111,21 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
       </div>
 
       {showForm && (
-        <div style={{
-          background: '#1e2028',
-          border: '1px solid #2c313a',
-          borderRadius: '6px',
-          padding: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-        }}>
+        <div
+          style={{
+            background: '#1e2028',
+            border: '1px solid #2c313a',
+            borderRadius: '6px',
+            padding: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}
+        >
           <input
             placeholder="名称"
             value={newName}
-            onChange={e => setNewName(e.target.value)}
+            onChange={(e) => setNewName(e.target.value)}
             style={{
               background: '#13151a',
               border: '1px solid #2c313a',
@@ -117,8 +139,10 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
           <input
             placeholder="命令"
             value={newCommand}
-            onChange={e => setNewCommand(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
+            onChange={(e) => setNewCommand(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAdd()
+            }}
             style={{
               background: '#13151a',
               border: '1px solid #2c313a',
@@ -141,7 +165,7 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
               padding: '6px',
               fontSize: '12px',
               cursor: 'pointer',
-              opacity: (!newName.trim() || !newCommand.trim()) ? 0.5 : 1,
+              opacity: !newName.trim() || !newCommand.trim() ? 0.5 : 1,
             }}
             type="button"
           >
@@ -158,7 +182,7 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
 
       {snippets.map((s, i) => (
         <div
-          key={i}
+          key={s.name}
           style={{
             background: '#1a1c20',
             border: '1px solid #2c313a',
@@ -171,19 +195,21 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ color: '#9da5b4', fontSize: '12px', fontWeight: 500 }}>{s.name}</div>
-            <div style={{
-              color: '#98c379',
-              fontSize: '11px',
-              fontFamily: 'Menlo, Monaco, monospace',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
+            <div
+              style={{
+                color: '#98c379',
+                fontSize: '11px',
+                fontFamily: 'Menlo, Monaco, monospace',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {s.command}
             </div>
           </div>
           <button
-            onClick={() => onSend(s.command + '\n')}
+            onClick={() => onSend(`${s.command}\n`)}
             disabled={disabled}
             style={{
               background: '#4d78cc',

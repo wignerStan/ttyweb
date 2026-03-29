@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { Mic, MicOff, Loader2 } from 'lucide-react'
+import { Loader2, Mic, MicOff } from 'lucide-react'
+import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
 import './VoiceInput.css'
 
@@ -18,7 +18,10 @@ type Status = 'idle' | 'connecting' | 'recording' | 'processing'
 
 const CONNECT_TIMEOUT_MS = 10000
 
-export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function VoiceInput({ onText, onPartial, disabled }, ref) {
+export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function VoiceInput(
+  { onText, onPartial, disabled },
+  ref,
+) {
   const [status, setStatus] = useState<Status>('idle')
   const [partialText, setPartialText] = useState('')
   const wsRef = useRef<WebSocket | null>(null)
@@ -42,7 +45,9 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       audioContextRef.current = null
     }
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop())
+      mediaStreamRef.current.getTracks().forEach((track) => {
+        track.stop()
+      })
       mediaStreamRef.current = null
     }
     if (wsRef.current) {
@@ -52,7 +57,9 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
   }, [])
 
   const startAudioCapture = useCallback(async (stream: MediaStream) => {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     const audioContext = new AudioContextClass()
     audioContextRef.current = audioContext
 
@@ -87,7 +94,7 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       const pcmData = new Int16Array(outputData.length)
       for (let i = 0; i < outputData.length; i++) {
         const s = Math.max(-1, Math.min(1, outputData[i] ?? 0))
-        pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
+        pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff
       }
 
       const bytes = new Uint8Array(pcmData.buffer)
@@ -105,10 +112,12 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
 
   const startRecording = useCallback(async () => {
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (!navigator.mediaDevices?.getUserMedia) {
         const isHTTP = window.location.protocol === 'http:'
         if (isHTTP) {
-          alert('麦克风需要 HTTPS 才能使用。\n\n当前是 HTTP 连接，iOS/浏览器会阻止麦克风权限。\n\n解决方法：使用 localhost 或 HTTPS 地址访问。')
+          alert(
+            '麦克风需要 HTTPS 才能使用。\n\n当前是 HTTP 连接，iOS/浏览器会阻止麦克风权限。\n\n解决方法：使用 localhost 或 HTTPS 地址访问。',
+          )
         } else {
           alert('当前浏览器不支持麦克风功能。')
         }
@@ -126,11 +135,10 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
             sampleRate: 16000,
             channelCount: 1,
             echoCancellation: true,
-            noiseSuppression: true
-          }
+            noiseSuppression: true,
+          },
         })
       } catch (permErr) {
-        console.error('[Voice] Permission error:', permErr)
         if (permErr instanceof Error) {
           if (permErr.name === 'NotAllowedError') {
             alert('麦克风权限被拒绝。\n\n请在浏览器设置中允许麦克风权限，然后重试。')
@@ -138,9 +146,11 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
             alert('未检测到麦克风设备。')
           } else {
             const isHTTP = window.location.protocol === 'http:'
-            alert(isHTTP
-              ? '无法访问麦克风。\n\nHTTP 连接下麦克风被阻止，请使用 HTTPS 或 localhost 访问。'
-              : '无法访问麦克风: ' + permErr.message)
+            alert(
+              isHTTP
+                ? '无法访问麦克风。\n\nHTTP 连接下麦克风被阻止，请使用 HTTPS 或 localhost 访问。'
+                : `无法访问麦克风: ${permErr.message}`,
+            )
           }
         }
         setStatus('idle')
@@ -156,7 +166,6 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       ws.onopen = () => {
         ws.send(JSON.stringify({ type: 'start' }))
         connectTimeoutRef.current = setTimeout(() => {
-          console.warn('[Voice] Connection timeout — no ready message')
           cleanup()
           setStatus('idle')
           setPartialText('')
@@ -172,8 +181,7 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
             connectTimeoutRef.current = null
           }
           setStatus('recording')
-          startAudioCapture(stream).catch((err) => {
-            console.error('[VoiceInput] Audio capture failed:', err)
+          startAudioCapture(stream).catch((_err) => {
             cleanup()
             setStatus('idle')
           })
@@ -202,7 +210,6 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
           setStatus('idle')
           setPartialText('')
         } else if (data.type === 'error') {
-          console.error('Speech error:', data.message)
           cleanup()
           setStatus('idle')
           setPartialText('')
@@ -218,11 +225,9 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
         cleanup()
         setStatus('idle')
       }
-
     } catch (err) {
-      console.error('[Voice] Failed:', err)
       if (err instanceof Error) {
-        alert('语音功能出错: ' + err.message)
+        alert(`语音功能出错: ${err.message}`)
       }
       setStatus('idle')
     }
@@ -244,10 +249,14 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
     else if (status === 'recording') stopRecording()
   }, [status, startRecording, stopRecording])
 
-  useImperativeHandle(ref, () => ({
-    toggle: handleClick,
-    status,
-  }), [status, handleClick])
+  useImperativeHandle(
+    ref,
+    () => ({
+      toggle: handleClick,
+      status,
+    }),
+    [status, handleClick],
+  )
 
   const isWorking = status === 'connecting' || status === 'processing'
 
@@ -257,11 +266,23 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
         className={`voice-btn ${status}`}
         onMouseDown={(e) => e.preventDefault()}
         onTouchStart={(e) => e.preventDefault()}
-        onTouchEnd={(e) => { e.preventDefault(); if (!(disabled || isWorking)) handleClick() }}
-        onClick={(e) => { e.preventDefault(); handleClick() }}
+        onTouchEnd={(e) => {
+          e.preventDefault()
+          if (!(disabled || isWorking)) handleClick()
+        }}
+        onClick={(e) => {
+          e.preventDefault()
+          handleClick()
+        }}
         disabled={disabled || isWorking}
         title={status === 'idle' ? '语音输入' : status === 'recording' ? '停止录音' : '处理中...'}
-        style={{ touchAction: 'manipulation', WebkitUserSelect: 'none', userSelect: 'none' } as React.CSSProperties}
+        style={
+          {
+            touchAction: 'manipulation',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+          } as React.CSSProperties
+        }
         tabIndex={-1}
       >
         {isWorking ? (
@@ -272,9 +293,7 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
           <Mic size={24} />
         )}
       </button>
-      {partialText && (
-        <div className="voice-preview">{partialText}</div>
-      )}
+      {partialText && <div className="voice-preview">{partialText}</div>}
     </div>
   )
 })

@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/url"
@@ -15,7 +16,7 @@ var privateCIDRs = []string{
 	"127.0.0.0/8",
 	"169.254.0.0/16", // link-local
 	"::1/128",        // IPv6 loopback
-	"fc00::/7",        // IPv6 unique local
+	"fc00::/7",       // IPv6 unique local
 }
 
 // privateNetworks is parsed once at init time.
@@ -42,7 +43,7 @@ var ErrInvalidScheme = fmt.Errorf("URL must use HTTPS scheme")
 // loopback addresses and use non-HTTPS schemes (for local development).
 var localhostNames = map[string]bool{
 	"localhost": true,
-	"[::1]":    true,
+	"[::1]":     true,
 	"127.0.0.1": true,
 }
 
@@ -64,7 +65,7 @@ func APIURL(rawURL string) error {
 
 	if !isLocalhost {
 		// Resolve hostname to IPs to check for private ranges.
-		ips, err := net.LookupIP(host)
+		ips, err := net.DefaultResolver.LookupIPAddr(context.Background(), host)
 		if err != nil {
 			return fmt.Errorf("failed to resolve host %q: %w", host, err)
 		}
@@ -73,7 +74,8 @@ func APIURL(rawURL string) error {
 			return fmt.Errorf("host %q resolved to no addresses", host)
 		}
 
-		for _, ip := range ips {
+		for _, ipAddr := range ips {
+			ip := ipAddr.IP
 			if isPrivateIP(ip) {
 				return ErrPrivateIP
 			}

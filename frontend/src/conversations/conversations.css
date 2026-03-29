@@ -38,7 +38,7 @@
   font-size: 12px;
   border-radius: 2px;
   outline: none;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 }
 
 .conv-list-filter-input::placeholder {
@@ -141,7 +141,7 @@
   color: #7aa2f7;
   padding: 1px 5px;
   border-radius: 2px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 }
 
 .conv-session-item--selected .conv-session-badge {
@@ -210,7 +210,7 @@
 .conv-viewer-header-session-info {
   font-size: 11px;
   color: #565f89;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   white-space: nowrap;
 }
 
@@ -289,7 +289,7 @@
 
 .conv-msg-content {
   white-space: pre-wrap;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   font-size: 12px;
 }
 
@@ -309,7 +309,7 @@
   color: #565f89;
   margin-top: 4px;
   text-align: right;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 }
 
 /* ── Tool Use Summary ── */
@@ -318,7 +318,7 @@
   background: #24283b;
   color: #bb9af7;
   font-size: 11px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   padding: 2px 8px;
   border-radius: 3px;
   margin-top: 6px;
@@ -352,13 +352,13 @@
   font-size: 12px;
   font-weight: 600;
   color: #7aa2f7;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
 }
 
 .conv-tool-result-input {
   font-size: 11px;
   color: #565f89;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -380,7 +380,7 @@
   padding: 8px 10px;
   background: #16161e;
   font-size: 11px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   color: #a9b1d6;
   white-space: pre-wrap;
   word-break: break-word;
@@ -391,8 +391,12 @@
 
 /* ── Spin animation ── */
 @keyframes conv-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .conv-spinning {

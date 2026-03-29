@@ -1,101 +1,105 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import type React from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 interface Session {
-  name: string;
-  windows: number;
-  attached: boolean;
+  name: string
+  windows: number
+  attached: boolean
 }
 
 interface Pane {
-  id: string;
-  title: string;
-  current_command: string;
-  running: boolean;
+  id: string
+  title: string
+  current_command: string
+  running: boolean
 }
 
 interface SessionDetail {
-  name: string;
-  windows: number;
-  attached: boolean;
-  panes: Pane[];
+  name: string
+  windows: number
+  attached: boolean
+  panes: Pane[]
 }
 
 interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
+  success: boolean
+  data: T
+  error?: string
 }
 
 interface SidebarProps {
-  onSelect: (session: string, pane?: string) => void;
+  onSelect: (session: string, pane?: string) => void
 }
 
 export function Sidebar({ onSelect }: SidebarProps) {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [details, setDetails] = useState<Record<string, SessionDetail>>({});
-  const [newName, setNewName] = useState('');
-  const [error, setError] = useState('');
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [details, setDetails] = useState<Record<string, SessionDetail>>({})
+  const [newName, setNewName] = useState('')
+  const [error, setError] = useState('')
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch('/api/sessions');
-      const json: ApiResponse<Session[]> = await res.json();
+      const res = await fetch('/api/sessions')
+      const json: ApiResponse<Session[]> = await res.json()
       if (json.success) {
-        setSessions(json.data);
-        setError('');
+        setSessions(json.data)
+        setError('')
       } else {
-        setError(json.error ?? 'failed to list sessions');
+        setError(json.error ?? 'failed to list sessions')
       }
     } catch {
-      setError('failed to connect to server');
+      setError('failed to connect to server')
     }
-  }, []);
+  }, [])
 
-  const fetchDetail = useCallback(async (name: string) => {
-    if (details[name]) return;
-    try {
-      const res = await fetch(`/api/sessions/${encodeURIComponent(name)}`);
-      const json: ApiResponse<SessionDetail> = await res.json();
-      if (json.success) {
-        setDetails((prev) => ({ ...prev, [name]: json.data }));
+  const fetchDetail = useCallback(
+    async (name: string) => {
+      if (details[name]) return
+      try {
+        const res = await fetch(`/api/sessions/${encodeURIComponent(name)}`)
+        const json: ApiResponse<SessionDetail> = await res.json()
+        if (json.success) {
+          setDetails((prev) => ({ ...prev, [name]: json.data }))
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-  }, [details]);
+    },
+    [details],
+  )
 
   useEffect(() => {
-    fetchSessions();
-    const interval = setInterval(fetchSessions, 3000);
-    return () => clearInterval(interval);
-  }, [fetchSessions]);
+    fetchSessions()
+    const interval = setInterval(fetchSessions, 3000)
+    return () => clearInterval(interval)
+  }, [fetchSessions])
 
   const handleToggle = (name: string) => {
     if (expanded === name) {
-      setExpanded(null);
+      setExpanded(null)
     } else {
-      setExpanded(name);
-      fetchDetail(name);
+      setExpanded(name)
+      fetchDetail(name)
     }
-  };
+  }
 
   const handleCreate = async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim()) return
     await fetch('/api/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newName.trim() }),
-    });
-    setNewName('');
-    fetchSessions();
-  };
+    })
+    setNewName('')
+    fetchSessions()
+  }
 
   const handleKill = async (name: string) => {
-    await fetch(`/api/sessions/${encodeURIComponent(name)}`, { method: 'DELETE' });
-    if (expanded === name) setExpanded(null);
-    fetchSessions();
-  };
+    await fetch(`/api/sessions/${encodeURIComponent(name)}`, { method: 'DELETE' })
+    if (expanded === name) setExpanded(null)
+    fetchSessions()
+  }
 
   return (
     <div style={styles.container}>
@@ -109,7 +113,9 @@ export function Sidebar({ onSelect }: SidebarProps) {
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="new session"
           />
-          <button style={styles.createBtn} onClick={handleCreate}>+</button>
+          <button style={styles.createBtn} onClick={handleCreate}>
+            +
+          </button>
         </div>
       </div>
 
@@ -120,11 +126,16 @@ export function Sidebar({ onSelect }: SidebarProps) {
           <div key={s.name}>
             <div style={styles.sessionRow} onClick={() => handleToggle(s.name)}>
               <span style={styles.expandIcon}>{expanded === s.name ? '▼' : '▶'}</span>
-              <span style={styles.sessionName} data-testid="session-name">{s.name}</span>
+              <span style={styles.sessionName} data-testid="session-name">
+                {s.name}
+              </span>
               {s.attached && <span style={styles.badge}>A</span>}
               <button
                 style={styles.killBtn}
-                onClick={(e) => { e.stopPropagation(); handleKill(s.name); }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleKill(s.name)
+                }}
                 title="Kill session"
               >
                 ×
@@ -133,33 +144,24 @@ export function Sidebar({ onSelect }: SidebarProps) {
 
             {expanded === s.name && details[s.name] && (
               <div style={styles.paneList}>
-                {details[s.name]!.panes.map((p) => (
-                  <div
-                    key={p.id}
-                    style={styles.paneRow}
-                    onClick={() => onSelect(s.name, p.id)}
-                  >
+                {details[s.name]?.panes.map((p) => (
+                  <div key={p.id} style={styles.paneRow} onClick={() => onSelect(s.name, p.id)}>
                     <span style={styles.paneId}>{p.id}</span>
                     <span style={styles.paneCmd}>{p.current_command}</span>
                     {!p.running && <span style={styles.deadBadge}>dead</span>}
                   </div>
                 ))}
-                <div
-                  style={styles.connectAll}
-                  onClick={() => onSelect(s.name)}
-                >
+                <div style={styles.connectAll} onClick={() => onSelect(s.name)}>
                   Connect to session
                 </div>
               </div>
             )}
           </div>
         ))}
-        {sessions.length === 0 && !error && (
-          <div style={styles.empty}>No sessions found</div>
-        )}
+        {sessions.length === 0 && !error && <div style={styles.empty}>No sessions found</div>}
       </div>
     </div>
-  );
+  )
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -285,4 +287,4 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     textAlign: 'center' as const,
   },
-};
+}

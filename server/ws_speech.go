@@ -60,14 +60,17 @@ func (s *speechSession) closeBoth() {
 	}
 	close(s.done)
 	if s.xunfeiConn != nil {
-		s.xunfeiConn.Close()
+		_ = s.xunfeiConn.Close()
 		s.xunfeiConn = nil
 	}
-	s.clientConn.Close()
+	if s.clientConn != nil {
+		_ = s.clientConn.Close()
+		s.clientConn = nil
+	}
 }
 
 func (s *speechSession) sendError(msg string) {
-	s.clientConn.WriteJSON(serverMessage{Type: "error", Message: msg})
+	_ = s.clientConn.WriteJSON(serverMessage{Type: "error", Message: msg})
 }
 
 // handleSpeechWS handles WebSocket connections to /ws/speech.
@@ -78,7 +81,7 @@ func (server *Server) handleSpeechWS(w http.ResponseWriter, r *http.Request) {
 	if !xunfeiCfg.IsConfigured() {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusServiceUnavailable)
-		json.NewEncoder(w).Encode(serverMessage{
+		_ = json.NewEncoder(w).Encode(serverMessage{
 			Type:    "error",
 			Message: "Xunfei STT is not configured. Set XFYUN_APP_ID, XFYUN_API_KEY, and XFYUN_API_SECRET environment variables.",
 		})
@@ -90,7 +93,7 @@ func (server *Server) handleSpeechWS(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[Speech] Failed to upgrade WebSocket: %v", err)
 		return
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	log.Printf("[Speech] Client connected: %s", r.RemoteAddr)
 
@@ -178,11 +181,14 @@ func (s *speechSession) handleStart() {
 	}
 
 	log.Printf("[Speech] Connecting to Xunfei...")
-	xfConn, _, err := websocket.DefaultDialer.Dial(authURL, nil)
+	xfConn, xfResp, err := websocket.DefaultDialer.Dial(authURL, nil)
 	if err != nil {
 		s.sendError("failed to connect to Xunfei: " + err.Error())
 		s.closeBoth()
 		return
+	}
+	if xfResp != nil {
+		_ = xfResp.Body.Close()
 	}
 
 	s.mu.Lock()
@@ -203,7 +209,7 @@ func (s *speechSession) handleStart() {
 
 // relayXunfeiToClient reads messages from Xunfei and forwards parsed results to the client.
 func (s *speechSession) relayXunfeiToClient(xfConn *websocket.Conn) {
-	defer xfConn.Close()
+	defer func() { _ = xfConn.Close() }()
 
 	for {
 		_, raw, err := xfConn.ReadMessage()

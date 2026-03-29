@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Menu, X, History, ScrollText } from 'lucide-react'
-import { MobileDrawer } from './MobileDrawer'
-import { MobileTerminal } from './MobileTerminal'
-import { TaskHistoryPanel } from '../shared/components/TaskHistoryPanel'
+import { History, Menu, ScrollText, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import useShakeDetect from '../hooks/useShakeDetect'
+import useVisualViewport from '../hooks/useVisualViewport'
 import { ImperialStudyPanel } from '../shared/components/imperial-study/components/ImperialStudyPanel'
 import { LoginModal } from '../shared/components/LoginModal'
-import { checkAuth, logout, getAuthHeader } from '../utils/auth'
-import { TmuxSession, OpenTab, Profile, SessionGroup } from '../types'
-import useVisualViewport from '../hooks/useVisualViewport'
-import useShakeDetect from '../hooks/useShakeDetect'
-import { VoiceInputHandle } from '../shared/components/VoiceInput'
+import { TaskHistoryPanel } from '../shared/components/TaskHistoryPanel'
+import type { VoiceInputHandle } from '../shared/components/VoiceInput'
+import type { OpenTab, Profile, SessionGroup, TmuxSession } from '../types'
+import { checkAuth, getAuthHeader, logout } from '../utils/auth'
+import { MobileDrawer } from './MobileDrawer'
+import { MobileTerminal } from './MobileTerminal'
 import './mobile.css'
 
 interface MobileTab extends OpenTab {
@@ -33,8 +33,8 @@ function getPaneKey(sessions: TmuxSession[], paneId: string): string | null {
     for (let wi = 0; wi < s.windows.length; wi++) {
       const w = s.windows[wi]!
       for (let pi = 0; pi < w.panes.length; pi++) {
-        if (w.panes[pi]!.paneId === paneId) {
-          return `${s.sessionName}:${w.windowIndex}:${w.panes[pi]!.paneId}`
+        if (w.panes[pi]?.paneId === paneId) {
+          return `${s.sessionName}:${w.windowIndex}:${w.panes[pi]?.paneId}`
         }
       }
     }
@@ -59,7 +59,9 @@ function loadTabs(): MobileTab[] {
   try {
     const raw = localStorage.getItem('mobile-openTabs')
     return raw ? JSON.parse(raw) : []
-  } catch { return [] }
+  } catch {
+    return []
+  }
 }
 
 function saveTabs(tabs: MobileTab[]) {
@@ -100,15 +102,24 @@ export default function MobileApp() {
 
   const voiceRef = useRef<VoiceInputHandle>(null)
 
-  useEffect(() => { saveTabs(tabs) }, [tabs])
-  useEffect(() => { saveActiveTabId(activeTabId) }, [activeTabId])
-  useEffect(() => { setTaskHistoryPaneKey(null) }, [activeTabId])
+  useEffect(() => {
+    saveTabs(tabs)
+  }, [tabs])
+  useEffect(() => {
+    saveActiveTabId(activeTabId)
+  }, [activeTabId])
+  useEffect(() => {
+    setTaskHistoryPaneKey(null)
+  }, [])
 
   useVisualViewport()
 
-  useShakeDetect(() => {
-    voiceRef.current?.toggle()
-  }, { enabled: tabs.length > 0 })
+  useShakeDetect(
+    () => {
+      voiceRef.current?.toggle()
+    },
+    { enabled: tabs.length > 0 },
+  )
 
   const handleFontSizeChange = useCallback((size: number) => {
     setFontSize(size)
@@ -121,7 +132,7 @@ export default function MobileApp() {
   const fetchSeqRef = useRef(0)
 
   useEffect(() => {
-    checkAuth().then(ok => setIsAuthenticated(ok))
+    checkAuth().then((ok) => setIsAuthenticated(ok))
   }, [])
 
   const fetchTree = useCallback(async () => {
@@ -130,7 +141,7 @@ export default function MobileApp() {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch('/api/tmux/tree', { headers })
       if (!res.ok) throw new Error('Failed to fetch tree')
       const data = await res.json()
@@ -143,11 +154,11 @@ export default function MobileApp() {
 
       const allIds = getAllPaneIds(newSessions)
       const currentTabs = tabsRef.current
-      const validTabs = currentTabs.filter(t => allIds.has(t.paneId))
+      const validTabs = currentTabs.filter((t) => allIds.has(t.paneId))
       if (validTabs.length !== currentTabs.length) {
         setTabs(validTabs)
-        setActiveTabId(prev => {
-          if (prev && validTabs.some(t => t.id === prev)) return prev
+        setActiveTabId((prev) => {
+          if (prev && validTabs.some((t) => t.id === prev)) return prev
           return validTabs[0]?.id ?? null
         })
       }
@@ -165,13 +176,14 @@ export default function MobileApp() {
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, { headers })
+      if (auth) headers.Authorization = auth
+      const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, {
+        headers,
+      })
       if (!res.ok) throw new Error('Failed to fetch groups')
       const data = await res.json()
       setGroups(data.data?.groups || data.groups || [])
-    } catch (err) {
-      console.error('Failed to fetch groups:', err)
+    } catch (_err) {
       setGroups([])
     }
   }, [])
@@ -182,12 +194,15 @@ export default function MobileApp() {
     }
   }, [isAuthenticated, fetchTree])
 
-  const handleProfileChange = useCallback((profile: Profile) => {
-    setCurrentProfile(profile)
-    setGroups([])
-    fetchTree()
-    fetchGroups(profile.profile_key)
-  }, [fetchTree, fetchGroups])
+  const handleProfileChange = useCallback(
+    (profile: Profile) => {
+      setCurrentProfile(profile)
+      setGroups([])
+      fetchTree()
+      fetchGroups(profile.profile_key)
+    },
+    [fetchTree, fetchGroups],
+  )
 
   const handleGroupsChanged = useCallback(() => {
     fetchTree()
@@ -196,20 +211,28 @@ export default function MobileApp() {
     }
   }, [fetchTree, fetchGroups, currentProfile])
 
-  const handleSelectPane = useCallback((paneId: string, paneName: string) => {
-    setTabs(prev => {
-      const existing = prev.find(t => t.paneId === paneId)
-      if (existing) {
-        setActiveTabId(existing.id)
-        return prev
-      }
-      const sessionName = getSessionForPane(sessions, paneId) || ''
-      const newTab: MobileTab = { id: `tab-${paneId}`, paneId, title: paneName, session: sessionName }
-      setActiveTabId(newTab.id)
-      return [...prev, newTab]
-    })
-    setDrawerOpen(false)
-  }, [sessions])
+  const handleSelectPane = useCallback(
+    (paneId: string, paneName: string) => {
+      setTabs((prev) => {
+        const existing = prev.find((t) => t.paneId === paneId)
+        if (existing) {
+          setActiveTabId(existing.id)
+          return prev
+        }
+        const sessionName = getSessionForPane(sessions, paneId) || ''
+        const newTab: MobileTab = {
+          id: `tab-${paneId}`,
+          paneId,
+          title: paneName,
+          session: sessionName,
+        }
+        setActiveTabId(newTab.id)
+        return [...prev, newTab]
+      })
+      setDrawerOpen(false)
+    },
+    [sessions],
+  )
 
   const handlePaneStatusClick = useCallback((paneKey: string) => {
     setTaskHistoryPaneKey(paneKey)
@@ -217,14 +240,14 @@ export default function MobileApp() {
   }, [])
 
   const handleCloseTab = useCallback((tabId: string) => {
-    setTabs(prev => {
-      const idx = prev.findIndex(t => t.id === tabId)
-      const next = prev.filter(t => t.id !== tabId)
-      setActiveTabId(prevActive => {
+    setTabs((prev) => {
+      const idx = prev.findIndex((t) => t.id === tabId)
+      const next = prev.filter((t) => t.id !== tabId)
+      setActiveTabId((prevActive) => {
         if (prevActive !== tabId) return prevActive
         if (next.length === 0) return null
         const newIdx = Math.min(idx, next.length - 1)
-        return next[newIdx]!.id
+        return next[newIdx]?.id ?? null
       })
       return next
     })
@@ -245,16 +268,16 @@ export default function MobileApp() {
   }, [])
 
   const toggleDrawer = useCallback(() => {
-    setDrawerOpen(prev => !prev)
+    setDrawerOpen((prev) => !prev)
   }, [])
 
-  const activeTab = tabs.find(t => t.id === activeTabId) ?? null
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
   const activePaneKey = useMemo(() => {
     return activeTab ? getPaneKey(sessions, activeTab.paneId) : null
   }, [activeTab, sessions])
 
   const toggleRightPanel = useCallback(() => {
-    setRightPanelOpen(prev => {
+    setRightPanelOpen((prev) => {
       const next = !prev
       if (next && !taskHistoryPaneKey) {
         setTaskHistoryPaneKey(activePaneKey)
@@ -289,7 +312,7 @@ export default function MobileApp() {
         </button>
         {tabs.length > 0 ? (
           <div className="mobile-tabs-bar">
-            {tabs.map(tab => (
+            {tabs.map((tab) => (
               <div
                 key={tab.id}
                 className={`mobile-tab ${tab.id === activeTabId ? 'active' : ''}`}
@@ -298,7 +321,10 @@ export default function MobileApp() {
                 <span className="mobile-tab-title">{tab.title}</span>
                 <button
                   className="mobile-tab-close"
-                  onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id) }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleCloseTab(tab.id)
+                  }}
                   type="button"
                 >
                   <X size={12} />
@@ -311,10 +337,20 @@ export default function MobileApp() {
         )}
         {activeTab && (
           <>
-            <button className="mobile-menu-btn" onClick={() => setImperialOpen(true)} type="button" title="Imperial Study">
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setImperialOpen(true)}
+              type="button"
+              title="Imperial Study"
+            >
               <ScrollText size={22} />
             </button>
-            <button className="mobile-menu-btn" onClick={toggleRightPanel} type="button" title="Task history">
+            <button
+              className="mobile-menu-btn"
+              onClick={toggleRightPanel}
+              type="button"
+              title="Task history"
+            >
               <History size={22} />
             </button>
           </>
@@ -322,14 +358,25 @@ export default function MobileApp() {
       </header>
 
       {(drawerOpen || rightPanelOpen || imperialOpen) && (
-        <div className="mobile-overlay" onClick={() => { setDrawerOpen(false); setRightPanelOpen(false); setImperialOpen(false) }} />
+        <div
+          className="mobile-overlay"
+          onClick={() => {
+            setDrawerOpen(false)
+            setRightPanelOpen(false)
+            setImperialOpen(false)
+          }}
+        />
       )}
 
       {imperialOpen && (
         <div className="mobile-imperial-panel">
           <header className="mobile-imperial-header">
             <span>Imperial Study</span>
-            <button className="mobile-menu-btn" onClick={() => setImperialOpen(false)} type="button">
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setImperialOpen(false)}
+              type="button"
+            >
               <X size={22} />
             </button>
           </header>
@@ -357,7 +404,7 @@ export default function MobileApp() {
           <TaskHistoryPanel
             paneKey={historyPaneKey}
             onClose={() => setRightPanelOpen(false)}
-            onStatusChange={() => setStatusRefreshToken(prev => prev + 1)}
+            onStatusChange={() => setStatusRefreshToken((prev) => prev + 1)}
           />
         )}
       </aside>
@@ -365,7 +412,7 @@ export default function MobileApp() {
       <main className="mobile-main">
         {tabs.length > 0 ? (
           <div className="mobile-tabs-content">
-            {tabs.map(tab => (
+            {tabs.map((tab) => (
               <div
                 key={tab.id}
                 className={`mobile-tab-panel ${tab.id === activeTabId ? 'visible' : 'hidden'}`}
@@ -377,14 +424,20 @@ export default function MobileApp() {
                   onFontSizeChange={handleFontSizeChange}
                   voiceRef={tab.id === activeTabId ? voiceRef : undefined}
                   taskHistoryPaneKey={tab.id === activeTabId ? historyPaneKey : null}
-                  onStatusChange={tab.id === activeTabId ? () => setStatusRefreshToken(prev => prev + 1) : undefined}
+                  onStatusChange={
+                    tab.id === activeTabId
+                      ? () => setStatusRefreshToken((prev) => prev + 1)
+                      : undefined
+                  }
                 />
               </div>
             ))}
           </div>
         ) : (
           <div className="mobile-placeholder">
-            <p>Tap <Menu size={20} /> to select a terminal</p>
+            <p>
+              Tap <Menu size={20} /> to select a terminal
+            </p>
           </div>
         )}
       </main>

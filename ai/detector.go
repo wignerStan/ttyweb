@@ -6,9 +6,9 @@ import "strings"
 type AssistantType string
 
 const (
-	AssistantTypeUnknown   AssistantType = ""
+	AssistantTypeUnknown    AssistantType = ""
 	AssistantTypeClaudeCode AssistantType = "claude_code"
-	AssistantTypeCodex     AssistantType = "codex"
+	AssistantTypeCodex      AssistantType = "codex"
 )
 
 // String returns the string representation of the assistant type.
@@ -23,8 +23,10 @@ func (t AssistantType) DisplayName() string {
 		return "Claude Code"
 	case AssistantTypeCodex:
 		return "OpenAI Codex"
-	default:
+	case AssistantTypeUnknown:
 		return ""
+	default:
+		return string(t)
 	}
 }
 

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
-import type { AISession, ConversationMessage, ApiResponse } from './types'
+import { useCallback, useEffect, useState } from 'react'
 import { getAuthHeader } from '../utils/auth'
+import type { AISession, ApiResponse, ConversationMessage } from './types'
 
 function authHeaders(): Record<string, string> {
   const auth = getAuthHeader()
@@ -43,12 +43,11 @@ export function useConversations(projectPath: string | null) {
 
 async function fetchMessages(
   sessionId: string,
-  endpoint: 'conversation' | 'refresh'
+  endpoint: 'conversation' | 'refresh',
 ): Promise<{ data: ConversationMessage[]; error: string }> {
-  const res = await fetch(
-    `/api/ai/sessions/${encodeURIComponent(sessionId)}/${endpoint}`,
-    { headers: authHeaders() }
-  )
+  const res = await fetch(`/api/ai/sessions/${encodeURIComponent(sessionId)}/${endpoint}`, {
+    headers: authHeaders(),
+  })
   const json: ApiResponse<ConversationMessage[]> = await res.json()
   if (json.success) {
     return { data: json.data, error: '' }
@@ -61,20 +60,23 @@ export function useConversation(sessionId: string | null) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const load = useCallback(async (endpoint: 'conversation' | 'refresh') => {
-    if (!sessionId) return
-    setLoading(true)
-    setError('')
-    try {
-      const result = await fetchMessages(sessionId, endpoint)
-      setMessages(result.data)
-      setError(result.error)
-    } catch {
-      setError('Failed to connect to server')
-    } finally {
-      setLoading(false)
-    }
-  }, [sessionId])
+  const load = useCallback(
+    async (endpoint: 'conversation' | 'refresh') => {
+      if (!sessionId) return
+      setLoading(true)
+      setError('')
+      try {
+        const result = await fetchMessages(sessionId, endpoint)
+        setMessages(result.data)
+        setError(result.error)
+      } catch {
+        setError('Failed to connect to server')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [sessionId],
+  )
 
   useEffect(() => {
     setMessages([])

@@ -1,6 +1,6 @@
-import { useConversation } from './useConversations'
 import { ConversationMessage } from './ConversationMessage'
 import type { AISession } from './types'
+import { useConversation } from './useConversations'
 import './conversations.css'
 
 interface ConversationViewerProps {
@@ -29,13 +29,9 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
         <button className="conv-viewer-header-btn" onClick={onBack}>
           &#9664; Back
         </button>
-        <span className="conv-viewer-header-title">
-          {sessionInfo?.title ?? 'Loading...'}
-        </span>
+        <span className="conv-viewer-header-title">{sessionInfo?.title ?? 'Loading...'}</span>
         {sessionInfo && (
-          <span className="conv-viewer-header-session-info">
-            {sessionInfo.model}
-          </span>
+          <span className="conv-viewer-header-session-info">{sessionInfo.model}</span>
         )}
         <button
           className={`conv-viewer-header-btn${loading ? ' conv-viewer-header-btn--disabled' : ''}`}
@@ -50,7 +46,9 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
       {error && (
         <div className="conv-viewer-error">
           <span>{error}</span>
-          <button className="conv-viewer-header-btn" onClick={refresh}>Retry</button>
+          <button className="conv-viewer-header-btn" onClick={refresh}>
+            Retry
+          </button>
         </div>
       )}
 
@@ -62,8 +60,8 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
         ) : messages.length === 0 && !error ? (
           <div className="conv-viewer-empty">No messages in this conversation</div>
         ) : (
-          messages.map((msg, idx) => (
-            <ConversationMessage key={`${msg.role}-${msg.timestamp}-${idx}`} message={msg} />
+          messages.map((msg) => (
+            <ConversationMessage key={`${msg.role}-${msg.timestamp}`} message={msg} />
           ))
         )}
       </div>

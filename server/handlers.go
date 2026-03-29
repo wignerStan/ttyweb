@@ -3,11 +3,11 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"crypto/subtle"
 	"net/url"
 	"sync/atomic"
 
@@ -63,7 +63,7 @@ func (server *Server) generateHandleWS(ctx context.Context, cancel context.Cance
 		log.Printf("New client connected: %s, connections: %d/%d", r.RemoteAddr, num, server.options.MaxConnection)
 
 		if r.Method != "GET" {
-			http.Error(w, "Method not allowed", 405)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -72,7 +72,7 @@ func (server *Server) generateHandleWS(ctx context.Context, cancel context.Cance
 			closeReason = err.Error()
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		if server.options.PassHeaders {
 			err = server.processWSConn(ctx, conn, r.Header)
@@ -139,13 +139,13 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	if err != nil {
 		return errors.Wrapf(err, "failed to create backend")
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	titleVars := server.titleVariables(
 		[]string{"server", "master", "slave"},
 		map[string]map[string]interface{}{
 			"server": server.options.TitleVariables,
-			"master": map[string]interface{}{
+			"master": {
 				"remote_addr": conn.RemoteAddr(),
 			},
 			"slave": slave.WindowTitleVariables(),
@@ -185,7 +185,7 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 
 func (server *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(indexHTML)
+	_, _ = w.Write(indexHTML)
 }
 
 // titleVariables merges maps in a specified order.

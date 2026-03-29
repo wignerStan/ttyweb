@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { AiConversation } from '../types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { AiConversation } from '../types'
 import { getAuthHeader } from '../utils/auth'
 
 export function useAIConversations(paneKey: string | null) {
@@ -13,12 +13,11 @@ export function useAIConversations(paneKey: string | null) {
     try {
       const authHeader = getAuthHeader()
       const res = await fetch(`/api/tasks/events/${encodeURIComponent(paneKey)}`, {
-        headers: authHeader ? { 'Authorization': authHeader } : undefined,
+        headers: authHeader ? { Authorization: authHeader } : undefined,
       })
       const data = await res.json()
       setConversations(data.conversations || [])
-    } catch (err) {
-      console.error('Failed to fetch AI conversations:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
     }
@@ -33,7 +32,9 @@ export function useAIConversations(paneKey: string | null) {
     fetchConversations()
 
     const auth = getAuthHeader() || ''
-    const es = new EventSource(`/api/tasks/events/stream/${encodeURIComponent(paneKey)}?auth=${encodeURIComponent(auth)}`)
+    const es = new EventSource(
+      `/api/tasks/events/stream/${encodeURIComponent(paneKey)}?auth=${encodeURIComponent(auth)}`,
+    )
     eventSourceRef.current = es
 
     es.onmessage = (event) => {
@@ -42,14 +43,10 @@ export function useAIConversations(paneKey: string | null) {
         if (['task_started', 'task_completed', 'task_failed', 'task_waiting'].includes(data.type)) {
           fetchConversations()
         }
-      } catch (err) {
-        console.error('Failed to parse SSE event:', err)
-      }
+      } catch (_err) {}
     }
 
-    es.onerror = () => {
-      console.warn('[useAIConversations] SSE connection error, will auto-reconnect')
-    }
+    es.onerror = () => {}
 
     return () => {
       es.close()

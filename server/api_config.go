@@ -15,7 +15,7 @@ func (server *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeAPISuccess(w, map[string]interface{}{
-		"opencode":      nil,
+		"opencode":       nil,
 		"oh_my_opencode": nil,
 	})
 }

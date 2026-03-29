@@ -5,7 +5,7 @@
 
 import { isIOS } from './platform'
 
-export type TelemetryEventType = 
+export type TelemetryEventType =
   | 'focus'
   | 'blur'
   | 'visibilitychange'
@@ -65,7 +65,7 @@ const buffer = new TelemetryRingBuffer()
  */
 export function isDebugEnabled(): boolean {
   if (typeof window === 'undefined') return false
-  
+
   // Check localStorage
   try {
     if (localStorage.getItem('tmux-debug') === '1') {
@@ -74,13 +74,13 @@ export function isDebugEnabled(): boolean {
   } catch {
     // localStorage may be unavailable
   }
-  
+
   // Check URL param
   const params = new URLSearchParams(window.location.search)
   if (params.get('debug') === '1') {
     return true
   }
-  
+
   return false
 }
 
@@ -91,7 +91,7 @@ export function isDebugEnabled(): boolean {
 export function log(type: TelemetryEventType, data?: Record<string, unknown>): void {
   // Only log on iOS when debug enabled
   if (!isIOS() || !isDebugEnabled()) return
-  
+
   const event: TelemetryEvent = {
     type,
     timestamp: Date.now(),
@@ -105,14 +105,6 @@ export function log(type: TelemetryEventType, data?: Record<string, unknown>): v
   }
 
   buffer.add(event)
-
-  // Structured console output
-  const prefix = `[Telemetry:${type}]`
-  if (data) {
-    console.log(prefix, JSON.stringify(data))
-  } else {
-    console.log(prefix)
-  }
 }
 
 /**
@@ -133,13 +125,12 @@ export function clearEvents(): void {
  * Export telemetry to console as JSON (for debugging)
  */
 export function dumpTelemetry(): void {
-  const events = buffer.getRecent()
-  console.log('[Telemetry] Recent events:', JSON.stringify(events, null, 2))
+  buffer.getRecent()
 }
 
 // Expose to window for debugging
 if (typeof window !== 'undefined') {
-  (window as unknown as Record<string, unknown>).tmuxTelemetry = {
+  ;(window as unknown as Record<string, unknown>).tmuxTelemetry = {
     getRecent: getRecentEvents,
     dump: dumpTelemetry,
     clear: clearEvents,

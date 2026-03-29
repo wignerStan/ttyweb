@@ -30,9 +30,9 @@ func (server *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		var body struct {
-			Name            string `json:"name"`
-			Path            string `json:"path"`
-			Description     string `json:"description"`
+			Name             string `json:"name"`
+			Path             string `json:"path"`
+			Description      string `json:"description"`
 			WorktreeBasePath string `json:"worktree_base_path"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

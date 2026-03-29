@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"crypto/x509"
+	"fmt"
 	"io/fs"
 	"log"
 	"net"
@@ -33,10 +33,10 @@ type Server struct {
 	factory Factory
 	options *Options
 
-	upgrader      *websocket.Upgrader
-	titleTemplate *noesctmpl.Template
+	upgrader       *websocket.Upgrader
+	titleTemplate  *noesctmpl.Template
 	noteSvc        *service.NoteService
-	segmentService  *service.TaskSegmentService
+	segmentService *service.TaskSegmentService
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
@@ -102,15 +102,15 @@ func New(factory Factory, options *Options) (*Server, error) {
 			Subprotocols:    webtty.Protocols,
 			CheckOrigin:     originChekcer,
 		},
-		titleTemplate: titleTemplate,
+		titleTemplate:  titleTemplate,
 		noteSvc:        noteSvc,
-		segmentService:  service.NewTaskSegmentService(database),
+		segmentService: service.NewTaskSegmentService(database),
 	}, nil
 }
 
 // Run starts the main process of the Server.
 // The cancelation of ctx will shutdown the server immediately with aborting
-// existing connections. Use WithGracefullContext() to support gracefull shutdown.
+// existing connections. Use WithGracefulContext() to support graceful shutdown.
 func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	cctx, cancel := context.WithCancel(ctx)
 	opts := &RunOptions{gracefullCtx: context.Background()}
@@ -147,7 +147,7 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 		log.Printf("Port number configured to `0`, choosing a random port")
 	}
 	hostPort := net.JoinHostPort(server.options.Address, server.options.Port)
-	listener, err := net.Listen("tcp", hostPort)
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", hostPort)
 	if err != nil {
 		return errors.Wrapf(err, "failed to listen at `%s`", hostPort)
 	}
@@ -184,20 +184,20 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	go func() {
 		select {
 		case <-opts.gracefullCtx.Done():
-			srv.Shutdown(context.Background())
+			_ = srv.Shutdown(context.Background())
 		case <-cctx.Done():
 		}
 	}()
 
 	select {
 	case err = <-srvErr:
-		if err == http.ErrServerClosed { // by gracefull ctx
+		if err == http.ErrServerClosed { // by graceful ctx
 			err = nil
 		} else {
 			cancel()
 		}
 	case <-cctx.Done():
-		srv.Close()
+		_ = srv.Close()
 		err = cctx.Err()
 	}
 

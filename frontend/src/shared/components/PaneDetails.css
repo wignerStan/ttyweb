@@ -31,7 +31,7 @@
 }
 
 .drawer-pane-badge {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-size: 11px;
   color: var(--zinc-500);
   background: var(--zinc-800);
@@ -132,8 +132,13 @@
 }
 
 @keyframes pulse-badge {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .conv-empty {
@@ -232,13 +237,27 @@
 }
 
 @keyframes pulse-dot-waiting {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px #eab308; }
-  50% { opacity: 0.4; box-shadow: 0 0 2px #eab308; }
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 6px #eab308;
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 2px #eab308;
+  }
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--blue-500); }
-  50% { opacity: 0.5; box-shadow: 0 0 2px var(--blue-500); }
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 6px var(--blue-500);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 2px var(--blue-500);
+  }
 }
 
 .conv-user-msg {
@@ -420,7 +439,7 @@
 }
 
 .task-id {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-size: 11px;
   color: var(--zinc-600);
 }
@@ -589,8 +608,12 @@
   text-transform: capitalize;
 }
 
-.chat-msg.user .msg-role { color: var(--blue-500); }
-.chat-msg.assistant .msg-role { color: var(--green-500); }
+.chat-msg.user .msg-role {
+  color: var(--blue-500);
+}
+.chat-msg.assistant .msg-role {
+  color: var(--green-500);
+}
 
 .msg-content {
   color: var(--zinc-400);
@@ -613,7 +636,7 @@
 }
 
 .cmd-text {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-size: 11px;
   color: var(--zinc-300);
   flex: 1;

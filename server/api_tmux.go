@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os/exec"
-	"strconv"
-	"strings"
 )
 
 // handleTmuxConfig returns the tmux prefix key configuration.
@@ -74,7 +72,7 @@ func (server *Server) handleTmuxNewWindow(w http.ResponseWriter, r *http.Request
 		args = append(args, "-c", body.Dir)
 	}
 
-	cmd := exec.Command("tmux", args...)
+	cmd := exec.CommandContext(r.Context(), "tmux", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "failed to create window: "+string(output))
 		return
@@ -123,24 +121,24 @@ func (server *Server) handleTmuxNewSession(w http.ResponseWriter, r *http.Reques
 
 // tmuxTreeSession represents a session in the tree response.
 type tmuxTreeSession struct {
-	SessionName string              `json:"sessionName"`
-	SessionID   string              `json:"sessionId"`
-	Windows     []tmuxTreeWindow    `json:"windows"`
+	SessionName string           `json:"sessionName"`
+	SessionID   string           `json:"sessionId"`
+	Windows     []tmuxTreeWindow `json:"windows"`
 }
 
 // tmuxTreeWindow represents a window in the tree response.
 type tmuxTreeWindow struct {
-	WindowIndex int               `json:"windowIndex"`
-	WindowName  string            `json:"windowName"`
-	WindowID    string            `json:"windowId"`
-	Panes       []tmuxTreePane    `json:"panes"`
+	WindowIndex int            `json:"windowIndex"`
+	WindowName  string         `json:"windowName"`
+	WindowID    string         `json:"windowId"`
+	Panes       []tmuxTreePane `json:"panes"`
 }
 
 // tmuxTreePane represents a pane in the tree response.
 type tmuxTreePane struct {
-	PaneID       string `json:"paneId"`
-	PaneTitle    string `json:"paneTitle"`
-	PaneCommand  string `json:"paneCommand"`
+	PaneID      string `json:"paneId"`
+	PaneTitle   string `json:"paneTitle"`
+	PaneCommand string `json:"paneCommand"`
 }
 
 // handleTmuxTree builds a nested tree of sessions, windows, and panes.
@@ -267,7 +265,7 @@ func (server *Server) handleTmuxSendKeys(w http.ResponseWriter, r *http.Request)
 	}
 
 	args := []string{"send-keys", "-t", body.Pane, body.Keys}
-	cmd := exec.Command("tmux", args...)
+	cmd := exec.CommandContext(r.Context(), "tmux", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "failed to send keys: "+string(output))
 		return
@@ -291,12 +289,4 @@ func (server *Server) handleTmuxPaneMode(w http.ResponseWriter, r *http.Request)
 	writeAPISuccess(w, map[string]string{
 		"mode": "pane",
 	})
-}
-
-// extractIntAfterPrefix parses an integer ID from a URL path suffix.
-// For example, prefix="/api/tasks/" and path="/api/tasks/42" returns 42.
-func extractIntAfterPrefix(path, prefix string) (int, error) {
-	relative := strings.TrimPrefix(path, prefix)
-	relative = strings.TrimSuffix(relative, "/")
-	return strconv.Atoi(relative)
 }

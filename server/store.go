@@ -31,9 +31,9 @@ type Snippet struct {
 
 // AiRole represents a custom AI assistant role with a system prompt.
 type AiRole struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
 	SystemPrompt string `json:"system_prompt"`
 }
 
@@ -50,13 +50,13 @@ type TaskEvent struct {
 
 // MemoryStore provides an in-memory data store with thread-safe CRUD operations.
 type MemoryStore struct {
-	mu           sync.RWMutex
-	profiles     []Profile
-	groups       []SessionGroup
-	snippets     []Snippet
-	roles        []AiRole
-	tasks        []TaskEvent
-	paneStatuses map[string]string
+	mu            sync.RWMutex
+	profiles      []Profile
+	groups        []SessionGroup
+	snippets      []Snippet
+	roles         []AiRole
+	tasks         []TaskEvent
+	paneStatuses  map[string]string
 	nextProfileID int
 	nextGroupID   int
 	nextRoleID    int
@@ -66,12 +66,12 @@ type MemoryStore struct {
 // NewMemoryStore creates and initializes a MemoryStore with default AI roles.
 func NewMemoryStore() *MemoryStore {
 	s := &MemoryStore{
-		profiles:     []Profile{},
-		groups:       []SessionGroup{},
-		snippets:     []Snippet{},
-		roles:        builtinRoles(),
-		tasks:        []TaskEvent{},
-		paneStatuses: make(map[string]string),
+		profiles:      []Profile{},
+		groups:        []SessionGroup{},
+		snippets:      []Snippet{},
+		roles:         builtinRoles(),
+		tasks:         []TaskEvent{},
+		paneStatuses:  make(map[string]string),
 		nextProfileID: 1,
 		nextGroupID:   1,
 		nextRoleID:    1,

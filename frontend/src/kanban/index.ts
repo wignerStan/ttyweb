@@ -1,8 +1,8 @@
-export { KanbanBoard } from './KanbanBoard';
-export { TaskColumn } from './TaskColumn';
-export { TaskCard } from './TaskCard';
-export { TaskDialog } from './TaskDialog';
-export { CommentThread } from './CommentThread';
-export { useKanbanTasks } from './useKanbanTasks';
-export type { TaskFields } from './useKanbanTasks';
-export type { KanbanTask, KanbanComment, KanbanStatus } from './types';
+export { CommentThread } from './CommentThread'
+export { KanbanBoard } from './KanbanBoard'
+export { TaskCard } from './TaskCard'
+export { TaskColumn } from './TaskColumn'
+export { TaskDialog } from './TaskDialog'
+export type { KanbanComment, KanbanStatus, KanbanTask } from './types'
+export type { TaskFields } from './useKanbanTasks'
+export { useKanbanTasks } from './useKanbanTasks'

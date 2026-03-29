@@ -2,10 +2,10 @@ package zellij
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"strconv"
 	"strings"
 
 	"ttyweb/pkg/validate"
@@ -97,7 +97,7 @@ func SessionsJSON() ([]byte, error) {
 
 // zellijOutput runs a zellij command and returns stdout.
 func zellijOutput(args ...string) (string, error) {
-	cmd := exec.Command("zellij", args...)
+	cmd := exec.CommandContext(context.Background(), "zellij", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -109,15 +109,10 @@ func zellijOutput(args ...string) (string, error) {
 
 // zellijExec runs a zellij command (ignoring output).
 func zellijExec(args ...string) (string, error) {
-	cmd := exec.Command("zellij", args...)
+	cmd := exec.CommandContext(context.Background(), "zellij", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	err := cmd.Run()
 	return out.String(), err
-}
-
-func atoi(s string) int {
-	n, _ := strconv.Atoi(s)
-	return n
 }

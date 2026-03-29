@@ -1,176 +1,187 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import type { ActivityEvent, RoutingInfo, PipelineRun, PipelineStage, PipelineStatus } from '../types';
-import { BUTLER_API_BASE } from '../constants';
-import { getAuthHeader } from '../../../../utils/auth';
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { getAuthHeader } from '../../../../utils/auth'
+import { BUTLER_API_BASE } from '../constants'
+import type {
+  ActivityEvent,
+  PipelineRun,
+  PipelineStage,
+  PipelineStatus,
+  RoutingInfo,
+} from '../types'
 
-const MAX_RUNS = 5;
-const BURST_FAST_MS = 500;
-const BURST_SLOW_MS = 1000;
-const BURST_FAST_DURATION = 5_000;
-const BURST_TOTAL_DURATION = 20_000;
+const MAX_RUNS = 5
+const BURST_FAST_MS = 500
+const BURST_SLOW_MS = 1000
+const BURST_FAST_DURATION = 5_000
+const BURST_TOTAL_DURATION = 20_000
 
 function isTerminal(stage: PipelineRun['stage']): boolean {
-    return stage === 'return';
+  return stage === 'return'
 }
 
-function deriveStage(
-    events: ActivityEvent[],
-): { stage: PipelineRun['stage']; status: PipelineRun['status']; result?: string } {
-    for (let i = events.length - 1; i >= 0; i--) {
-        const ev = events[i]!;
-        if (ev.event_type === 'task_completed') {
-            return { stage: 'return', status: 'success', result: ev.summary };
-        }
-        if (ev.event_type === 'task_failed') {
-            return { stage: 'return', status: 'failed', result: ev.summary };
-        }
-        if (ev.event_type === 'task_started' || ev.event_type === 'worker_launched') {
-            return { stage: 'processing', status: 'running' };
-        }
+function deriveStage(events: ActivityEvent[]): {
+  stage: PipelineRun['stage']
+  status: PipelineRun['status']
+  result?: string
+} {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const ev = events[i]!
+    if (ev.event_type === 'task_completed') {
+      return { stage: 'return', status: 'success', result: ev.summary }
     }
-    return { stage: 'outflow', status: 'pending' };
+    if (ev.event_type === 'task_failed') {
+      return { stage: 'return', status: 'failed', result: ev.summary }
+    }
+    if (ev.event_type === 'task_started' || ev.event_type === 'worker_launched') {
+      return { stage: 'processing', status: 'running' }
+    }
+  }
+  return { stage: 'outflow', status: 'pending' }
 }
 
 interface DashboardRun {
-    id: string;
-    task_id: string;
-    state: string;
-    assistant: string | null;
-    intent: string | null;
-    queued_at: string | null;
+  id: string
+  task_id: string
+  state: string
+  assistant: string | null
+  intent: string | null
+  queued_at: string | null
 }
 
 function mapState(s: string): { stage: PipelineStage; status: PipelineStatus } {
-    switch (s) {
-        case 'succeeded': return { stage: 'return', status: 'success' };
-        case 'failed':    return { stage: 'return', status: 'failed' };
-        case 'cancelled': return { stage: 'return', status: 'failed' };
-        case 'running':   return { stage: 'processing', status: 'running' };
-        default:          return { stage: 'outflow', status: 'pending' };
-    }
+  switch (s) {
+    case 'succeeded':
+      return { stage: 'return', status: 'success' }
+    case 'failed':
+      return { stage: 'return', status: 'failed' }
+    case 'cancelled':
+      return { stage: 'return', status: 'failed' }
+    case 'running':
+      return { stage: 'processing', status: 'running' }
+    default:
+      return { stage: 'outflow', status: 'pending' }
+  }
 }
 
 function dashboardToPipelineRun(r: DashboardRun): PipelineRun {
-    const { stage, status } = mapState(r.state);
-    return {
-        run_id: r.id,
-        task_id: r.task_id,
-        intent: r.intent ?? '',
-        routing: { strategy: r.assistant ?? 'unknown', executor: r.assistant ?? '', delegated: false },
-        stage,
-        status,
-        events: [],
-        startedAt: r.queued_at ? new Date(r.queued_at).getTime() : Date.now(),
-    };
+  const { stage, status } = mapState(r.state)
+  return {
+    run_id: r.id,
+    task_id: r.task_id,
+    intent: r.intent ?? '',
+    routing: { strategy: r.assistant ?? 'unknown', executor: r.assistant ?? '', delegated: false },
+    stage,
+    status,
+    events: [],
+    startedAt: r.queued_at ? new Date(r.queued_at).getTime() : Date.now(),
+  }
 }
 
 export function useRunPipeline() {
-    const [runs, setRuns] = useState<PipelineRun[]>([]);
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const burstStartRef = useRef<number>(0);
+  const [runs, setRuns] = useState<PipelineRun[]>([])
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const burstStartRef = useRef<number>(0)
 
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const authHeader = getAuthHeader();
-                const res = await fetch(`${BUTLER_API_BASE}/dashboard/runs?limit=${MAX_RUNS}`, {
-                    headers: authHeader ? { 'Authorization': authHeader } : undefined,
-                });
-                if (!res.ok || cancelled) return;
-                const json = await res.json();
-                const loaded: DashboardRun[] = json?.data?.runs ?? [];
-                if (!cancelled && loaded.length > 0) {
-                    setRuns(loaded.map(dashboardToPipelineRun));
-                }
-            } catch { /* ignore */ }
-        })();
-        return () => { cancelled = true; };
-    }, []);
-
-    const stopBurst = useCallback(() => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const authHeader = getAuthHeader()
+        const res = await fetch(`${BUTLER_API_BASE}/dashboard/runs?limit=${MAX_RUNS}`, {
+          headers: authHeader ? { Authorization: authHeader } : undefined,
+        })
+        if (!res.ok || cancelled) return
+        const json = await res.json()
+        const loaded: DashboardRun[] = json?.data?.runs ?? []
+        if (!cancelled && loaded.length > 0) {
+          setRuns(loaded.map(dashboardToPipelineRun))
         }
-    }, []);
+      } catch {
+        /* ignore */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
-    const pollForRun = useCallback(
-        (runId: string) => {
-            const elapsed = Date.now() - burstStartRef.current;
-            if (elapsed >= BURST_TOTAL_DURATION) {
-                stopBurst();
-                return;
-            }
+  const stopBurst = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
 
-            const interval = elapsed < BURST_FAST_DURATION ? BURST_FAST_MS : BURST_SLOW_MS;
+  const pollForRun = useCallback(
+    (runId: string) => {
+      const elapsed = Date.now() - burstStartRef.current
+      if (elapsed >= BURST_TOTAL_DURATION) {
+        stopBurst()
+        return
+      }
 
-            timerRef.current = setTimeout(async () => {
-                try {
-                    const params = new URLSearchParams({ limit: '50' });
-                    const authHeader = getAuthHeader();
-                    const res = await fetch(`${BUTLER_API_BASE}/activity_events?${params}`, {
-                        headers: authHeader ? { 'Authorization': authHeader } : undefined,
-                    });
-                    if (!res.ok) return;
-                    const json = await res.json();
-                    const allEvents: ActivityEvent[] = json?.data?.activity_events ?? [];
+      const interval = elapsed < BURST_FAST_DURATION ? BURST_FAST_MS : BURST_SLOW_MS
 
-                    const matched = allEvents.filter(
-                        (ev) =>
-                            ev.detail?.includes(runId) ||
-                            ev.summary?.includes(runId),
-                    );
+      timerRef.current = setTimeout(async () => {
+        try {
+          const params = new URLSearchParams({ limit: '50' })
+          const authHeader = getAuthHeader()
+          const res = await fetch(`${BUTLER_API_BASE}/activity_events?${params}`, {
+            headers: authHeader ? { Authorization: authHeader } : undefined,
+          })
+          if (!res.ok) return
+          const json = await res.json()
+          const allEvents: ActivityEvent[] = json?.data?.activity_events ?? []
 
-                    const derived = deriveStage(matched);
+          const matched = allEvents.filter(
+            (ev) => ev.detail?.includes(runId) || ev.summary?.includes(runId),
+          )
 
-                    setRuns((prev) =>
-                        prev.map((r) =>
-                            r.run_id === runId
-                                ? { ...r, events: matched, ...derived }
-                                : r,
-                        ),
-                    );
+          const derived = deriveStage(matched)
 
-                    if (!isTerminal(derived.stage)) {
-                        pollForRun(runId);
-                    }
-                } catch {
-                    pollForRun(runId);
-                }
-            }, interval);
-        },
-        [stopBurst],
-    );
+          setRuns((prev) =>
+            prev.map((r) => (r.run_id === runId ? { ...r, events: matched, ...derived } : r)),
+          )
 
-    const dispatch = useCallback(
-        (intent: string, routing: RoutingInfo, runId: string, taskId?: string) => {
-            stopBurst();
+          if (!isTerminal(derived.stage)) {
+            pollForRun(runId)
+          }
+        } catch {
+          pollForRun(runId)
+        }
+      }, interval)
+    },
+    [stopBurst],
+  )
 
-            const newRun: PipelineRun = {
-                run_id: runId,
-                task_id: taskId,
-                intent,
-                routing,
-                stage: 'outflow',
-                status: 'pending',
-                events: [],
-                startedAt: Date.now(),
-            };
+  const dispatch = useCallback(
+    (intent: string, routing: RoutingInfo, runId: string, taskId?: string) => {
+      stopBurst()
 
-            setRuns((prev) => [newRun, ...prev.filter((r) => r.run_id !== runId)].slice(0, MAX_RUNS));
+      const newRun: PipelineRun = {
+        run_id: runId,
+        task_id: taskId,
+        intent,
+        routing,
+        stage: 'outflow',
+        status: 'pending',
+        events: [],
+        startedAt: Date.now(),
+      }
 
-            burstStartRef.current = Date.now();
-            pollForRun(runId);
-        },
-        [stopBurst, pollForRun],
-    );
+      setRuns((prev) => [newRun, ...prev.filter((r) => r.run_id !== runId)].slice(0, MAX_RUNS))
 
-    const dismiss = useCallback((runId: string) => {
-        setRuns((prev) => prev.filter((r) => r.run_id !== runId));
-    }, []);
+      burstStartRef.current = Date.now()
+      pollForRun(runId)
+    },
+    [stopBurst, pollForRun],
+  )
 
-    const activeRun = runs.find((r) => !isTerminal(r.stage)) ?? null;
+  const dismiss = useCallback((runId: string) => {
+    setRuns((prev) => prev.filter((r) => r.run_id !== runId))
+  }, [])
 
-    return { runs, activeRun, dispatch, dismiss };
+  const activeRun = runs.find((r) => !isTerminal(r.stage)) ?? null
+
+  return { runs, activeRun, dispatch, dismiss }
 }

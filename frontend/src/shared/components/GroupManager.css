@@ -211,7 +211,7 @@
 .session-name {
   color: var(--blue-500);
   font-size: 12px;
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 }
 
 .btn-assign {

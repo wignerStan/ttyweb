@@ -2,6 +2,7 @@ package tmux
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -160,7 +161,8 @@ func KillSession(name string) error {
 
 // SendKeys sends text/keys to a pane.
 func SendKeys(pane string, keys ...string) error {
-	args := []string{"send-keys", "-t", pane}
+	args := make([]string, 0, 3+len(keys))
+	args = append(args, "send-keys", "-t", pane)
 	args = append(args, keys...)
 	_, err := tmuxExec(args...)
 	if err != nil {
@@ -247,7 +249,7 @@ func SessionDetailJSON(name string) ([]byte, error) {
 
 // tmuxOutput runs a tmux command and returns stdout.
 func tmuxOutput(args ...string) (string, error) {
-	cmd := exec.Command("tmux", args...)
+	cmd := exec.CommandContext(context.Background(), "tmux", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -259,7 +261,7 @@ func tmuxOutput(args ...string) (string, error) {
 
 // tmuxExec runs a tmux command (ignoring output).
 func tmuxExec(args ...string) (string, error) {
-	cmd := exec.Command("tmux", args...)
+	cmd := exec.CommandContext(context.Background(), "tmux", args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out

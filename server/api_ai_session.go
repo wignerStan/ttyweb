@@ -75,10 +75,10 @@ func (server *Server) handleAISessions(w http.ResponseWriter, r *http.Request) {
 	rel = strings.TrimPrefix(rel, "/api/ai/sessions")
 	rel = strings.Trim(rel, "/")
 
-	switch {
-	case rel == "" || rel == "?"+r.URL.RawQuery:
+	switch rel {
+	case "", "?" + r.URL.RawQuery:
 		server.handleAIListSessions(w, r)
-	case rel == "cleanup":
+	case "cleanup":
 		server.handleAICleanupSessions(w, r)
 	default:
 		server.handleAISessionSubroute(w, r, rel)

@@ -39,7 +39,7 @@
   flex-direction: column;
   height: 100%;
   background: var(--kanban-bg);
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   color: var(--kanban-text);
   overflow: hidden;
 }
@@ -86,7 +86,9 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 
 .kanban-board__btn:hover {
@@ -189,7 +191,9 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .task-column__add-btn:hover {
@@ -226,7 +230,11 @@
   border: 1px solid var(--kanban-border);
   border-radius: 6px;
   cursor: grab;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
   user-select: none;
 }
 
@@ -312,13 +320,34 @@
   white-space: nowrap;
 }
 
-.tag--red { color: var(--kanban-tag-red-text); background: var(--kanban-tag-red); }
-.tag--yellow { color: var(--kanban-tag-yellow-text); background: var(--kanban-tag-yellow); }
-.tag--green { color: var(--kanban-tag-green-text); background: var(--kanban-tag-green); }
-.tag--blue { color: var(--kanban-tag-blue-text); background: var(--kanban-tag-blue); }
-.tag--purple { color: var(--kanban-tag-purple-text); background: var(--kanban-tag-purple); }
-.tag--cyan { color: var(--kanban-tag-cyan-text); background: var(--kanban-tag-cyan); }
-.tag--default { color: var(--kanban-text-dim); background: var(--kanban-surface); }
+.tag--red {
+  color: var(--kanban-tag-red-text);
+  background: var(--kanban-tag-red);
+}
+.tag--yellow {
+  color: var(--kanban-tag-yellow-text);
+  background: var(--kanban-tag-yellow);
+}
+.tag--green {
+  color: var(--kanban-tag-green-text);
+  background: var(--kanban-tag-green);
+}
+.tag--blue {
+  color: var(--kanban-tag-blue-text);
+  background: var(--kanban-tag-blue);
+}
+.tag--purple {
+  color: var(--kanban-tag-purple-text);
+  background: var(--kanban-tag-purple);
+}
+.tag--cyan {
+  color: var(--kanban-tag-cyan-text);
+  background: var(--kanban-tag-cyan);
+}
+.tag--default {
+  color: var(--kanban-text-dim);
+  background: var(--kanban-surface);
+}
 
 .task-card__footer {
   display: flex;
@@ -390,7 +419,9 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .task-dialog__close:hover {
@@ -433,7 +464,9 @@
   border: 1px solid var(--kanban-input-border);
   border-radius: 6px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .task-dialog__input:focus,
@@ -490,7 +523,9 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
 }
 
 .task-dialog__btn--cancel {
@@ -590,7 +625,9 @@
   resize: none;
   min-height: 36px;
   max-height: 100px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .comment-thread__input:focus {
@@ -614,7 +651,9 @@
   border: 1px solid var(--kanban-accent);
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .comment-thread__submit:hover {

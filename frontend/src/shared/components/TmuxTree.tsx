@@ -1,46 +1,46 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
-  DndContext,
-  DragOverlay,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
+  type DragOverEvent,
+  DragOverlay,
+  type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  DragOverEvent,
 } from '@dnd-kit/core'
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
   useSortable,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  GripVertical,
-  Terminal,
-  ChevronRight,
+  CheckCircle2,
   ChevronDown,
+  ChevronRight,
+  Clock,
   Folder,
-  FolderOpen,
-  RefreshCw,
-  MoreHorizontal,
-  Pencil,
   FolderInput,
   FolderMinus,
+  FolderOpen,
   FolderPlus,
+  GripVertical,
   Loader2,
-  CheckCircle2,
+  MoreHorizontal,
+  Pencil,
+  RefreshCw,
+  RotateCcw,
+  Terminal,
   XCircle,
-  Clock,
-  RotateCcw
 } from 'lucide-react'
-import { NewTmuxButton } from './NewTmuxButton'
-import { TmuxSession, SessionGroup, PaneStatus, PaneStatusInfo } from '../../types'
-import { StatusBadge } from './StatusBadge'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { PaneStatus, PaneStatusInfo, SessionGroup, TmuxSession } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
+import { NewTmuxButton } from './NewTmuxButton'
+import { StatusBadge } from './StatusBadge'
 import './TmuxTree.css'
 
 interface Props {
@@ -57,18 +57,22 @@ interface Props {
   defaultExpanded?: boolean
 }
 
-async function renameWindow(sessionName: string, windowIndex: number, newName: string): Promise<boolean> {
+async function renameWindow(
+  sessionName: string,
+  windowIndex: number,
+  newName: string,
+): Promise<boolean> {
   try {
     const auth = getAuthHeader()
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (auth) headers['Authorization'] = auth
+    if (auth) headers.Authorization = auth
     const res = await fetch(
       `/api/tmux/windows/${encodeURIComponent(sessionName)}/${windowIndex}/rename`,
       {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ name: newName })
-      }
+        body: JSON.stringify({ name: newName }),
+      },
     )
     return res.ok
   } catch {
@@ -99,23 +103,26 @@ interface TreeItem {
 async function saveOrder(profileId: number, orderData: OrderData) {
   const auth = getAuthHeader()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (auth) headers['Authorization'] = auth
+  if (auth) headers.Authorization = auth
   await fetch(`/api/profiles/${profileId}/order`, {
     method: 'PUT',
     headers,
-    body: JSON.stringify(orderData)
+    body: JSON.stringify(orderData),
   })
 }
 
-async function fetchPaneStatuses(profileKey: string, paneKeys: string[]): Promise<PaneStatusInfo[]> {
+async function fetchPaneStatuses(
+  profileKey: string,
+  paneKeys: string[],
+): Promise<PaneStatusInfo[]> {
   if (!paneKeys.length) return []
-  const encodedKeys = paneKeys.map(k => encodeURIComponent(k)).join(',')
+  const encodedKeys = paneKeys.map((k) => encodeURIComponent(k)).join(',')
   const auth = getAuthHeader()
   const headers: Record<string, string> = {}
-  if (auth) headers['Authorization'] = auth
+  if (auth) headers.Authorization = auth
   const res = await fetch(
     `/api/panes/status?profile_key=${encodeURIComponent(profileKey)}&paneKeys=${encodedKeys}`,
-    { headers }
+    { headers },
   )
   if (!res.ok) return []
   const data = await res.json()
@@ -127,17 +134,23 @@ async function fetchTaskPaneStatuses(): Promise<Record<string, PaneStatus>> {
   try {
     const auth = getAuthHeader()
     const headers: Record<string, string> = {}
-    if (auth) headers['Authorization'] = auth
+    if (auth) headers.Authorization = auth
     const res = await fetch('/api/tasks?limit=500', { headers })
     if (!res.ok) return {}
     const data = await res.json()
     const map: Record<string, PaneStatus> = {}
-    for (const task of (data.tasks || [])) {
+    for (const task of data.tasks || []) {
       const key: string = task.pane_key
       const status: string = task.task_status
       if (!key) continue
       // Keep the 'hottest' status per pane: in_progress > failed > waiting > done
-      const priority: Record<string, number> = { in_progress: 4, failed: 3, waiting: 2, done: 1, completed: 1 }
+      const priority: Record<string, number> = {
+        in_progress: 4,
+        failed: 3,
+        waiting: 2,
+        done: 1,
+        completed: 1,
+      }
       const cur = map[key]
       const curP = priority[cur!] ?? 0
       const newP = priority[status!] ?? 0
@@ -158,7 +171,7 @@ function buildPaneKey(sessionName: string, windowIndex: number, paneId: string):
 
 function DragHandle() {
   return (
-    <span className="drag-handle" aria-label="Drag to reorder">
+    <span className="drag-handle" role="img" aria-label="Drag to reorder">
       <GripVertical size={14} />
     </span>
   )
@@ -174,7 +187,15 @@ interface QuickGroupMenuProps {
   onDone: () => void
 }
 
-function QuickGroupMenu({ sessionName, currentGroupId, groups, profileKey, position, onClose, onDone }: QuickGroupMenuProps) {
+function QuickGroupMenu({
+  sessionName,
+  currentGroupId,
+  groups,
+  profileKey,
+  position,
+  onClose,
+  onDone,
+}: QuickGroupMenuProps) {
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -195,7 +216,7 @@ function QuickGroupMenu({ sessionName, currentGroupId, groups, profileKey, posit
     if (rect.bottom > window.innerHeight) {
       menuRef.current.style.top = `${window.innerHeight - rect.height - 8}px`
     }
-  }, [creating])
+  }, [])
 
   const assignToGroup = async (groupId: number | null) => {
     if (loading) return
@@ -203,15 +224,14 @@ function QuickGroupMenu({ sessionName, currentGroupId, groups, profileKey, posit
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       await fetch(`/api/sessions/${encodeURIComponent(sessionName)}/group`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ profile_key: profileKey, group_id: groupId })
+        body: JSON.stringify({ profile_key: profileKey, group_id: groupId }),
       })
       onDone()
-    } catch (err) {
-      console.error('Failed to assign group:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
       onClose()
@@ -224,23 +244,22 @@ function QuickGroupMenu({ sessionName, currentGroupId, groups, profileKey, posit
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch('/api/groups', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ profile_key: profileKey, group_name: newName.trim() })
+        body: JSON.stringify({ profile_key: profileKey, group_name: newName.trim() }),
       })
       const data = await res.json()
       if (data.id) {
         await fetch(`/api/sessions/${encodeURIComponent(sessionName)}/group`, {
           method: 'PUT',
           headers,
-          body: JSON.stringify({ profile_key: profileKey, group_id: data.id })
+          body: JSON.stringify({ profile_key: profileKey, group_id: data.id }),
         })
         onDone()
       }
-    } catch (err) {
-      console.error('Failed to create group:', err)
+    } catch (_err) {
     } finally {
       setLoading(false)
       onClose()
@@ -249,26 +268,30 @@ function QuickGroupMenu({ sessionName, currentGroupId, groups, profileKey, posit
 
   return (
     <>
-      <div className="quick-group-backdrop" onClick={onClose} onTouchEnd={(e) => { e.preventDefault(); onClose() }} />
       <div
-        ref={menuRef}
-        className="quick-group-menu"
-        style={{ left: position.x, top: position.y }}
-      >
+        className="quick-group-backdrop"
+        onClick={onClose}
+        onTouchEnd={(e) => {
+          e.preventDefault()
+          onClose()
+        }}
+      />
+      <div ref={menuRef} className="quick-group-menu" style={{ left: position.x, top: position.y }}>
         <div className="quick-group-title">移动到分组</div>
 
-        {groups.length > 0 && groups.map(g => (
-          <button
-            key={g.id}
-            className={`quick-group-item ${g.id === currentGroupId ? 'current' : ''}`}
-            onClick={() => assignToGroup(g.id)}
-            disabled={loading || g.id === currentGroupId}
-          >
-            <FolderInput size={14} />
-            <span>{g.group_name}</span>
-            {g.id === currentGroupId && <span className="quick-group-check">✓</span>}
-          </button>
-        ))}
+        {groups.length > 0 &&
+          groups.map((g) => (
+            <button
+              key={g.id}
+              className={`quick-group-item ${g.id === currentGroupId ? 'current' : ''}`}
+              onClick={() => assignToGroup(g.id)}
+              disabled={loading || g.id === currentGroupId}
+            >
+              <FolderInput size={14} />
+              <span>{g.group_name}</span>
+              {g.id === currentGroupId && <span className="quick-group-check">✓</span>}
+            </button>
+          ))}
 
         {currentGroupId !== null && (
           <button
@@ -291,10 +314,13 @@ function QuickGroupMenu({ sessionName, currentGroupId, groups, profileKey, posit
               className="quick-group-input"
               placeholder="分组名称..."
               value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') createAndAssign()
-                if (e.key === 'Escape') { setCreating(false); setNewName('') }
+                if (e.key === 'Escape') {
+                  setCreating(false)
+                  setNewName('')
+                }
               }}
               disabled={loading}
             />
@@ -327,21 +353,24 @@ function useLongPress(callback: (pos: { x: number; y: number }) => void, ms = 50
   const firedRef = useRef(false)
   const posRef = useRef({ x: 0, y: 0 })
 
-  const start = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    movedRef.current = false
-    firedRef.current = false
-    if ('touches' in e && e.touches.length > 0) {
-      posRef.current = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY }
-    } else if ('clientX' in e) {
-      posRef.current = { x: (e as React.MouseEvent).clientX, y: (e as React.MouseEvent).clientY }
-    }
-    timerRef.current = setTimeout(() => {
-      if (!movedRef.current) {
-        firedRef.current = true
-        callback(posRef.current)
+  const start = useCallback(
+    (e: React.TouchEvent | React.MouseEvent) => {
+      movedRef.current = false
+      firedRef.current = false
+      if ('touches' in e && e.touches.length > 0) {
+        posRef.current = { x: e.touches[0]?.clientX ?? 0, y: e.touches[0]?.clientY ?? 0 }
+      } else if ('clientX' in e) {
+        posRef.current = { x: (e as React.MouseEvent).clientX, y: (e as React.MouseEvent).clientY }
       }
-    }, ms)
-  }, [callback, ms])
+      timerRef.current = setTimeout(() => {
+        if (!movedRef.current) {
+          firedRef.current = true
+          callback(posRef.current)
+        }
+      }, ms)
+    },
+    [callback, ms],
+  )
 
   const move = useCallback(() => {
     movedRef.current = true
@@ -358,7 +387,15 @@ function useLongPress(callback: (pos: { x: number; y: number }) => void, ms = 50
     }
   }, [])
 
-  return { onTouchStart: start, onTouchMove: move, onTouchEnd: end, onMouseDown: start, onMouseMove: move, onMouseUp: end, firedRef }
+  return {
+    onTouchStart: start,
+    onTouchMove: move,
+    onTouchEnd: end,
+    onMouseDown: start,
+    onMouseMove: move,
+    onMouseUp: end,
+    firedRef,
+  }
 }
 
 interface SortableSessionProps {
@@ -377,38 +414,63 @@ interface SortableSessionProps {
   onGroupChanged?: () => void
 }
 
-function SortableSession({ item, session, isInGroup, isOver, statusMap, onSelectPane, onPaneContextMenu, onPaneStatusClick, onRefresh, defaultExpanded = false, groups = [], profileKey = '', onGroupChanged }: SortableSessionProps) {
+function SortableSession({
+  item,
+  session,
+  isInGroup,
+  isOver,
+  statusMap,
+  onSelectPane,
+  onPaneContextMenu,
+  onPaneStatusClick,
+  onRefresh,
+  defaultExpanded = false,
+  groups = [],
+  profileKey = '',
+  onGroupChanged,
+}: SortableSessionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [editingWindowIndex, setEditingWindowIndex] = useState<number | null>(null)
   const [editWindowName, setEditWindowName] = useState('')
   const [quickGroupMenu, setQuickGroupMenu] = useState<{ x: number; y: number } | null>(null)
   const [rebuilding, setRebuilding] = useState(false)
 
-  const handleRebuild = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (rebuilding) return
-    if (!confirm(`Rebuild session "${session.sessionName}"? This will kill all processes and recreate windows with the same directories.`)) return
-    setRebuilding(true)
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch(`/api/tmux/sessions/${encodeURIComponent(session.sessionName)}/rebuild`, {
-        method: 'POST',
-        headers,
-      })
-      if (res.ok) {
-        onRefresh()
-      } else {
-        const data = await res.json().catch(() => ({}))
-        alert(`Rebuild failed: ${data.message || 'Unknown error'}`)
+  const handleRebuild = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (rebuilding) return
+      if (
+        !confirm(
+          `Rebuild session "${session.sessionName}"? This will kill all processes and recreate windows with the same directories.`,
+        )
+      )
+        return
+      setRebuilding(true)
+      try {
+        const auth = getAuthHeader()
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (auth) headers.Authorization = auth
+        const res = await fetch(
+          `/api/tmux/sessions/${encodeURIComponent(session.sessionName)}/rebuild`,
+          {
+            method: 'POST',
+            headers,
+          },
+        )
+        if (res.ok) {
+          onRefresh()
+        } else {
+          const data = await res.json().catch(() => ({}))
+          alert(`Rebuild failed: ${data.message || 'Unknown error'}`)
+        }
+      } catch (err) {
+        alert(`Rebuild failed: ${err instanceof Error ? err.message : 'Network error'}`)
+      } finally {
+        setRebuilding(false)
       }
-    } catch (err) {
-      alert(`Rebuild failed: ${err instanceof Error ? err.message : 'Network error'}`)
-    } finally {
-      setRebuilding(false)
-    }
-  }, [rebuilding, session.sessionName, onRefresh])
+    },
+    [rebuilding, session.sessionName, onRefresh],
+  )
 
   // Aggregate session-level status from all panes
   const sessionStatus = useMemo(() => {
@@ -417,8 +479,8 @@ function SortableSession({ item, session, isInGroup, isOver, statusMap, onSelect
     let failed = 0
     let waiting = 0
     let total = 0
-    session.windows.forEach(w => {
-      w.panes.forEach(p => {
+    session.windows.forEach((w) => {
+      w.panes.forEach((p) => {
         const key = buildPaneKey(session.sessionName, w.windowIndex, p.paneId)
         const st = statusMap[key] || 'idle'
         total++
@@ -431,24 +493,22 @@ function SortableSession({ item, session, isInGroup, isOver, statusMap, onSelect
     return { inProgress, done, failed, waiting, total }
   }, [session, statusMap])
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   }
 
-  const handleLongPress = useCallback((pos: { x: number; y: number }) => {
-    if (!profileKey || !groups) return
-    setQuickGroupMenu(pos)
-  }, [profileKey, groups])
+  const handleLongPress = useCallback(
+    (pos: { x: number; y: number }) => {
+      if (!profileKey || !groups) return
+      setQuickGroupMenu(pos)
+    },
+    [profileKey, groups],
+  )
 
   const longPress = useLongPress(handleLongPress, 500)
 
@@ -458,43 +518,52 @@ function SortableSession({ item, session, isInGroup, isOver, statusMap, onSelect
       style={style}
       className={`session-node ${isDragging ? 'dragging' : ''} ${isOver ? 'drop-target' : ''} ${isInGroup ? 'in-group' : ''}`}
     >
-      <div
-        className="session-row"
-        {...longPress}
-      >
+      <div className="session-row" {...longPress}>
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button
-          className="expand-btn"
-          onClick={() => setExpanded(!expanded)}
-        >
+        <button className="expand-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         <Terminal size={14} style={{ color: 'var(--blue-500)' }} />
         <span className="session-name">{session.sessionName}</span>
-        {(sessionStatus.inProgress > 0 || sessionStatus.done > 0 || sessionStatus.failed > 0 || sessionStatus.waiting > 0) && (
+        {(sessionStatus.inProgress > 0 ||
+          sessionStatus.done > 0 ||
+          sessionStatus.failed > 0 ||
+          sessionStatus.waiting > 0) && (
           <span className="session-status-summary">
             {sessionStatus.inProgress > 0 && (
-              <span className="session-stat session-stat--progress" title={`${sessionStatus.inProgress} 进行中`}>
+              <span
+                className="session-stat session-stat--progress"
+                title={`${sessionStatus.inProgress} 进行中`}
+              >
                 <Loader2 size={10} className="spinning" />
                 {sessionStatus.inProgress}
               </span>
             )}
             {sessionStatus.done > 0 && (
-              <span className="session-stat session-stat--done" title={`${sessionStatus.done} 已完成`}>
+              <span
+                className="session-stat session-stat--done"
+                title={`${sessionStatus.done} 已完成`}
+              >
                 <CheckCircle2 size={10} />
                 {sessionStatus.done}
               </span>
             )}
             {sessionStatus.failed > 0 && (
-              <span className="session-stat session-stat--failed" title={`${sessionStatus.failed} 失败`}>
+              <span
+                className="session-stat session-stat--failed"
+                title={`${sessionStatus.failed} 失败`}
+              >
                 <XCircle size={10} />
                 {sessionStatus.failed}
               </span>
             )}
             {sessionStatus.waiting > 0 && (
-              <span className="session-stat session-stat--waiting" title={`${sessionStatus.waiting} 等待中`}>
+              <span
+                className="session-stat session-stat--waiting"
+                title={`${sessionStatus.waiting} 等待中`}
+              >
                 <Clock size={10} />
                 {sessionStatus.waiting}
               </span>
@@ -519,88 +588,99 @@ function SortableSession({ item, session, isInGroup, isOver, statusMap, onSelect
           profileKey={profileKey}
           position={quickGroupMenu}
           onClose={() => setQuickGroupMenu(null)}
-          onDone={() => { setQuickGroupMenu(null); onGroupChanged?.() }}
+          onDone={() => {
+            setQuickGroupMenu(null)
+            onGroupChanged?.()
+          }}
         />
       )}
 
-      {expanded && session.windows.map(window => (
-        <div key={window.windowId} className="window-node">
-          <div className="window-row">
-            {editingWindowIndex === window.windowIndex ? (
-              <input
-                type="text"
-                className="window-name-input"
-                value={editWindowName}
-                onChange={e => setEditWindowName(e.target.value)}
-                onKeyDown={async e => {
-                  if (e.key === 'Enter' && editWindowName.trim()) {
-                    const ok = await renameWindow(session.sessionName, window.windowIndex, editWindowName.trim())
-                    if (ok) onRefresh()
-                    setEditingWindowIndex(null)
-                  }
-                  if (e.key === 'Escape') setEditingWindowIndex(null)
-                }}
-                onBlur={() => setEditingWindowIndex(null)}
-                autoFocus
-              />
-            ) : (
-              <>
-                <span className="window-name">{window.windowIndex}: {window.windowName}</span>
-                <button
-                  className="window-rename-btn"
-                  onClick={() => {
-                    setEditWindowName(window.windowName)
-                    setEditingWindowIndex(window.windowIndex)
+      {expanded &&
+        session.windows.map((window) => (
+          <div key={window.windowId} className="window-node">
+            <div className="window-row">
+              {editingWindowIndex === window.windowIndex ? (
+                <input
+                  type="text"
+                  className="window-name-input"
+                  value={editWindowName}
+                  onChange={(e) => setEditWindowName(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && editWindowName.trim()) {
+                      const ok = await renameWindow(
+                        session.sessionName,
+                        window.windowIndex,
+                        editWindowName.trim(),
+                      )
+                      if (ok) onRefresh()
+                      setEditingWindowIndex(null)
+                    }
+                    if (e.key === 'Escape') setEditingWindowIndex(null)
                   }}
-                  title="Rename window"
-                >
-                  <Pencil size={12} />
-                </button>
-              </>
-            )}
-          </div>
-          {window.panes.map((pane) => {
-            const paneKey = buildPaneKey(session.sessionName, window.windowIndex, pane.paneId)
-            const paneStatus = statusMap[paneKey] || 'idle'
-            return (
-              <div
-                key={pane.paneId}
-                className="pane-node"
-                onClick={() => onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  onPaneContextMenu?.(paneKey)
-                }}
-              >
-                <span className="pane-id">{pane.paneId}</span>
-                <span
-                  className="pane-status-clickable"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onPaneStatusClick?.(paneKey)
-                  }}
-                  title="View task history"
-                >
-                  <StatusBadge status={paneStatus} size="small" />
-                </span>
-                <span className="pane-cmd">{pane.paneCommand}</span>
-                {onPaneContextMenu && (
+                  onBlur={() => setEditingWindowIndex(null)}
+                />
+              ) : (
+                <>
+                  <span className="window-name">
+                    {window.windowIndex}: {window.windowName}
+                  </span>
                   <button
-                    className="pane-details-btn"
+                    className="window-rename-btn"
+                    onClick={() => {
+                      setEditWindowName(window.windowName)
+                      setEditingWindowIndex(window.windowIndex)
+                    }}
+                    title="Rename window"
+                  >
+                    <Pencil size={12} />
+                  </button>
+                </>
+              )}
+            </div>
+            {window.panes.map((pane) => {
+              const paneKey = buildPaneKey(session.sessionName, window.windowIndex, pane.paneId)
+              const paneStatus = statusMap[paneKey] || 'idle'
+              return (
+                <div
+                  key={pane.paneId}
+                  className="pane-node"
+                  onClick={() =>
+                    onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)
+                  }
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    onPaneContextMenu?.(paneKey)
+                  }}
+                >
+                  <span className="pane-id">{pane.paneId}</span>
+                  <span
+                    className="pane-status-clickable"
                     onClick={(e) => {
                       e.stopPropagation()
-                      onPaneContextMenu(paneKey)
+                      onPaneStatusClick?.(paneKey)
                     }}
-                    title="View details"
+                    title="View task history"
                   >
-                    <MoreHorizontal size={14} />
-                  </button>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      ))}
+                    <StatusBadge status={paneStatus} size="small" />
+                  </span>
+                  <span className="pane-cmd">{pane.paneCommand}</span>
+                  {onPaneContextMenu && (
+                    <button
+                      className="pane-details-btn"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onPaneContextMenu(paneKey)
+                      }}
+                      title="View details"
+                    >
+                      <MoreHorizontal size={14} />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        ))}
     </div>
   )
 }
@@ -615,14 +695,9 @@ interface SortableGroupProps {
 function SortableGroup({ item, group, children, isOver }: SortableGroupProps) {
   const [expanded, setExpanded] = useState(true)
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -639,22 +714,19 @@ function SortableGroup({ item, group, children, isOver }: SortableGroupProps) {
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button
-          className="expand-btn"
-          onClick={() => setExpanded(!expanded)}
-        >
+        <button className="expand-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
-        {expanded ? <FolderOpen size={14} style={{ color: 'var(--blue-500)' }} /> : <Folder size={14} style={{ color: 'var(--blue-500)' }} />}
+        {expanded ? (
+          <FolderOpen size={14} style={{ color: 'var(--blue-500)' }} />
+        ) : (
+          <Folder size={14} style={{ color: 'var(--blue-500)' }} />
+        )}
         <span className="group-name">{group.group_name}</span>
         <span className="group-count">{group.session_count}</span>
       </div>
 
-      {expanded && (
-        <div className="group-children">
-          {children}
-        </div>
-      )}
+      {expanded && <div className="group-children">{children}</div>}
     </div>
   )
 }
@@ -697,8 +769,8 @@ export function TmuxTree({
   onOrderChange,
   onPaneContextMenu,
   onPaneStatusClick,
-  statusRefreshToken,
-  defaultExpanded = false
+  statusRefreshToken: _statusRefreshToken,
+  defaultExpanded = false,
 }: Props) {
   const [sessionOrders, setSessionOrders] = useState<SessionOrder[]>([])
   const [groupOrders, setGroupOrders] = useState<{ id: number; sort_order: number }[]>([])
@@ -715,10 +787,10 @@ export function TmuxTree({
 
     const auth = getAuthHeader()
     const headers: Record<string, string> = {}
-    if (auth) headers['Authorization'] = auth
+    if (auth) headers.Authorization = auth
     fetch(`/api/profiles/${profileId}/order`, { headers })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
         if (!data) return
 
         const orders: SessionOrder[] = []
@@ -728,7 +800,7 @@ export function TmuxTree({
             orders.push({
               session_name: s.session_name,
               group_id: g.id,
-              sort_order: s.sort_order
+              sort_order: s.sort_order,
             })
           }
         }
@@ -737,19 +809,21 @@ export function TmuxTree({
           orders.push({
             session_name: s.session_name,
             group_id: null,
-            sort_order: s.sort_order
+            sort_order: s.sort_order,
           })
         }
 
         setSessionOrders(orders)
 
-        setGroupOrders((data.groups || []).map((g: { id: number; sort_order: number }) => ({
-          id: g.id,
-          sort_order: g.sort_order
-        })))
+        setGroupOrders(
+          (data.groups || []).map((g: { id: number; sort_order: number }) => ({
+            id: g.id,
+            sort_order: g.sort_order,
+          })),
+        )
       })
-      .catch(err => console.error('Failed to fetch order:', err))
-  }, [profileId, groups])
+      .catch((_err) => {})
+  }, [profileId])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -759,7 +833,7 @@ export function TmuxTree({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   )
 
   const allPaneKeys = useMemo(() => {
@@ -774,13 +848,14 @@ export function TmuxTree({
     return keys
   }, [sessions])
 
-  const buildStatusMap = async () => {
+  const buildStatusMap = useCallback(async () => {
     // Start with pane process statuses
-    const paneItems = profileKey && allPaneKeys.length > 0
-      ? await fetchPaneStatuses(profileKey, allPaneKeys)
-      : []
+    const paneItems =
+      profileKey && allPaneKeys.length > 0 ? await fetchPaneStatuses(profileKey, allPaneKeys) : []
     const map: Record<string, PaneStatus> = {}
-    paneItems.forEach((s) => { map[s.paneKey] = s.status })
+    paneItems.forEach((s) => {
+      map[s.paneKey] = s.status
+    })
     // Overlay with AI task statuses (take priority over idle)
     const taskMap = await fetchTaskPaneStatuses()
     for (const [key, status] of Object.entries(taskMap)) {
@@ -789,12 +864,11 @@ export function TmuxTree({
       }
     }
     setStatusMap(map)
-  }
+  }, [profileKey, allPaneKeys])
 
   useEffect(() => {
     buildStatusMap()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileKey, allPaneKeys, statusRefreshToken])
+  }, [buildStatusMap])
 
   // Auto-poll pane + task statuses every 10 seconds
   useEffect(() => {
@@ -803,74 +877,79 @@ export function TmuxTree({
       buildStatusMap()
     }, 10000)
     return () => clearInterval(interval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileKey, allPaneKeys])
+  }, [profileKey, allPaneKeys, buildStatusMap])
 
   const treeItems = useMemo(() => {
-    const groupOrderMap = new Map(groupOrders.map(o => [o.id, o.sort_order]))
+    const groupOrderMap = new Map(groupOrders.map((o) => [o.id, o.sort_order]))
     const sortedGroups = [...groups].sort((a, b) => {
       const aOrder = groupOrderMap.get(a.id) ?? a.sort_order
       const bOrder = groupOrderMap.get(b.id) ?? b.sort_order
       return aOrder - bOrder
     })
-    const orderMap = new Map(sessionOrders.map(o => [o.session_name, o]))
+    const orderMap = new Map(sessionOrders.map((o) => [o.session_name, o]))
 
-    const ungroupedSessions = sessions.filter(s => {
-      const order = orderMap.get(s.sessionName)
-      return !order || order.group_id === null
-    }).map((s, idx) => {
-      const order = orderMap.get(s.sessionName)
-      return {
-        id: `session-${s.sessionName}`,
-        type: 'session' as const,
-        session: s,
-        groupId: null,
-        sortOrder: order?.sort_order ?? idx * 10
-      }
-    }).sort((a, b) => a.sortOrder - b.sortOrder)
+    const ungroupedSessions = sessions
+      .filter((s) => {
+        const order = orderMap.get(s.sessionName)
+        return !order || order.group_id === null
+      })
+      .map((s, idx) => {
+        const order = orderMap.get(s.sessionName)
+        return {
+          id: `session-${s.sessionName}`,
+          type: 'session' as const,
+          session: s,
+          groupId: null,
+          sortOrder: order?.sort_order ?? idx * 10,
+        }
+      })
+      .sort((a, b) => a.sortOrder - b.sortOrder)
 
     const allRootItems: TreeItem[] = [
       ...ungroupedSessions,
-      ...sortedGroups.map(g => ({
+      ...sortedGroups.map((g) => ({
         id: `group-${g.id}`,
         type: 'group' as const,
         group: g,
         groupId: null,
-        sortOrder: groupOrderMap.get(g.id) ?? g.sort_order
-      }))
+        sortOrder: groupOrderMap.get(g.id) ?? g.sort_order,
+      })),
     ].sort((a, b) => a.sortOrder - b.sortOrder)
 
     return { rootItems: allRootItems, orderMap }
   }, [sessions, groups, sessionOrders, groupOrders])
 
-  const getGroupSessions = (groupId: number): TreeItem[] => {
-    return sessions
-      .filter(s => {
-        const order = treeItems.orderMap.get(s.sessionName)
-        return order?.group_id === groupId
-      })
-      .map((s, idx) => {
-        const order = treeItems.orderMap.get(s.sessionName)
-        return {
-          id: `session-${s.sessionName}`,
-          type: 'session' as const,
-          session: s,
-          groupId,
-          sortOrder: order?.sort_order ?? idx * 10
-        }
-      })
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-  }
+  const getGroupSessions = useCallback(
+    (groupId: number): TreeItem[] => {
+      return sessions
+        .filter((s) => {
+          const order = treeItems.orderMap.get(s.sessionName)
+          return order?.group_id === groupId
+        })
+        .map((s, idx) => {
+          const order = treeItems.orderMap.get(s.sessionName)
+          return {
+            id: `session-${s.sessionName}`,
+            type: 'session' as const,
+            session: s,
+            groupId,
+            sortOrder: order?.sort_order ?? idx * 10,
+          }
+        })
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    },
+    [sessions, treeItems.orderMap],
+  )
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
     const id = active.id as string
 
-    let item = treeItems.rootItems.find(i => i.id === id)
+    let item = treeItems.rootItems.find((i) => i.id === id)
     if (!item) {
       for (const g of groups) {
         const groupSessions = getGroupSessions(g.id)
-        item = groupSessions.find(i => i.id === id)
+        item = groupSessions.find((i) => i.id === id)
         if (item) break
       }
     }
@@ -899,20 +978,20 @@ export function TmuxTree({
     const isOverSession = overId.startsWith('session-')
     const isOverGroup = overId.startsWith('group-')
 
-    let foundActiveItem = treeItems.rootItems.find(i => i.id === activeId)
+    let foundActiveItem = treeItems.rootItems.find((i) => i.id === activeId)
     if (!foundActiveItem) {
       for (const g of groups) {
         const groupSessions = getGroupSessions(g.id)
-        foundActiveItem = groupSessions.find(i => i.id === activeId)
+        foundActiveItem = groupSessions.find((i) => i.id === activeId)
         if (foundActiveItem) break
       }
     }
 
-    let overItem = treeItems.rootItems.find(i => i.id === overId)
+    let overItem = treeItems.rootItems.find((i) => i.id === overId)
     if (!overItem) {
       for (const g of groups) {
         const groupSessions = getGroupSessions(g.id)
-        overItem = groupSessions.find(i => i.id === overId)
+        overItem = groupSessions.find((i) => i.id === overId)
         if (overItem) break
       }
     }
@@ -924,19 +1003,24 @@ export function TmuxTree({
     const activeSessionName = foundActiveItem.session?.sessionName
 
     if (isActiveSession && activeSessionName) {
-      let orderEntry = newSessionOrders.find(o => o.session_name === activeSessionName)
+      let orderEntry = newSessionOrders.find((o) => o.session_name === activeSessionName)
       if (!orderEntry) {
-        orderEntry = { session_name: activeSessionName, group_id: foundActiveItem.groupId, sort_order: 0 }
+        orderEntry = {
+          session_name: activeSessionName,
+          group_id: foundActiveItem.groupId,
+          sort_order: 0,
+        }
         newSessionOrders.push(orderEntry)
       }
 
       if (isOverGroup) {
-        const targetGroupId = parseInt(overId.replace('group-', ''))
+        const targetGroupId = parseInt(overId.replace('group-', ''), 10)
         orderEntry.group_id = targetGroupId
         orderEntry.sort_order = 0
       } else if (isOverSession) {
         orderEntry.group_id = overItem.groupId
-        orderEntry.sort_order = overItem.sortOrder + (foundActiveItem.sortOrder < overItem.sortOrder ? 1 : -1)
+        orderEntry.sort_order =
+          overItem.sortOrder + (foundActiveItem.sortOrder < overItem.sortOrder ? 1 : -1)
       }
 
       setSessionOrders(newSessionOrders)
@@ -944,7 +1028,7 @@ export function TmuxTree({
 
     if (isActiveGroup && foundActiveItem.group) {
       const activeGroupId = foundActiveItem.group.id
-      let groupOrder = newGroupOrders.find(g => g.id === activeGroupId)
+      let groupOrder = newGroupOrders.find((g) => g.id === activeGroupId)
       if (!groupOrder) {
         groupOrder = { id: activeGroupId, sort_order: foundActiveItem.sortOrder }
         newGroupOrders.push(groupOrder)
@@ -960,17 +1044,20 @@ export function TmuxTree({
 
     const orderData: OrderData = {
       groups: groups.map((g) => {
-        const order = newGroupOrders.find(o => o.id === g.id)
+        const order = newGroupOrders.find((o) => o.id === g.id)
         return {
           id: g.id,
-          sort_order: order?.sort_order ?? g.sort_order
+          sort_order: order?.sort_order ?? g.sort_order,
         }
       }),
-      sessions: newSessionOrders.length > 0 ? newSessionOrders : sessions.map((s, idx) => ({
-        session_name: s.sessionName,
-        group_id: null,
-        sort_order: idx * 10
-      }))
+      sessions:
+        newSessionOrders.length > 0
+          ? newSessionOrders
+          : sessions.map((s, idx) => ({
+              session_name: s.sessionName,
+              group_id: null,
+              sort_order: idx * 10,
+            })),
     }
 
     try {
@@ -978,28 +1065,26 @@ export function TmuxTree({
         await saveOrder(profileId, orderData)
       }
       onOrderChange?.()
-    } catch (err) {
-      console.error('Failed to save order:', err)
-    }
+    } catch (_err) {}
   }
 
   const allSortableIds = useMemo(() => {
-    const ids = treeItems.rootItems.map(i => i.id)
+    const ids = treeItems.rootItems.map((i) => i.id)
     for (const g of groups) {
       const groupSessions = getGroupSessions(g.id)
-      ids.push(...groupSessions.map(s => s.id))
+      ids.push(...groupSessions.map((s) => s.id))
     }
     return ids
-  }, [treeItems.rootItems, groups])
+  }, [treeItems.rootItems, groups, getGroupSessions])
 
   const taskStats = useMemo(() => {
     const values = Object.values(statusMap)
     return {
-      inProgress: values.filter(s => s === 'in_progress').length,
-      done: values.filter(s => s === 'done').length,
-      failed: values.filter(s => s === 'failed').length,
-      waiting: values.filter(s => s === 'waiting').length,
-      total: values.length
+      inProgress: values.filter((s) => s === 'in_progress').length,
+      done: values.filter((s) => s === 'done').length,
+      failed: values.filter((s) => s === 'failed').length,
+      waiting: values.filter((s) => s === 'waiting').length,
+      total: values.length,
     }
   }, [statusMap])
 
@@ -1039,9 +1124,7 @@ export function TmuxTree({
         <NewTmuxButton sessions={sessions} onCreated={onRefresh} />
       </div>
 
-      {sessions.length === 0 && groups.length === 0 && (
-        <div className="empty">No sessions</div>
-      )}
+      {sessions.length === 0 && groups.length === 0 && <div className="empty">No sessions</div>}
 
       <DndContext
         sensors={sensors}
@@ -1050,12 +1133,9 @@ export function TmuxTree({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext
-          items={allSortableIds}
-          strategy={verticalListSortingStrategy}
-        >
+        <SortableContext items={allSortableIds} strategy={verticalListSortingStrategy}>
           <div className="tree-content">
-            {treeItems.rootItems.map(item => {
+            {treeItems.rootItems.map((item) => {
               if (item.type === 'group' && item.group) {
                 const groupSessions = getGroupSessions(item.group.id)
                 return (
@@ -1068,7 +1148,7 @@ export function TmuxTree({
                     {groupSessions.length === 0 ? (
                       <div className="group-empty-drop">Drop sessions here</div>
                     ) : (
-                      groupSessions.map(sessionItem => (
+                      groupSessions.map((sessionItem) => (
                         <SortableSession
                           key={sessionItem.id}
                           item={sessionItem}

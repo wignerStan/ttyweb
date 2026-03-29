@@ -1,27 +1,27 @@
-import { useState, useCallback, useMemo } from 'react';
 import {
-  DndContext,
-  DragOverlay,
   closestCorners,
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
   PointerSensor,
+  type UniqueIdentifier,
   useSensor,
   useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-  type UniqueIdentifier,
-} from '@dnd-kit/core';
-import { Plus, RefreshCw, Inbox } from 'lucide-react';
-import { useKanbanTasks } from './useKanbanTasks';
-import { TaskColumn } from './TaskColumn';
-import { TaskCard } from './TaskCard';
-import { TaskDialog } from './TaskDialog';
-import type { KanbanTask, KanbanStatus } from './types';
-import type { TaskFormData } from './TaskDialog';
-import './kanban.css';
+} from '@dnd-kit/core'
+import { Inbox, Plus, RefreshCw } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { TaskCard } from './TaskCard'
+import { TaskColumn } from './TaskColumn'
+import type { TaskFormData } from './TaskDialog'
+import { TaskDialog } from './TaskDialog'
+import type { KanbanStatus, KanbanTask } from './types'
+import { useKanbanTasks } from './useKanbanTasks'
+import './kanban.css'
 
 interface ColumnConfig {
-  key: KanbanStatus;
-  title: string;
+  key: KanbanStatus
+  title: string
 }
 
 const COLUMNS: ColumnConfig[] = [
@@ -29,7 +29,7 @@ const COLUMNS: ColumnConfig[] = [
   { key: 'in_progress', title: 'In Progress' },
   { key: 'done', title: 'Done' },
   { key: 'archived', title: 'Archived' },
-];
+]
 
 function KanbanBoard() {
   const {
@@ -43,18 +43,18 @@ function KanbanBoard() {
     deleteTask,
     fetchComments,
     createComment,
-  } = useKanbanTasks();
+  } = useKanbanTasks()
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<KanbanTask | null>(null);
-  const [defaultStatus, setDefaultStatus] = useState<KanbanStatus>('todo');
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<KanbanTask | null>(null)
+  const [defaultStatus, setDefaultStatus] = useState<KanbanStatus>('todo')
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
     }),
-  );
+  )
 
   const tasksByStatus = useMemo(() => {
     const map: Record<KanbanStatus, KanbanTask[]> = {
@@ -62,106 +62,105 @@ function KanbanBoard() {
       in_progress: [],
       done: [],
       archived: [],
-    };
+    }
     for (const task of tasks) {
-      map[task.status].push(task);
+      map[task.status].push(task)
     }
     for (const key of Object.keys(map) as KanbanStatus[]) {
-      map[key].sort((a, b) => a.order_index - b.order_index);
+      map[key].sort((a, b) => a.order_index - b.order_index)
     }
-    return map;
-  }, [tasks]);
+    return map
+  }, [tasks])
 
   const activeTask = useMemo(
-    () => (activeId ? tasks.find((t) => t.id === activeId) ?? null : null),
+    () => (activeId ? (tasks.find((t) => t.id === activeId) ?? null) : null),
     [activeId, tasks],
-  );
+  )
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id);
-  }, []);
+    setActiveId(event.active.id)
+  }, [])
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      setActiveId(null);
-      const { active, over } = event;
-      if (!over) return;
+      setActiveId(null)
+      const { active, over } = event
+      if (!over) return
 
-      const taskId = active.id as string;
-      const overId = over.id as string;
+      const taskId = active.id as string
+      const overId = over.id as string
 
       // Determine target column: dropped on column header or on another task
-      const columnStatus = COLUMNS.find((col) => col.key === overId)?.key;
-      const overTask = tasks.find((t) => t.id === overId);
-      const targetStatus = (columnStatus ?? overTask?.status) as KanbanStatus | undefined;
+      const columnStatus = COLUMNS.find((col) => col.key === overId)?.key
+      const overTask = tasks.find((t) => t.id === overId)
+      const targetStatus = (columnStatus ?? overTask?.status) as KanbanStatus | undefined
 
-      if (!targetStatus) return;
+      if (!targetStatus) return
 
-      const currentTask = tasks.find((t) => t.id === taskId);
-      if (!currentTask) return;
+      const currentTask = tasks.find((t) => t.id === taskId)
+      if (!currentTask) return
 
       // Same column and position — skip
-      if (currentTask.status === targetStatus && currentTask.id === overId) return;
+      if (currentTask.status === targetStatus && currentTask.id === overId) return
 
       // Calculate order index
-      const targetColumnTasks = tasksByStatus[targetStatus] ?? [];
-      let newIndex = 0;
+      const targetColumnTasks = tasksByStatus[targetStatus] ?? []
+      let newIndex = 0
 
       if (targetStatus === currentTask.status) {
         // Reordering within same column
-        const currentIndex = targetColumnTasks.findIndex((t) => t.id === taskId);
-        const overIndex = targetColumnTasks.findIndex((t) => t.id === overId);
+        const currentIndex = targetColumnTasks.findIndex((t) => t.id === taskId)
+        const overIndex = targetColumnTasks.findIndex((t) => t.id === overId)
         if (currentIndex >= 0 && overIndex >= 0 && currentIndex !== overIndex) {
-          newIndex = overIndex;
+          newIndex = overIndex
         } else {
-          newIndex = currentIndex >= 0 ? currentIndex : 0;
+          newIndex = currentIndex >= 0 ? currentIndex : 0
         }
       } else {
         // Moving to different column
-        const overIndex = targetColumnTasks.findIndex((t) => t.id === overId);
-        newIndex = overIndex >= 0 ? overIndex : targetColumnTasks.length;
+        const overIndex = targetColumnTasks.findIndex((t) => t.id === overId)
+        newIndex = overIndex >= 0 ? overIndex : targetColumnTasks.length
       }
 
-      let orderIndex = 1000;
+      let orderIndex = 1000
 
       if (newIndex === 0 && targetColumnTasks.length > 0) {
-        orderIndex = targetColumnTasks[0]?.order_index != null
-          ? targetColumnTasks[0].order_index - 1000
-          : 1000;
+        orderIndex =
+          targetColumnTasks[0]?.order_index != null ? targetColumnTasks[0].order_index - 1000 : 1000
       } else if (newIndex >= targetColumnTasks.length && targetColumnTasks.length > 0) {
-        const last = targetColumnTasks[targetColumnTasks.length - 1];
-        orderIndex = (last?.order_index ?? 0) + 1000;
+        const last = targetColumnTasks[targetColumnTasks.length - 1]
+        orderIndex = (last?.order_index ?? 0) + 1000
       } else if (newIndex > 0 && newIndex < targetColumnTasks.length) {
-        const prev = targetColumnTasks[newIndex - 1];
-        const next = targetColumnTasks[newIndex];
+        const prev = targetColumnTasks[newIndex - 1]
+        const next = targetColumnTasks[newIndex]
         if (prev && next) {
-          orderIndex = Math.round((prev.order_index + next.order_index) / 2);
+          orderIndex = Math.round((prev.order_index + next.order_index) / 2)
         } else {
-          orderIndex = prev?.order_index != null ? prev.order_index + 1000 : 1000;
+          orderIndex = prev?.order_index != null ? prev.order_index + 1000 : 1000
         }
       }
 
-      void moveTask(taskId, targetStatus, orderIndex);
+      void moveTask(taskId, targetStatus, orderIndex)
     },
     [tasks, tasksByStatus, moveTask],
-  );
+  )
 
   const handleSelectTask = useCallback((task: KanbanTask) => {
-    setEditingTask(task);
-    setDefaultStatus(task.status);
-    setDialogOpen(true);
-  }, []);
+    setEditingTask(task)
+    setDefaultStatus(task.status)
+    setDialogOpen(true)
+  }, [])
 
   const handleAddTask = useCallback((status: KanbanStatus) => {
-    setEditingTask(null);
-    setDefaultStatus(status);
-    setDialogOpen(true);
-  }, []);
+    setEditingTask(null)
+    setDefaultStatus(status)
+    setDialogOpen(true)
+  }, [])
 
   const handleDialogClose = useCallback(() => {
-    setDialogOpen(false);
-    setEditingTask(null);
-  }, []);
+    setDialogOpen(false)
+    setEditingTask(null)
+  }, [])
 
   const handleCreate = useCallback(
     async (fields: Partial<TaskFormData>) => {
@@ -172,14 +171,14 @@ function KanbanBoard() {
         priority: fields.priority,
         tags: fields.tags,
         due_date: fields.due_date,
-      });
+      })
     },
     [createTask, defaultStatus],
-  );
+  )
 
   const handleSave = useCallback(
     async (fields: TaskFormData) => {
-      if (!editingTask) return null;
+      if (!editingTask) return null
       return await updateTask(editingTask.id, {
         title: fields.title,
         description: fields.description,
@@ -187,27 +186,23 @@ function KanbanBoard() {
         priority: fields.priority,
         tags: fields.tags,
         due_date: fields.due_date,
-      });
+      })
     },
     [editingTask, updateTask],
-  );
+  )
 
   if (error) {
     return (
       <div className="kanban-board">
         <div className="kanban-board__empty">
           <p style={{ color: 'var(--kanban-danger)' }}>{error}</p>
-          <button
-            className="kanban-board__btn"
-            onClick={() => void fetchTasks()}
-            type="button"
-          >
+          <button className="kanban-board__btn" onClick={() => void fetchTasks()} type="button">
             <RefreshCw size={13} />
             Retry
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -215,9 +210,7 @@ function KanbanBoard() {
       <div className="kanban-board__header">
         <div>
           <h2 className="kanban-board__title">Kanban Board</h2>
-          <div className="kanban-board__subtitle">
-            Drag and drop tasks between columns
-          </div>
+          <div className="kanban-board__subtitle">Drag and drop tasks between columns</div>
         </div>
         <div className="kanban-board__actions">
           <button
@@ -229,11 +222,7 @@ function KanbanBoard() {
           >
             <RefreshCw size={14} className={loading ? 'status-icon--spinning' : ''} />
           </button>
-          <button
-            className="kanban-board__btn"
-            onClick={() => handleAddTask('todo')}
-            type="button"
-          >
+          <button className="kanban-board__btn" onClick={() => handleAddTask('todo')} type="button">
             <Plus size={14} />
             Add Task
           </button>
@@ -292,7 +281,7 @@ function KanbanBoard() {
         createComment={createComment}
       />
     </div>
-  );
+  )
 }
 
-export { KanbanBoard };
+export { KanbanBoard }

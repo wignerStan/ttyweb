@@ -48,7 +48,9 @@ func New(masterConn Master, slave Slave, options ...Option) (*WebTTY, error) {
 	}
 
 	for _, option := range options {
-		option(wt)
+		if err := option(wt); err != nil {
+			return nil, err
+		}
 	}
 
 	return wt, nil
@@ -75,7 +77,7 @@ func (wt *WebTTY) Run(ctx context.Context) error {
 				//base64 length
 				effectiveBufferSize := wt.bufferSize - 1
 				//max raw data length
-				maxChunkSize := int(effectiveBufferSize/4) * 3
+				maxChunkSize := effectiveBufferSize / 4 * 3
 
 				n, err := wt.slave.Read(buffer[:maxChunkSize])
 				if err != nil {
@@ -232,7 +234,9 @@ func (wt *WebTTY) handleMasterReadEvent(data []byte) error {
 			columns = int(args.Columns)
 		}
 
-		wt.slave.ResizeTerminal(columns, rows)
+		if err := wt.slave.ResizeTerminal(columns, rows); err != nil {
+			return errors.Wrapf(err, "failed to resize terminal")
+		}
 	default:
 		return errors.Errorf("unknown message type `%c`", data[0])
 	}

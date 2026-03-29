@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
 import './ConfigViewer.css'
 
@@ -42,26 +42,28 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
 
     const auth = getAuthHeader()
     const headers: Record<string, string> = {}
-    if (auth) headers['Authorization'] = auth
+    if (auth) headers.Authorization = auth
     fetch(`/api/opencode-config?${params}`, { headers })
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
-      .then(json => {
+      .then((json) => {
         if (!cancelled) {
           setData(json)
           setLoading(false)
         }
       })
-      .catch(err => {
+      .catch((err) => {
         if (!cancelled) {
           setError(err.message)
           setLoading(false)
         }
       })
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [paneKey])
 
   if (loading) {
@@ -89,7 +91,7 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
   return (
     <div className="config-viewer">
       <div className="config-viewer-tabs">
-        {tabs.map(tab => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             className={`config-viewer-tab ${activeTab === tab ? 'active' : ''}`}

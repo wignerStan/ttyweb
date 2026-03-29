@@ -37,12 +37,12 @@ var hopByHopHeaders = map[string]bool{
 // butlerAllowedResponseHeaders is an allowlist of response headers forwarded
 // from the upstream Butler service. All other headers are stripped.
 var butlerAllowedResponseHeaders = map[string]bool{
-	"Content-Type":      true,
-	"Content-Length":    true,
-	"Cache-Control":     true,
-	"Last-Modified":     true,
-	"Etag":              true,
-	"X-Request-Id":      true,
+	"Content-Type":   true,
+	"Content-Length": true,
+	"Cache-Control":  true,
+	"Last-Modified":  true,
+	"Etag":           true,
+	"X-Request-Id":   true,
 }
 
 // butlerMaxRequestBodyBytes is the maximum allowed request body size for
@@ -157,7 +157,7 @@ func (server *Server) proxySSE(w http.ResponseWriter, r *http.Request, targetURL
 		writeAPIError(w, http.StatusBadGateway, "Butler service unavailable")
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Flush headers immediately to start the SSE stream.
 	flusher, canFlush := w.(http.Flusher)
@@ -220,7 +220,7 @@ func (server *Server) proxyNormal(w http.ResponseWriter, r *http.Request, target
 		writeAPIError(w, http.StatusBadGateway, "Butler service unavailable")
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Copy only allowlisted response headers.
 	copyAllowedResponseHeaders(w.Header(), resp.Header)

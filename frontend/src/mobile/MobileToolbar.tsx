@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 const KEYS = {
   ESC: '\x1b',
@@ -17,21 +17,24 @@ interface Props {
 export function MobileToolbar({ onSendText, onPaste }: Props) {
   const [ctrlActive, setCtrlActive] = useState(false)
 
-  const handleKey = useCallback((key: string) => {
-    if (ctrlActive) {
-      const upper = key.toUpperCase()
-      if (upper >= 'A' && upper <= 'Z') {
-        const code = upper.charCodeAt(0) - 64
-        onSendText(String.fromCharCode(code))
-        setCtrlActive(false)
-        return
+  const handleKey = useCallback(
+    (key: string) => {
+      if (ctrlActive) {
+        const upper = key.toUpperCase()
+        if (upper >= 'A' && upper <= 'Z') {
+          const code = upper.charCodeAt(0) - 64
+          onSendText(String.fromCharCode(code))
+          setCtrlActive(false)
+          return
+        }
       }
-    }
-    onSendText(key)
-  }, [ctrlActive, onSendText])
+      onSendText(key)
+    },
+    [ctrlActive, onSendText],
+  )
 
   const toggleCtrl = useCallback(() => {
-    setCtrlActive(prev => !prev)
+    setCtrlActive((prev) => !prev)
   }, [])
 
   return (
@@ -42,7 +45,7 @@ export function MobileToolbar({ onSendText, onPaste }: Props) {
       <button className="mobile-toolbar-key" onClick={() => handleKey(KEYS.TAB)} type="button">
         Tab
       </button>
-      <button 
+      <button
         className={`mobile-toolbar-key mobile-toolbar-ctrl ${ctrlActive ? 'active' : ''}`}
         onClick={toggleCtrl}
         type="button"
@@ -50,16 +53,32 @@ export function MobileToolbar({ onSendText, onPaste }: Props) {
         Ctrl
       </button>
       <div className="mobile-toolbar-arrows">
-        <button className="mobile-toolbar-arrow" onClick={() => handleKey(KEYS.ARROW_LEFT)} type="button">
+        <button
+          className="mobile-toolbar-arrow"
+          onClick={() => handleKey(KEYS.ARROW_LEFT)}
+          type="button"
+        >
           ←
         </button>
-        <button className="mobile-toolbar-arrow" onClick={() => handleKey(KEYS.ARROW_UP)} type="button">
+        <button
+          className="mobile-toolbar-arrow"
+          onClick={() => handleKey(KEYS.ARROW_UP)}
+          type="button"
+        >
           ↑
         </button>
-        <button className="mobile-toolbar-arrow" onClick={() => handleKey(KEYS.ARROW_DOWN)} type="button">
+        <button
+          className="mobile-toolbar-arrow"
+          onClick={() => handleKey(KEYS.ARROW_DOWN)}
+          type="button"
+        >
           ↓
         </button>
-        <button className="mobile-toolbar-arrow" onClick={() => handleKey(KEYS.ARROW_RIGHT)} type="button">
+        <button
+          className="mobile-toolbar-arrow"
+          onClick={() => handleKey(KEYS.ARROW_RIGHT)}
+          type="button"
+        >
           →
         </button>
       </div>

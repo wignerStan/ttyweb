@@ -2,6 +2,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -52,7 +53,7 @@ func (r *UpdateProjectRequest) toUpdates() map[string]interface{} {
 // runGitCommand executes a git command in the given directory and returns its
 // trimmed stdout. Returns an error if the command fails.
 func runGitCommand(dir string, args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(context.Background(), "git", args...)
 	cmd.Dir = dir
 	out, err := cmd.Output()
 	if err != nil {
@@ -63,17 +64,17 @@ func runGitCommand(dir string, args ...string) (string, error) {
 
 // Project represents a tracked git repository with metadata.
 type Project struct {
-	ID              string     `gorm:"primaryKey;type:text" json:"id"`
-	Name            string     `gorm:"type:text;not null;index" json:"name"`
-	Path            string     `gorm:"type:text;not null;uniqueIndex" json:"path"`
-	Description     string     `gorm:"type:text" json:"description"`
-	DefaultBranch   string     `gorm:"type:text" json:"default_branch"`
-	WorktreeBasePath string    `gorm:"type:text" json:"worktree_base_path"`
-	RemoteURL       string     `gorm:"type:text" json:"remote_url"`
-	LastSyncAt      *time.Time `gorm:"type:datetime" json:"last_sync_at"`
-	Priority        int        `gorm:"type:integer;not null;default:0" json:"priority"`
-	CreatedAt       time.Time  `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt       time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
+	ID               string     `gorm:"primaryKey;type:text" json:"id"`
+	Name             string     `gorm:"type:text;not null;index" json:"name"`
+	Path             string     `gorm:"type:text;not null;uniqueIndex" json:"path"`
+	Description      string     `gorm:"type:text" json:"description"`
+	DefaultBranch    string     `gorm:"type:text" json:"default_branch"`
+	WorktreeBasePath string     `gorm:"type:text" json:"worktree_base_path"`
+	RemoteURL        string     `gorm:"type:text" json:"remote_url"`
+	LastSyncAt       *time.Time `gorm:"type:datetime" json:"last_sync_at"`
+	Priority         int        `gorm:"type:integer;not null;default:0" json:"priority"`
+	CreatedAt        time.Time  `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt        time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 // TableName maps the GORM model to the projects table.
@@ -83,10 +84,10 @@ func (Project) TableName() string {
 
 // Common errors returned by ProjectService methods.
 var (
-	ErrProjectNotFound     = errors.New("project not found")
-	ErrInvalidProjectPath  = errors.New("invalid project path: must be an absolute path to a directory containing .git")
-	ErrProjectNameRequired = errors.New("project name is required")
-	ErrProjectPathRequired = errors.New("project path is required")
+	ErrProjectNotFound      = errors.New("project not found")
+	ErrInvalidProjectPath   = errors.New("invalid project path: must be an absolute path to a directory containing .git")
+	ErrProjectNameRequired  = errors.New("project name is required")
+	ErrProjectPathRequired  = errors.New("project path is required")
 	ErrProjectAlreadyExists = errors.New("a project with this path already exists")
 )
 
@@ -253,10 +254,7 @@ func (s *ProjectService) SyncProject(id string) (*Project, error) {
 		return nil, err
 	}
 
-	remoteURL, err := gitRemoteURL(project.Path)
-	if err != nil {
-		return nil, fmt.Errorf("detect remote URL: %w", err)
-	}
+	remoteURL, _ := gitRemoteURL(project.Path)
 
 	defaultBranch, err := gitDefaultBranch(project.Path)
 	if err != nil {
@@ -303,8 +301,11 @@ func gitRemoteURL(repoPath string) (string, error) {
 // or no commits).
 func gitDefaultBranch(repoPath string) (string, error) {
 	branch, err := runGitCommand(repoPath, "symbolic-ref", "--short", "HEAD")
-	if err != nil || branch == "" {
-		// Detached HEAD or no commits; fall back to "main".
+	//nolint:nilerr // detached HEAD is an expected state, not an error
+	if err != nil {
+		return "main", nil
+	}
+	if branch == "" {
 		return "main", nil
 	}
 	return branch, nil

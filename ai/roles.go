@@ -4,11 +4,11 @@ import "sync"
 
 // Role defines an AI assistant persona with a specialized system prompt.
 type Role struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Emoji       string `json:"emoji"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Emoji        string `json:"emoji"`
 	SystemPrompt string `json:"system_prompt"`
-	Suffix      string `json:"suffix"`
+	Suffix       string `json:"suffix"`
 }
 
 // BuiltinRoles returns the default set of AI roles shipped with ttyweb.

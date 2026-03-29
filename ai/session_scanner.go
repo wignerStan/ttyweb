@@ -168,7 +168,7 @@ func ScanCodexSessions() ([]AISession, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("failed to read codex session directory %q: %w", todayDir, err)
 	}
 
 	var sessions []AISession

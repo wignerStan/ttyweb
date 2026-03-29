@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
-import { useConversations } from './useConversations'
+import { useMemo, useState } from 'react'
 import type { AISession } from './types'
+import { useConversations } from './useConversations'
 import './conversations.css'
 
 interface ConversationListProps {
@@ -26,7 +26,7 @@ function formatRelativeTime(timestamp?: string): string {
   if (!timestamp) return ''
   try {
     const date = new Date(timestamp)
-    if (isNaN(date.getTime())) return ''
+    if (Number.isNaN(date.getTime())) return ''
     const now = Date.now()
     const diffMs = now - date.getTime()
     const diffMins = Math.floor(diffMs / 60000)
@@ -43,13 +43,10 @@ function formatRelativeTime(timestamp?: string): string {
 
 const TYPE_ORDER: Record<string, number> = {
   'Claude Code': 0,
-  'Codex': 1,
+  Codex: 1,
 }
 
-export function ConversationList({
-  selectedSessionId,
-  onSelectSession,
-}: ConversationListProps) {
+export function ConversationList({ selectedSessionId, onSelectSession }: ConversationListProps) {
   const [filterText, setFilterText] = useState('')
   const { sessions, loading, error, refetch } = useConversations(null)
 
@@ -60,17 +57,15 @@ export function ConversationList({
       (s) =>
         s.title.toLowerCase().includes(lower) ||
         s.model.toLowerCase().includes(lower) ||
-        s.type.toLowerCase().includes(lower)
+        s.type.toLowerCase().includes(lower),
     )
   }, [sessions, filterText])
 
   const grouped = useMemo(() => groupByType(filteredSessions), [filteredSessions])
   const sortedGroups = useMemo(
     () =>
-      [...grouped.entries()].sort(
-        (a, b) => (TYPE_ORDER[a[0]] ?? 99) - (TYPE_ORDER[b[0]] ?? 99)
-      ),
-    [grouped]
+      [...grouped.entries()].sort((a, b) => (TYPE_ORDER[a[0]] ?? 99) - (TYPE_ORDER[b[0]] ?? 99)),
+    [grouped],
   )
 
   return (

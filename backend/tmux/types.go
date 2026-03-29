@@ -10,14 +10,14 @@ type Session struct {
 
 // Pane represents a tmux pane within a session.
 type Pane struct {
-	ID       string `json:"id"`
-	Session  string `json:"session"`
-	Window   int    `json:"window"`
-	Title    string `json:"title"`
-	Current  string `json:"current_command"`
-	Running  bool   `json:"running"`
-	Width    int    `json:"width"`
-	Height   int    `json:"height"`
+	ID      string `json:"id"`
+	Session string `json:"session"`
+	Window  int    `json:"window"`
+	Title   string `json:"title"`
+	Current string `json:"current_command"`
+	Running bool   `json:"running"`
+	Width   int    `json:"width"`
+	Height  int    `json:"height"`
 }
 
 // SessionDetail is a session with its panes.

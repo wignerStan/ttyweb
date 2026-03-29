@@ -1,6 +1,7 @@
 package tmux
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"strconv"
@@ -14,10 +15,10 @@ import (
 // TmuxSlave is a tmux session attached via PTY.
 // It implements server.Slave interface from ttyweb/server.
 type TmuxSlave struct {
-	pty       *os.File
-	cmd       *exec.Cmd
-	session   string
-	pane      string
+	pty     *os.File
+	cmd     *exec.Cmd
+	session string
+	pane    string
 
 	closeSignal  syscall.Signal
 	closeTimeout time.Duration
@@ -58,7 +59,7 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 		args = append(args, "attach-session", "-t", session)
 	}
 
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.CommandContext(context.Background(), args[0], args[1:]...)
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 
 	ptyFile, err := pty.Start(cmd)
@@ -72,9 +73,9 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 		pane:         pane,
 		closeSignal:  syscall.SIGHUP,
 		closeTimeout: 10 * time.Second,
-		cmd:           cmd,
-		pty:           ptyFile,
-		ptyClosed:     ptyClosed,
+		cmd:          cmd,
+		pty:          ptyFile,
+		ptyClosed:    ptyClosed,
 	}
 
 	for _, opt := range options {
@@ -83,10 +84,10 @@ func NewTmuxSlave(session string, pane string, options ...Option) (*TmuxSlave, e
 
 	go func() {
 		defer func() {
-			slave.pty.Close()
+			_ = slave.pty.Close()
 			close(slave.ptyClosed)
 		}()
-		slave.cmd.Wait()
+		_ = slave.cmd.Wait()
 	}()
 
 	return slave, nil
@@ -134,14 +135,14 @@ func (s *TmuxSlave) ResizeTerminal(width int, height int) error {
 
 func (s *TmuxSlave) Close() error {
 	if s.cmd != nil && s.cmd.Process != nil {
-		s.cmd.Process.Signal(s.closeSignal)
+		_ = s.cmd.Process.Signal(s.closeSignal)
 	}
 	for {
 		select {
 		case <-s.ptyClosed:
 			return nil
 		case <-s.closeTimeoutC():
-			s.cmd.Process.Signal(syscall.SIGKILL)
+			_ = s.cmd.Process.Signal(syscall.SIGKILL)
 		}
 	}
 }

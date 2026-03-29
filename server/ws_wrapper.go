@@ -12,17 +12,17 @@ type wsWrapper struct {
 }
 
 func (wsw *wsWrapper) Write(p []byte) (n int, err error) {
-	writer, err := wsw.Conn.NextWriter(websocket.TextMessage)
+	writer, err := wsw.NextWriter(websocket.TextMessage)
 	if err != nil {
 		return 0, err
 	}
-	defer writer.Close()
+	defer func() { _ = writer.Close() }()
 	return writer.Write(p)
 }
 
 func (wsw *wsWrapper) Read(p []byte) (n int, err error) {
 	for {
-		msgType, reader, err := wsw.Conn.NextReader()
+		msgType, reader, err := wsw.NextReader()
 		if err != nil {
 			return 0, err
 		}

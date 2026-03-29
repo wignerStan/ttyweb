@@ -41,7 +41,7 @@ func (server *Server) handleAuthCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if subtle.ConstantTimeCompare([]byte(server.options.Credential), []byte(payload)) != 1 {
+	if subtle.ConstantTimeCompare([]byte(server.options.Credential), payload) != 1 {
 		w.Header().Set("WWW-Authenticate", `Basic realm="ttyweb"`)
 		writeAPIError(w, http.StatusUnauthorized, "invalid credentials")
 		return

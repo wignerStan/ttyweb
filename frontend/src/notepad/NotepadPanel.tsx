@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
 import { Plus, X } from 'lucide-react'
-import { useNotepad, type Note } from './useNotepad'
+import { useCallback, useState } from 'react'
 import { NotepadTab } from './NotepadTab'
+import { type Note, useNotepad } from './useNotepad'
 import './notepad.css'
 
 interface NotepadPanelProps {
@@ -15,10 +15,7 @@ export function NotepadPanel({ projectId = null }: NotepadPanelProps) {
   const sortedNotes = [...notes].sort((a, b) => a.order_index - b.order_index)
 
   const handleCreate = useCallback(async () => {
-    const maxOrder = sortedNotes.reduce(
-      (max, n) => Math.max(max, n.order_index),
-      -1
-    )
+    const maxOrder = sortedNotes.reduce((max, n) => Math.max(max, n.order_index), -1)
     const newNote = await createNote('Untitled', '', maxOrder + 1)
     if (newNote) {
       setActiveNoteId(newNote.id)
@@ -30,10 +27,10 @@ export function NotepadPanel({ projectId = null }: NotepadPanelProps) {
       await deleteNote(noteId)
       if (activeNoteId === noteId) {
         const remaining = sortedNotes.filter((n) => n.id !== noteId)
-        setActiveNoteId(remaining.length > 0 ? remaining[remaining.length - 1]!.id : null)
+        setActiveNoteId(remaining.length > 0 ? (remaining[remaining.length - 1]?.id ?? null) : null)
       }
     },
-    [deleteNote, activeNoteId, sortedNotes]
+    [deleteNote, activeNoteId, sortedNotes],
   )
 
   const activeNote: Note | undefined = sortedNotes.find((n) => n.id === activeNoteId)
@@ -53,6 +50,7 @@ export function NotepadPanel({ projectId = null }: NotepadPanelProps) {
             className={`notepad-bar-tab ${note.id === activeNoteId ? 'notepad-bar-tab-active' : ''}`}
             onClick={() => setActiveNoteId(note.id)}
             role="tab"
+            tabIndex={0}
             aria-selected={note.id === activeNoteId}
           >
             <span className="notepad-bar-tab-label">{note.name}</span>

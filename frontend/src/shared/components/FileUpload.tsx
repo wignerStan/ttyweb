@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react'
-import { Upload, X, Copy, Check, FileText, File, TerminalSquare } from 'lucide-react'
+import { Check, Copy, File, FileText, TerminalSquare, Upload, X } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
 
 interface UploadResult {
@@ -37,58 +37,63 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragCountRef = useRef(0)
 
-  const uploadFiles = useCallback(async (files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-    if (fileArray.length === 0) return
+  const uploadFiles = useCallback(
+    async (files: FileList | File[]) => {
+      const fileArray = Array.from(files)
+      if (fileArray.length === 0) return
 
-    setUploading(true)
-    setError(null)
+      setUploading(true)
+      setError(null)
 
-    try {
-      const formData = new FormData()
-      if (fileArray.length === 1) {
-        const file = fileArray[0]
-        if (!file) return
-        formData.append('file', file)
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = {}
-        if (auth) headers['Authorization'] = auth
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers,
-          body: formData,
-        })
-        if (!res.ok) {
+      try {
+        const formData = new FormData()
+        if (fileArray.length === 1) {
+          const file = fileArray[0]
+          if (!file) return
+          formData.append('file', file)
+          const auth = getAuthHeader()
+          const headers: Record<string, string> = {}
+          if (auth) headers.Authorization = auth
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers,
+            body: formData,
+          })
+          if (!res.ok) {
+            const data = await res.json()
+            throw new Error(data.message || `Upload failed (${res.status})`)
+          }
           const data = await res.json()
-          throw new Error(data.message || `Upload failed (${res.status})`)
-        }
-        const data = await res.json()
-        setResults(prev => [data, ...prev])
-        onUploaded?.(data)
-      } else {
-        for (const f of fileArray) formData.append('files', f)
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = {}
-        if (auth) headers['Authorization'] = auth
-        const res = await fetch('/api/upload/multi', {
-          method: 'POST',
-          headers,
-          body: formData,
-        })
-        if (!res.ok) {
+          setResults((prev) => [data, ...prev])
+          onUploaded?.(data)
+        } else {
+          for (const f of fileArray) formData.append('files', f)
+          const auth = getAuthHeader()
+          const headers: Record<string, string> = {}
+          if (auth) headers.Authorization = auth
+          const res = await fetch('/api/upload/multi', {
+            method: 'POST',
+            headers,
+            body: formData,
+          })
+          if (!res.ok) {
+            const data = await res.json()
+            throw new Error(data.message || `Upload failed (${res.status})`)
+          }
           const data = await res.json()
-          throw new Error(data.message || `Upload failed (${res.status})`)
+          setResults((prev) => [...data.files, ...prev])
+          data.files.forEach((f: UploadResult) => {
+            onUploaded?.(f)
+          })
         }
-        const data = await res.json()
-        setResults(prev => [...data.files, ...prev])
-        data.files.forEach((f: UploadResult) => onUploaded?.(f))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Upload failed')
+      } finally {
+        setUploading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
-    } finally {
-      setUploading(false)
-    }
-  }, [onUploaded])
+    },
+    [onUploaded],
+  )
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -109,26 +114,32 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
     e.stopPropagation()
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    dragCountRef.current = 0
-    setDragging(false)
-    if (e.dataTransfer.files.length > 0) {
-      uploadFiles(e.dataTransfer.files)
-    }
-  }, [uploadFiles])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      dragCountRef.current = 0
+      setDragging(false)
+      if (e.dataTransfer.files.length > 0) {
+        uploadFiles(e.dataTransfer.files)
+      }
+    },
+    [uploadFiles],
+  )
 
   const handleClick = useCallback(() => {
     fileInputRef.current?.click()
   }, [])
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      uploadFiles(e.target.files)
-      e.target.value = ''
-    }
-  }, [uploadFiles])
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        uploadFiles(e.target.files)
+        e.target.value = ''
+      }
+    },
+    [uploadFiles],
+  )
 
   const copyPath = useCallback((path: string, idx: number) => {
     navigator.clipboard.writeText(path).then(() => {
@@ -138,14 +149,17 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
   }, [])
 
   const removeResult = useCallback((idx: number) => {
-    setResults(prev => prev.filter((_, i) => i !== idx))
+    setResults((prev) => prev.filter((_, i) => i !== idx))
   }, [])
 
-  const sendPath = useCallback((serverPath: string, idx: number) => {
-    onSend?.(serverPath)
-    setSentIdx(idx)
-    setTimeout(() => setSentIdx(null), 1500)
-  }, [onSend])
+  const sendPath = useCallback(
+    (serverPath: string, idx: number) => {
+      onSend?.(serverPath)
+      setSentIdx(idx)
+      setTimeout(() => setSentIdx(null), 1500)
+    },
+    [onSend],
+  )
 
   return (
     <div className="file-upload">
@@ -180,7 +194,9 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
       {error && (
         <div className="file-upload-error">
           {error}
-          <button onClick={() => setError(null)}><X size={12} /></button>
+          <button onClick={() => setError(null)}>
+            <X size={12} />
+          </button>
         </div>
       )}
 
@@ -188,25 +204,30 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
         <div className="file-upload-results">
           {results.map((r, i) => {
             const imgUrl = r.url
-            const label = isImage(r.mimetype)
-              ? `image ${results.length - i}`
-              : r.originalname
+            const label = isImage(r.mimetype) ? `image ${results.length - i}` : r.originalname
             return (
-              <div key={`${r.filename}-${i}`} className={`file-upload-card${isImage(r.mimetype) ? ' is-image' : ''}`}>
+              <div
+                key={r.url}
+                className={`file-upload-card${isImage(r.mimetype) ? ' is-image' : ''}`}
+              >
                 {isImage(r.mimetype) ? (
                   <div className="file-upload-thumb">
                     <img src={imgUrl} alt={label} />
                   </div>
                 ) : (
                   <div className="file-upload-file-icon">
-                    {r.mimetype.includes('pdf') || r.mimetype.includes('text')
-                      ? <FileText size={24} />
-                      : <File size={24} />}
+                    {r.mimetype.includes('pdf') || r.mimetype.includes('text') ? (
+                      <FileText size={24} />
+                    ) : (
+                      <File size={24} />
+                    )}
                   </div>
                 )}
                 <div className="file-upload-card-body">
                   <div className="file-upload-card-label">
-                    <span className="file-upload-card-name" title={r.originalname}>{label}</span>
+                    <span className="file-upload-card-name" title={r.originalname}>
+                      {label}
+                    </span>
                     <span className="file-upload-card-size">{formatSize(r.size)}</span>
                   </div>
                   <div className="file-upload-card-actions">

@@ -1,5 +1,5 @@
-import { PaneStatus } from '../../types'
-import { Check, Circle, Loader2, XCircle, Clock } from 'lucide-react'
+import { Check, Circle, Clock, Loader2, XCircle } from 'lucide-react'
+import type { PaneStatus } from '../../types'
 import './StatusBadge.css'
 
 interface Props {
@@ -13,7 +13,7 @@ const statusLabels: Record<PaneStatus, string> = {
   in_progress: 'In Progress',
   done: 'Done',
   failed: 'Failed',
-  waiting: 'Waiting'
+  waiting: 'Waiting',
 }
 
 const statusOptions: PaneStatus[] = ['idle', 'in_progress', 'done', 'failed', 'waiting']
@@ -40,7 +40,9 @@ export function StatusBadge({ status, onChange, size = 'small' }: Props) {
 
   if (isEditable) {
     return (
-      <div className={`status-badge status-badge--${status} status-badge--${size} status-badge--editable`}>
+      <div
+        className={`status-badge status-badge--${status} status-badge--${size} status-badge--editable`}
+      >
         <StatusIcon status={status} size={size} />
         <select
           className="status-badge__select"

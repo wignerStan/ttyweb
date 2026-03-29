@@ -1,27 +1,27 @@
-import { useState, useEffect, type FormEvent } from 'react';
-import { X, Trash2 } from 'lucide-react';
-import type { KanbanTask, KanbanStatus, KanbanComment } from './types';
-import { CommentThread } from './CommentThread';
+import { Trash2, X } from 'lucide-react'
+import { type FormEvent, useEffect, useState } from 'react'
+import { CommentThread } from './CommentThread'
+import type { KanbanComment, KanbanStatus, KanbanTask } from './types'
 
 interface TaskDialogProps {
-  open: boolean;
-  task: KanbanTask | null;
-  defaultStatus?: KanbanStatus;
-  onSave: (task: TaskFormData) => Promise<KanbanTask | null>;
-  onCreate: (fields: Partial<TaskFormData>) => Promise<KanbanTask | null>;
-  onDelete: (id: string) => Promise<boolean>;
-  onClose: () => void;
-  fetchComments: (taskId: string) => Promise<KanbanComment[]>;
-  createComment: (taskId: string, content: string) => Promise<KanbanComment | null>;
+  open: boolean
+  task: KanbanTask | null
+  defaultStatus?: KanbanStatus
+  onSave: (task: TaskFormData) => Promise<KanbanTask | null>
+  onCreate: (fields: Partial<TaskFormData>) => Promise<KanbanTask | null>
+  onDelete: (id: string) => Promise<boolean>
+  onClose: () => void
+  fetchComments: (taskId: string) => Promise<KanbanComment[]>
+  createComment: (taskId: string, content: string) => Promise<KanbanComment | null>
 }
 
 export interface TaskFormData {
-  title: string;
-  description: string;
-  status: KanbanStatus;
-  priority: number;
-  tags: string[];
-  due_date: string | null;
+  title: string
+  description: string
+  status: KanbanStatus
+  priority: number
+  tags: string[]
+  due_date: string | null
 }
 
 const STATUS_OPTIONS: { value: KanbanStatus; label: string }[] = [
@@ -29,7 +29,7 @@ const STATUS_OPTIONS: { value: KanbanStatus; label: string }[] = [
   { value: 'in_progress', label: 'In Progress' },
   { value: 'done', label: 'Done' },
   { value: 'archived', label: 'Archived' },
-];
+]
 
 const PRIORITY_OPTIONS = [
   { value: 1, label: '1 - Low' },
@@ -37,7 +37,7 @@ const PRIORITY_OPTIONS = [
   { value: 3, label: '3 - High' },
   { value: 4, label: '4 - Critical' },
   { value: 5, label: '5 - Urgent' },
-];
+]
 
 function emptyForm(status: KanbanStatus): TaskFormData {
   return {
@@ -47,7 +47,7 @@ function emptyForm(status: KanbanStatus): TaskFormData {
     priority: 2,
     tags: [],
     due_date: null,
-  };
+  }
 }
 
 function formFromTask(task: KanbanTask): TaskFormData {
@@ -58,7 +58,7 @@ function formFromTask(task: KanbanTask): TaskFormData {
     priority: task.priority,
     tags: [...task.tags],
     due_date: task.due_date,
-  };
+  }
 }
 
 function TaskDialog({
@@ -74,26 +74,26 @@ function TaskDialog({
 }: TaskDialogProps) {
   const [form, setForm] = useState<TaskFormData>(() =>
     task ? formFromTask(task) : emptyForm(defaultStatus),
-  );
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  )
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (open) {
-      setForm(task ? formFromTask(task) : emptyForm(defaultStatus));
-      setErrors({});
+      setForm(task ? formFromTask(task) : emptyForm(defaultStatus))
+      setErrors({})
     }
-  }, [open, task, defaultStatus]);
+  }, [open, task, defaultStatus])
 
   function updateField<K extends keyof TaskFormData>(key: K, value: TaskFormData[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({ ...prev, [key]: value }))
     if (key === 'title' && String(value).trim()) {
       setErrors((prev) => {
-        if (!prev.title) return prev;
-        const { title: _, ...rest } = prev;
-        return rest;
-      });
+        if (!prev.title) return prev
+        const { title: _, ...rest } = prev
+        return rest
+      })
     }
   }
 
@@ -101,57 +101,62 @@ function TaskDialog({
     const tags = value
       .split(',')
       .map((t) => t.trim())
-      .filter(Boolean);
-    updateField('tags', tags);
+      .filter(Boolean)
+    updateField('tags', tags)
   }
 
   function validate(): boolean {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {}
     if (!form.title.trim()) {
-      newErrors['title'] = 'Title is required';
+      newErrors.title = 'Title is required'
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!validate()) return;
+    e.preventDefault()
+    if (!validate()) return
 
-    setSaving(true);
+    setSaving(true)
     try {
       if (task) {
-        await onSave(form);
+        await onSave(form)
       } else {
-        await onCreate(form);
+        await onCreate(form)
       }
-      onClose();
+      onClose()
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
   async function handleDelete() {
-    if (!task) return;
-    setDeleting(true);
+    if (!task) return
+    setDeleting(true)
     try {
-      const ok = await onDelete(task.id);
+      const ok = await onDelete(task.id)
       if (ok) {
-        onClose();
+        onClose()
       }
     } finally {
-      setDeleting(false);
+      setDeleting(false)
     }
   }
 
-  if (!open) return null;
+  if (!open) return null
 
-  const isEdit = task !== null;
-  const title = isEdit ? 'Edit Task' : 'New Task';
-  const tagsString = form.tags.join(', ');
+  const isEdit = task !== null
+  const title = isEdit ? 'Edit Task' : 'New Task'
+  const tagsString = form.tags.join(', ')
 
   return (
-    <div className="task-dialog-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="task-dialog-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div className="task-dialog">
         <div className="task-dialog__header">
           <h2 className="task-dialog__title">{title}</h2>
@@ -172,11 +177,8 @@ function TaskDialog({
               value={form.title}
               onChange={(e) => updateField('title', e.target.value)}
               placeholder="Task title"
-              autoFocus
             />
-            {errors['title'] && (
-              <span className="task-dialog__error">{errors['title']}</span>
-            )}
+            {errors.title && <span className="task-dialog__error">{errors.title}</span>}
           </div>
 
           <div className="task-dialog__field">
@@ -303,8 +305,8 @@ function TaskDialog({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export { TaskDialog };
-export type { TaskDialogProps };
+export type { TaskDialogProps }
+export { TaskDialog }

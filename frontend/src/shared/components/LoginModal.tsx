@@ -1,28 +1,28 @@
-import { useState, FormEvent } from 'react';
-import { Terminal } from 'lucide-react';
-import { login } from '../../utils/auth';
-import './LoginModal.css';
+import { Terminal } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { login } from '../../utils/auth'
+import './LoginModal.css'
 
 interface Props {
-  onLogin: () => void;
+  onLogin: () => void
 }
 
 export function LoginModal({ onLogin }: Props) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    const result = await login(username, password);
-    setLoading(false);
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const result = await login(username, password)
+    setLoading(false)
     if (result.success) {
-      onLogin();
+      onLogin()
     } else {
-      setError(result.error || 'Login failed');
+      setError(result.error || 'Login failed')
     }
   }
 
@@ -44,7 +44,6 @@ export function LoginModal({ onLogin }: Props) {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
-            autoFocus
             disabled={loading}
           />
         </div>
@@ -68,5 +67,5 @@ export function LoginModal({ onLogin }: Props) {
         </button>
       </form>
     </div>
-  );
+  )
 }

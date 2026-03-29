@@ -1,6 +1,7 @@
 package localcommand
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"strings"
@@ -29,7 +30,7 @@ type LocalCommand struct {
 }
 
 func New(command string, argv []string, headers map[string][]string, options ...Option) (*LocalCommand, error) {
-	cmd := exec.Command(command, argv...)
+	cmd := exec.CommandContext(context.Background(), command, argv...)
 
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 
@@ -39,7 +40,7 @@ func New(command string, argv []string, headers map[string][]string, options ...
 	// a (F)CGI server would proxy to a backend service
 	// Replace hyphen with underscore and make them all upper case
 	for key, values := range headers {
-		h := "HTTP_" + strings.Replace(strings.ToUpper(key), "-", "_", -1) + "=" + strings.Join(values, ",")
+		h := "HTTP_" + strings.ReplaceAll(strings.ToUpper(key), "-", "_") + "=" + strings.Join(values, ",")
 		// log.Printf("Adding header: %s", h)
 		cmd.Env = append(cmd.Env, h)
 	}
@@ -71,11 +72,11 @@ func New(command string, argv []string, headers map[string][]string, options ...
 	// close pty so that Read() on the pty breaks with an EOF.
 	go func() {
 		defer func() {
-			lcmd.pty.Close()
+			_ = lcmd.pty.Close()
 			close(lcmd.ptyClosed)
 		}()
 
-		lcmd.cmd.Wait()
+		_ = lcmd.cmd.Wait()
 	}()
 
 	return lcmd, nil
@@ -91,14 +92,14 @@ func (lcmd *LocalCommand) Write(p []byte) (n int, err error) {
 
 func (lcmd *LocalCommand) Close() error {
 	if lcmd.cmd != nil && lcmd.cmd.Process != nil {
-		lcmd.cmd.Process.Signal(lcmd.closeSignal)
+		_ = lcmd.cmd.Process.Signal(lcmd.closeSignal)
 	}
 	for {
 		select {
 		case <-lcmd.ptyClosed:
 			return nil
 		case <-lcmd.closeTimeoutC():
-			lcmd.cmd.Process.Signal(syscall.SIGKILL)
+			_ = lcmd.cmd.Process.Signal(syscall.SIGKILL)
 		}
 	}
 }

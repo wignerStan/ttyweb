@@ -1,19 +1,65 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { Send, Copy, Play, Loader2, ChevronUp, ChevronDown, ChevronRight, X, Terminal, Square } from 'lucide-react'
-import { RoleManagerModal } from './RoleManagerModal'
-import { getAuthHeader } from '../../utils/auth'
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Copy,
+  Loader2,
+  Play,
+  Send,
+  Square,
+  Terminal,
+  X,
+} from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AiRole } from '../../types'
+import { getAuthHeader } from '../../utils/auth'
+import { RoleManagerModal } from './RoleManagerModal'
 
 const TEMPLATE_ROLE_ID = 'research-publish'
 
 const BUILTIN_ROLES: AiRole[] = [
-  { id: 'cli', emoji: '\u{1F5A5}\u{FE0F}', label: '\u547D\u4EE4\u884C\u5927\u795E', desc: '\u751F\u6210\u53EF\u6267\u884C\u7684\u7EC8\u7AEF\u547D\u4EE4' },
-  { id: 'ops', emoji: '\u{1F527}', label: '\u8FD0\u7EF4\u4E13\u5BB6', desc: '\u4F18\u5316 DevOps/\u8FD0\u7EF4\u63D0\u793A\u8BCD' },
-  { id: 'prompt', emoji: '\u{2728}', label: '\u63D0\u793A\u8BCD\u4F18\u5316', desc: '\u901A\u7528 AI \u63D0\u793A\u8BCD\u4F18\u5316' },
-  { id: 'frontend', emoji: '\u{1F3A8}', label: '\u524D\u7AEF\u4F18\u5316', desc: '\u524D\u7AEF\u5F00\u53D1\u63D0\u793A\u8BCD\u4F18\u5316' },
-  { id: 'backend', emoji: '\u{2699}\u{FE0F}', label: '\u540E\u7AEF\u4F18\u5316', desc: '\u540E\u7AEF\u5F00\u53D1\u63D0\u793A\u8BCD\u4F18\u5316' },
-  { id: 'ui', emoji: '\u{1F3AD}', label: 'UI\u4F18\u5316', desc: 'UI/UX \u8BBE\u8BA1\u63D0\u793A\u8BCD\u4F18\u5316' },
-  { id: 'api', emoji: '\u{1F504}', label: 'API\u8F6C\u6362', desc: 'API \u67B6\u6784\u8F6C\u6362\u4E0E\u91CD\u6784' },
+  {
+    id: 'cli',
+    emoji: '\u{1F5A5}\u{FE0F}',
+    label: '\u547D\u4EE4\u884C\u5927\u795E',
+    desc: '\u751F\u6210\u53EF\u6267\u884C\u7684\u7EC8\u7AEF\u547D\u4EE4',
+  },
+  {
+    id: 'ops',
+    emoji: '\u{1F527}',
+    label: '\u8FD0\u7EF4\u4E13\u5BB6',
+    desc: '\u4F18\u5316 DevOps/\u8FD0\u7EF4\u63D0\u793A\u8BCD',
+  },
+  {
+    id: 'prompt',
+    emoji: '\u{2728}',
+    label: '\u63D0\u793A\u8BCD\u4F18\u5316',
+    desc: '\u901A\u7528 AI \u63D0\u793A\u8BCD\u4F18\u5316',
+  },
+  {
+    id: 'frontend',
+    emoji: '\u{1F3A8}',
+    label: '\u524D\u7AEF\u4F18\u5316',
+    desc: '\u524D\u7AEF\u5F00\u53D1\u63D0\u793A\u8BCD\u4F18\u5316',
+  },
+  {
+    id: 'backend',
+    emoji: '\u{2699}\u{FE0F}',
+    label: '\u540E\u7AEF\u4F18\u5316',
+    desc: '\u540E\u7AEF\u5F00\u53D1\u63D0\u793A\u8BCD\u4F18\u5316',
+  },
+  {
+    id: 'ui',
+    emoji: '\u{1F3AD}',
+    label: 'UI\u4F18\u5316',
+    desc: 'UI/UX \u8BBE\u8BA1\u63D0\u793A\u8BCD\u4F18\u5316',
+  },
+  {
+    id: 'api',
+    emoji: '\u{1F504}',
+    label: 'API\u8F6C\u6362',
+    desc: 'API \u67B6\u6784\u8F6C\u6362\u4E0E\u91CD\u6784',
+  },
 ]
 
 interface AiCommandTabProps {
@@ -36,7 +82,11 @@ const PRE_STYLE: React.CSSProperties = {
   overflow: 'auto',
 }
 
-function CopyExecuteButtons({ onCopy, onExecute, disabled }: {
+function CopyExecuteButtons({
+  onCopy,
+  onExecute,
+  disabled,
+}: {
   onCopy: () => void
   onExecute: () => void
   disabled?: boolean
@@ -46,9 +96,18 @@ function CopyExecuteButtons({ onCopy, onExecute, disabled }: {
       <button
         onClick={onCopy}
         style={{
-          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: '4px', padding: '6px', background: '#2c313a', color: '#abb2bf',
-          border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer',
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '4px',
+          padding: '6px',
+          background: '#2c313a',
+          color: '#abb2bf',
+          border: 'none',
+          borderRadius: '4px',
+          fontSize: '12px',
+          cursor: 'pointer',
         }}
         type="button"
       >
@@ -58,9 +117,18 @@ function CopyExecuteButtons({ onCopy, onExecute, disabled }: {
         onClick={onExecute}
         disabled={disabled}
         style={{
-          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: '4px', padding: '6px', background: '#4d78cc', color: '#fff',
-          border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer',
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '4px',
+          padding: '6px',
+          background: '#4d78cc',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '4px',
+          fontSize: '12px',
+          cursor: 'pointer',
           opacity: disabled ? 0.5 : 1,
         }}
         type="button"
@@ -100,7 +168,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
     if (resultRef.current) {
       resultRef.current.scrollTop = resultRef.current.scrollHeight
     }
-  }, [streamText])
+  }, [])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -119,7 +187,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
     try {
       const auth = getAuthHeader()
       const headers: Record<string, string> = {}
-      if (auth) headers['Authorization'] = auth
+      if (auth) headers.Authorization = auth
       const res = await fetch('/api/roles', { headers })
       if (res.ok) {
         const data = await res.json()
@@ -130,7 +198,9 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
     }
   }, [])
 
-  useEffect(() => { fetchRoles() }, [fetchRoles])
+  useEffect(() => {
+    fetchRoles()
+  }, [fetchRoles])
 
   const resetStream = useCallback(() => {
     if (wsRef.current) {
@@ -152,7 +222,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
   const handleDirectSend = useCallback(() => {
     if (!input.trim() || disabled) return
-    onSend(input.trim() + '\n')
+    onSend(`${input.trim()}\n`)
     setInput('')
   }, [input, onSend, disabled])
 
@@ -163,31 +233,39 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
     setLoading(false)
   }, [resetStream])
 
-  const fallbackNonStreaming = useCallback(async (prompt: string) => {
-    setLoading(true)
-    try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers['Authorization'] = auth
-      const res = await fetch('/api/ai/command', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ prompt, role: selectedRole })
-      })
-      const data = await res.json()
-      setResult({ command: data.command || '', explanation: data.explanation || '' })
-    } catch (err) {
-      setResult({ command: '', explanation: '\u8BF7\u6C42\u5931\u8D25: ' + (err instanceof Error ? err.message : String(err)) })
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedRole])
+  const fallbackNonStreaming = useCallback(
+    async (prompt: string) => {
+      setLoading(true)
+      try {
+        const auth = getAuthHeader()
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (auth) headers.Authorization = auth
+        const res = await fetch('/api/ai/command', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ prompt, role: selectedRole }),
+        })
+        const data = await res.json()
+        setResult({ command: data.command || '', explanation: data.explanation || '' })
+      } catch (err) {
+        setResult({
+          command: '',
+          explanation: `\u8BF7\u6C42\u5931\u8D25: ${err instanceof Error ? err.message : String(err)}`,
+        })
+      } finally {
+        setLoading(false)
+      }
+    },
+    [selectedRole],
+  )
 
   const handleGenerate = useCallback(async () => {
     if (!input.trim() || loading || streaming) return
     if (selectedRole === TEMPLATE_ROLE_ID) {
       const url = input.trim()
-      setInput(`\u7528 github-project-researcher \u7814\u7A76 ${url}\uFF0C\u7136\u540E\u7528 md2wechat \u53D1\u5FAE\u4FE1\u516C\u4F17\u53F7`)
+      setInput(
+        `\u7528 github-project-researcher \u7814\u7A76 ${url}\uFF0C\u7136\u540E\u7528 md2wechat \u53D1\u5FAE\u4FE1\u516C\u4F17\u53F7`,
+      )
       return
     }
 
@@ -218,7 +296,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
             setResult({ command: msg.data || streamTextRef.current, explanation: '' })
             resetStream()
           } else if (msg.type === 'error') {
-            setResult({ command: '', explanation: '\u9519\u8BEF: ' + msg.data })
+            setResult({ command: '', explanation: `\u9519\u8BEF: ${msg.data}` })
             resetStream()
           }
         } catch {
@@ -246,21 +324,32 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
     if (text) {
       try {
         await navigator.clipboard.writeText(text)
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [result, streaming, streamText])
 
   const handleExecute = useCallback(() => {
     const text = streaming ? streamText : result?.command
     if (text) {
-      onSend(text + '\n')
+      onSend(`${text}\n`)
     }
   }, [result, onSend, streaming, streamText])
 
-  const selectedRoleDef = roles.find(r => r.id === selectedRole)
+  const selectedRoleDef = roles.find((r) => r.id === selectedRole)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '8px', gap: '8px', overflow: 'auto' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        padding: '8px',
+        gap: '8px',
+        overflow: 'auto',
+      }}
+    >
       {/* Role selector dropdown */}
       <div style={{ position: 'relative' }} ref={dropdownRef}>
         <button
@@ -284,7 +373,9 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>{selectedRoleDef?.emoji ?? '\u26A1'}</span>
-            <span style={{ fontWeight: 500 }}>{selectedRoleDef?.label ?? '\u547D\u4EE4\u884C\u5927\u795E'}</span>
+            <span style={{ fontWeight: 500 }}>
+              {selectedRoleDef?.label ?? '\u547D\u4EE4\u884C\u5927\u795E'}
+            </span>
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span style={{ color: '#555a66', fontSize: '11px' }}>{selectedRoleDef?.desc}</span>
@@ -301,51 +392,57 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
         </button>
 
         {showRoleDropdown && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            marginTop: '4px',
-            background: '#1e2028',
-            border: '1px solid #2c313a',
-            borderRadius: '8px',
-            zIndex: 100,
-            maxHeight: '240px',
-            overflowY: 'auto',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-          }}>
-            {roles.filter(r => r.id !== TEMPLATE_ROLE_ID).map(role => (
-              <button
-                key={role.id}
-                onClick={() => {
-                  setSelectedRole(role.id)
-                  setShowRoleDropdown(false)
-                  setShowPrompt(false)
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 10px',
-                  background: role.id === selectedRole ? '#4d78cc22' : 'none',
-                  border: 'none',
-                  borderBottom: '1px solid #2c313a',
-                  color: role.id === selectedRole ? '#4d78cc' : '#abb2bf',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  textAlign: 'left',
-                }}
-                type="button"
-              >
-                <span>{role.emoji}</span>
-                <span style={{ flex: 1 }}>
-                  <span style={{ fontWeight: 500 }}>{role.label}</span>
-                  <span style={{ color: '#555a66', fontSize: '11px', marginLeft: '6px' }}>{role.desc}</span>
-                </span>
-              </button>
-            ))}
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '4px',
+              background: '#1e2028',
+              border: '1px solid #2c313a',
+              borderRadius: '8px',
+              zIndex: 100,
+              maxHeight: '240px',
+              overflowY: 'auto',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            }}
+          >
+            {roles
+              .filter((r) => r.id !== TEMPLATE_ROLE_ID)
+              .map((role) => (
+                <button
+                  key={role.id}
+                  onClick={() => {
+                    setSelectedRole(role.id)
+                    setShowRoleDropdown(false)
+                    setShowPrompt(false)
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    background: role.id === selectedRole ? '#4d78cc22' : 'none',
+                    border: 'none',
+                    borderBottom: '1px solid #2c313a',
+                    color: role.id === selectedRole ? '#4d78cc' : '#abb2bf',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    textAlign: 'left',
+                  }}
+                  type="button"
+                >
+                  <span>{role.emoji}</span>
+                  <span style={{ flex: 1 }}>
+                    <span style={{ fontWeight: 500 }}>{role.label}</span>
+                    <span style={{ color: '#555a66', fontSize: '11px', marginLeft: '6px' }}>
+                      {role.desc}
+                    </span>
+                  </span>
+                </button>
+              ))}
             <button
               onClick={() => {
                 setShowRoleDropdown(false)
@@ -391,21 +488,32 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
       {/* Prompt viewer content */}
       {showPrompt && selectedRoleDef?.prompt && (
-        <div style={{
-          background: '#1a1c20',
-          border: '1px solid #2c313a',
-          borderRadius: '6px',
-          padding: '8px',
-          fontSize: '11px',
-          color: '#7a818c',
-          maxHeight: '120px',
-          overflow: 'auto',
-          whiteSpace: 'pre-wrap',
-        }}>
-          <div style={{ color: '#9da5b4', marginBottom: '4px', fontWeight: 600 }}>{selectedRoleDef.emoji} {selectedRoleDef.label}</div>
+        <div
+          style={{
+            background: '#1a1c20',
+            border: '1px solid #2c313a',
+            borderRadius: '6px',
+            padding: '8px',
+            fontSize: '11px',
+            color: '#7a818c',
+            maxHeight: '120px',
+            overflow: 'auto',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          <div style={{ color: '#9da5b4', marginBottom: '4px', fontWeight: 600 }}>
+            {selectedRoleDef.emoji} {selectedRoleDef.label}
+          </div>
           {selectedRoleDef.prompt}
           {selectedRoleDef.suffix && (
-            <div style={{ marginTop: '8px', color: '#555a66', borderTop: '1px solid #2c313a', paddingTop: '4px' }}>
+            <div
+              style={{
+                marginTop: '8px',
+                color: '#555a66',
+                borderTop: '1px solid #2c313a',
+                paddingTop: '4px',
+              }}
+            >
               {selectedRoleDef.suffix}
             </div>
           )}
@@ -416,8 +524,8 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       <div style={{ position: 'relative' }}>
         <textarea
           value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => {
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
               if (streaming) return
@@ -503,7 +611,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
               border: 'none',
               borderRadius: '6px',
               cursor: loading ? 'default' : 'pointer',
-              opacity: (!input.trim() || disabled) ? 0.5 : 1,
+              opacity: !input.trim() || disabled ? 0.5 : 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -527,7 +635,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
-            opacity: (!input && !result && !streamText) ? 0.3 : 1,
+            opacity: !input && !result && !streamText ? 0.3 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -548,7 +656,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
-            opacity: (!input.trim() || disabled || streaming) ? 0.3 : 1,
+            opacity: !input.trim() || disabled || streaming ? 0.3 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -565,12 +673,15 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
       {/* Streaming output */}
       {streaming && streamText && (
-        <div ref={resultRef} style={{
-          background: '#1a1c20',
-          border: '1px solid #4d78cc44',
-          borderRadius: '6px',
-          padding: '8px',
-        }}>
+        <div
+          ref={resultRef}
+          style={{
+            background: '#1a1c20',
+            border: '1px solid #4d78cc44',
+            borderRadius: '6px',
+            padding: '8px',
+          }}
+        >
           <pre style={{ ...PRE_STYLE, maxHeight: '200px' }}>
             {streamText}
             <span style={{ color: '#4d78cc' }}>&#9646;</span>
@@ -581,21 +692,29 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
       {/* Result card (non-streaming) */}
       {result && !streaming && (
-        <div style={{
-          background: '#1a1c20',
-          border: '1px solid #2c313a',
-          borderRadius: '6px',
-          padding: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-        }}>
+        <div
+          style={{
+            background: '#1a1c20',
+            border: '1px solid #2c313a',
+            borderRadius: '6px',
+            padding: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ color: '#7a818c', fontSize: '11px' }}>{result.explanation}</span>
             <div style={{ display: 'flex', gap: '4px' }}>
               <button
                 onClick={() => setExpanded(!expanded)}
-                style={{ background: 'none', border: 'none', color: '#7a818c', cursor: 'pointer', padding: '2px' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#7a818c',
+                  cursor: 'pointer',
+                  padding: '2px',
+                }}
                 type="button"
               >
                 {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -604,10 +723,20 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
           </div>
           {result.command && (
             <>
-              <pre style={{ ...PRE_STYLE, maxHeight: expanded ? 'none' : '80px', overflow: expanded ? 'auto' : 'hidden' }}>
+              <pre
+                style={{
+                  ...PRE_STYLE,
+                  maxHeight: expanded ? 'none' : '80px',
+                  overflow: expanded ? 'auto' : 'hidden',
+                }}
+              >
                 {result.command}
               </pre>
-              <CopyExecuteButtons onCopy={handleCopy} onExecute={handleExecute} disabled={disabled} />
+              <CopyExecuteButtons
+                onCopy={handleCopy}
+                onExecute={handleExecute}
+                disabled={disabled}
+              />
             </>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getAuthHeader } from '../utils/auth'
 
 interface TmuxPrefix {
@@ -11,9 +11,9 @@ export function useTmuxPrefix(): TmuxPrefix {
 
   useEffect(() => {
     const authHeader = getAuthHeader()
-    fetch('/api/tmux/config', { headers: authHeader ? { 'Authorization': authHeader } : undefined })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
+    fetch('/api/tmux/config', { headers: authHeader ? { Authorization: authHeader } : undefined })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
         if (data?.code) setPrefix({ code: data.code, label: data.label || 'prefix' })
       })
       .catch(() => {})

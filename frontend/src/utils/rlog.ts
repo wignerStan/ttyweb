@@ -1,7 +1,8 @@
 const LOG_ENDPOINT = '/api/log'
 
 function send(level: string, message: string, data?: unknown) {
-  const consoleFn = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log
+  const consoleFn =
+    level === 'error' ? console.error : level === 'warn' ? console.warn : console.log
   consoleFn(`[Remote] ${message}`, data || '')
 
   try {
@@ -13,7 +14,7 @@ function send(level: string, message: string, data?: unknown) {
         level,
         message,
         data,
-        ua: ua.length > 80 ? ua.slice(0, 80) + '…' : ua,
+        ua: ua.length > 80 ? `${ua.slice(0, 80)}…` : ua,
         url: window.location.href,
       }),
     }).catch(() => {})

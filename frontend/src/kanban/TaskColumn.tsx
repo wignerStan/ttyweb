@@ -1,47 +1,29 @@
-import type { ReactNode } from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { Plus } from 'lucide-react';
-import type { KanbanTask, KanbanStatus } from './types';
-import { TaskCard } from './TaskCard';
+import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { Plus } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { TaskCard } from './TaskCard'
+import type { KanbanStatus, KanbanTask } from './types'
 
 interface TaskColumnProps {
-  status: KanbanStatus;
-  title: string;
-  tasks: KanbanTask[];
-  onSelectTask: (task: KanbanTask) => void;
-  onAddTask: (status: KanbanStatus) => void;
+  status: KanbanStatus
+  title: string
+  tasks: KanbanTask[]
+  onSelectTask: (task: KanbanTask) => void
+  onAddTask: (status: KanbanStatus) => void
 }
 
-function DroppableColumn({
-  status,
-  children,
-}: {
-  status: KanbanStatus;
-  children: ReactNode;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: status });
+function DroppableColumn({ status, children }: { status: KanbanStatus; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: status })
   return (
-    <div
-      ref={setNodeRef}
-      className={`task-column ${isOver ? 'task-column--over' : ''}`}
-    >
+    <div ref={setNodeRef} className={`task-column ${isOver ? 'task-column--over' : ''}`}>
       {children}
     </div>
-  );
+  )
 }
 
-function TaskColumn({
-  status,
-  title,
-  tasks,
-  onSelectTask,
-  onAddTask,
-}: TaskColumnProps) {
-  const taskIds = tasks.map((t) => t.id);
+function TaskColumn({ status, title, tasks, onSelectTask, onAddTask }: TaskColumnProps) {
+  const taskIds = tasks.map((t) => t.id)
 
   return (
     <DroppableColumn status={status}>
@@ -63,21 +45,15 @@ function TaskColumn({
       <div className="task-column__body">
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onSelect={onSelectTask}
-            />
+            <TaskCard key={task.id} task={task} onSelect={onSelectTask} />
           ))}
         </SortableContext>
 
-        {tasks.length === 0 && (
-          <div className="task-column__placeholder">Drop tasks here</div>
-        )}
+        {tasks.length === 0 && <div className="task-column__placeholder">Drop tasks here</div>}
       </div>
     </DroppableColumn>
-  );
+  )
 }
 
-export { TaskColumn };
-export type { TaskColumnProps };
+export type { TaskColumnProps }
+export { TaskColumn }

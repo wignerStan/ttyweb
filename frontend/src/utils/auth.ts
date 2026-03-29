@@ -1,10 +1,13 @@
 const AUTH_KEY = 'ttyweb_auth'
 
-export async function login(username: string, password: string): Promise<{ success: boolean; error?: string }> {
+export async function login(
+  username: string,
+  password: string,
+): Promise<{ success: boolean; error?: string }> {
   const credentials = btoa(`${username}:${password}`)
   try {
     const res = await fetch('/api/auth/check', {
-      headers: { 'Authorization': `Basic ${credentials}` }
+      headers: { Authorization: `Basic ${credentials}` },
     })
     if (!res.ok) {
       const data = await res.json()
@@ -25,7 +28,7 @@ export async function checkAuth(): Promise<boolean> {
   const credentials = localStorage.getItem(AUTH_KEY)
   try {
     const headers: Record<string, string> = {}
-    if (credentials) headers['Authorization'] = `Basic ${credentials}`
+    if (credentials) headers.Authorization = `Basic ${credentials}`
     const res = await fetch('/api/auth/check', { headers })
     if (!res.ok) return false
     const data = await res.json()
