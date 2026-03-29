@@ -74,22 +74,32 @@ func TestRepoLock_DifferentRepos(t *testing.T) {
 	unlock2()
 }
 
-func TestRepoLock_ContextCancel(t *testing.T) {
+func TestRepoLock_LockRespectsContext(t *testing.T) {
 	t.Parallel()
 
 	rl := NewRepoLock()
 	path := "/repo/locked"
 
-	unlock1 := rl.Lock(path, context.Background())
+	unlock := rl.Lock(path, context.Background())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := rl.LockContext(path, ctx)
-	if err == nil {
-		t.Fatal("expected error from cancelled context")
+	done := make(chan struct{})
+	go func() {
+		unlockFn := rl.Lock(path, ctx)
+		if unlockFn != nil {
+			t.Error("expected nil unlock from cancelled context")
+		}
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Lock blocked despite cancelled context")
 	}
-	unlock1()
+	unlock()
 }
 
 func TestRepoLock_RLockConcurrency(t *testing.T) {
