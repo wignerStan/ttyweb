@@ -1,74 +1,73 @@
-import type React from 'react'
-import { useCallback, useEffect, useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
-import { Sidebar } from './components/Sidebar'
-import { TerminalTab } from './components/TerminalTab'
-import { ConversationList } from './conversations/ConversationList'
-import { ConversationViewer } from './conversations/ConversationViewer'
-import type { AISession } from './conversations/types'
-import { KanbanBoard } from './kanban'
-import MobileApp from './mobile/MobileApp'
-import { NotepadPanel } from './notepad/NotepadPanel'
-import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy'
+import React, { useState, useEffect, useCallback } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { Sidebar } from './components/Sidebar';
+import { TerminalTab } from './components/TerminalTab';
+import { KanbanBoard } from './kanban';
+import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy';
+import { NotepadPanel } from './notepad/NotepadPanel';
+import { ConversationList } from './conversations/ConversationList';
+import { ConversationViewer } from './conversations/ConversationViewer';
+import MobileApp from './mobile/MobileApp';
+import type { AISession } from './conversations/types';
 
-type AppView = 'terminal' | 'conversations'
+type AppView = 'terminal' | 'conversations';
 
-const NOTEPAD_TAB_ID = '__notepad__'
+const NOTEPAD_TAB_ID = '__notepad__';
 
 interface Tab {
-  id: string
-  session: string
-  pane: string
-  type?: 'terminal' | 'notepad'
+  id: string;
+  session: string;
+  pane: string;
+  type?: 'terminal' | 'notepad';
 }
 
-type ViewMode = 'terminal' | 'kanban'
+type ViewMode = 'terminal' | 'kanban';
 
 function DesktopLayout() {
-  const [tabs, setTabs] = useState<Tab[]>([])
-  const [activeTabId, setActiveTabId] = useState<string | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [viewMode, setViewMode] = useState<ViewMode>('terminal')
-  const [imperialStudyOpen, setImperialStudyOpen] = useState(true)
-  const [activeView, setActiveView] = useState<AppView>('terminal')
-  const [selectedSession, setSelectedSession] = useState<AISession | null>(null)
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('terminal');
+  const [imperialStudyOpen, setImperialStudyOpen] = useState(true);
+  const [activeView, setActiveView] = useState<AppView>('terminal');
+  const [selectedSession, setSelectedSession] = useState<AISession | null>(null);
 
   const openNotepad = useCallback(() => {
     setTabs((prev) => {
-      if (prev.some((t) => t.id === NOTEPAD_TAB_ID)) return prev
-      return [...prev, { id: NOTEPAD_TAB_ID, type: 'notepad' as const, session: '', pane: '' }]
-    })
-    setViewMode('terminal')
-    setActiveTabId(NOTEPAD_TAB_ID)
-  }, [])
+      if (prev.some((t) => t.id === NOTEPAD_TAB_ID)) return prev;
+      return [...prev, { id: NOTEPAD_TAB_ID, type: 'notepad' as const, session: '', pane: '' }];
+    });
+    setViewMode('terminal');
+    setActiveTabId(NOTEPAD_TAB_ID);
+  }, []);
 
   const openTab = useCallback((session: string, pane?: string) => {
-    const id = pane ? `${session}:${pane}` : session
+    const id = pane ? `${session}:${pane}` : session;
     setTabs((prev) => {
-      if (prev.some((t) => t.id === id)) return prev
-      return [...prev, { id, session, pane: pane ?? '', type: 'terminal' as const }]
-    })
-    setViewMode('terminal')
-    setActiveTabId(id)
-  }, [])
+      if (prev.some((t) => t.id === id)) return prev;
+      return [...prev, { id, session, pane: pane ?? '' }];
+    });
+    setViewMode('terminal');
+    setActiveTabId(id);
+  }, []);
 
   const closeTab = useCallback((tabId: string) => {
-    setTabs((prev) => prev.filter((t) => t.id !== tabId))
-  }, [])
+    setTabs((prev) => prev.filter((t) => t.id !== tabId));
+  }, []);
 
   // Auto-select last tab when active tab is removed
   useEffect(() => {
     if (activeTabId && !tabs.some((t) => t.id === activeTabId)) {
-      setActiveTabId(tabs.length > 0 ? (tabs[tabs.length - 1]?.id ?? null) : null)
+      setActiveTabId(tabs.length > 0 ? tabs[tabs.length - 1]!.id : null);
     }
-  }, [tabs, activeTabId])
+  }, [tabs, activeTabId]);
 
   // Open default tab on mount
   useEffect(() => {
-    openTab('ttyweb')
-  }, [openTab])
+    openTab('ttyweb');
+  }, [openTab]);
 
-  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
 
   return (
     <div style={styles.container}>
@@ -115,19 +114,18 @@ function DesktopLayout() {
                   ...(tab.id === activeTabId ? styles.tabActive : {}),
                 }}
                 onClick={() => {
-                  setViewMode('terminal')
-                  setActiveTabId(tab.id)
+                  setViewMode('terminal');
+                  setActiveTabId(tab.id);
                 }}
               >
                 <span style={styles.tabLabel}>{tab.type === 'notepad' ? 'Notepad' : tab.id}</span>
                 {tab.id !== NOTEPAD_TAB_ID && (
                   <button
                     onClick={(e) => {
-                      e.stopPropagation()
-                      closeTab(tab.id)
+                      e.stopPropagation();
+                      closeTab(tab.id);
                     }}
                     style={styles.tabClose}
-                    title="Close tab"
                   >
                     \u00D7
                   </button>
@@ -154,15 +152,9 @@ function DesktopLayout() {
                 <KanbanBoard />
               ) : (
                 <>
-                  {activeTab && activeTab.type === 'notepad' && (
-                    <NotepadPanel key={NOTEPAD_TAB_ID} />
-                  )}
+                  {activeTab && activeTab.type === 'notepad' && <NotepadPanel key={NOTEPAD_TAB_ID} />}
                   {activeTab && activeTab.type === 'terminal' && (
-                    <TerminalTab
-                      key={activeTab.id}
-                      session={activeTab.session}
-                      pane={activeTab.pane}
-                    />
+                    <TerminalTab key={activeTab.id} session={activeTab.session} pane={activeTab.pane} />
                   )}
                 </>
               )}
@@ -188,7 +180,7 @@ function DesktopLayout() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function App() {
@@ -197,7 +189,7 @@ export function App() {
       <Route path="/m" element={<MobileApp />} />
       <Route path="/*" element={<DesktopLayout />} />
     </Routes>
-  )
+  );
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -316,4 +308,4 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     overflow: 'hidden',
   },
-}
+};
