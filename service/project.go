@@ -12,7 +12,13 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+
+	"ttyweb/db"
 )
+
+func init() {
+	db.RegisterModel(&Project{})
+}
 
 // UpdateProjectRequest contains only the fields that users are allowed to
 // update on a project. Any field not present in this struct is ignored,

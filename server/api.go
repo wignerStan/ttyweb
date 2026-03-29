@@ -237,9 +237,9 @@ var (
 
 func projectService() (*service.ProjectService, error) {
 	projectServiceOnce.Do(func() {
-		gormDB, err := db.Open()
+		gormDB, err := db.GetDB()
 		if err != nil {
-			projectServiceErr = fmt.Errorf("open project database: %w", err)
+			projectServiceErr = fmt.Errorf("get project database: %w", err)
 			return
 		}
 		projectServiceInstance = service.NewProjectService(gormDB)

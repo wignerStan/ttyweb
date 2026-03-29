@@ -13,24 +13,29 @@ import (
 	"ttyweb/backend/localcommand"
 	"ttyweb/backend/tmux"
 	"ttyweb/backend/zellij"
+	"ttyweb/config"
+	"ttyweb/db"
 	"ttyweb/server"
 )
 
 func main() {
 	var (
-		addr      string
-		port      string
-		path      string
-		backend   string
-		cred      string
-		enableTLS bool
-		tlsCrt    string
-		tlsKey    string
-		write     bool
-		titleFmt  string
-		session   string
+		configFile string
+		addr       string
+		port       string
+		path       string
+		backend    string
+		cred       string
+		enableTLS  bool
+		tlsCrt     string
+		tlsKey     string
+		write      bool
+		titleFmt   string
+		session    string
+		dbPath     string
 	)
 
+	flag.StringVar(&configFile, "config", "", "Path to JSON configuration file")
 	flag.StringVar(&addr, "addr", "0.0.0.0", "IP address to listen")
 	flag.StringVar(&port, "port", "8080", "Port number")
 	flag.StringVar(&path, "path", "/", "Base path")
@@ -42,6 +47,7 @@ func main() {
 	flag.BoolVar(&write, "w", false, "Permit client write")
 	flag.StringVar(&titleFmt, "title-format", "{{ .command }}@ttyweb", "Window title format")
 	flag.StringVar(&session, "session", "ttyweb", "Default session name (tmux/zellij)")
+	flag.StringVar(&dbPath, "db", "", "SQLite database path (default: ~/.local/share/ttyweb/ttyweb.db)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: ttyweb [options] [-- command args...]\n\n")
@@ -60,6 +66,29 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
+
+	// Load configuration: explicit -config path, or default location.
+	configPath := configFile
+	if configPath == "" {
+		configPath = config.DefaultConfigPath()
+	}
+	if _, err := config.Load(configPath); err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+
+	// Initialize database.
+	if dbPath == "" {
+		dbOpts := db.DefaultOptions()
+		dbPath = dbOpts.Path
+	}
+	if err := db.Init(dbPath); err != nil {
+		log.Printf("warning: database initialization failed: %v", err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("warning: database close failed: %v", err)
+		}
+	}()
 
 	options := &server.Options{
 		Address:             addr,

@@ -1,56 +1,47 @@
-// Package db provides GORM database initialization and migration.
 package db
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-
-	"ttyweb/service"
+	"sync"
 )
 
-// Open opens (or creates) the SQLite database at the default path and
-// runs auto-migration for all registered models.
-// Returns the *gorm.DB handle or an error.
-func Open() (*gorm.DB, error) {
-	dbPath := defaultDBPath()
+var (
+	migrateMu  sync.Mutex
+	registered []any
+)
 
-	dir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, fmt.Errorf("create db directory: %w", err)
-	}
+// RegisterModel adds a model struct to the migration list.
+// Models are migrated automatically when Init is called, or manually
+// via AutoMigrate. Call this before Init to ensure tables are created
+// during startup.
+func RegisterModel(model any) {
+	migrateMu.Lock()
+	defer migrateMu.Unlock()
 
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Warn),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("open database: %w", err)
-	}
-
-	if err := migrate(db); err != nil {
-		return nil, fmt.Errorf("migrate database: %w", err)
-	}
-
-	return db, nil
+	registered = append(registered, model)
 }
 
-// migrate registers all models for auto-migration.
-func migrate(db *gorm.DB) error {
-	return db.AutoMigrate(
-		&service.Project{},
-	)
+// getRegisteredModels returns a snapshot of registered models.
+func getRegisteredModels() []any {
+	migrateMu.Lock()
+	models := make([]any, len(registered))
+	copy(models, registered)
+	migrateMu.Unlock()
+	return models
 }
 
-// defaultDBPath returns the path to the SQLite database file.
-// It lives in the user's config directory.
-func defaultDBPath() string {
-	home, err := os.UserHomeDir()
+// AutoMigrate runs GORM AutoMigrate for all registered models.
+// If the database is not initialized, returns ErrNotInitialized.
+func AutoMigrate() error {
+	models := getRegisteredModels()
+
+	db, err := GetDB()
 	if err != nil {
-		home = "."
+		return err
 	}
-	return filepath.Join(home, ".config", "ttyweb", "ttyweb.db")
+
+	if len(models) == 0 {
+		return nil
+	}
+
+	return db.AutoMigrate(models...)
 }
