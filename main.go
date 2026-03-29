@@ -93,18 +93,15 @@ func main() {
 		log.Fatalf("failed to create server: %v", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	gracefulCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		<-sigCh
+		<-gracefulCtx.Done()
 		log.Println("Received signal, shutting down...")
-		cancel()
 	}()
 
-	if err := srv.Run(ctx, server.WithGracefullContext(context.Background())); err != nil {
+	if err := srv.Run(context.Background(), server.WithGracefulContext(gracefulCtx)); err != nil {
 		log.Printf("Server exited: %v", err)
 	}
 }

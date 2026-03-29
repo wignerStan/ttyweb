@@ -113,7 +113,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 // existing connections. Use WithGracefulContext() to support graceful shutdown.
 func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	cctx, cancel := context.WithCancel(ctx)
-	opts := &RunOptions{gracefullCtx: context.Background()}
+	opts := &RunOptions{gracefulCtx: context.Background()}
 	for _, opt := range options {
 		opt(opts)
 	}
@@ -184,7 +184,7 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 
 	go func() {
 		select {
-		case <-opts.gracefullCtx.Done():
+		case <-opts.gracefulCtx.Done():
 			_ = srv.Shutdown(context.Background())
 		case <-cctx.Done():
 		}
