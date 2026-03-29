@@ -174,7 +174,7 @@ func hasClaudeToolResultInBlocks(blocks []interface{}) bool {
 
 // parseClaudeToolResultBlocks extracts tool result messages from content blocks.
 func parseClaudeToolResultBlocks(blocks []interface{}, ts time.Time) []ConversationMessage {
-	var messages []ConversationMessage
+	messages := make([]ConversationMessage, 0, len(blocks))
 	for _, block := range blocks {
 		blockMap, ok := block.(map[string]interface{})
 		if !ok {

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"ttyweb/worktree"
 )
 
 // initGitRepo creates a bare git repository at the given path with an initial commit.
@@ -34,6 +36,7 @@ func runGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
 	cmd := exec.CommandContext(context.Background(), "git", args...)
 	cmd.Dir = dir
+	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git %v: %s (err: %v)", args, string(out), err)

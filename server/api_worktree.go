@@ -86,7 +86,7 @@ func handleWorktreeProjects(w http.ResponseWriter, r *http.Request) {
 func handleWorktreeList(w http.ResponseWriter, r *http.Request, projectID string) {
 	switch r.Method {
 	case http.MethodGet:
-		worktrees, err := wtService.ListWorktrees(projectID)
+		worktrees, err := wtService.ListWorktrees(r.Context(), projectID)
 		if err != nil {
 			writeAPIError(w, http.StatusBadRequest, err.Error())
 			return
@@ -108,7 +108,7 @@ func handleWorktreeList(w http.ResponseWriter, r *http.Request, projectID string
 			return
 		}
 
-		record, err := wtService.CreateWorktree(projectID, body.BranchName, body.BaseBranch, body.CreateBranch)
+		record, err := wtService.CreateWorktree(r.Context(), projectID, body.BranchName, body.BaseBranch, body.CreateBranch)
 		if err != nil {
 			writeAPIError(w, http.StatusBadRequest, err.Error())
 			return
@@ -123,7 +123,7 @@ func handleWorktreeList(w http.ResponseWriter, r *http.Request, projectID string
 func handleWorktreeSync(w http.ResponseWriter, r *http.Request, projectID string) {
 	switch r.Method {
 	case http.MethodPost:
-		worktrees, err := wtService.SyncAllWorktrees(projectID)
+		worktrees, err := wtService.SyncAllWorktrees(r.Context(), projectID)
 		if err != nil {
 			writeAPIError(w, http.StatusBadRequest, err.Error())
 			return
@@ -143,7 +143,7 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 
 	switch r.Method {
 	case http.MethodDelete:
-		if err := wtService.RemoveWorktree(projectID, worktreePath, false); err != nil {
+		if err := wtService.RemoveWorktree(r.Context(), projectID, worktreePath, false); err != nil {
 			writeAPIError(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -160,7 +160,7 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 
 		switch action {
 		case "refresh":
-			record, err := wtService.RefreshWorktree(projectID, worktreeID)
+			record, err := wtService.RefreshWorktree(r.Context(), projectID, worktreeID)
 			if err != nil {
 				writeAPIError(w, http.StatusBadRequest, err.Error())
 				return
@@ -179,7 +179,7 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 				writeAPIError(w, http.StatusBadRequest, "commit message is required")
 				return
 			}
-			record, err := wtService.CommitWorktree(projectID, worktreeID, body.Message)
+			record, err := wtService.CommitWorktree(r.Context(), projectID, worktreeID, body.Message)
 			if err != nil {
 				writeAPIError(w, http.StatusBadRequest, err.Error())
 				return

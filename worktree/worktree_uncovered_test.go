@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -70,7 +71,7 @@ func TestSetTestEnv_Empty(t *testing.T) {
 func TestResolveDefaultBranch_Main(t *testing.T) {
 	t.Parallel()
 	repo := initTestRepo(t)
-	branch := resolveDefaultBranch(repo)
+	branch := resolveDefaultBranch(context.Background(), repo)
 	if branch != "main" {
 		t.Fatalf("expected 'main', got %q", branch)
 	}
@@ -79,7 +80,7 @@ func TestResolveDefaultBranch_Main(t *testing.T) {
 func TestResolveDefaultBranch_NoBranch(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
-	branch := resolveDefaultBranch(dir)
+	branch := resolveDefaultBranch(context.Background(), dir)
 	if branch != "" {
 		t.Fatalf("expected empty string for non-repo, got %q", branch)
 	}

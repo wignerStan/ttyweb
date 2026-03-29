@@ -4,12 +4,14 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"ttyweb/worktree"
@@ -26,19 +28,19 @@ type WtProject struct {
 
 // WorktreeRecord represents a persisted worktree.
 type WorktreeRecord struct {
-	ID                string    `json:"id"`
-	ProjectID         string    `json:"projectId"`
-	BranchName        string    `json:"branchName"`
-	Path              string    `json:"path"`
-	IsMain            bool      `json:"isMain"`
-	HeadCommit        string    `json:"headCommit,omitempty"`
-	HeadCommitMessage string    `json:"headCommitMessage,omitempty"`
-	StatusAhead       int       `json:"statusAhead"`
-	StatusBehind      int       `json:"statusBehind"`
-	StatusModified    int       `json:"statusModified"`
-	StatusStaged      int       `json:"statusStaged"`
-	StatusUntracked   int       `json:"statusUntracked"`
-	StatusConflicts   int       `json:"statusConflicts"`
+	ID                string `json:"id"`
+	ProjectID         string `json:"projectId"`
+	BranchName        string `json:"branchName"`
+	Path              string `json:"path"`
+	IsMain            bool   `json:"isMain"`
+	HeadCommit        string `json:"headCommit,omitempty"`
+	HeadCommitMessage string `json:"headCommitMessage,omitempty"`
+	StatusAhead       int    `json:"statusAhead"`
+	StatusBehind      int    `json:"statusBehind"`
+	StatusModified    int    `json:"statusModified"`
+	StatusStaged      int    `json:"statusStaged"`
+	StatusUntracked   int    `json:"statusUntracked"`
+	StatusConflicts   int    `json:"statusConflicts"`
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
 }
@@ -48,7 +50,8 @@ type WorktreeService struct {
 	mu        sync.RWMutex
 	projects  map[string]WtProject
 	worktrees map[string]WorktreeRecord
-	nextID    int
+	nextID    atomic.Int64
+	repoLock  *worktree.RepoLock
 }
 
 // NewWorktreeService creates a WorktreeService with initialized storage.
@@ -56,6 +59,7 @@ func NewWorktreeService() *WorktreeService {
 	return &WorktreeService{
 		projects:  make(map[string]WtProject),
 		worktrees: make(map[string]WorktreeRecord),
+		repoLock:  worktree.NewRepoLock(),
 	}
 }
 
@@ -133,7 +137,7 @@ func (s *WorktreeService) GetProject(id string) (*WtProject, error) {
 // --- Worktree operations ---
 
 // CreateWorktree creates a new worktree for a project and persists it.
-func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch string, createBranch bool) (*WorktreeRecord, error) {
+func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchName, baseBranch string, createBranch bool) (*WorktreeRecord, error) {
 	if branchName = strings.TrimSpace(branchName); branchName == "" {
 		return nil, errors.New("branch name is required")
 	}
@@ -146,7 +150,13 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 		return nil, err
 	}
 
-	wtPath, err := worktree.CreateWorktree(project.Path, branchName, baseBranch, createBranch)
+	unlock := s.repoLock.Lock(project.Path, ctx)
+	if unlock == nil {
+		return nil, context.Canceled
+	}
+	defer unlock()
+
+	wtPath, err := worktree.CreateWorktree(ctx, project.Path, branchName, baseBranch, createBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +173,7 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 	}
 
 	// Populate initial status.
-	if status, err := worktree.GetWorktreeStatus(wtPath); err == nil {
+	if status, err := worktree.GetWorktreeStatus(ctx, wtPath); err == nil {
 		record = record.withStatus(status)
 	}
 
@@ -175,20 +185,20 @@ func (s *WorktreeService) CreateWorktree(projectID, branchName, baseBranch strin
 }
 
 // ListWorktrees returns worktrees for a project, syncing with git state first.
-func (s *WorktreeService) ListWorktrees(projectID string) ([]WorktreeRecord, error) {
+func (s *WorktreeService) ListWorktrees(ctx context.Context, projectID string) ([]WorktreeRecord, error) {
 	project, err := s.GetProject(projectID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Sync with git state first (takes its own lock).
-	_ = s.syncWorktrees(project)
+	_ = s.syncWorktrees(ctx, project)
 
 	return s.worktreesForProject(projectID), nil
 }
 
 // RemoveWorktree removes a worktree by ID.
-func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force bool) error {
+func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktreeID string, force bool) error {
 	project, err := s.GetProject(projectID)
 	if err != nil {
 		return err
@@ -205,7 +215,13 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 		return errors.New("cannot remove main worktree")
 	}
 
-	if err := worktree.RemoveWorktree(project.Path, record.Path, force); err != nil {
+	unlock := s.repoLock.Lock(project.Path, ctx)
+	if unlock == nil {
+		return context.Canceled
+	}
+	defer unlock()
+
+	if err := worktree.RemoveWorktree(ctx, project.Path, record.Path, force); err != nil {
 		return err
 	}
 
@@ -217,7 +233,7 @@ func (s *WorktreeService) RemoveWorktree(projectID, worktreeID string, force boo
 }
 
 // RefreshWorktree updates the status of a worktree from git.
-func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*WorktreeRecord, error) {
+func (s *WorktreeService) RefreshWorktree(ctx context.Context, projectID, worktreeID string) (*WorktreeRecord, error) {
 	s.mu.RLock()
 	record, err := s.getWorktreeLocked(worktreeID, projectID)
 	s.mu.RUnlock()
@@ -225,7 +241,7 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 		return nil, err
 	}
 
-	status, err := worktree.GetWorktreeStatus(record.Path)
+	status, err := worktree.GetWorktreeStatus(ctx, record.Path)
 	if err != nil {
 		return nil, fmt.Errorf("get worktree status: %w", err)
 	}
@@ -234,7 +250,7 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 	record.UpdatedAt = time.Now()
 
 	// Fetch updated commit info from git list.
-	infos, err := worktree.ListWorktrees(filepath.Dir(record.Path))
+	infos, err := worktree.ListWorktrees(ctx, filepath.Dir(record.Path))
 	if err == nil {
 		for _, info := range infos {
 			if worktree.EqualPath(info.Path, record.Path) {
@@ -255,13 +271,13 @@ func (s *WorktreeService) RefreshWorktree(projectID, worktreeID string) (*Worktr
 }
 
 // SyncAllWorktrees syncs all worktrees for a project.
-func (s *WorktreeService) SyncAllWorktrees(projectID string) ([]WorktreeRecord, error) {
+func (s *WorktreeService) SyncAllWorktrees(ctx context.Context, projectID string) ([]WorktreeRecord, error) {
 	project, err := s.GetProject(projectID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.syncWorktrees(project); err != nil {
+	if err := s.syncWorktrees(ctx, project); err != nil {
 		return nil, err
 	}
 
@@ -269,7 +285,7 @@ func (s *WorktreeService) SyncAllWorktrees(projectID string) ([]WorktreeRecord, 
 }
 
 // CommitWorktree stages all and commits in a worktree.
-func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) (*WorktreeRecord, error) {
+func (s *WorktreeService) CommitWorktree(ctx context.Context, projectID, worktreeID, message string) (*WorktreeRecord, error) {
 	s.mu.RLock()
 	record, err := s.getWorktreeLocked(worktreeID, projectID)
 	s.mu.RUnlock()
@@ -277,11 +293,22 @@ func (s *WorktreeService) CommitWorktree(projectID, worktreeID, message string) 
 		return nil, err
 	}
 
-	if err := worktree.CommitWorktree(record.Path, message); err != nil {
+	project, err := s.GetProject(projectID)
+	if err != nil {
 		return nil, err
 	}
 
-	return s.RefreshWorktree(projectID, worktreeID)
+	unlock := s.repoLock.Lock(project.Path, ctx)
+	if unlock == nil {
+		return nil, context.Canceled
+	}
+	defer unlock()
+
+	if err := worktree.CommitWorktree(ctx, record.Path, message); err != nil {
+		return nil, err
+	}
+
+	return s.RefreshWorktree(ctx, projectID, worktreeID)
 }
 
 // --- internal ---
@@ -311,10 +338,11 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 	return record, nil
 }
 
-func (s *WorktreeService) syncWorktrees(project *WtProject) error {
+func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	gitWorktrees, err := worktree.ListWorktrees(project.Path)
+
+	gitWorktrees, err := worktree.ListWorktrees(ctx, project.Path)
 	if err != nil {
 		return err
 	}
@@ -367,8 +395,7 @@ func (s *WorktreeService) syncWorktrees(project *WtProject) error {
 }
 
 func (s *WorktreeService) newID() string {
-	s.nextID++
-	return fmt.Sprintf("wt-%d", s.nextID)
+	return fmt.Sprintf("wt-%d", s.nextID.Add(1))
 }
 
 func normalizePath(p string) string {
