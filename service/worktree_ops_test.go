@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -25,11 +26,11 @@ func TestWorktreeService_ConcurrentCreateDifferentProjects(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, errs[0] = svc.CreateWorktree(proj1.ID, "branch-a", "main", true)
+		_, errs[0] = svc.CreateWorktree(context.Background(), proj1.ID, "branch-a", "main", true)
 	}()
 	go func() {
 		defer wg.Done()
-		_, errs[1] = svc.CreateWorktree(proj2.ID, "branch-b", "main", true)
+		_, errs[1] = svc.CreateWorktree(context.Background(), proj2.ID, "branch-b", "main", true)
 	}()
 	wg.Wait()
 
@@ -57,7 +58,7 @@ func TestWorktreeService_ConcurrentCreateSameProject(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			branch := "serialized-" + string(rune('A'+idx))
-			_, err := svc.CreateWorktree(proj.ID, branch, "main", true)
+			_, err := svc.CreateWorktree(context.Background(), proj.ID, branch, "main", true)
 			if err != nil {
 				t.Errorf("CreateWorktree %d: %v", idx, err)
 				return
