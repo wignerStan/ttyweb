@@ -47,11 +47,17 @@ export function NotepadPanel({ projectId = null }: NotepadPanelProps) {
         {sortedNotes.map((note) => (
           <div
             key={note.id}
-            className={`notepad-bar-tab ${note.id === activeNoteId ? 'notepad-bar-tab-active' : ''}`}
-            onClick={() => setActiveNoteId(note.id)}
             role="tab"
             tabIndex={0}
+            className={`notepad-bar-tab ${note.id === activeNoteId ? 'notepad-bar-tab-active' : ''}`}
+            onClick={() => setActiveNoteId(note.id)}
             aria-selected={note.id === activeNoteId}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setActiveNoteId(note.id)
+              }
+            }}
           >
             <span className="notepad-bar-tab-label">{note.name}</span>
             <button
