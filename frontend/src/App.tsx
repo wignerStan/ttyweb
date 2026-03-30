@@ -10,6 +10,8 @@ import { KanbanBoard } from './kanban'
 import MobileApp from './mobile/MobileApp'
 import { NotepadPanel } from './notepad/NotepadPanel'
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy'
+import { NotificationProvider } from './shared/components/NotificationProvider'
+import { ThemeToggle } from './shared/components/ThemeToggle'
 
 type AppView = 'terminal' | 'conversations'
 
@@ -176,6 +178,7 @@ function DesktopLayout() {
           >
             <span style={{ fontSize: '14px' }}>{'\u270E'}</span>
           </button>
+          <ThemeToggle />
         </div>
         <div style={styles.contentArea}>
           {activeView === 'terminal' && (
@@ -223,10 +226,12 @@ function DesktopLayout() {
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/m" element={<MobileApp />} />
-      <Route path="/*" element={<DesktopLayout />} />
-    </Routes>
+    <NotificationProvider>
+      <Routes>
+        <Route path="/m" element={<MobileApp />} />
+        <Route path="/*" element={<DesktopLayout />} />
+      </Routes>
+    </NotificationProvider>
   )
 }
 
@@ -235,15 +240,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     height: '100vh',
     width: '100vw',
-    backgroundColor: '#1a1b26',
-    color: '#a9b1d6',
+    backgroundColor: 'var(--bg-primary)',
+    color: 'var(--text-secondary)',
     fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
     overflow: 'hidden',
   },
   sidebar: {
     width: '260px',
     minWidth: '260px',
-    borderRight: '1px solid #24283b',
+    borderRight: '1px solid var(--border-color)',
     overflow: 'auto',
   },
   main: {
@@ -255,8 +260,8 @@ const styles: Record<string, React.CSSProperties> = {
   tabBar: {
     display: 'flex',
     alignItems: 'center',
-    backgroundColor: '#16161e',
-    borderBottom: '1px solid #24283b',
+    backgroundColor: 'var(--bg-secondary)',
+    borderBottom: '1px solid var(--border-color)',
     height: '36px',
     paddingLeft: '4px',
     overflow: 'auto',
@@ -265,7 +270,7 @@ const styles: Record<string, React.CSSProperties> = {
   toggleBtn: {
     background: 'none',
     border: 'none',
-    color: '#a9b1d6',
+    color: 'var(--text-secondary)',
     cursor: 'pointer',
     fontSize: '12px',
     padding: '4px 8px',
@@ -279,25 +284,25 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     fontWeight: 600,
     whiteSpace: 'nowrap' as const,
-    color: '#565f89',
-    borderRight: '1px solid #24283b',
+    color: 'var(--text-muted)',
+    borderRight: '1px solid var(--border-color)',
   },
   viewTabActive: {
-    backgroundColor: '#1a1b26',
-    color: '#c0caf5',
+    backgroundColor: 'var(--bg-primary)',
+    color: 'var(--text-primary)',
   },
   tab: {
     display: 'flex',
     alignItems: 'center',
     padding: '4px 12px',
     cursor: 'pointer',
-    borderRight: '1px solid #24283b',
+    borderRight: '1px solid var(--border-color)',
     fontSize: '12px',
     whiteSpace: 'nowrap' as const,
   },
   tabActive: {
-    backgroundColor: '#1a1b26',
-    color: '#c0caf5',
+    backgroundColor: 'var(--bg-primary)',
+    color: 'var(--text-primary)',
   },
   tabLabel: {
     marginRight: '6px',
@@ -305,7 +310,7 @@ const styles: Record<string, React.CSSProperties> = {
   tabClose: {
     background: 'none',
     border: 'none',
-    color: '#565f89',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
     fontSize: '14px',
     lineHeight: '1',
@@ -313,8 +318,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   notepadBtn: {
     background: 'none',
-    border: '1px solid #3b4261',
-    color: '#565f89',
+    border: '1px solid var(--border-light)',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
     fontSize: '12px',
     padding: '2px 8px',
@@ -339,7 +344,7 @@ const styles: Record<string, React.CSSProperties> = {
   conversationsListPane: {
     width: '320px',
     minWidth: '320px',
-    borderRight: '1px solid #24283b',
+    borderRight: '1px solid var(--border-color)',
     overflow: 'hidden',
   },
   conversationsViewerPane: {
