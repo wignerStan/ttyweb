@@ -89,8 +89,17 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"notepad", server.handleNotepad)
 	mux.HandleFunc(apiPrefix+"notepad/", server.handleNotepadDetail)
 	// Task Segments
+	mux.HandleFunc(apiPrefix+"segments/summaries", server.handleListSummaries)
 	mux.HandleFunc(apiPrefix+"segments", server.handleSegments)
-	mux.HandleFunc(apiPrefix+"segments/", server.handleSegmentDetail)
+	mux.HandleFunc(apiPrefix+"segments/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/summarize") {
+			server.handleSummarizeSegment(w, r)
+		} else if strings.HasSuffix(r.URL.Path, "/summary") {
+			server.handleGetSummary(w, r)
+		} else {
+			server.handleSegmentDetail(w, r)
+		}
+	})
 	// SSE Task Events
 	mux.HandleFunc(apiPrefix+"tasks/events/stream", server.sseHandler.ServeHTTP)
 	// Worktree
