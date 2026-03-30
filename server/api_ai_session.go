@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -96,7 +97,8 @@ func (*Server) handleAIListSessions(w http.ResponseWriter, r *http.Request) {
 
 	project := r.URL.Query().Get("project")
 	if err := refreshSessionsFromDisk(project); err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "failed to scan sessions: "+err.Error())
+		log.Printf("failed to scan sessions: %v", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to scan sessions")
 		return
 	}
 
@@ -177,13 +179,15 @@ func (*Server) aiSessionConversationOrRefresh(w http.ResponseWriter, r *http.Req
 	if refresh {
 		messages, err = aiSessionService.RefreshSession(id)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to refresh conversation: "+err.Error())
+			log.Printf("failed to refresh conversation: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to refresh conversation")
 			return
 		}
 	} else {
 		messages, err = aiSessionService.GetConversation(id)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to parse conversation: "+err.Error())
+			log.Printf("failed to parse conversation: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to parse conversation")
 			return
 		}
 	}

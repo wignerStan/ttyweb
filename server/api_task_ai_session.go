@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -56,7 +57,8 @@ func (server *Server) handleTaskAISessionLinks(w http.ResponseWriter, r *http.Re
 		}
 		link, err := taskAISessionSvc.LinkSession(taskID, body.AISessionID)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			log.Printf("failed to link AI session: %v", err)
+			writeAPIError(w, http.StatusBadRequest, "failed to link AI session")
 			return
 		}
 		writeAPISuccess(w, link)
@@ -68,7 +70,8 @@ func (server *Server) handleTaskAISessionLinks(w http.ResponseWriter, r *http.Re
 		}
 		links, err := taskAISessionSvc.ListLinkedSessions(taskID)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			log.Printf("failed to list linked sessions: %v", err)
+			writeAPIError(w, http.StatusBadRequest, "failed to list linked sessions")
 			return
 		}
 		writeAPISuccess(w, links)
@@ -79,7 +82,8 @@ func (server *Server) handleTaskAISessionLinks(w http.ResponseWriter, r *http.Re
 			return
 		}
 		if err := taskAISessionSvc.UnlinkSession(taskID, aiSessionID); err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to unlink AI session: %v", err)
+			writeAPIError(w, http.StatusNotFound, "failed to unlink AI session")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "unlinked"})
