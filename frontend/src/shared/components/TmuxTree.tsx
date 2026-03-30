@@ -882,14 +882,14 @@ export function TmuxTree({
   }, [profileKey, allPaneKeys])
 
   useEffect(() => {
-    buildStatusMap()
+    buildStatusMap().catch(() => {})
   }, [buildStatusMap])
 
   // Auto-poll pane + task statuses every 10 seconds
   useEffect(() => {
     if (!profileKey && allPaneKeys.length === 0) return
     const interval = setInterval(() => {
-      buildStatusMap()
+      buildStatusMap().catch(() => {})
     }, 10000)
     return () => clearInterval(interval)
   }, [profileKey, allPaneKeys, buildStatusMap])

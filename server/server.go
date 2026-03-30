@@ -245,12 +245,19 @@ func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFu
 	wsMux.HandleFunc(pathPrefix+"ws/speech", server.handleSpeechWS)
 	wsMux.HandleFunc(pathPrefix+"ws/ai/stream", server.handleAIStream)
 	server.setupAPIHandlers(wsMux, pathPrefix)
+	wsMux.HandleFunc(pathPrefix+"api/health", server.handleHealthCheck)
 	siteHandler = http.Handler(wsMux)
 
 	if server.options.EnableBasicAuth {
 		log.Printf("Using Basic Authentication")
 		siteHandler = server.wrapBasicAuth(siteHandler, server.options.Credential)
 	}
+
+	// Security middleware (applied after basic auth so auth rejects unauthenticated first)
+	rateLimiter := newVisitorLimiter(10, 20) // 10 req/s per IP, burst 20
+	siteHandler = rateLimitMiddleware(rateLimiter)(siteHandler)
+	siteHandler = corsMiddleware(&CORSConfig{AllowedOrigins: server.options.CORSAllowedOrigins})(siteHandler)
+	siteHandler = csrfMiddleware(siteHandler)
 
 	return siteHandler
 }

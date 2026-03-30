@@ -14,50 +14,24 @@ import (
 	"ttyweb/db"
 )
 
-func TestSanitizeStreamError_RedactsURLs(t *testing.T) {
-	err := fmt.Errorf("API returned status 500: https://internal.company.com/v1/chat/completions failed")
-	msg := sanitizeStreamError(err)
-
-	if msg != "upstream AI service error" {
-		t.Errorf("expected redacted URL error, got %q", msg)
+func TestSanitizeStreamError_AlwaysReturnsGeneric(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{"URLs", fmt.Errorf("API returned status 500: https://internal.company.com/v1/chat/completions failed")},
+		{"Bearer tokens", fmt.Errorf("Authorization failed: Bearer sk-12345-secret-key")},
+		{"Long error", fmt.Errorf("error: %s", strings.Repeat("a", 200))},
+		{"Short safe error", fmt.Errorf("context canceled")},
+		{"SK prefix", fmt.Errorf("invalid api key sk-proj-abc123")},
 	}
-}
-
-func TestSanitizeStreamError_RedactsBearerTokens(t *testing.T) {
-	err := fmt.Errorf("Authorization failed: Bearer sk-12345-secret-key")
-	msg := sanitizeStreamError(err)
-
-	if msg != "authentication error with AI service" {
-		t.Errorf("expected redacted auth error, got %q", msg)
-	}
-}
-
-func TestSanitizeStreamError_TruncatesLongErrors(t *testing.T) {
-	longMsg := strings.Repeat("a", 200)
-	err := fmt.Errorf("error: %s", longMsg)
-	msg := sanitizeStreamError(err)
-
-	if msg != "upstream AI service error" {
-		t.Errorf("expected truncated error, got %q", msg)
-	}
-}
-
-func TestSanitizeStreamError_PreservesShortSafeErrors(t *testing.T) {
-	err := fmt.Errorf("context canceled")
-	msg := sanitizeStreamError(err)
-
-	expected := "AI stream error: context canceled"
-	if msg != expected {
-		t.Errorf("expected %q, got %q", expected, msg)
-	}
-}
-
-func TestSanitizeStreamError_RedactsSKPrefix(t *testing.T) {
-	err := fmt.Errorf("invalid api key sk-proj-abc123")
-	msg := sanitizeStreamError(err)
-
-	if msg != "authentication error with AI service" {
-		t.Errorf("expected redacted sk- error, got %q", msg)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg := sanitizeStreamError(tt.err)
+			if msg != "AI stream error" {
+				t.Errorf("expected generic error, got %q", msg)
+			}
+		})
 	}
 }
 

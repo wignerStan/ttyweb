@@ -71,6 +71,7 @@ func (s *speechSession) closeBoth() {
 }
 
 func (s *speechSession) sendError(msg string) {
+	log.Printf("[Speech] Error to client: %s", msg)
 	_ = s.clientConn.WriteJSON(serverMessage{Type: "error", Message: msg})
 }
 
@@ -134,7 +135,8 @@ func (s *speechSession) run() {
 			s.seq++
 			frame, err := s.buildAudioFrame(msg.Audio)
 			if err != nil {
-				s.sendError("failed to build audio frame: " + err.Error())
+				log.Printf("[Speech] Failed to build audio frame: %v", err)
+				s.sendError("failed to build audio frame")
 				s.closeBoth()
 				return
 			}
@@ -151,7 +153,8 @@ func (s *speechSession) run() {
 			s.seq++
 			frame, err := ai.BuildLastFrame(s.seq)
 			if err != nil {
-				s.sendError("failed to build last frame: " + err.Error())
+				log.Printf("[Speech] Failed to build last frame: %v", err)
+				s.sendError("failed to build last frame")
 				s.closeBoth()
 				return
 			}
@@ -184,7 +187,8 @@ func (s *speechSession) buildAudioFrame(audio string) ([]byte, error) {
 func (s *speechSession) handleStart() {
 	authURL, err := ai.GenerateAuthURL(s.xunfeiCfg)
 	if err != nil {
-		s.sendError("failed to generate auth URL: " + err.Error())
+		log.Printf("[Speech] Failed to generate auth URL: %v", err)
+		s.sendError("failed to generate auth URL")
 		s.closeBoth()
 		return
 	}
@@ -192,7 +196,8 @@ func (s *speechSession) handleStart() {
 	log.Printf("[Speech] Connecting to Xunfei...")
 	xfConn, xfResp, err := websocket.DefaultDialer.Dial(authURL, nil)
 	if err != nil {
-		s.sendError("failed to connect to Xunfei: " + err.Error())
+		log.Printf("[Speech] Failed to connect to Xunfei: %v", err)
+		s.sendError("failed to connect to speech service")
 		s.closeBoth()
 		return
 	}
@@ -228,7 +233,7 @@ func (s *speechSession) relayXunfeiToClient(xfConn *websocket.Conn) {
 				return
 			default:
 				log.Printf("[Speech] Xunfei read error: %v", err)
-				s.sendError("Xunfei connection error: " + err.Error())
+				s.sendError("speech service connection error")
 			}
 			return
 		}
@@ -236,7 +241,7 @@ func (s *speechSession) relayXunfeiToClient(xfConn *websocket.Conn) {
 		result, err := ai.ParseResult(raw)
 		if err != nil {
 			log.Printf("[Speech] Parse error: %v", err)
-			s.sendError(err.Error())
+			s.sendError("failed to parse speech result")
 			continue
 		}
 

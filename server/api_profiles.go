@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -82,14 +83,16 @@ func (server *Server) handleProfileDetail(w http.ResponseWriter, r *http.Request
 			SortOrder:  body.SortOrder,
 		})
 		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to update profile: %v", err)
+			writeAPIError(w, http.StatusNotFound, "profile not found")
 			return
 		}
 		writeAPISuccess(w, updated)
 
 	case http.MethodDelete:
 		if err := store.DeleteProfile(id); err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to delete profile: %v", err)
+			writeAPIError(w, http.StatusNotFound, "profile not found")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "deleted"})

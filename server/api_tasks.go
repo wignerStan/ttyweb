@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -108,7 +109,8 @@ func (server *Server) handleTaskDetail(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := store.CompleteTask(id); err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to complete task: %v", err)
+			writeAPIError(w, http.StatusNotFound, "task not found")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "completed"})

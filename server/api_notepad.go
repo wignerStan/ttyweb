@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 
@@ -21,7 +22,8 @@ func (server *Server) handleNotepad(w http.ResponseWriter, r *http.Request) {
 		}
 		notes, err := server.noteSvc.ListNotes(projectID)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to list notes: "+err.Error())
+			log.Printf("failed to list notes: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to list notes")
 			return
 		}
 		writeAPISuccess(w, notes)
@@ -42,7 +44,8 @@ func (server *Server) handleNotepad(w http.ResponseWriter, r *http.Request) {
 		}
 		note, err := server.noteSvc.CreateNote(body.Name, body.Content, opts...)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to create note: "+err.Error())
+			log.Printf("failed to create note: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to create note")
 			return
 		}
 		writeAPISuccess(w, note)
@@ -69,11 +72,12 @@ func (server *Server) handleNotepadDetail(w http.ResponseWriter, r *http.Request
 	case http.MethodGet:
 		note, err := server.noteSvc.GetNote(id)
 		if err != nil {
+			log.Printf("failed to get note %s: %v", id, err)
 			status := http.StatusInternalServerError
 			if errors.Is(err, service.ErrNotFound) {
 				status = http.StatusNotFound
 			}
-			writeAPIError(w, status, err.Error())
+			writeAPIError(w, status, "failed to get note")
 			return
 		}
 		writeAPISuccess(w, note)
@@ -89,22 +93,24 @@ func (server *Server) handleNotepadDetail(w http.ResponseWriter, r *http.Request
 		}
 		note, err := server.noteSvc.UpdateNote(id, body.Name, body.Content)
 		if err != nil {
+			log.Printf("failed to update note %s: %v", id, err)
 			if errors.Is(err, service.ErrNotFound) {
-				writeAPIError(w, http.StatusNotFound, err.Error())
+				writeAPIError(w, http.StatusNotFound, "note not found")
 				return
 			}
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			writeAPIError(w, http.StatusBadRequest, "failed to update note")
 			return
 		}
 		writeAPISuccess(w, note)
 
 	case http.MethodDelete:
 		if err := server.noteSvc.DeleteNote(id); err != nil {
+			log.Printf("failed to delete note %s: %v", id, err)
 			status := http.StatusInternalServerError
 			if errors.Is(err, service.ErrNotFound) {
 				status = http.StatusNotFound
 			}
-			writeAPIError(w, status, err.Error())
+			writeAPIError(w, status, "failed to delete note")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "deleted"})
@@ -130,11 +136,12 @@ func (server *Server) handleNotepadReorder(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := server.noteSvc.ReorderNotes(reorders); err != nil {
+		log.Printf("failed to reorder notes: %v", err)
 		status := http.StatusInternalServerError
 		if errors.Is(err, service.ErrNotFound) {
 			status = http.StatusNotFound
 		}
-		writeAPIError(w, status, err.Error())
+		writeAPIError(w, status, "failed to reorder notes")
 		return
 	}
 

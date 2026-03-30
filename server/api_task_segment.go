@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -15,7 +16,8 @@ func (server *Server) handleSegments(w http.ResponseWriter, r *http.Request) {
 		session := r.URL.Query().Get("session")
 		segments, err := server.segmentService.ListSegments(session)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to list segments: "+err.Error())
+			log.Printf("failed to list segments: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to list segments")
 			return
 		}
 		writeAPISuccess(w, segments)
@@ -39,7 +41,8 @@ func (server *Server) handleSegments(w http.ResponseWriter, r *http.Request) {
 			body.SessionName, body.WindowName, body.PaneIndex, body.TaskTitle,
 		)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to create segment: "+err.Error())
+			log.Printf("failed to create segment: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to create segment")
 			return
 		}
 		writeAPISuccess(w, segment)
@@ -83,7 +86,8 @@ func (server *Server) handleSegmentDetail(w http.ResponseWriter, r *http.Request
 	if r.Method == http.MethodGet {
 		detail, err := server.segmentService.GetSegmentDetail(relative)
 		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to get segment detail: %v", err)
+			writeAPIError(w, http.StatusNotFound, "segment not found")
 			return
 		}
 		writeAPISuccess(w, detail)
@@ -109,7 +113,8 @@ func (server *Server) handleSegmentPatch(w http.ResponseWriter, r *http.Request,
 	}
 	segment, err := server.segmentService.UpdateSegment(id, body.TaskTitle, body.TaskStatus)
 	if err != nil {
-		writeAPIError(w, http.StatusNotFound, err.Error())
+		log.Printf("failed to update segment: %v", err)
+		writeAPIError(w, http.StatusNotFound, "segment not found")
 		return
 	}
 	writeAPISuccess(w, segment)
@@ -130,21 +135,24 @@ func (server *Server) handleSegmentSubRoute(w http.ResponseWriter, r *http.Reque
 	case "detail":
 		detail, err := server.segmentService.GetSegmentDetail(id)
 		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to get segment detail: %v", err)
+			writeAPIError(w, http.StatusNotFound, "segment not found")
 		} else {
 			writeAPISuccess(w, detail)
 		}
 	case "messages":
 		messages, err := server.segmentService.ListMessages(id)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to list messages: "+err.Error())
+			log.Printf("failed to list messages: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to list messages")
 		} else {
 			writeAPISuccess(w, messages)
 		}
 	case "commands":
 		commands, err := server.segmentService.ListCommands(id)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to list commands: "+err.Error())
+			log.Printf("failed to list commands: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to list commands")
 		} else {
 			writeAPISuccess(w, commands)
 		}

@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -27,20 +28,23 @@ func (*Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 50<<20)
 
 	if err := r.ParseMultipartForm(50 << 20); err != nil {
-		writeAPIError(w, http.StatusBadRequest, "failed to parse multipart form: "+err.Error())
+		log.Printf("failed to parse multipart form: %v", err)
+		writeAPIError(w, http.StatusBadRequest, "failed to parse multipart form")
 		return
 	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "file field required: "+err.Error())
+		log.Printf("failed to get form file: %v", err)
+		writeAPIError(w, http.StatusBadRequest, "file field required")
 		return
 	}
 	defer func() { _ = file.Close() }()
 
 	// Ensure upload directory exists.
 	if err := os.MkdirAll(uploadDir, 0o750); err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "failed to create upload directory: "+err.Error())
+		log.Printf("failed to create upload directory: %v", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to create upload directory")
 		return
 	}
 
@@ -52,14 +56,16 @@ func (*Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	dst, err := os.Create(destPath) //nolint:gosec // reason: destPath is server-generated (timestamp + nano + extension), not user-controlled
 	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "failed to create file: "+err.Error())
+		log.Printf("failed to create file: %v", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to create file")
 		return
 	}
 	defer func() { _ = dst.Close() }()
 
 	written, err := io.Copy(dst, file)
 	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "failed to write file: "+err.Error())
+		log.Printf("failed to write file: %v", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to write file")
 		return
 	}
 
@@ -71,7 +77,7 @@ func (*Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	writeAPISuccess(w, map[string]any{
 		"filename": header.Filename,
-		"path":     destPath,
+		"path":     uniqueName,
 		"size":     written,
 		"type":     strings.Split(contentType, ";")[0],
 	})

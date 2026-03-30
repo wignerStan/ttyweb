@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -73,7 +74,8 @@ func handleWorktreeProjects(w http.ResponseWriter, r *http.Request) {
 		}
 		project, err := wtService.AddProject(body.Path)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			log.Printf("failed to add project: %v", err)
+			writeAPIError(w, http.StatusBadRequest, "failed to add project")
 			return
 		}
 		writeAPISuccess(w, project)
@@ -88,7 +90,8 @@ func handleWorktreeList(w http.ResponseWriter, r *http.Request, projectID string
 	case http.MethodGet:
 		worktrees, err := wtService.ListWorktrees(r.Context(), projectID)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			log.Printf("failed to list worktrees for project %s: %v", projectID, err)
+			writeAPIError(w, http.StatusBadRequest, "failed to list worktrees")
 			return
 		}
 		writeAPISuccess(w, worktrees)
@@ -110,7 +113,8 @@ func handleWorktreeList(w http.ResponseWriter, r *http.Request, projectID string
 
 		record, err := wtService.CreateWorktree(r.Context(), projectID, body.BranchName, body.BaseBranch, body.CreateBranch)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			log.Printf("failed to create worktree for project %s: %v", projectID, err)
+			writeAPIError(w, http.StatusBadRequest, "failed to create worktree")
 			return
 		}
 		writeAPISuccess(w, record)
@@ -125,7 +129,8 @@ func handleWorktreeSync(w http.ResponseWriter, r *http.Request, projectID string
 	case http.MethodPost:
 		worktrees, err := wtService.SyncAllWorktrees(r.Context(), projectID)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			log.Printf("failed to sync worktrees for project %s: %v", projectID, err)
+			writeAPIError(w, http.StatusBadRequest, "failed to sync worktrees")
 			return
 		}
 		writeAPISuccess(w, worktrees)
@@ -144,7 +149,8 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 	switch r.Method {
 	case http.MethodDelete:
 		if err := wtService.RemoveWorktree(r.Context(), projectID, worktreePath, false); err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
+			log.Printf("failed to remove worktree: %v", err)
+			writeAPIError(w, http.StatusBadRequest, "failed to remove worktree")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "removed"})
@@ -162,7 +168,8 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 		case "refresh":
 			record, err := wtService.RefreshWorktree(r.Context(), projectID, worktreeID)
 			if err != nil {
-				writeAPIError(w, http.StatusBadRequest, err.Error())
+				log.Printf("failed to refresh worktree: %v", err)
+				writeAPIError(w, http.StatusBadRequest, "failed to refresh worktree")
 				return
 			}
 			writeAPISuccess(w, record)
@@ -181,7 +188,8 @@ func handleWorktreeItem(w http.ResponseWriter, r *http.Request, projectID, workt
 			}
 			record, err := wtService.CommitWorktree(r.Context(), projectID, worktreeID, body.Message)
 			if err != nil {
-				writeAPIError(w, http.StatusBadRequest, err.Error())
+				log.Printf("failed to commit worktree: %v", err)
+				writeAPIError(w, http.StatusBadRequest, "failed to commit worktree")
 				return
 			}
 			writeAPISuccess(w, record)
