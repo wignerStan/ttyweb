@@ -19,7 +19,7 @@ func initGitRepo(t *testing.T, path string) {
 		t.Fatalf("create repo dir: %v", err)
 	}
 
-	runGit(t, path, "init")
+	runGit(t, path, "init", "-b", "main")
 	runGit(t, path, "config", "user.email", "test@example.com")
 	runGit(t, path, "config", "user.name", "Test User")
 

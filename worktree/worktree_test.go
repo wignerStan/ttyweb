@@ -20,7 +20,8 @@ func initTestRepo(t *testing.T) string {
 	}
 
 	// Create a working repo and make an initial commit so we have a main branch.
-	mustRun(t, workPath, "init")
+	// Use -b main explicitly for CI runners where git init defaults to master.
+	mustRun(t, workPath, "init", "-b", "main")
 	mustRun(t, workPath, "config", "user.name", "test")
 	mustRun(t, workPath, "config", "user.email", "test@test.com")
 	mustWriteFile(t, filepath.Join(workPath, "README.md"), "# test\n")
