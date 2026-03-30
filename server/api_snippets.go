@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -78,14 +79,16 @@ func (server *Server) handleSnippetDetail(w http.ResponseWriter, r *http.Request
 			Command: body.Command,
 		})
 		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to update snippet: %v", err)
+			writeAPIError(w, http.StatusNotFound, "snippet not found")
 			return
 		}
 		writeAPISuccess(w, updated)
 
 	case http.MethodDelete:
 		if err := store.DeleteSnippet(index); err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to delete snippet: %v", err)
+			writeAPIError(w, http.StatusNotFound, "snippet not found")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "deleted"})

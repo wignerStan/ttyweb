@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -82,14 +83,16 @@ func (server *Server) handleRoleDetail(w http.ResponseWriter, r *http.Request) {
 			SystemPrompt: body.SystemPrompt,
 		})
 		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to update role: %v", err)
+			writeAPIError(w, http.StatusNotFound, "role not found")
 			return
 		}
 		writeAPISuccess(w, updated)
 
 	case http.MethodDelete:
 		if err := store.DeleteRole(id); err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to delete role: %v", err)
+			writeAPIError(w, http.StatusNotFound, "role not found")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "deleted"})

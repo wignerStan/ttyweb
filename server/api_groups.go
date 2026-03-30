@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -79,14 +80,16 @@ func (server *Server) handleGroupDetail(w http.ResponseWriter, r *http.Request) 
 			ProfileKey: body.ProfileKey,
 		})
 		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to update group: %v", err)
+			writeAPIError(w, http.StatusNotFound, "group not found")
 			return
 		}
 		writeAPISuccess(w, updated)
 
 	case http.MethodDelete:
 		if err := store.DeleteGroup(id); err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
+			log.Printf("failed to delete group: %v", err)
+			writeAPIError(w, http.StatusNotFound, "group not found")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "deleted"})
