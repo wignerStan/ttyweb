@@ -112,14 +112,23 @@ export function ConversationList({ selectedSessionId, onSelectSession }: Convers
               </div>
               <div className="conv-group-list">
                 {items.map((session) => (
-                  <div
+                  <button
                     key={session.id}
+                    type="button"
                     className={`conv-session-item${
                       selectedSessionId === session.id ? ' conv-session-item--selected' : ''
                     }`}
                     onClick={() => onSelectSession(session)}
-                    role="button"
-                    tabIndex={0}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      font: 'inherit',
+                      color: 'inherit',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'inherit',
+                    }}
                   >
                     <span className="conv-session-title">{session.title || 'Untitled'}</span>
                     <div className="conv-session-meta">
@@ -127,7 +136,7 @@ export function ConversationList({ selectedSessionId, onSelectSession }: Convers
                       <span>{session.message_count} msgs</span>
                       <span>{formatRelativeTime(session.timestamp)}</span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>

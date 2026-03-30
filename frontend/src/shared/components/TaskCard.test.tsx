@@ -67,17 +67,20 @@ describe('TaskCard (shared)', () => {
     expect(screen.queryByText('Mark Done')).not.toBeInTheDocument()
   })
 
-  it('sets role="button" and tabIndex={0} when onSelect is provided', () => {
+  it('renders as a native button when onSelect is provided', () => {
     const onSelect = vi.fn()
     const { container } = renderWithProviders(<TaskCard task={makeTask()} onSelect={onSelect} />)
     const card = container.firstChild as HTMLElement
-    expect(card).toHaveAttribute('role', 'button')
-    expect(card).toHaveAttribute('tabindex', '0')
+    expect(card.tagName).toBe('BUTTON')
+    // Native buttons have implicit role="button" and are focusable (no tabIndex needed)
+    expect(card).not.toHaveAttribute('role')
+    expect(card).not.toHaveAttribute('tabindex')
   })
 
-  it('does not set role or tabIndex when onSelect is omitted', () => {
+  it('renders as a div when onSelect is omitted', () => {
     const { container } = renderWithProviders(<TaskCard task={makeTask()} />)
     const card = container.firstChild as HTMLElement
+    expect(card.tagName).toBe('DIV')
     expect(card).not.toHaveAttribute('role')
     expect(card).not.toHaveAttribute('tabindex')
   })

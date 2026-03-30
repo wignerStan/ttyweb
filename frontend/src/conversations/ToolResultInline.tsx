@@ -46,17 +46,26 @@ export function ToolResultInline({ toolUse, toolResult }: ToolResultInlineProps)
 
   return (
     <div className={`conv-tool-result${expanded ? ' conv-tool-result--expanded' : ''}`}>
-      <div
+      <button
+        type="button"
         className="conv-tool-result-header"
         onClick={() => setExpanded((prev) => !prev)}
-        role="button"
-        tabIndex={0}
         aria-expanded={expanded}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
       >
         <span className="conv-tool-result-chevron">&#9654;</span>
         <span className="conv-tool-result-name">{toolUse.name}</span>
         {inputSummary && <span className="conv-tool-result-input">{inputSummary}</span>}
-      </div>
+      </button>
       {expanded && <div className="conv-tool-result-output">{output}</div>}
     </div>
   )
