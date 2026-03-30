@@ -41,6 +41,8 @@ func makeProjectDetailHandler(projectPrefix string) http.HandlerFunc {
 		switch {
 		case subPath == "":
 			writeAPIError(w, http.StatusNotFound, "not found")
+		case subPath == "pr-checkout":
+			handlePRCheckout(w, r, projectID)
 		case subPath == "worktrees":
 			handleWorktreeList(w, r, projectID)
 		case subPath == "worktrees/sync":
