@@ -263,6 +263,7 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
   return (
     <div className="voice-input">
       <button
+        type="button"
         className={`voice-btn ${status}`}
         onMouseDown={(e) => e.preventDefault()}
         onTouchStart={(e) => e.preventDefault()}

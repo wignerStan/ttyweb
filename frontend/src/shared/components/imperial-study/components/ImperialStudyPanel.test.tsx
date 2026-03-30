@@ -53,12 +53,17 @@ vi.mock('./CommandInput', () => ({
   }) => (
     <div data-testid="command-input">
       <button
+        type="button"
         data-testid="cmd-dispatch"
         onClick={() => onDispatched?.({ run_id: 'r1', task_id: 't1', intent: 'test' })}
       >
         Dispatch
       </button>
-      <button data-testid="cmd-assistant" onClick={() => onAssistantSend?.('hello', 'chat')}>
+      <button
+        type="button"
+        data-testid="cmd-assistant"
+        onClick={() => onAssistantSend?.('hello', 'chat')}
+      >
         Assistant
       </button>
     </div>
@@ -69,7 +74,7 @@ vi.mock('./WorkerSection', () => ({
   WorkerSection: ({ onWorkerClick }: { onWorkerClick?: (runId: string) => void }) => (
     <div data-testid="workers-section">
       Workers
-      <button data-testid="worker-click" onClick={() => onWorkerClick?.('r1')}>
+      <button type="button" data-testid="worker-click" onClick={() => onWorkerClick?.('r1')}>
         Click worker
       </button>
     </div>
@@ -94,7 +99,7 @@ vi.mock('./InboxSection', () => ({
     return (
       <div data-testid="inbox-section">
         Inbox
-        <button data-testid="inbox-click" onClick={() => onItemClick?.(item)}>
+        <button type="button" data-testid="inbox-click" onClick={() => onItemClick?.(item)}>
           Click inbox
         </button>
       </div>
@@ -118,10 +123,10 @@ vi.mock('./InboxDetailModal', () => ({
   InboxDetailModal: ({ onReplied, onClose }: { onReplied: () => void; onClose: () => void }) => (
     <div data-testid="inbox-modal">
       Modal
-      <button data-testid="modal-replied" onClick={onReplied}>
+      <button type="button" data-testid="modal-replied" onClick={onReplied}>
         Replied
       </button>
-      <button data-testid="modal-close" onClick={onClose}>
+      <button type="button" data-testid="modal-close" onClick={onClose}>
         Close
       </button>
     </div>
@@ -132,7 +137,7 @@ vi.mock('./TaskDetailModal', () => ({
   TaskDetailModal: ({ onClose }: { onClose: () => void }) => (
     <div data-testid="task-modal">
       Modal
-      <button data-testid="task-modal-close" onClick={onClose}>
+      <button type="button" data-testid="task-modal-close" onClick={onClose}>
         Close
       </button>
     </div>

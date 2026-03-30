@@ -113,7 +113,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="new session"
           />
-          <button style={styles.createBtn} onClick={handleCreate}>
+          <button type="button" style={styles.createBtn} onClick={handleCreate}>
             +
           </button>
         </div>
@@ -131,6 +131,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
               </span>
               {s.attached && <span style={styles.badge}>A</span>}
               <button
+                type="button"
                 style={styles.killBtn}
                 onClick={(e) => {
                   e.stopPropagation()

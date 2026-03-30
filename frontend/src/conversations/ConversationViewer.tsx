@@ -26,7 +26,7 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
   return (
     <div className="conv-viewer-container">
       <div className="conv-viewer-header">
-        <button className="conv-viewer-header-btn" onClick={onBack}>
+        <button type="button" className="conv-viewer-header-btn" onClick={onBack}>
           &#9664; Back
         </button>
         <span className="conv-viewer-header-title">{sessionInfo?.title ?? 'Loading...'}</span>
@@ -34,6 +34,7 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
           <span className="conv-viewer-header-session-info">{sessionInfo.model}</span>
         )}
         <button
+          type="button"
           className={`conv-viewer-header-btn${loading ? ' conv-viewer-header-btn--disabled' : ''}`}
           onClick={refresh}
           disabled={loading}
@@ -46,7 +47,7 @@ export function ConversationViewer({ sessionId, sessionInfo, onBack }: Conversat
       {error && (
         <div className="conv-viewer-error">
           <span>{error}</span>
-          <button className="conv-viewer-header-btn" onClick={refresh}>
+          <button type="button" className="conv-viewer-header-btn" onClick={refresh}>
             Retry
           </button>
         </div>

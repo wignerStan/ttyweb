@@ -282,6 +282,7 @@ function QuickGroupMenu({
         {groups.length > 0 &&
           groups.map((g) => (
             <button
+              type="button"
               key={g.id}
               className={`quick-group-item ${g.id === currentGroupId ? 'current' : ''}`}
               onClick={() => assignToGroup(g.id)}
@@ -295,6 +296,7 @@ function QuickGroupMenu({
 
         {currentGroupId !== null && (
           <button
+            type="button"
             className="quick-group-item ungroup"
             onClick={() => assignToGroup(null)}
             disabled={loading}
@@ -325,6 +327,7 @@ function QuickGroupMenu({
               disabled={loading}
             />
             <button
+              type="button"
               className="quick-group-confirm"
               onClick={createAndAssign}
               disabled={loading || !newName.trim()}
@@ -334,6 +337,7 @@ function QuickGroupMenu({
           </div>
         ) : (
           <button
+            type="button"
             className="quick-group-item create"
             onClick={() => setCreating(true)}
             disabled={loading}
@@ -522,7 +526,7 @@ function SortableSession({
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button className="expand-btn" onClick={() => setExpanded(!expanded)}>
+        <button type="button" className="expand-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         <Terminal size={14} style={{ color: 'var(--blue-500)' }} />
@@ -571,6 +575,7 @@ function SortableSession({
           </span>
         )}
         <button
+          type="button"
           className="rebuild-btn"
           onClick={handleRebuild}
           disabled={rebuilding}
@@ -625,6 +630,7 @@ function SortableSession({
                     {window.windowIndex}: {window.windowName}
                   </span>
                   <button
+                    type="button"
                     className="window-rename-btn"
                     onClick={() => {
                       setEditWindowName(window.windowName)
@@ -666,6 +672,7 @@ function SortableSession({
                   <span className="pane-cmd">{pane.paneCommand}</span>
                   {onPaneContextMenu && (
                     <button
+                      type="button"
                       className="pane-details-btn"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -714,7 +721,7 @@ function SortableGroup({ item, group, children, isOver }: SortableGroupProps) {
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button className="expand-btn" onClick={() => setExpanded(!expanded)}>
+        <button type="button" className="expand-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         {expanded ? (
@@ -1118,7 +1125,7 @@ export function TmuxTree({
             </span>
           )}
         </div>
-        <button onClick={onRefresh} className="refresh-btn" title="Refresh">
+        <button type="button" onClick={onRefresh} className="refresh-btn" title="Refresh">
           <RefreshCw size={12} />
         </button>
         <NewTmuxButton sessions={sessions} onCreated={onRefresh} />
@@ -1148,26 +1155,26 @@ export function TmuxTree({
                     {groupSessions.length === 0 ? (
                       <div className="group-empty-drop">Drop sessions here</div>
                     ) : (
-                      groupSessions.map((sessionItem) => (
+                      groupSessions.map((sessionItem) =>
                         sessionItem.session ? (
-                        <SortableSession
-                          key={sessionItem.id}
-                          item={sessionItem}
-                          session={sessionItem.session}
-                          isInGroup={true}
-                          isOver={overItemId === sessionItem.id}
-                          statusMap={statusMap}
-                          onSelectPane={onSelectPane}
-                          onPaneContextMenu={onPaneContextMenu}
-                          onPaneStatusClick={onPaneStatusClick}
-                          onRefresh={onRefresh}
-                          defaultExpanded={defaultExpanded}
-                          groups={groups}
-                          profileKey={profileKey}
-                          onGroupChanged={onOrderChange}
-                        />
-                        ) : null
-                      ))
+                          <SortableSession
+                            key={sessionItem.id}
+                            item={sessionItem}
+                            session={sessionItem.session}
+                            isInGroup={true}
+                            isOver={overItemId === sessionItem.id}
+                            statusMap={statusMap}
+                            onSelectPane={onSelectPane}
+                            onPaneContextMenu={onPaneContextMenu}
+                            onPaneStatusClick={onPaneStatusClick}
+                            onRefresh={onRefresh}
+                            defaultExpanded={defaultExpanded}
+                            groups={groups}
+                            profileKey={profileKey}
+                            onGroupChanged={onOrderChange}
+                          />
+                        ) : null,
+                      )
                     )}
                   </SortableGroup>
                 )

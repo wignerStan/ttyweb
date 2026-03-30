@@ -56,7 +56,12 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
               {run.state}
             </span>
           )}
-          <button className="is-icon-btn is-modal__close" onClick={onClose} title="Close">
+          <button
+            type="button"
+            className="is-icon-btn is-modal__close"
+            onClick={onClose}
+            title="Close"
+          >
             <X size={18} />
           </button>
         </div>

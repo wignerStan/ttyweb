@@ -93,6 +93,7 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
       <div className="config-viewer-tabs">
         {tabs.map((tab) => (
           <button
+            type="button"
             key={tab}
             className={`config-viewer-tab ${activeTab === tab ? 'active' : ''}`}
             onClick={() => setActiveTab(tab)}

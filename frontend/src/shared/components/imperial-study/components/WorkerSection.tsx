@@ -110,6 +110,7 @@ export function WorkerSection({
         <span className="is-section__label">Workers</span>
         {onAddWorker && (
           <button
+            type="button"
             className="is-icon-btn is-section__action"
             onClick={(e) => {
               e.stopPropagation()

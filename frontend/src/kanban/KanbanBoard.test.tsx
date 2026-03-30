@@ -103,7 +103,11 @@ vi.mock('./TaskColumn', () => ({
             {task.title}
           </div>
         ))}
-        <button data-testid={`column-add-${status}`} onClick={() => onAddTask(status)}>
+        <button
+          type="button"
+          data-testid={`column-add-${status}`}
+          onClick={() => onAddTask(status)}
+        >
           Add
         </button>
       </div>
@@ -126,10 +130,11 @@ vi.mock('./TaskDialog', () => ({
       <div data-testid="task-dialog">
         <span data-testid="dialog-mode">{task ? 'edit' : 'create'}</span>
         <span data-testid="dialog-default-status">{String(defaultStatus)}</span>
-        <button data-testid="dialog-close" onClick={() => (onClose as () => void)()}>
+        <button type="button" data-testid="dialog-close" onClick={() => (onClose as () => void)()}>
           Close
         </button>
         <button
+          type="button"
           data-testid="dialog-create"
           onClick={() =>
             (onCreate as (fields: Record<string, unknown>) => Promise<unknown>)({
@@ -141,6 +146,7 @@ vi.mock('./TaskDialog', () => ({
           Create
         </button>
         <button
+          type="button"
           data-testid="dialog-save"
           onClick={() =>
             (onSave as (fields: Record<string, unknown>) => Promise<unknown>)({
@@ -152,6 +158,7 @@ vi.mock('./TaskDialog', () => ({
           Save
         </button>
         <button
+          type="button"
           data-testid="dialog-delete"
           onClick={() =>
             (onDelete as (id: string) => Promise<boolean>)((task as KanbanTask)?.id ?? '1')

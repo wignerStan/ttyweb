@@ -85,7 +85,11 @@ function DesktopLayout() {
       )}
       <div style={styles.main}>
         <div style={styles.tabBar}>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={styles.toggleBtn}>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={styles.toggleBtn}
+          >
             {sidebarOpen ? '\u25C0' : '\u25B6'}
           </button>
           <div
@@ -122,6 +126,7 @@ function DesktopLayout() {
                 <span style={styles.tabLabel}>{tab.type === 'notepad' ? 'Notepad' : tab.id}</span>
                 {tab.id !== NOTEPAD_TAB_ID && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation()
                       closeTab(tab.id)
@@ -143,7 +148,12 @@ function DesktopLayout() {
           >
             <span style={styles.tabLabel}>Kanban</span>
           </div>
-          <button onClick={openNotepad} style={styles.notepadBtn} title="Open Notepad">
+          <button
+            type="button"
+            onClick={openNotepad}
+            style={styles.notepadBtn}
+            title="Open Notepad"
+          >
             <span style={{ fontSize: '14px' }}>{'\u270E'}</span>
           </button>
         </div>

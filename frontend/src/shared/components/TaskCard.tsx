@@ -42,6 +42,7 @@ export function TaskCard({ task, isCurrent = false, onComplete, onSelect }: Prop
       {isCurrent && task.task_status === 'in_progress' && onComplete && (
         <div className="task-actions">
           <button
+            type="button"
             className="btn-complete"
             onClick={(e) => {
               e.stopPropagation()

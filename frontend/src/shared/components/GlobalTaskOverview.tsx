@@ -131,6 +131,7 @@ export function GlobalTaskOverview({
       <div className="global-task-header">
         <span className="global-task-title">Tasks</span>
         <button
+          type="button"
           className="global-task-refresh"
           onClick={fetchTasks}
           title="Refresh Tasks"
@@ -145,7 +146,9 @@ export function GlobalTaskOverview({
           <div className="global-task-error">
             <XCircle size={16} />
             <span>{error}</span>
-            <button onClick={fetchTasks}>Retry</button>
+            <button type="button" onClick={fetchTasks}>
+              Retry
+            </button>
           </div>
         ) : loading && tasks.length === 0 ? (
           <div className="global-task-loading">

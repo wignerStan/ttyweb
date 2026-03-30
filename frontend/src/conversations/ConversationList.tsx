@@ -81,6 +81,7 @@ export function ConversationList({ selectedSessionId, onSelectSession }: Convers
             onChange={(e) => setFilterText(e.target.value)}
           />
           <button
+            type="button"
             className="conv-viewer-header-btn"
             onClick={refetch}
             disabled={loading}

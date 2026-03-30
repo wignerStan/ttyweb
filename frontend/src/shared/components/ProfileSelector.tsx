@@ -187,18 +187,19 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
                   disabled={loading}
                 />
                 <button
+                  type="button"
                   onClick={createProfile}
                   disabled={loading || !newName.trim()}
                   className="btn-confirm"
                 >
                   <Check size={14} />
                 </button>
-                <button onClick={() => setIsCreating(false)} className="btn-cancel">
+                <button type="button" onClick={() => setIsCreating(false)} className="btn-cancel">
                   <X size={14} />
                 </button>
               </div>
             ) : (
-              <button className="profile-add-btn" onClick={() => setIsCreating(true)}>
+              <button type="button" className="profile-add-btn" onClick={() => setIsCreating(true)}>
                 <Plus size={14} /> New Profile
               </button>
             )}
@@ -218,19 +219,21 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
                     disabled={loading}
                   />
                   <button
+                    type="button"
                     onClick={updateProfile}
                     disabled={loading || !editName.trim()}
                     className="btn-confirm"
                   >
                     <Check size={14} />
                   </button>
-                  <button onClick={() => setIsEditing(false)} className="btn-cancel">
+                  <button type="button" onClick={() => setIsEditing(false)} className="btn-cancel">
                     <X size={14} />
                   </button>
                 </div>
               ) : (
                 <div className="profile-edit-actions">
                   <button
+                    type="button"
                     className="btn-edit"
                     onClick={() => {
                       setEditName(currentProfile.name)
@@ -240,6 +243,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
                     <Pencil size={12} style={{ marginRight: 4 }} /> Edit
                   </button>
                   <button
+                    type="button"
                     className="btn-delete"
                     onClick={deleteProfile}
                     disabled={profiles.length <= 1}
