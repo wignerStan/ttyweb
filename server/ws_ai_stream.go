@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -126,27 +125,11 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// sanitizeStreamError returns a user-safe error message that does not leak
-// internal details such as API URLs, keys, or stack traces.
+// sanitizeStreamError returns a generic user-safe error message.
+// The full error is already logged server-side.
 func sanitizeStreamError(err error) string {
-	msg := err.Error()
-
-	// Redact any URL-like strings that may contain internal paths or credentials.
-	if strings.Contains(msg, "://") {
-		return "upstream AI service error"
-	}
-
-	// Redact messages that may contain API keys or tokens.
-	if strings.Contains(msg, "Bearer") || strings.Contains(msg, "sk-") {
-		return "authentication error with AI service"
-	}
-
-	// Truncate long error messages to avoid leaking internal details.
-	if len(msg) > 120 {
-		return "upstream AI service error"
-	}
-
-	return "AI stream error: " + msg
+	_ = err // logged at call site
+	return "AI stream error"
 }
 
 // resolveSystemPrompt looks up the system prompt for the given frontend role ID.
