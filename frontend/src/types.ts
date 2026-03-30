@@ -93,6 +93,17 @@ export interface AiRole {
   apiUrl?: string
 }
 
+export interface Metadata {
+  type: string
+  data: Record<string, unknown>
+}
+
+export interface AIPaneState {
+  paneKey: string
+  state: 'idle' | 'working' | 'waiting_approval' | 'unknown'
+  updatedAt: number
+}
+
 export interface AiConversation {
   conversation_id: string
   pane_key: string
