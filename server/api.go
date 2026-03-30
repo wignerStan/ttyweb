@@ -96,6 +96,8 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"kanban/tasks/", server.handleTaskAISessionLinks)
 	// File browser
 	mux.HandleFunc(apiPrefix+"fs", server.handleFSList)
+	// Editor
+	mux.HandleFunc(apiPrefix+"editor/open", server.handleEditorOpen)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {

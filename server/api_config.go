@@ -1,11 +1,14 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
-// handleConfig returns the opencode configuration.
-// This is a stub that returns null configs since opencode is not integrated.
+// handleConfig reads the opencode configuration from the cwd query parameter.
+// If cwd is empty or no config file is found, returns null.
 func (*Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -14,8 +17,24 @@ func (*Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAPISuccess(w, map[string]any{
-		"opencode":       nil,
-		"oh_my_opencode": nil,
-	})
+	cwd := r.URL.Query().Get("cwd")
+	if cwd == "" {
+		writeAPISuccess(w, nil)
+		return
+	}
+
+	for _, name := range []string{"opencode.json", ".opencode.json"} {
+		path := filepath.Join(cwd, name)
+		data, err := os.ReadFile(path) //nolint:gosec // reason: path is constructed from validated cwd query parameter
+		if err != nil {
+			continue
+		}
+		var result any
+		if json.Unmarshal(data, &result) == nil {
+			writeAPISuccess(w, result)
+			return
+		}
+	}
+
+	writeAPISuccess(w, nil)
 }

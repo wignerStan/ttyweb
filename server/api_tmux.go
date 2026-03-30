@@ -297,16 +297,38 @@ func (server *Server) handleTmuxSendKeys(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// handleTmuxPaneMode returns the current pane mode (stub).
+// handleTmuxPaneMode gets or sets the pane mode.
+// GET with ?pane=<key> returns the current mode.
+// POST with ?pane=<key> and {"mode":"pane"|"control"} sets the mode.
 func (*Server) handleTmuxPaneMode(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	paneKey := r.URL.Query().Get("pane")
+	if paneKey == "" {
+		writeAPIError(w, http.StatusBadRequest, "pane key is required")
 		return
 	}
 
-	writeAPISuccess(w, map[string]string{
-		"mode": "pane",
-	})
+	switch r.Method {
+	case http.MethodGet:
+		mode := store.GetPaneMode(paneKey)
+		if mode == "" {
+			mode = "pane" // default mode
+		}
+		writeAPISuccess(w, map[string]string{"mode": mode})
+
+	case http.MethodPost:
+		var req struct {
+			Mode string `json:"mode"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeAPIError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		store.SetPaneMode(paneKey, req.Mode)
+		writeAPISuccess(w, map[string]string{"mode": req.Mode})
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 }
