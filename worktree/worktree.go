@@ -363,5 +363,17 @@ func computeAheadBehind(repo *goGit.Repository) (int, int) {
 		return 0, 0
 	}
 
-	return len(ahead), len(behind)
+	return countCommits(repo, ahead), countCommits(repo, behind)
+}
+
+// countCommits filters a list of object hashes to only commit objects.
+func countCommits(repo *goGit.Repository, hashes []plumbing.Hash) int {
+	count := 0
+	for _, h := range hashes {
+		obj, err := repo.Storer.EncodedObject(plumbing.CommitObject, h)
+		if err == nil && obj != nil {
+			count++
+		}
+	}
+	return count
 }
