@@ -24,14 +24,17 @@ const projects = BACKENDS.map((backend) => ({
 }));
 
 export default defineConfig({
-  reporter: [['html', { open: 'never' }]],
+  reporter: process.env.CI
+    ? [['html', { open: 'never' }], ['junit', { outputFile: 'test-results/results.xml' }]]
+    : [['html', { open: 'never' }]],
   testDir: './e2e',
   timeout: 30000,
   retries: 1,
   expect: {
     timeout: 5000,
   },
-  workers: 8,
+  workers: process.env.CI ? 2 : 8,
+  forbidOnly: !!process.env.CI,
   webServer: webServers,
   use: {
     headless: true,
