@@ -163,6 +163,8 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
 
   return (
     <div className="file-upload">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: file drop zone with click-to-upload */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: file drop zone with click-to-upload */}
       <div
         className={`file-upload-zone${dragging ? ' dragging' : ''}${uploading ? ' uploading' : ''}${compact ? ' compact' : ''}`}
         onDragEnter={handleDragEnter}

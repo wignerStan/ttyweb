@@ -268,6 +268,8 @@ function QuickGroupMenu({
 
   return (
     <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: context menu backdrop */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: context menu backdrop */}
       <div
         className="quick-group-backdrop"
         onClick={onClose}
@@ -647,43 +649,49 @@ function SortableSession({
               const paneKey = buildPaneKey(session.sessionName, window.windowIndex, pane.paneId)
               const paneStatus = statusMap[paneKey] || 'idle'
               return (
-                <div
-                  key={pane.paneId}
-                  className="pane-node"
-                  onClick={() =>
-                    onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    onPaneContextMenu?.(paneKey)
-                  }}
-                >
-                  <span className="pane-id">{pane.paneId}</span>
-                  <span
-                    className="pane-status-clickable"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onPaneStatusClick?.(paneKey)
+                <>
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: tree pane node with click handler */}
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: tree pane node with click handler */}
+                  <div
+                    key={pane.paneId}
+                    className="pane-node"
+                    onClick={() =>
+                      onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)
+                    }
+                    onContextMenu={(e) => {
+                      e.preventDefault()
+                      onPaneContextMenu?.(paneKey)
                     }}
-                    title="View task history"
                   >
-                    <StatusBadge status={paneStatus} size="small" />
-                  </span>
-                  <span className="pane-cmd">{pane.paneCommand}</span>
-                  {onPaneContextMenu && (
-                    <button
-                      type="button"
-                      className="pane-details-btn"
+                    <span className="pane-id">{pane.paneId}</span>
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions: pane status click target */}
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: pane status click target */}
+                    <span
+                      className="pane-status-clickable"
                       onClick={(e) => {
                         e.stopPropagation()
-                        onPaneContextMenu(paneKey)
+                        onPaneStatusClick?.(paneKey)
                       }}
-                      title="View details"
+                      title="View task history"
                     >
-                      <MoreHorizontal size={14} />
-                    </button>
-                  )}
-                </div>
+                      <StatusBadge status={paneStatus} size="small" />
+                    </span>
+                    <span className="pane-cmd">{pane.paneCommand}</span>
+                    {onPaneContextMenu && (
+                      <button
+                        type="button"
+                        className="pane-details-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onPaneContextMenu(paneKey)
+                        }}
+                        title="View details"
+                      >
+                        <MoreHorizontal size={14} />
+                      </button>
+                    )}
+                  </div>
+                </>
               )
             })}
           </div>

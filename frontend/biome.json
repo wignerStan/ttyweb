@@ -10,18 +10,11 @@
         "useIterableCallbackReturn": "off",
         "noRedundantUseStrict": "error"
       },
-      "complexity": { "noForEach": "off" },
-      "style": {
-        "noNonNullAssertion": "off"
-      },
-      "a11y": {
-        "useButtonType": "off",
-        "noStaticElementInteractions": "off",
-        "useKeyWithClickEvents": "off",
-        "useSemanticElements": "off"
+      "complexity": {
+        "noForEach": "off"
       },
       "correctness": {
-        "noUnusedFunctionParameters": "warn",
+        "noUnusedFunctionParameters": "error",
         "noUnusedImports": "error"
       }
     }
@@ -39,7 +32,12 @@
       }
     }
   },
-  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded"
+    }
+  },
   "overrides": [
     {
       "includes": ["**/*.css"],
@@ -62,11 +60,18 @@
       }
     },
     {
-      "includes": ["**/*.test.{ts,tsx}", "src/__tests__/**"],
+      "includes": ["**/*.test.{ts,tsx}", "src/__tests__/**", "src/test-setup.ts"],
       "linter": {
         "rules": {
+          "a11y": {
+            "noStaticElementInteractions": "off",
+            "useKeyWithClickEvents": "off"
+          },
           "complexity": {
             "useArrowFunction": "off"
+          },
+          "style": {
+            "noNonNullAssertion": "off"
           }
         }
       }

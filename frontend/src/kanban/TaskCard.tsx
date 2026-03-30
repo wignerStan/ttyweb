@@ -57,44 +57,50 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
   const dueDate = task.due_date
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`task-card ${isDragging ? 'task-card--dragging' : ''}`}
-      onClick={() => onSelect(task)}
-      {...attributes}
-    >
-      <div className="task-card__header" ref={setActivatorNodeRef} {...listeners}>
-        <span className="task-card__title">{task.title}</span>
-        {priority && (
-          <span
-            className={`task-card__priority ${priority.className}`}
-            title={`Priority: ${priority.label}`}
-          >
-            {priority.label}
-          </span>
+    <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: dnd-kit requires div wrapper */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: dnd-kit requires div wrapper */}
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`task-card ${isDragging ? 'task-card--dragging' : ''}`}
+        onClick={() => onSelect(task)}
+        {...attributes}
+      >
+        <div className="task-card__header" ref={setActivatorNodeRef} {...listeners}>
+          <span className="task-card__title">{task.title}</span>
+          {priority && (
+            <span
+              className={`task-card__priority ${priority.className}`}
+              title={`Priority: ${priority.label}`}
+            >
+              {priority.label}
+            </span>
+          )}
+        </div>
+
+        {task.tags.length > 0 && (
+          <div className="task-card__tags">
+            {task.tags.map((tag) => (
+              <span key={tag} className={`task-card__tag ${getTagColorClass(tag)}`}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {dueDate && (
+          <div className="task-card__footer">
+            <span
+              className={`task-card__due ${isOverdue(dueDate) ? 'task-card__due--overdue' : ''}`}
+            >
+              {isOverdue(dueDate) ? <AlertTriangle size={10} /> : <Calendar size={10} />}
+              {formatDueDate(dueDate)}
+            </span>
+          </div>
         )}
       </div>
-
-      {task.tags.length > 0 && (
-        <div className="task-card__tags">
-          {task.tags.map((tag) => (
-            <span key={tag} className={`task-card__tag ${getTagColorClass(tag)}`}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {dueDate && (
-        <div className="task-card__footer">
-          <span className={`task-card__due ${isOverdue(dueDate) ? 'task-card__due--overdue' : ''}`}>
-            {isOverdue(dueDate) ? <AlertTriangle size={10} /> : <Calendar size={10} />}
-            {formatDueDate(dueDate)}
-          </span>
-        </div>
-      )}
-    </div>
+    </>
   )
 }
 
