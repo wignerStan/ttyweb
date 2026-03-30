@@ -19,7 +19,6 @@
         "noUnusedVariables": "error"
       },
       "style": {
-        "useGroupedTypeImport": "error",
         "noNonNullAssertion": "warn"
       }
     }

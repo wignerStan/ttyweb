@@ -4,17 +4,19 @@ import { Terminal } from '@xterm/xterm'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import '@xterm/xterm/css/xterm.css'
+import type { Metadata } from '../types'
 
 interface TerminalTabProps {
   session: string
   pane: string
+  onMetadata?: (metadata: Metadata) => void
 }
 
 // Message types in gotty/webtty protocol:
 // Client -> Server: '0'=Output (base64), '1'=Input, '2'=Ping, '3'=Resize, '4'=SetWindowTitle (unused)
 // Server -> Client: '0'=Output (base64), '1'=Input (unused), '2'=Pong, '3'=SetWindowTitle
 
-export function TerminalTab({ session, pane }: TerminalTabProps) {
+export function TerminalTab({ session, pane, onMetadata }: TerminalTabProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
@@ -98,6 +100,17 @@ export function TerminalTab({ session, pane }: TerminalTabProps) {
             term.write(payload)
           }
           break
+        case '7': {
+          // SetMetadata
+          try {
+            const metaJSON = atob(payload)
+            const metadata: Metadata = JSON.parse(metaJSON)
+            onMetadata?.(metadata)
+          } catch {
+            // malformed metadata — ignore
+          }
+          break
+        }
         case '3': {
           // SetWindowTitle
           const title = JSON.parse(payload)
@@ -145,7 +158,7 @@ export function TerminalTab({ session, pane }: TerminalTabProps) {
       termRef.current = null
       fitRef.current = null
     }
-  }, [session, pane])
+  }, [session, pane, onMetadata])
 
   const statusColor =
     status === 'connected' ? '#9ece6a' : status === 'connecting' ? '#e0af68' : '#f7768e'
