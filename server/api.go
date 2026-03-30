@@ -91,6 +91,8 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	// Task Segments
 	mux.HandleFunc(apiPrefix+"segments", server.handleSegments)
 	mux.HandleFunc(apiPrefix+"segments/", server.handleSegmentDetail)
+	// SSE Task Events
+	mux.HandleFunc(apiPrefix+"tasks/events/stream", server.sseHandler.ServeHTTP)
 	// Worktree
 	setupWorktreeRoutes(mux, apiPrefix)
 	// Branches

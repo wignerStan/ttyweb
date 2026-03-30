@@ -40,6 +40,8 @@ type Server struct {
 	segmentService *service.TaskSegmentService
 	stateMachine   *ai.StateMachine
 	srvErrCh       chan error
+	eventBus       *TaskEventBus
+	sseHandler     *SSEHandler
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
@@ -100,11 +102,18 @@ func New(factory Factory, options *Options) (*Server, error) {
 		segmentService: service.NewTaskSegmentService(database),
 		stateMachine:   ai.NewStateMachine(),
 		srvErrCh:       make(chan error, 1),
+		eventBus:       NewTaskEventBus(),
 	}
+	server.sseHandler = NewSSEHandler(server.eventBus)
 
 	registerAIStateChangeHandlers(server.stateMachine)
 
 	return server, nil
+}
+
+// EventBus returns the server's TaskEventBus for publishing events.
+func (s *Server) EventBus() *TaskEventBus {
+	return s.eventBus
 }
 
 // Run starts the main process of the Server.
