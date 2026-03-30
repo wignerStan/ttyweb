@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"math"
 	"strings"
 	"testing"
 )
@@ -90,6 +91,30 @@ func TestPaneID(t *testing.T) {
 			err := PaneID(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PaneID(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestUint16(t *testing.T) {
+	tests := []struct {
+		name  string
+		input int
+		want  uint16
+	}{
+		{"zero", 0, 0},
+		{"positive", 100, 100},
+		{"max uint16", math.MaxUint16, math.MaxUint16},
+		{"negative", -1, 0},
+		{"very negative", -9999, 0},
+		{"over max", math.MaxUint16 + 1, math.MaxUint16},
+		{"way over", 999999, math.MaxUint16},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Uint16(tt.input)
+			if got != tt.want {
+				t.Errorf("Uint16(%d) = %d, want %d", tt.input, got, tt.want)
 			}
 		})
 	}

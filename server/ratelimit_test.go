@@ -76,6 +76,50 @@ func TestRateLimitMiddleware_SeparateIPs(t *testing.T) {
 	}
 }
 
+func TestRateLimitMiddleware_XForwardedFor(t *testing.T) {
+	t.Parallel()
+	limiter := newVisitorLimiter(0, 1)
+	var called atomic.Int32
+	handler := rateLimitMiddleware(limiter)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called.Add(1)
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	// First request from real IP
+	req := httptest.NewRequestWithContext(context.Background(), "GET", "/api/health", nil)
+	req.RemoteAddr = "10.0.0.1:1234"
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	// Second request with same IP but different X-Forwarded-For should use forwarded IP
+	req2 := httptest.NewRequestWithContext(context.Background(), "GET", "/api/health", nil)
+	req2.RemoteAddr = "10.0.0.1:1234"
+	req2.Header.Set("X-Forwarded-For", "10.0.0.99")
+	rec2 := httptest.NewRecorder()
+	handler.ServeHTTP(rec2, req2)
+	if rec2.Code != http.StatusOK {
+		t.Errorf("expected 200 (different forwarded IP), got %d", rec2.Code)
+	}
+
+	// Third request from forwarded IP should be rate limited
+	req3 := httptest.NewRequestWithContext(context.Background(), "GET", "/api/health", nil)
+	req3.RemoteAddr = "10.0.0.1:1234"
+	req3.Header.Set("X-Forwarded-For", "10.0.0.99")
+	rec3 := httptest.NewRecorder()
+	handler.ServeHTTP(rec3, req3)
+	if rec3.Code != http.StatusTooManyRequests {
+		t.Errorf("expected 429 (forwarded IP exhausted), got %d", rec3.Code)
+	}
+}
+
+func TestExtractIP_NoPort(t *testing.T) {
+	t.Parallel()
+	ip := extractIP("10.0.0.1") // no port
+	if ip != "10.0.0.1" {
+		t.Errorf("expected '10.0.0.1', got '%s'", ip)
+	}
+}
+
 func TestRateLimitMiddleware_CleansStaleEntries(t *testing.T) {
 	t.Parallel()
 	limiter := newVisitorLimiter(0, 1)

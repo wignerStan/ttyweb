@@ -95,3 +95,26 @@ func TestCORSMiddleware_UntrustedOriginBlocked(t *testing.T) {
 		t.Error("untrusted origin should not get CORS headers")
 	}
 }
+
+func TestCORSMiddleware_WithCredentials(t *testing.T) {
+	t.Parallel()
+	cfg := CORSConfig{
+		AllowedOrigins:   []string{"https://trusted.example.com"},
+		AllowCredentials: true,
+		ExposeHeaders:    []string{"X-Custom-Header"},
+		MaxAge:           3600,
+	}
+	handler := corsMiddleware(&cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	req := httptest.NewRequestWithContext(context.Background(), "GET", "/api/health", nil)
+	req.Header.Set("Origin", "https://trusted.example.com")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if got := rec.Header().Get("Access-Control-Allow-Credentials"); got != "true" {
+		t.Errorf("expected 'true', got '%s'", got)
+	}
+	if got := rec.Header().Get("Access-Control-Expose-Headers"); got != "X-Custom-Header" {
+		t.Errorf("expected 'X-Custom-Header', got '%s'", got)
+	}
+}
