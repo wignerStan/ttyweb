@@ -1,0 +1,12 @@
+[
+  {
+    "Path": "/tmp/testdir/session-a.jsonl",
+    "ModTime": "<time>",
+    "Size": 29
+  },
+  {
+    "Path": "/tmp/testdir/session-b.jsonl",
+    "ModTime": "<time>",
+    "Size": 29
+  }
+]
