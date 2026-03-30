@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"sync/atomic"
@@ -296,4 +297,40 @@ func (b *aiStateMachineBridge) Intercept(data []byte) []ai.Metadata {
 		}
 	}
 	return metadata
+}
+
+// registerAIStateChangeHandlers wires up the state machine to auto-create
+// task events when the AI transitions to/from working state.
+func registerAIStateChangeHandlers(sm *ai.StateMachine) {
+	sm.OnStateChange(func(paneKey string, from, to ai.AIState) {
+		if to == ai.AIStateWorking {
+			slog.Info("AI started working, auto-creating task",
+				"pane", paneKey,
+				"from_state", string(from),
+			)
+
+			store.AddTaskEvent(&TaskEvent{
+				PaneKey: paneKey,
+				Event:   "ai_started_working",
+				Data: map[string]any{
+					"from_state": string(from),
+					"pane_key":   paneKey,
+				},
+			})
+
+			return
+		}
+
+		if to == ai.AIStateIdle && from == ai.AIStateWorking {
+			slog.Info("AI task completed",
+				"pane", paneKey,
+			)
+
+			store.AddTaskEvent(&TaskEvent{
+				PaneKey: paneKey,
+				Event:   "ai_completed",
+				Data:    map[string]any{"pane_key": paneKey},
+			})
+		}
+	})
 }

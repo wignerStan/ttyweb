@@ -85,7 +85,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 	}
 	noteSvc := service.NewNoteService(database)
 
-	return &Server{
+	server := &Server{
 		factory: factory,
 		options: options,
 
@@ -100,7 +100,11 @@ func New(factory Factory, options *Options) (*Server, error) {
 		segmentService: service.NewTaskSegmentService(database),
 		stateMachine:   ai.NewStateMachine(),
 		srvErrCh:       make(chan error, 1),
-	}, nil
+	}
+
+	registerAIStateChangeHandlers(server.stateMachine)
+
+	return server, nil
 }
 
 // Run starts the main process of the Server.
