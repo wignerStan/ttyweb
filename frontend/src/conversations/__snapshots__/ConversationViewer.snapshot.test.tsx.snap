@@ -55,7 +55,7 @@ exports[`ConversationViewer snapshot > renders conversation with messages 1`] = 
         <div
           class="conv-msg-timestamp"
         >
-          06:00 PM
+          10:00 AM
         </div>
       </div>
       <div
@@ -74,7 +74,7 @@ exports[`ConversationViewer snapshot > renders conversation with messages 1`] = 
         <div
           class="conv-msg-timestamp"
         >
-          06:00 PM
+          10:00 AM
         </div>
       </div>
     </div>
