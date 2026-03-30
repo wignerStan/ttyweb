@@ -119,3 +119,11 @@ func Close() error {
 	available = false
 	return nil
 }
+
+// SetTestDB sets the database instance for testing.
+func SetTestDB(gormDB *gorm.DB) {
+	initMu.Lock()
+	defer initMu.Unlock()
+	globalDB = gormDB
+	available = gormDB != nil
+}
