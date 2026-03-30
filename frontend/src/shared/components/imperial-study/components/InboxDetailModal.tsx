@@ -38,7 +38,12 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
       <div className="is-modal">
         <div className="is-modal__header">
           <span className="is-modal__header-title">Inbox Detail</span>
-          <button className="is-icon-btn is-modal__close" onClick={onClose} title="Close">
+          <button
+            type="button"
+            className="is-icon-btn is-modal__close"
+            onClick={onClose}
+            title="Close"
+          >
             <X size={18} />
           </button>
         </div>
@@ -76,6 +81,7 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
 
         <div className="is-modal__actions">
           <button
+            type="button"
             className="is-btn is-btn--approve"
             onClick={() => handleAction('approved')}
             disabled={loading}
@@ -83,6 +89,7 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
             Approve
           </button>
           <button
+            type="button"
             className="is-btn is-btn--reject"
             onClick={() => handleAction('rejected')}
             disabled={loading}
@@ -90,6 +97,7 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
             Reject
           </button>
           <button
+            type="button"
             className="is-btn is-btn--reply"
             onClick={() => handleAction('custom')}
             disabled={loading || !replyText.trim()}

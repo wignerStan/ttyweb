@@ -70,6 +70,7 @@ export function RunPipeline({ runs, activeRun, onDismiss }: RunPipelineProps) {
       <div className="is-pipeline__header">
         <span className="is-pipeline__intent">{run.intent}</span>
         <button
+          type="button"
           className="is-pipeline__dismiss"
           onClick={() => onDismiss(run.run_id)}
           title="Dismiss"
@@ -118,7 +119,11 @@ export function RunPipeline({ runs, activeRun, onDismiss }: RunPipelineProps) {
 
       {run.events.length > 0 && (
         <div className="is-pipeline__detail-toggle">
-          <button className="is-pipeline__expand-btn" onClick={() => setExpanded(!expanded)}>
+          <button
+            type="button"
+            className="is-pipeline__expand-btn"
+            onClick={() => setExpanded(!expanded)}
+          >
             {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             <span>Timeline</span>
           </button>

@@ -68,7 +68,13 @@ export function TaskStatBadges({ refreshToken: _refreshToken }: TaskStatBadgesPr
             <span className="task-stat-count">{waiting}</span>
           </div>
         )}
-        <button className="task-stat-refresh" onClick={fetch_} disabled={loading} title="Refresh">
+        <button
+          type="button"
+          className="task-stat-refresh"
+          onClick={fetch_}
+          disabled={loading}
+          title="Refresh"
+        >
           <RefreshCw size={11} className={loading ? 'task-stat-spin' : ''} />
         </button>
       </div>

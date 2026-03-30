@@ -72,6 +72,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
             title={`Opacity ${Math.round(opacity * 100)}%`}
           />
           <button
+            type="button"
             className="is-floating-panel__btn"
             onClick={(e) => {
               e.stopPropagation()
@@ -82,6 +83,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
             <Minus size={12} />
           </button>
           <button
+            type="button"
             className="is-floating-panel__btn is-floating-panel__btn--close"
             onClick={(e) => {
               e.stopPropagation()

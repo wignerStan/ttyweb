@@ -184,7 +184,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
             {pane}
           </span>
         </div>
-        <button className="drawer-close" onClick={onClose}>
+        <button type="button" className="drawer-close" onClick={onClose}>
           <X size={16} />
         </button>
       </header>

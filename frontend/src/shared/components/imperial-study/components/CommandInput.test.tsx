@@ -12,10 +12,10 @@ vi.mock('../../VoiceInput', () => ({
     onPartial?: (t: string) => void
   }) => (
     <div>
-      <button data-testid="voice-text" onClick={() => onText('hello voice')}>
+      <button type="button" data-testid="voice-text" onClick={() => onText('hello voice')}>
         Voice Text
       </button>
-      <button data-testid="voice-partial" onClick={() => onPartial?.('partial text')}>
+      <button type="button" data-testid="voice-partial" onClick={() => onPartial?.('partial text')}>
         Voice Partial
       </button>
     </div>

@@ -22,6 +22,7 @@ exports[`NotepadPanel snapshot > renders panel with notes 1`] = `
         <button
           aria-label="Close Meeting Notes"
           class="notepad-bar-tab-close"
+          type="button"
         >
           <svg
             aria-hidden="true"
@@ -59,6 +60,7 @@ exports[`NotepadPanel snapshot > renders panel with notes 1`] = `
         <button
           aria-label="Close Ideas"
           class="notepad-bar-tab-close"
+          type="button"
         >
           <svg
             aria-hidden="true"
@@ -85,6 +87,7 @@ exports[`NotepadPanel snapshot > renders panel with notes 1`] = `
       <button
         aria-label="New note"
         class="notepad-add-btn"
+        type="button"
       >
         <svg
           aria-hidden="true"

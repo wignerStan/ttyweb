@@ -187,6 +187,7 @@ export function CommandInput({
           disabled={loading}
         />
         <button
+          type="button"
           className={`is-command__send ${loading ? 'loading' : ''}`}
           onClick={handleSubmit}
           disabled={!intent.trim() || loading}
@@ -198,6 +199,7 @@ export function CommandInput({
       <div className="is-command__tags">
         {ASSISTANT_TAGS.map((tag) => (
           <button
+            type="button"
             key={tag.id}
             className={`is-command__tag ${activeTag === tag.id ? 'active' : ''}`}
             style={{ '--tag-color': tag.color } as React.CSSProperties}

@@ -55,6 +55,7 @@ export function NotepadPanel({ projectId = null }: NotepadPanelProps) {
           >
             <span className="notepad-bar-tab-label">{note.name}</span>
             <button
+              type="button"
               className="notepad-bar-tab-close"
               onClick={(e) => {
                 e.stopPropagation()
@@ -67,6 +68,7 @@ export function NotepadPanel({ projectId = null }: NotepadPanelProps) {
           </div>
         ))}
         <button
+          type="button"
           className="notepad-add-btn"
           onClick={() => void handleCreate()}
           aria-label="New note"

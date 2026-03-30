@@ -18,7 +18,11 @@ vi.mock('../components/TerminalTab', () => ({
 vi.mock('../components/Sidebar', () => ({
   Sidebar: ({ onSelect }: { onSelect: (s: string, p?: string) => void }) => (
     <div data-testid="sidebar">
-      <button data-testid="mock-session-select" onClick={() => onSelect('test-session')}>
+      <button
+        type="button"
+        data-testid="mock-session-select"
+        onClick={() => onSelect('test-session')}
+      >
         Select test-session
       </button>
     </div>
