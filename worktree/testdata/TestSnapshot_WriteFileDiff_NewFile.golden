@@ -1,0 +1,4 @@
+diff --git a/newfile.txt b/newfile.txt
+new file mode 100644
+@@ -1,0 +1,1 @@
++content
