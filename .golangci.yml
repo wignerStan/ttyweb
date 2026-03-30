@@ -145,7 +145,7 @@ linters:
         path: server/api_
       - linters: [revive]
         text: "exported"
-        path: _test\.go
+        path: _test\.go$
 
 formatters:
   enable:
