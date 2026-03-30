@@ -116,7 +116,7 @@ linters:
       require-specific: true
 
     wrapcheck:
-      ignoreSigs:
+      ignore-sigs:
         - "fmt.Errorf"
         - "errors.New"
         - "errors.Join"
@@ -135,8 +135,17 @@ linters:
         - "gorm.io/gorm.ErrRecordNotFound"
         - "github.com/gorilla/websocket\\."
         - "github.com/go-git/go-git/v5\\."
-      ignorePackageGlobs:
+      ignore-package-globs:
         - "*/**/*_test.go"
+
+  exclusions:
+    rules:
+      - linters: [gocritic]
+        text: "mapKeyAny"
+        path: server/api_
+      - linters: [revive]
+        text: "exported"
+        path: _test\.go$
 
 formatters:
   enable:
@@ -153,13 +162,6 @@ severity:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-rules:
-    - linters: [gocritic]
-      text: "mapKeyAny"
-      path: server/api_
-    - linters: [revive]
-      text: "exported"
-      path: _test\.go
 
 run:
   timeout: 5m
