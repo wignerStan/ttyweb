@@ -9,6 +9,15 @@ import (
 )
 
 // handleTasks handles GET (list tasks with pagination).
+//
+// @Summary List tasks
+// @Description Returns paginated list of task events
+// @Tags tasks
+// @Produce json
+// @Param page query int false "Page number"
+// @Param limit query int false "Items per page"
+// @Success 200 {object} map[string]any
+// @Router /tasks [get]
 func (*Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

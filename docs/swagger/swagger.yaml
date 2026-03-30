@@ -1,0 +1,131 @@
+definitions:
+  server.Profile:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      profile_key:
+        type: string
+      sort_order:
+        type: integer
+    type: object
+  server.VersionInfo:
+    properties:
+      commit:
+        type: string
+      goVersion:
+        type: string
+      version:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/check:
+    get:
+      description: Returns whether basic auth is enabled and if the client is authenticated
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Check auth status
+      tags:
+      - auth
+  /profiles:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Returns all saved profiles
+        Creates a new profile
+      parameters:
+      - description: Profile data
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.Profile'
+      summary: Create profile
+      tags:
+      - profiles
+      - profiles
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Returns all saved profiles
+        Creates a new profile
+      parameters:
+      - description: Profile data
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.Profile'
+      summary: Create profile
+      tags:
+      - profiles
+      - profiles
+  /tasks:
+    get:
+      description: Returns paginated list of task events
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List tasks
+      tags:
+      - tasks
+  /version:
+    get:
+      description: Returns server version, Go version, and commit hash
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.VersionInfo'
+      summary: Get version info
+      tags:
+      - system
+swagger: "2.0"
