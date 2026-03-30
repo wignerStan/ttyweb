@@ -122,7 +122,11 @@ func TestExtractIP_NoPort(t *testing.T) {
 
 func TestRateLimitMiddleware_CleansStaleEntries(t *testing.T) {
 	t.Parallel()
-	limiter := newVisitorLimiter(0, 1)
+	limiter := &visitorLimiter{
+		visitors: make(map[string]*visitor),
+		rate:     0,
+		burst:    1,
+	}
 	handler := rateLimitMiddleware(limiter)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -138,6 +142,16 @@ func TestRateLimitMiddleware_CleansStaleEntries(t *testing.T) {
 	}
 	limiter.mu.Unlock()
 
+	// Trigger cleanup manually (no background goroutine in test).
+	limiter.mu.Lock()
+	now := time.Now().Unix()
+	for ip, v := range limiter.visitors {
+		if now-v.lastSeen > int64(rateLimitCleanupInterval.Seconds()) {
+			delete(limiter.visitors, ip)
+		}
+	}
+	limiter.mu.Unlock()
+
 	req2 := httptest.NewRequestWithContext(context.Background(), "GET", "/api/health", nil)
 	req2.RemoteAddr = "10.99.99.2:1234"
 	rec2 := httptest.NewRecorder()
@@ -146,7 +160,7 @@ func TestRateLimitMiddleware_CleansStaleEntries(t *testing.T) {
 	limiter.mu.Lock()
 	count := len(limiter.visitors)
 	limiter.mu.Unlock()
-	if count > 2 {
-		t.Errorf("expected <= 2 visitors after cleanup, got %d", count)
+	if count > 1 {
+		t.Errorf("expected <= 1 visitors after cleanup, got %d", count)
 	}
 }

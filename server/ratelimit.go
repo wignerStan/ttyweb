@@ -24,10 +24,28 @@ type visitorLimiter struct {
 }
 
 func newVisitorLimiter(r rate.Limit, burst int) *visitorLimiter {
-	return &visitorLimiter{
+	vl := &visitorLimiter{
 		visitors: make(map[string]*visitor),
 		rate:     r,
 		burst:    burst,
+	}
+	go vl.cleanupLoop()
+	return vl
+}
+
+// cleanupLoop periodically removes stale visitor entries to bound memory.
+func (vl *visitorLimiter) cleanupLoop() {
+	ticker := time.NewTicker(rateLimitCleanupInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		vl.mu.Lock()
+		now := time.Now().Unix()
+		for ip, v := range vl.visitors {
+			if now-v.lastSeen > int64(rateLimitCleanupInterval.Seconds()) {
+				delete(vl.visitors, ip)
+			}
+		}
+		vl.mu.Unlock()
 	}
 }
 
@@ -36,12 +54,6 @@ func (vl *visitorLimiter) getLimiter(ip string) *rate.Limiter {
 	defer vl.mu.Unlock()
 
 	now := time.Now().Unix()
-	for key, v := range vl.visitors {
-		if now-v.lastSeen > int64(rateLimitCleanupInterval.Seconds()) {
-			delete(vl.visitors, key)
-		}
-	}
-
 	existing, ok := vl.visitors[ip]
 	if ok {
 		existing.lastSeen = now
