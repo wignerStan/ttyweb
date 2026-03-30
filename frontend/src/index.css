@@ -10,7 +10,7 @@ body,
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background: #1a1b26;
+  background: var(--bg-primary);
 }
 
 @supports (height: 100dvh) {
@@ -27,14 +27,14 @@ body,
 }
 
 ::-webkit-scrollbar-track {
-  background: #16161e;
+  background: var(--scrollbar-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3b4261;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #565f89;
+  background: var(--scrollbar-thumb-hover);
 }
