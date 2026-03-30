@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
+	"ttyweb/ai"
 	"ttyweb/pkg/validate"
 	"ttyweb/webtty"
 )
@@ -117,6 +118,27 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	}
 
 	opts := server.webttyOptions(titleBuf.Bytes())
+
+	// Build a pane key for the state machine from session/pane params.
+	paneKey := params.Get("session")
+	if pane := params.Get("pane"); pane != "" {
+		if paneKey != "" {
+			paneKey = paneKey + ":" + pane
+		} else {
+			paneKey = pane
+		}
+	}
+	if paneKey == "" {
+		paneKey = "default"
+	}
+
+	bridge := &aiStateMachineBridge{
+		inner:   ai.NewANSITerminalInterceptor(),
+		sm:      server.stateMachine,
+		paneKey: paneKey,
+	}
+	opts = append(opts, webtty.WithOutputInterceptor(bridge))
+
 	tty, err := webtty.New(&wsWrapper{conn}, slave, opts...)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create webtty")
@@ -245,4 +267,26 @@ func (*Server) titleVariables(order []string, varUnits map[string]map[string]any
 	}
 
 	return titleVars, nil
+}
+
+// aiStateMachineBridge connects the ANSI interceptor's pattern matching
+// to the per-pane state machine's transitions.
+type aiStateMachineBridge struct {
+	inner   ai.OutputInterceptor
+	sm      *ai.StateMachine
+	paneKey string
+}
+
+// Intercept delegates to the inner interceptor and transitions the state
+// machine for any ai_state_change metadata.
+func (b *aiStateMachineBridge) Intercept(data []byte) []ai.Metadata {
+	metadata := b.inner.Intercept(data)
+	for _, m := range metadata {
+		if m.Type == "ai_state_change" {
+			if state, ok := m.Data["state"].(string); ok {
+				b.sm.Transition(b.paneKey, ai.AIState(state))
+			}
+		}
+	}
+	return metadata
 }

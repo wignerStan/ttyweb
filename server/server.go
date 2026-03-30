@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
+	"ttyweb/ai"
 	"ttyweb/bindata"
 	"ttyweb/db"
 	"ttyweb/pkg/homedir"
@@ -37,6 +38,7 @@ type Server struct {
 	titleTemplate  *noesctmpl.Template
 	noteSvc        *service.NoteService
 	segmentService *service.TaskSegmentService
+	stateMachine   *ai.StateMachine
 	srvErrCh       chan error
 }
 
@@ -96,6 +98,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 		titleTemplate:  titleTemplate,
 		noteSvc:        noteSvc,
 		segmentService: service.NewTaskSegmentService(database),
+		stateMachine:   ai.NewStateMachine(),
 		srvErrCh:       make(chan error, 1),
 	}, nil
 }
