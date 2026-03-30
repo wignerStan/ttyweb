@@ -47,7 +47,12 @@ func makeProjectDetailHandler(projectPrefix string) http.HandlerFunc {
 			handleWorktreeSync(w, r, projectID)
 		case strings.HasPrefix(subPath, "worktrees/"):
 			rest := strings.TrimPrefix(subPath, "worktrees/")
-			handleWorktreeItem(w, r, projectID, rest)
+			if strings.HasSuffix(rest, "/ai-commit-message") {
+				wtID := strings.TrimSuffix(rest, "/ai-commit-message")
+				handleAICommitMessage(w, r, projectID, wtID)
+			} else {
+				handleWorktreeItem(w, r, projectID, rest)
+			}
 		}
 	}
 }
