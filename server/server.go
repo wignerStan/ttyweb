@@ -253,7 +253,7 @@ func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFu
 		siteHandler = server.wrapBasicAuth(siteHandler, server.options.Credential)
 	}
 
-	// Security middleware (applied after basic auth so auth rejects unauthenticated first)
+	// Security middleware (wraps outer, executes before basic auth: csrf → cors → rateLimit → auth → handler)
 	rateLimiter := newVisitorLimiter(10, 20) // 10 req/s per IP, burst 20
 	siteHandler = rateLimitMiddleware(rateLimiter)(siteHandler)
 	siteHandler = corsMiddleware(&CORSConfig{AllowedOrigins: server.options.CORSAllowedOrigins})(siteHandler)
