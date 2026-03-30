@@ -1,0 +1,6 @@
+{
+  "ancestor_hash": "HASH_PLACEHOLDER",
+  "descendant_hash": "HASH_PLACEHOLDER",
+  "description": "main is parent of feature but isAncestorOf returns false due to revlist including descendant commit",
+  "is_ancestor": false
+}

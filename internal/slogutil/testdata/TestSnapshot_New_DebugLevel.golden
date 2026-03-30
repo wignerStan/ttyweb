@@ -1,0 +1,4 @@
+{"time":"TIMESTAMP","level":"DEBUG","msg":"debug msg","key1":"val1"}
+{"time":"TIMESTAMP","level":"INFO","msg":"info msg","key2":"val2"}
+{"time":"TIMESTAMP","level":"WARN","msg":"warn msg"}
+{"time":"TIMESTAMP","level":"ERROR","msg":"error msg"}

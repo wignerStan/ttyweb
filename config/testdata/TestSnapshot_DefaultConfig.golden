@@ -1,0 +1,24 @@
+{
+  "llm": {
+    "apiKey": "",
+    "apiUrl": "https://api.openai.com/v1/chat/completions",
+    "model": "gpt-4o",
+    "defaultRole": ""
+  },
+  "xfyun": {
+    "appId": "",
+    "apiKey": "",
+    "apiSecret": ""
+  },
+  "butler": {
+    "host": "localhost",
+    "port": "8215"
+  },
+  "db": {
+    "path": ""
+  },
+  "worktree": {
+    "basePath": ""
+  },
+  "quickDirs": null
+}
