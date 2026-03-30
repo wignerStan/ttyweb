@@ -73,7 +73,7 @@ jobs:
             echo "::error::Go coverage ${COVERAGE}% below 90%"
             exit 1
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: go-coverage
@@ -97,7 +97,7 @@ jobs:
       - run: cd frontend && bunx vitest run --coverage.enabled
       - name: Build verification
         run: cd frontend && bun run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-coverage
@@ -126,7 +126,7 @@ jobs:
           done
       - name: Upload E2E test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-test-results
           path: |
