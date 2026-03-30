@@ -14,7 +14,7 @@ if (typeof localStorage.getItem !== 'function') {
   Object.defineProperty(globalThis, 'localStorage', {
     value: {
       getItem(key: string): string | null {
-        return key in store ? store[key]! : null
+        return key in store ? (store[key] ?? null) : null
       },
       setItem(key: string, value: string): void {
         store[key] = String(value)

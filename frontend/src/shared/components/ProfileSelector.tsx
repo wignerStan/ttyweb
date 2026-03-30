@@ -130,7 +130,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
       })
       const remaining = profiles.filter((p) => p.id !== currentProfile.id)
       setProfiles(remaining)
-      onProfileChange(remaining[0]!)
+      if (remaining.length > 0) onProfileChange(remaining[0])
       setIsEditing(false)
     } catch (_err) {
     } finally {

@@ -152,8 +152,8 @@ async function fetchTaskPaneStatuses(): Promise<Record<string, PaneStatus>> {
         completed: 1,
       }
       const cur = map[key]
-      const curP = priority[cur!] ?? 0
-      const newP = priority[status!] ?? 0
+      const curP = priority[cur ?? ''] ?? 0
+      const newP = priority[status ?? ''] ?? 0
       if (newP > curP) {
         // Normalise 'completed' -> 'done'
         map[key] = (status === 'completed' ? 'done' : status) as PaneStatus
@@ -1149,10 +1149,11 @@ export function TmuxTree({
                       <div className="group-empty-drop">Drop sessions here</div>
                     ) : (
                       groupSessions.map((sessionItem) => (
+                        sessionItem.session ? (
                         <SortableSession
                           key={sessionItem.id}
                           item={sessionItem}
-                          session={sessionItem.session!}
+                          session={sessionItem.session}
                           isInGroup={true}
                           isOver={overItemId === sessionItem.id}
                           statusMap={statusMap}
@@ -1165,6 +1166,7 @@ export function TmuxTree({
                           profileKey={profileKey}
                           onGroupChanged={onOrderChange}
                         />
+                        ) : null
                       ))
                     )}
                   </SortableGroup>
