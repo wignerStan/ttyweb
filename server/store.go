@@ -382,5 +382,25 @@ func (s *MemoryStore) SetPaneStatus(paneKey, status string) {
 	s.paneStatuses[paneKey] = status
 }
 
+// --- Pane Mode ---
+
+// GetPaneMode returns the current mode ("pane" or "control") for a pane.
+// Returns empty string if no mode is set.
+func (s *MemoryStore) GetPaneMode(paneKey string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.paneStatuses["mode:"+paneKey]
+}
+
+// SetPaneMode stores the mode for a pane. Only "pane" and "control" are valid.
+func (s *MemoryStore) SetPaneMode(paneKey, mode string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if mode != "pane" && mode != "control" {
+		return
+	}
+	s.paneStatuses["mode:"+paneKey] = mode
+}
+
 // store is the global in-memory data store.
 var store = NewMemoryStore()
