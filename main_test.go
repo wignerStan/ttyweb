@@ -75,6 +75,17 @@ func TestHostnameIsString(t *testing.T) {
 	}
 }
 
+func TestHostname_NotEmptyAndValid(t *testing.T) {
+	t.Parallel()
+	got := hostname()
+	if got == "" {
+		t.Fatal("hostname() returned empty string")
+	}
+	if len(got) > 253 {
+		t.Errorf("hostname() = %q, exceeds max hostname length", got)
+	}
+}
+
 func TestCommandExistsTrue(t *testing.T) {
 	t.Parallel()
 	// "sh" should always exist on any Unix system.
@@ -166,6 +177,17 @@ func TestSelectBackend_Unknown(t *testing.T) {
 	_, err := selectBackend("unknown_backend", "s1", nil)
 	if err == nil {
 		t.Error("expected error for unknown backend")
+	}
+}
+
+func TestSelectBackend_LocalEmptyArgsUsesDefaultShell(t *testing.T) {
+	t.Parallel()
+	f, err := selectBackend("local", "s1", []string{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f == nil {
+		t.Fatal("expected non-nil factory")
 	}
 }
 
