@@ -327,21 +327,16 @@ func collectStatusGoGit(path string) (*Status, error) {
 
 	status := &Status{}
 	for _, fs := range snap {
-		if fs.Staging == goGit.Untracked || fs.Worktree == goGit.Untracked {
+		if isUntrackedFileStatus(fs) {
 			status.Untracked++
 			continue
 		}
-		if fs.Staging == goGit.UpdatedButUnmerged || fs.Worktree == goGit.UpdatedButUnmerged {
+		if isConflictedFileStatus(fs) {
 			status.Conflicts++
 			continue
 		}
-		switch fs.Worktree {
-		case goGit.Modified, goGit.Added, goGit.Deleted, goGit.Renamed, goGit.Copied:
+		if isModifiedWorktreeStatus(fs.Worktree) {
 			status.Modified++
-		case goGit.Unmodified:
-			// No change — clean file
-		case goGit.Untracked, goGit.UpdatedButUnmerged:
-			// Already handled by continue above; unreachable here.
 		}
 		if fs.Staging != goGit.Unmodified && fs.Staging != goGit.Untracked {
 			status.Staged++
@@ -350,6 +345,27 @@ func collectStatusGoGit(path string) (*Status, error) {
 
 	status.Ahead, status.Behind = computeAheadBehind(repo)
 	return status, nil
+}
+
+// isUntrackedFileStatus returns true if the file status represents an untracked file.
+func isUntrackedFileStatus(fs *goGit.FileStatus) bool {
+	return fs.Staging == goGit.Untracked || fs.Worktree == goGit.Untracked
+}
+
+// isConflictedFileStatus returns true if the file status represents a merge conflict.
+func isConflictedFileStatus(fs *goGit.FileStatus) bool {
+	return fs.Staging == goGit.UpdatedButUnmerged || fs.Worktree == goGit.UpdatedButUnmerged
+}
+
+// isModifiedWorktreeStatus returns true if the worktree status indicates a modification.
+func isModifiedWorktreeStatus(ws goGit.StatusCode) bool {
+	switch ws {
+	case goGit.Modified, goGit.Added, goGit.Deleted, goGit.Renamed, goGit.Copied:
+		return true
+	case goGit.Unmodified, goGit.Untracked, goGit.UpdatedButUnmerged:
+		return false
+	}
+	return false
 }
 
 // computeAheadBehind counts commits ahead/behind a tracking branch.

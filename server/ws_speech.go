@@ -129,42 +129,55 @@ func (s *speechSession) run() {
 			s.handleStart()
 
 		case "audio":
-			if s.xunfeiConn == nil {
-				continue
-			}
-			s.seq++
-			frame, err := s.buildAudioFrame(msg.Audio)
-			if err != nil {
-				log.Printf("[Speech] Failed to build audio frame: %v", err)
-				s.sendError("failed to build audio frame")
-				s.closeBoth()
-				return
-			}
-			if err := s.xunfeiConn.WriteMessage(websocket.TextMessage, frame); err != nil {
-				log.Printf("[Speech] Error sending to Xunfei: %v", err)
-				s.closeBoth()
+			if !s.handleAudio(msg.Audio) {
 				return
 			}
 
 		case "stop":
-			if s.xunfeiConn == nil {
-				continue
-			}
-			s.seq++
-			frame, err := ai.BuildLastFrame(s.seq)
-			if err != nil {
-				log.Printf("[Speech] Failed to build last frame: %v", err)
-				s.sendError("failed to build last frame")
-				s.closeBoth()
-				return
-			}
-			if err := s.xunfeiConn.WriteMessage(websocket.TextMessage, frame); err != nil {
-				log.Printf("[Speech] Error sending last frame: %v", err)
-			}
+			s.handleStop()
 
 		default:
 			log.Printf("[Speech] Unknown message type: %s", msg.Type)
 		}
+	}
+}
+
+// handleAudio processes an audio frame message. Returns false if the session should close.
+func (s *speechSession) handleAudio(audio string) bool {
+	if s.xunfeiConn == nil {
+		return true
+	}
+	s.seq++
+	frame, err := s.buildAudioFrame(audio)
+	if err != nil {
+		log.Printf("[Speech] Failed to build audio frame: %v", err)
+		s.sendError("failed to build audio frame")
+		s.closeBoth()
+		return false
+	}
+	if err := s.xunfeiConn.WriteMessage(websocket.TextMessage, frame); err != nil {
+		log.Printf("[Speech] Error sending to Xunfei: %v", err)
+		s.closeBoth()
+		return false
+	}
+	return true
+}
+
+// handleStop processes a stop message, sending the final frame to Xunfei.
+func (s *speechSession) handleStop() {
+	if s.xunfeiConn == nil {
+		return
+	}
+	s.seq++
+	frame, err := ai.BuildLastFrame(s.seq)
+	if err != nil {
+		log.Printf("[Speech] Failed to build last frame: %v", err)
+		s.sendError("failed to build last frame")
+		s.closeBoth()
+		return
+	}
+	if err := s.xunfeiConn.WriteMessage(websocket.TextMessage, frame); err != nil {
+		log.Printf("[Speech] Error sending last frame: %v", err)
 	}
 }
 

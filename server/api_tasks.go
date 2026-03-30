@@ -42,80 +42,87 @@ func (server *Server) handleTaskDetail(w http.ResponseWriter, r *http.Request) {
 
 	// Route: /api/tasks/events
 	if relative == "events" {
-		switch r.Method {
-		case http.MethodPost:
-			var body struct {
-				TaskID  string         `json:"task_id"`
-				PaneKey string         `json:"pane_key"`
-				Event   string         `json:"event"`
-				Data    map[string]any `json:"data"`
-			}
-			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-				writeAPIError(w, http.StatusBadRequest, "invalid request body")
-				return
-			}
-			if body.PaneKey == "" {
-				writeAPIError(w, http.StatusBadRequest, "pane_key is required")
-				return
-			}
-			if body.Event == "" {
-				writeAPIError(w, http.StatusBadRequest, "event is required")
-				return
-			}
-			created := store.AddTaskEvent(&TaskEvent{
-				TaskID:  body.TaskID,
-				PaneKey: body.PaneKey,
-				Event:   body.Event,
-				Data:    body.Data,
-			})
-			writeAPISuccess(w, created)
-
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
+		handleTaskEventsRoot(w, r)
 		return
 	}
 
 	// Route: /api/tasks/events/{paneKey}
 	if strings.HasPrefix(relative, "events/") {
-		paneKey := strings.TrimPrefix(relative, "events/")
-		if paneKey == "" {
-			writeAPIError(w, http.StatusBadRequest, "pane key required")
-			return
-		}
-
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		events := store.GetTaskEventsByPane(paneKey)
-		writeAPISuccess(w, events)
+		handleTaskEventsPane(w, r, strings.TrimPrefix(relative, "events/"))
 		return
 	}
 
 	// Route: /api/tasks/{id}/complete
 	if strings.HasSuffix(relative, "/complete") {
-		idStr := strings.TrimSuffix(relative, "/complete")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, "invalid task ID")
-			return
-		}
-
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		if err := store.CompleteTask(id); err != nil {
-			log.Printf("failed to complete task: %v", err)
-			writeAPIError(w, http.StatusNotFound, "task not found")
-			return
-		}
-		writeAPISuccess(w, map[string]string{"status": "completed"})
+		handleTaskComplete(w, r, strings.TrimSuffix(relative, "/complete"))
 		return
 	}
 
 	writeAPIError(w, http.StatusBadRequest, "unknown task endpoint")
+}
+
+// handleTaskEventsRoot handles POST /api/tasks/events.
+func handleTaskEventsRoot(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var body struct {
+		TaskID  string         `json:"task_id"`
+		PaneKey string         `json:"pane_key"`
+		Event   string         `json:"event"`
+		Data    map[string]any `json:"data"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.PaneKey == "" {
+		writeAPIError(w, http.StatusBadRequest, "pane_key is required")
+		return
+	}
+	if body.Event == "" {
+		writeAPIError(w, http.StatusBadRequest, "event is required")
+		return
+	}
+	created := store.AddTaskEvent(&TaskEvent{
+		TaskID:  body.TaskID,
+		PaneKey: body.PaneKey,
+		Event:   body.Event,
+		Data:    body.Data,
+	})
+	writeAPISuccess(w, created)
+}
+
+// handleTaskEventsPane handles GET /api/tasks/events/{paneKey}.
+func handleTaskEventsPane(w http.ResponseWriter, r *http.Request, paneKey string) {
+	if paneKey == "" {
+		writeAPIError(w, http.StatusBadRequest, "pane key required")
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	events := store.GetTaskEventsByPane(paneKey)
+	writeAPISuccess(w, events)
+}
+
+// handleTaskComplete handles POST /api/tasks/{id}/complete.
+func handleTaskComplete(w http.ResponseWriter, r *http.Request, idStr string) {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid task ID")
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if err := store.CompleteTask(id); err != nil {
+		log.Printf("failed to complete task: %v", err)
+		writeAPIError(w, http.StatusNotFound, "task not found")
+		return
+	}
+	writeAPISuccess(w, map[string]string{"status": "completed"})
 }
