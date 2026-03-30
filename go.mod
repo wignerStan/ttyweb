@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/creack/pty v1.1.11
+	github.com/creack/pty v1.1.24
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.17.0
 	github.com/gorilla/websocket v1.4.2
