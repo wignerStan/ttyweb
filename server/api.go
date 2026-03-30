@@ -93,6 +93,8 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"segments/", server.handleSegmentDetail)
 	// Worktree
 	setupWorktreeRoutes(mux, apiPrefix)
+	// Branches
+	setupBranchRoutes(mux, apiPrefix)
 	// Kanban task-AI session linking
 	mux.HandleFunc(apiPrefix+"kanban/tasks/", server.handleTaskAISessionLinks)
 }
