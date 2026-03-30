@@ -18,7 +18,7 @@ func initTestGitRepo(t *testing.T, path string) {
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	runTestGit(t, path, "init")
+	runTestGit(t, path, "init", "-b", "main")
 	runTestGit(t, path, "config", "user.email", "test@example.com")
 	runTestGit(t, path, "config", "user.name", "Test User")
 

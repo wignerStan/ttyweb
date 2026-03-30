@@ -31,6 +31,9 @@ vi.mock('./useConversations', () => ({
 
 describe('ConversationViewer snapshot', () => {
   it('renders conversation with messages', () => {
+    // Mock toLocaleTimeString to avoid timezone-dependent snapshot diffs.
+    vi.spyOn(Date.prototype, 'toLocaleTimeString').mockReturnValue('10:00 AM')
+
     const { container } = render(
       <ConversationViewer sessionId="sess-1" sessionInfo={mockSession} onBack={vi.fn()} />,
     )
