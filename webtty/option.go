@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
+
+	"ttyweb/ai"
 )
 
 // Option is an option for WebTTY.
@@ -57,6 +59,14 @@ func WithMasterPreferences(preferences any) Option {
 			return errors.Wrapf(err, "failed to marshal preferences as JSON")
 		}
 		wt.masterPrefs = prefs
+		return nil
+	}
+}
+
+// WithOutputInterceptor sets a terminal output observer for metadata extraction.
+func WithOutputInterceptor(interceptor ai.OutputInterceptor) Option {
+	return func(wt *WebTTY) error {
+		wt.interceptor = interceptor
 		return nil
 	}
 }

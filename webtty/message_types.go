@@ -32,4 +32,6 @@ const (
 	SetReconnect = '5'
 	// SetBufferSize sets the input buffer size.
 	SetBufferSize = '6'
+	// SetMetadata sends side-channel metadata (AI state changes, notifications).
+	SetMetadata = '7'
 )
