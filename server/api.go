@@ -54,6 +54,7 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"roles/", server.handleRoleDetail)
 	// Tasks
 	mux.HandleFunc(apiPrefix+"tasks", server.handleTasks)
+	mux.HandleFunc(apiPrefix+"tasks/stats", server.handleTaskStats)
 	mux.HandleFunc(apiPrefix+"tasks/", server.handleTaskDetail)
 	// Panes
 	mux.HandleFunc(apiPrefix+"panes/status", server.handlePaneStatus)
