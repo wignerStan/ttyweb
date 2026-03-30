@@ -250,7 +250,12 @@ func (s *WorktreeService) RefreshWorktree(ctx context.Context, projectID, worktr
 	record.UpdatedAt = time.Now()
 
 	// Fetch updated commit info from git list.
-	infos, err := worktree.ListWorktrees(ctx, filepath.Dir(record.Path))
+	// Use the project path, not the worktree parent, to correctly resolve the repo.
+	project, err2 := s.GetProject(projectID)
+	if err2 != nil {
+		return nil, fmt.Errorf("get project: %w", err2)
+	}
+	infos, err := worktree.ListWorktrees(ctx, project.Path)
 	if err == nil {
 		for _, info := range infos {
 			if worktree.EqualPath(info.Path, record.Path) {
