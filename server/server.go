@@ -221,6 +221,9 @@ func (server *Server) serveBackground(srv *http.Server, listener net.Listener) {
 }
 
 func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFunc, pathPrefix string, counter *counter) http.Handler {
+	// Register the current working directory as the default file browser root.
+	initFSDefaults()
+
 	staticFS, err := fs.Sub(bindata.Fs, "static")
 	if err != nil {
 		log.Fatalf("failed to open static/ subdirectory of embedded filesystem: %v", err)
