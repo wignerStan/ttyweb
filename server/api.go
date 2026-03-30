@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -107,7 +108,8 @@ func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request)
 		}
 		data, err := sm.ListSessions()
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to list sessions: "+err.Error())
+			log.Printf("failed to list sessions: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to list sessions")
 			return
 		}
 		writeAPISuccessRaw(w, data)
@@ -134,7 +136,8 @@ func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request)
 		}
 		name, err := sm.CreateSession(body.Name, body.Command...)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to create session: "+err.Error())
+			log.Printf("failed to create session: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to create session")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"name": name})
@@ -170,14 +173,16 @@ func (server *Server) handleSessionDetail(w http.ResponseWriter, r *http.Request
 	case http.MethodGet:
 		data, err := sm.GetSessionDetail(path)
 		if err != nil {
-			writeAPIError(w, http.StatusNotFound, "session not found: "+err.Error())
+			log.Printf("session not found: %v", err)
+			writeAPIError(w, http.StatusNotFound, "session not found")
 			return
 		}
 		writeAPISuccessRaw(w, data)
 
 	case http.MethodDelete:
 		if err := sm.KillSession(path); err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "failed to kill session: "+err.Error())
+			log.Printf("failed to kill session: %v", err)
+			writeAPIError(w, http.StatusInternalServerError, "failed to kill session")
 			return
 		}
 		writeAPISuccess(w, map[string]string{"status": "killed"})

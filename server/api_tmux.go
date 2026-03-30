@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os/exec"
 
@@ -66,7 +67,8 @@ func (server *Server) handleTmuxNewWindow(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if err := validate.SessionName(body.Session); err != nil {
-		writeAPIError(w, http.StatusBadRequest, "invalid session name: "+err.Error())
+		log.Printf("invalid session name: %v", err)
+		writeAPIError(w, http.StatusBadRequest, "invalid session name")
 		return
 	}
 
@@ -115,7 +117,8 @@ func (server *Server) handleTmuxNewSession(w http.ResponseWriter, r *http.Reques
 
 	name, err := sm.CreateSession(body.Name)
 	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "failed to create session: "+err.Error())
+		log.Printf("failed to create session: %v", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to create session")
 		return
 	}
 
@@ -165,7 +168,8 @@ func (server *Server) handleTmuxTree(w http.ResponseWriter, r *http.Request) {
 	// Get all sessions.
 	sessionsRaw, err := sm.ListSessions()
 	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "failed to list sessions: "+err.Error())
+		log.Printf("failed to list sessions: %v", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to list sessions")
 		return
 	}
 
@@ -266,7 +270,8 @@ func (server *Server) handleTmuxSendKeys(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := validate.PaneID(body.Pane); err != nil {
-		writeAPIError(w, http.StatusBadRequest, "invalid pane ID: "+err.Error())
+		log.Printf("invalid pane ID: %v", err)
+		writeAPIError(w, http.StatusBadRequest, "invalid pane ID")
 		return
 	}
 	if body.Keys == "" {
