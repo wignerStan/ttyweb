@@ -160,6 +160,14 @@ func TestPersistService_DeleteProfile(t *testing.T) {
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 }
 
+func TestPersistService_DeleteProfile_NotFound(t *testing.T) {
+	svc := newPersistService(t)
+
+	err := svc.DeleteProfile(9999)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+}
+
 func TestPersistService_LoadProfiles(t *testing.T) {
 	gormDB := setupPersistTestDB(t)
 	svc := NewPersistService(gormDB)

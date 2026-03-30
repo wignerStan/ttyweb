@@ -270,6 +270,35 @@ func TestSummaryService_BuildPrompt(t *testing.T) {
 	}
 }
 
+func TestSummaryService_BuildPrompt_WithExitCode(t *testing.T) {
+	t.Parallel()
+
+	commands := []db.CommandRecord{
+		{Command: "go build ./...", ExitCode: 1},
+	}
+	prompt := buildPrompt("Build failed", commands, nil)
+
+	if !strings.Contains(prompt, "(exit 1)") {
+		t.Errorf("expected exit code in prompt, got:\n%s", prompt)
+	}
+}
+
+func TestSummaryService_BuildPrompt_Empty(t *testing.T) {
+	t.Parallel()
+
+	prompt := buildPrompt("Empty task", nil, nil)
+
+	if !strings.Contains(prompt, "Empty task") {
+		t.Error("prompt should contain task title")
+	}
+	if strings.Contains(prompt, "Commands executed:") {
+		t.Error("prompt should not contain commands section")
+	}
+	if strings.Contains(prompt, "AI Conversation:") {
+		t.Error("prompt should not contain messages section")
+	}
+}
+
 // ptrTime returns a pointer to the given time.
 func ptrTime(t time.Time) *time.Time {
 	return &t

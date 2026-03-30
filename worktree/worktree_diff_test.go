@@ -6,6 +6,8 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -212,7 +214,12 @@ func TestSnapshot_GetWorktreeDiff_MixedChanges(t *testing.T) {
 		t.Fatalf("GetWorktreeDiff: %v", err)
 	}
 
-	compareGolden(t, []byte(diff))
+	// Sort diff hunks for deterministic comparison (map iteration order varies).
+	hunks := strings.Split(diff, "\n")
+	slices.Sort(hunks)
+	sortedDiff := strings.Join(hunks, "\n")
+
+	compareGolden(t, []byte(sortedDiff))
 }
 
 // --- writeHunk snapshot tests ---

@@ -224,6 +224,29 @@ func TestParseRepoSlug_Unrecognized(t *testing.T) {
 	}
 }
 
+func TestParseRepoSlug_MalformedSlug(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		url  string
+	}{
+		{"SSH missing repo", "git@github.com:owner/"},
+		{"SSH missing owner", "git@github.com:/repo.git"},
+		{"HTTPS missing repo", "https://github.com/owner/"},
+		{"HTTPS missing owner", "https://github.com/repo.git"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := parseRepoSlug(tc.url)
+			if err == nil {
+				t.Fatal("expected error for malformed slug")
+			}
+		})
+	}
+}
+
 func TestDetectRepoSlug_EmptyPath(t *testing.T) {
 	t.Parallel()
 
