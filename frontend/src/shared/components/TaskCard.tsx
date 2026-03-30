@@ -19,13 +19,10 @@ export function TaskCard({ task, isCurrent = false, onComplete, onSelect }: Prop
     })
   }
 
-  return (
-    <div
-      className={`task-card ${isCurrent ? 'current' : ''} ${task.task_status}`}
-      onClick={onSelect}
-      role={onSelect ? 'button' : undefined}
-      tabIndex={onSelect ? 0 : undefined}
-    >
+  const className = `task-card ${isCurrent ? 'current' : ''} ${task.task_status}`
+
+  const cardContent = (
+    <>
       <div className="task-header">
         <span className="task-id">#{task.id}</span>
         <span className={`task-badge ${task.task_status}`}>
@@ -42,6 +39,7 @@ export function TaskCard({ task, isCurrent = false, onComplete, onSelect }: Prop
       {isCurrent && task.task_status === 'in_progress' && onComplete && (
         <div className="task-actions">
           <button
+            type="button"
             className="btn-complete"
             onClick={(e) => {
               e.stopPropagation()
@@ -52,6 +50,30 @@ export function TaskCard({ task, isCurrent = false, onComplete, onSelect }: Prop
           </button>
         </div>
       )}
-    </div>
+    </>
   )
+
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        className={className}
+        onClick={onSelect}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+      >
+        {cardContent}
+      </button>
+    )
+  }
+
+  return <div className={className}>{cardContent}</div>
 }

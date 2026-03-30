@@ -45,94 +45,102 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
   )
 
   return (
-    <div className="is-modal-overlay" onClick={handleOverlayClick}>
-      <div className="is-modal is-task-detail-modal">
-        <div className="is-modal__header">
-          <span className="is-modal__header-title">
-            {run ? `Run: ${run.id.slice(0, 8)}` : 'Run Detail'}
-          </span>
-          {run && (
-            <span className={`is-task-detail-state is-task-detail-state--${run.state}`}>
-              {run.state}
+    <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
+      <div className="is-modal-overlay" role="presentation" onClick={handleOverlayClick}>
+        <div className="is-modal is-task-detail-modal">
+          <div className="is-modal__header">
+            <span className="is-modal__header-title">
+              {run ? `Run: ${run.id.slice(0, 8)}` : 'Run Detail'}
             </span>
-          )}
-          <button className="is-icon-btn is-modal__close" onClick={onClose} title="Close">
-            <X size={18} />
-          </button>
-        </div>
-
-        {loading && !run && <div className="is-task-detail-loading">Loading...</div>}
-
-        {error && !run && <div className="is-task-detail-error">{error}</div>}
-
-        {run && (
-          <div className="is-task-detail-body">
-            <div className="is-task-detail-section">
-              <div className="is-task-detail-section__label">Intent</div>
-              <div className="is-task-detail-section__content">
-                {run.input_data?.intent || '\u2014'}
-              </div>
-            </div>
-
-            <div className="is-task-detail-section">
-              <div className="is-task-detail-section__label">Info</div>
-              <div className="is-task-detail-meta">
-                <span>Task: {run.task_id.slice(0, 8)}</span>
-                <span>Attempt: {run.attempt}</span>
-                <span>Started: {formatTime(run.started_at)}</span>
-                {run.ended_at && <span>Ended: {formatTime(run.ended_at)}</span>}
-              </div>
-            </div>
-
-            {thinkingEvents.length > 0 && (
-              <div className="is-task-detail-section">
-                <div className="is-task-detail-section__label">
-                  Thinking ({thinkingEvents.length})
-                </div>
-                <div className="is-thinking-chain">
-                  {thinkingEvents.map((ev) => (
-                    <div key={ev.id} className="is-thinking-chain__entry">
-                      <span className="is-thinking-chain__time">
-                        {new Date(ev.created_at).toLocaleTimeString()}
-                      </span>
-                      <span className="is-thinking-chain__text">
-                        {extractPayloadText(ev.payload)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {run && (
+              <span className={`is-task-detail-state is-task-detail-state--${run.state}`}>
+                {run.state}
+              </span>
             )}
-
-            {(run.result || run.error) && (
-              <div className="is-task-detail-section">
-                <div className="is-task-detail-section__label">
-                  {run.error ? 'Error' : 'Result'}
-                </div>
-                <div className={`is-result-block ${run.error ? 'is-result-block--error' : ''}`}>
-                  {run.error ?? run.result}
-                </div>
-              </div>
-            )}
-
-            {events.length > 0 && (
-              <div className="is-task-detail-section">
-                <div className="is-task-detail-section__label">Events ({events.length})</div>
-                <div className="is-events-timeline">
-                  {events.map((ev) => (
-                    <div key={ev.id} className="is-events-timeline__row">
-                      <span className="is-events-timeline__time">
-                        {new Date(ev.created_at).toLocaleTimeString()}
-                      </span>
-                      <span className="is-events-timeline__type">{ev.event_type}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <button
+              type="button"
+              className="is-icon-btn is-modal__close"
+              onClick={onClose}
+              title="Close"
+            >
+              <X size={18} />
+            </button>
           </div>
-        )}
+
+          {loading && !run && <div className="is-task-detail-loading">Loading...</div>}
+
+          {error && !run && <div className="is-task-detail-error">{error}</div>}
+
+          {run && (
+            <div className="is-task-detail-body">
+              <div className="is-task-detail-section">
+                <div className="is-task-detail-section__label">Intent</div>
+                <div className="is-task-detail-section__content">
+                  {run.input_data?.intent || '\u2014'}
+                </div>
+              </div>
+
+              <div className="is-task-detail-section">
+                <div className="is-task-detail-section__label">Info</div>
+                <div className="is-task-detail-meta">
+                  <span>Task: {run.task_id.slice(0, 8)}</span>
+                  <span>Attempt: {run.attempt}</span>
+                  <span>Started: {formatTime(run.started_at)}</span>
+                  {run.ended_at && <span>Ended: {formatTime(run.ended_at)}</span>}
+                </div>
+              </div>
+
+              {thinkingEvents.length > 0 && (
+                <div className="is-task-detail-section">
+                  <div className="is-task-detail-section__label">
+                    Thinking ({thinkingEvents.length})
+                  </div>
+                  <div className="is-thinking-chain">
+                    {thinkingEvents.map((ev) => (
+                      <div key={ev.id} className="is-thinking-chain__entry">
+                        <span className="is-thinking-chain__time">
+                          {new Date(ev.created_at).toLocaleTimeString()}
+                        </span>
+                        <span className="is-thinking-chain__text">
+                          {extractPayloadText(ev.payload)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(run.result || run.error) && (
+                <div className="is-task-detail-section">
+                  <div className="is-task-detail-section__label">
+                    {run.error ? 'Error' : 'Result'}
+                  </div>
+                  <div className={`is-result-block ${run.error ? 'is-result-block--error' : ''}`}>
+                    {run.error ?? run.result}
+                  </div>
+                </div>
+              )}
+
+              {events.length > 0 && (
+                <div className="is-task-detail-section">
+                  <div className="is-task-detail-section__label">Events ({events.length})</div>
+                  <div className="is-events-timeline">
+                    {events.map((ev) => (
+                      <div key={ev.id} className="is-events-timeline__row">
+                        <span className="is-events-timeline__time">
+                          {new Date(ev.created_at).toLocaleTimeString()}
+                        </span>
+                        <span className="is-events-timeline__type">{ev.event_type}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }

@@ -13,6 +13,18 @@ import { FloatingImperialStudy } from './shared/components/imperial-study/compon
 
 type AppView = 'terminal' | 'conversations'
 
+/** Reset native button styles to behave like a neutral inline element. */
+const BUTTON_RESET: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  font: 'inherit',
+  color: 'inherit',
+  cursor: 'pointer',
+  width: '100%',
+  textAlign: 'inherit',
+}
+
 const NOTEPAD_TAB_ID = '__notepad__'
 
 interface Tab {
@@ -85,32 +97,42 @@ function DesktopLayout() {
       )}
       <div style={styles.main}>
         <div style={styles.tabBar}>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} style={styles.toggleBtn}>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={styles.toggleBtn}
+          >
             {sidebarOpen ? '\u25C0' : '\u25B6'}
           </button>
-          <div
+          <button
+            type="button"
             style={{
+              ...BUTTON_RESET,
               ...styles.viewTab,
               ...(activeView === 'terminal' ? styles.viewTabActive : {}),
             }}
             onClick={() => setActiveView('terminal')}
           >
             Terminal
-          </div>
-          <div
+          </button>
+          <button
+            type="button"
             style={{
+              ...BUTTON_RESET,
               ...styles.viewTab,
               ...(activeView === 'conversations' ? styles.viewTabActive : {}),
             }}
             onClick={() => setActiveView('conversations')}
           >
             Conversations
-          </div>
+          </button>
           {activeView === 'terminal' &&
             tabs.map((tab) => (
-              <div
+              <button
                 key={tab.id}
+                type="button"
                 style={{
+                  ...BUTTON_RESET,
                   ...styles.tab,
                   ...(tab.id === activeTabId ? styles.tabActive : {}),
                 }}
@@ -122,6 +144,7 @@ function DesktopLayout() {
                 <span style={styles.tabLabel}>{tab.type === 'notepad' ? 'Notepad' : tab.id}</span>
                 {tab.id !== NOTEPAD_TAB_ID && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation()
                       closeTab(tab.id)
@@ -132,18 +155,25 @@ function DesktopLayout() {
                     \u00D7
                   </button>
                 )}
-              </div>
+              </button>
             ))}
-          <div
+          <button
+            type="button"
             style={{
+              ...BUTTON_RESET,
               ...styles.tab,
               ...(viewMode === 'kanban' ? styles.tabActive : {}),
             }}
             onClick={() => setViewMode('kanban')}
           >
             <span style={styles.tabLabel}>Kanban</span>
-          </div>
-          <button onClick={openNotepad} style={styles.notepadBtn} title="Open Notepad">
+          </button>
+          <button
+            type="button"
+            onClick={openNotepad}
+            style={styles.notepadBtn}
+            title="Open Notepad"
+          >
             <span style={{ fontSize: '14px' }}>{'\u270E'}</span>
           </button>
         </div>

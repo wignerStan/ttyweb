@@ -288,6 +288,7 @@ export function MobileToolbox({
           <Clock size={14} />
           <span>命令</span>
         </button>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper for VoiceInput component */}
         <div className="toolbox-tab-voice" onMouseDown={preventFocus} onTouchStart={preventFocus}>
           <VoiceInput ref={effectiveVoiceRef} onText={handleVoiceText} disabled={disabled} />
         </div>

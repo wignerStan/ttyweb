@@ -10,6 +10,7 @@ exports[`ConversationViewer snapshot > renders conversation with messages 1`] = 
     >
       <button
         class="conv-viewer-header-btn"
+        type="button"
       >
         ◀ Back
       </button>
@@ -26,6 +27,7 @@ exports[`ConversationViewer snapshot > renders conversation with messages 1`] = 
       <button
         class="conv-viewer-header-btn"
         title="Refresh conversation"
+        type="button"
       >
         <span
           class=""

@@ -18,7 +18,12 @@ export function AssistantChatPanel({ messages, onClear }: AssistantChatPanelProp
   return (
     <div className="is-chat-panel">
       <div className="is-chat-panel__header">
-        <button className="is-chat-panel__clear is-icon-btn" onClick={onClear} title="Clear chat">
+        <button
+          type="button"
+          className="is-chat-panel__clear is-icon-btn"
+          onClick={onClear}
+          title="Clear chat"
+        >
           <X size={12} />
         </button>
       </div>

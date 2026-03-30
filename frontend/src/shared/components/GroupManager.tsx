@@ -152,7 +152,12 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     <div className="group-manager">
       <div className="group-header">
         <span className="group-title">Groups</span>
-        <button className="group-add-btn" onClick={() => setIsCreating(true)} title="Create group">
+        <button
+          type="button"
+          className="group-add-btn"
+          onClick={() => setIsCreating(true)}
+          title="Create group"
+        >
           <Plus size={14} />
         </button>
       </div>
@@ -170,13 +175,14 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
             disabled={loading}
           />
           <button
+            type="button"
             onClick={createGroup}
             disabled={loading || !newGroupName.trim()}
             className="btn-sm btn-confirm"
           >
             <Check size={12} />
           </button>
-          <button onClick={() => setIsCreating(false)} className="btn-sm btn-cancel">
+          <button type="button" onClick={() => setIsCreating(false)} className="btn-sm btn-cancel">
             <X size={12} />
           </button>
         </div>
@@ -197,13 +203,18 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                   disabled={loading}
                 />
                 <button
+                  type="button"
                   onClick={() => updateGroup(group.id)}
                   disabled={loading || !editName.trim()}
                   className="btn-sm btn-confirm"
                 >
                   <Check size={12} />
                 </button>
-                <button onClick={() => setEditingId(null)} className="btn-sm btn-cancel">
+                <button
+                  type="button"
+                  onClick={() => setEditingId(null)}
+                  className="btn-sm btn-cancel"
+                >
                   <X size={12} />
                 </button>
               </div>
@@ -213,6 +224,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                 <span className="group-count">{group.session_count}</span>
                 <div className="group-actions">
                   <button
+                    type="button"
                     className="btn-icon"
                     onClick={() => {
                       setEditingId(group.id)
@@ -223,6 +235,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                     <Pencil size={12} />
                   </button>
                   <button
+                    type="button"
                     className="btn-icon btn-danger"
                     onClick={() => deleteGroup(group.id)}
                     title="Delete"
@@ -260,6 +273,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                 </select>
               ) : (
                 <button
+                  type="button"
                   className="btn-assign"
                   onClick={() => setAssigningSession(session.sessionName)}
                   title="Assign to group"

@@ -163,6 +163,8 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
 
   return (
     <div className="file-upload">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: file drop zone with click-to-upload */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: file drop zone with click-to-upload */}
       <div
         className={`file-upload-zone${dragging ? ' dragging' : ''}${uploading ? ' uploading' : ''}${compact ? ' compact' : ''}`}
         onDragEnter={handleDragEnter}
@@ -194,7 +196,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
       {error && (
         <div className="file-upload-error">
           {error}
-          <button onClick={() => setError(null)}>
+          <button type="button" onClick={() => setError(null)}>
             <X size={12} />
           </button>
         </div>
@@ -233,6 +235,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
                   <div className="file-upload-card-actions">
                     {onSend && (
                       <button
+                        type="button"
                         className="file-upload-send"
                         onClick={() => sendPath(r.path, i)}
                         title={r.path}
@@ -242,6 +245,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
                       </button>
                     )}
                     <button
+                      type="button"
                       className="file-upload-copy"
                       onClick={() => copyPath(r.path, i)}
                       title={r.path}
@@ -250,6 +254,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
                       <span>路径</span>
                     </button>
                     <button
+                      type="button"
                       className="file-upload-copy"
                       onClick={() => copyPath(r.url, i + 1000)}
                       title={r.url}
@@ -258,6 +263,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
                       <span>URL</span>
                     </button>
                     <button
+                      type="button"
                       className="file-upload-remove"
                       onClick={() => removeResult(i)}
                       title="Dismiss"

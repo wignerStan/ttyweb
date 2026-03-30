@@ -75,22 +75,78 @@ export function WorkerContextMenu({ x, y, workerId, paneTarget, onClose }: Worke
 
   return (
     <div ref={menuRef} className="is-ctx-menu" style={{ left: x, top: y }}>
-      <div className="is-ctx-menu__item" onClick={() => handle('open')}>
+      <button
+        type="button"
+        className="is-ctx-menu__item"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => handle('open')}
+      >
         <Terminal size={14} />
         <span>Open Terminal</span>
-      </div>
-      <div className="is-ctx-menu__item" onClick={() => handle('copy')}>
+      </button>
+      <button
+        type="button"
+        className="is-ctx-menu__item"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => handle('copy')}
+      >
         <Copy size={14} />
         <span>Copy pane target</span>
-      </div>
-      <div className="is-ctx-menu__item" onClick={() => handle('pause')}>
+      </button>
+      <button
+        type="button"
+        className="is-ctx-menu__item"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => handle('pause')}
+      >
         <Pause size={14} />
         <span>Pause worker</span>
-      </div>
-      <div className="is-ctx-menu__item danger" onClick={() => handle('kill')}>
+      </button>
+      <button
+        type="button"
+        className="is-ctx-menu__item danger"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => handle('kill')}
+      >
         <Power size={14} />
         <span>Kill worker</span>
-      </div>
+      </button>
     </div>
   )
 }

@@ -12,7 +12,7 @@ vi.mock('../shared/components/AiCommandTab', () => ({
   }) => (
     <div data-testid="ai-command-tab">
       <span data-testid="ai-initial-text">{initialText ?? ''}</span>
-      <button data-testid="ai-consume" onClick={onTextConsumed}>
+      <button type="button" data-testid="ai-consume" onClick={onTextConsumed}>
         Consume
       </button>
     </div>

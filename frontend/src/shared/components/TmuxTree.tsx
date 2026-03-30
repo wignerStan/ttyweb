@@ -152,8 +152,8 @@ async function fetchTaskPaneStatuses(): Promise<Record<string, PaneStatus>> {
         completed: 1,
       }
       const cur = map[key]
-      const curP = priority[cur!] ?? 0
-      const newP = priority[status!] ?? 0
+      const curP = priority[cur ?? ''] ?? 0
+      const newP = priority[status ?? ''] ?? 0
       if (newP > curP) {
         // Normalise 'completed' -> 'done'
         map[key] = (status === 'completed' ? 'done' : status) as PaneStatus
@@ -268,6 +268,8 @@ function QuickGroupMenu({
 
   return (
     <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: context menu backdrop */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: context menu backdrop */}
       <div
         className="quick-group-backdrop"
         onClick={onClose}
@@ -282,6 +284,7 @@ function QuickGroupMenu({
         {groups.length > 0 &&
           groups.map((g) => (
             <button
+              type="button"
               key={g.id}
               className={`quick-group-item ${g.id === currentGroupId ? 'current' : ''}`}
               onClick={() => assignToGroup(g.id)}
@@ -295,6 +298,7 @@ function QuickGroupMenu({
 
         {currentGroupId !== null && (
           <button
+            type="button"
             className="quick-group-item ungroup"
             onClick={() => assignToGroup(null)}
             disabled={loading}
@@ -325,6 +329,7 @@ function QuickGroupMenu({
               disabled={loading}
             />
             <button
+              type="button"
               className="quick-group-confirm"
               onClick={createAndAssign}
               disabled={loading || !newName.trim()}
@@ -334,6 +339,7 @@ function QuickGroupMenu({
           </div>
         ) : (
           <button
+            type="button"
             className="quick-group-item create"
             onClick={() => setCreating(true)}
             disabled={loading}
@@ -522,7 +528,7 @@ function SortableSession({
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button className="expand-btn" onClick={() => setExpanded(!expanded)}>
+        <button type="button" className="expand-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         <Terminal size={14} style={{ color: 'var(--blue-500)' }} />
@@ -571,6 +577,7 @@ function SortableSession({
           </span>
         )}
         <button
+          type="button"
           className="rebuild-btn"
           onClick={handleRebuild}
           disabled={rebuilding}
@@ -625,6 +632,7 @@ function SortableSession({
                     {window.windowIndex}: {window.windowName}
                   </span>
                   <button
+                    type="button"
                     className="window-rename-btn"
                     onClick={() => {
                       setEditWindowName(window.windowName)
@@ -641,42 +649,49 @@ function SortableSession({
               const paneKey = buildPaneKey(session.sessionName, window.windowIndex, pane.paneId)
               const paneStatus = statusMap[paneKey] || 'idle'
               return (
-                <div
-                  key={pane.paneId}
-                  className="pane-node"
-                  onClick={() =>
-                    onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    onPaneContextMenu?.(paneKey)
-                  }}
-                >
-                  <span className="pane-id">{pane.paneId}</span>
-                  <span
-                    className="pane-status-clickable"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onPaneStatusClick?.(paneKey)
+                <>
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: tree pane node with click handler */}
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: tree pane node with click handler */}
+                  <div
+                    key={pane.paneId}
+                    className="pane-node"
+                    onClick={() =>
+                      onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)
+                    }
+                    onContextMenu={(e) => {
+                      e.preventDefault()
+                      onPaneContextMenu?.(paneKey)
                     }}
-                    title="View task history"
                   >
-                    <StatusBadge status={paneStatus} size="small" />
-                  </span>
-                  <span className="pane-cmd">{pane.paneCommand}</span>
-                  {onPaneContextMenu && (
-                    <button
-                      className="pane-details-btn"
+                    <span className="pane-id">{pane.paneId}</span>
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions: pane status click target */}
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: pane status click target */}
+                    <span
+                      className="pane-status-clickable"
                       onClick={(e) => {
                         e.stopPropagation()
-                        onPaneContextMenu(paneKey)
+                        onPaneStatusClick?.(paneKey)
                       }}
-                      title="View details"
+                      title="View task history"
                     >
-                      <MoreHorizontal size={14} />
-                    </button>
-                  )}
-                </div>
+                      <StatusBadge status={paneStatus} size="small" />
+                    </span>
+                    <span className="pane-cmd">{pane.paneCommand}</span>
+                    {onPaneContextMenu && (
+                      <button
+                        type="button"
+                        className="pane-details-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onPaneContextMenu(paneKey)
+                        }}
+                        title="View details"
+                      >
+                        <MoreHorizontal size={14} />
+                      </button>
+                    )}
+                  </div>
+                </>
               )
             })}
           </div>
@@ -714,7 +729,7 @@ function SortableGroup({ item, group, children, isOver }: SortableGroupProps) {
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button className="expand-btn" onClick={() => setExpanded(!expanded)}>
+        <button type="button" className="expand-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         {expanded ? (
@@ -1118,7 +1133,7 @@ export function TmuxTree({
             </span>
           )}
         </div>
-        <button onClick={onRefresh} className="refresh-btn" title="Refresh">
+        <button type="button" onClick={onRefresh} className="refresh-btn" title="Refresh">
           <RefreshCw size={12} />
         </button>
         <NewTmuxButton sessions={sessions} onCreated={onRefresh} />
@@ -1148,24 +1163,26 @@ export function TmuxTree({
                     {groupSessions.length === 0 ? (
                       <div className="group-empty-drop">Drop sessions here</div>
                     ) : (
-                      groupSessions.map((sessionItem) => (
-                        <SortableSession
-                          key={sessionItem.id}
-                          item={sessionItem}
-                          session={sessionItem.session!}
-                          isInGroup={true}
-                          isOver={overItemId === sessionItem.id}
-                          statusMap={statusMap}
-                          onSelectPane={onSelectPane}
-                          onPaneContextMenu={onPaneContextMenu}
-                          onPaneStatusClick={onPaneStatusClick}
-                          onRefresh={onRefresh}
-                          defaultExpanded={defaultExpanded}
-                          groups={groups}
-                          profileKey={profileKey}
-                          onGroupChanged={onOrderChange}
-                        />
-                      ))
+                      groupSessions.map((sessionItem) =>
+                        sessionItem.session ? (
+                          <SortableSession
+                            key={sessionItem.id}
+                            item={sessionItem}
+                            session={sessionItem.session}
+                            isInGroup={true}
+                            isOver={overItemId === sessionItem.id}
+                            statusMap={statusMap}
+                            onSelectPane={onSelectPane}
+                            onPaneContextMenu={onPaneContextMenu}
+                            onPaneStatusClick={onPaneStatusClick}
+                            onRefresh={onRefresh}
+                            defaultExpanded={defaultExpanded}
+                            groups={groups}
+                            profileKey={profileKey}
+                            onGroupChanged={onOrderChange}
+                          />
+                        ) : null,
+                      )
                     )}
                   </SortableGroup>
                 )

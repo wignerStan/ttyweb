@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('../shared/components/LoginModal', () => ({
   LoginModal: ({ onLogin }: { onLogin: () => void }) => (
     <div data-testid="login-modal">
-      <button onClick={onLogin} data-testid="login-btn">
+      <button type="button" onClick={onLogin} data-testid="login-btn">
         Login
       </button>
     </div>
@@ -40,16 +40,16 @@ vi.mock('./MobileDrawer', () => ({
     statusRefreshToken: number
   }) => (
     <div data-testid="mobile-drawer" data-open={open ? 'true' : undefined}>
-      <button onClick={onClose} data-testid="drawer-close">
+      <button type="button" onClick={onClose} data-testid="drawer-close">
         Close
       </button>
-      <button onClick={() => onSelectPane('%0', 'bash')} data-testid="select-pane">
+      <button type="button" onClick={() => onSelectPane('%0', 'bash')} data-testid="select-pane">
         Select Pane
       </button>
-      <button onClick={onRefresh} data-testid="drawer-refresh">
+      <button type="button" onClick={onRefresh} data-testid="drawer-refresh">
         Refresh
       </button>
-      <button onClick={onLogout} data-testid="drawer-logout">
+      <button type="button" onClick={onLogout} data-testid="drawer-logout">
         Logout
       </button>
     </div>
@@ -67,10 +67,10 @@ vi.mock('../shared/components/TaskHistoryPanel', () => ({
     onStatusChange: () => void
   }) => (
     <div data-testid="task-history" data-pane-key={paneKey ?? ''}>
-      <button onClick={onClose} data-testid="history-close">
+      <button type="button" onClick={onClose} data-testid="history-close">
         Close
       </button>
-      <button onClick={onStatusChange} data-testid="status-change">
+      <button type="button" onClick={onStatusChange} data-testid="status-change">
         Status Change
       </button>
     </div>

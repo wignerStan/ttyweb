@@ -54,6 +54,7 @@ export function NewWindowButton({ session, onCreated, compact }: NewWindowButton
   return (
     <div className={`nwb-wrap${compact ? ' compact' : ''}`} ref={menuRef}>
       <button
+        type="button"
         className="nwb-trigger"
         title="New tmux window"
         disabled={loading}
@@ -87,6 +88,7 @@ export function NewWindowButton({ session, onCreated, compact }: NewWindowButton
 
           {/* Default dir */}
           <button
+            type="button"
             className={`nwb-item${selectedDir === undefined ? ' selected' : ''}`}
             onClick={() => {
               setSelectedDir(undefined)
@@ -101,6 +103,7 @@ export function NewWindowButton({ session, onCreated, compact }: NewWindowButton
 
           {quickDirs.map((d) => (
             <button
+              type="button"
               key={d.path}
               className={`nwb-item${selectedDir === d.path ? ' selected' : ''}`}
               onClick={() => {

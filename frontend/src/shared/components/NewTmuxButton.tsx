@@ -120,6 +120,7 @@ export function NewTmuxButton({ sessions, onCreated }: NewTmuxButtonProps) {
   }) => (
     <div className="ntb-chips">
       <button
+        type="button"
         className={`ntb-chip${!selected ? ' active' : ''}`}
         onClick={() => onSelect(undefined)}
       >
@@ -127,6 +128,7 @@ export function NewTmuxButton({ sessions, onCreated }: NewTmuxButtonProps) {
       </button>
       {quickDirs.map((d) => (
         <button
+          type="button"
           key={d.path}
           className={`ntb-chip${selected === d.path ? ' active' : ''}`}
           onClick={() => onSelect(d.path)}
@@ -141,6 +143,7 @@ export function NewTmuxButton({ sessions, onCreated }: NewTmuxButtonProps) {
   return (
     <div className="ntb-wrap" ref={menuRef}>
       <button
+        type="button"
         className="ntb-trigger"
         title="New session / window"
         disabled={loading}
@@ -167,7 +170,12 @@ export function NewTmuxButton({ sessions, onCreated }: NewTmuxButtonProps) {
               maxLength={60}
             />
             <DirChips selected={sDir} onSelect={setSDir} />
-            <button className="ntb-action green" onClick={createSession} disabled={loading}>
+            <button
+              type="button"
+              className="ntb-action green"
+              onClick={createSession}
+              disabled={loading}
+            >
               <FolderOpen size={12} /> Create Session
             </button>
           </div>
@@ -204,6 +212,7 @@ export function NewTmuxButton({ sessions, onCreated }: NewTmuxButtonProps) {
             />
             <DirChips selected={wDir} onSelect={setWDir} />
             <button
+              type="button"
               className="ntb-action blue"
               onClick={createWindow}
               disabled={loading || !wSession}

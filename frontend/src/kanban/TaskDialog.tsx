@@ -151,160 +151,164 @@ function TaskDialog({
   const tagsString = form.tags.join(', ')
 
   return (
-    <div
-      className="task-dialog-overlay"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
-      <div className="task-dialog">
-        <div className="task-dialog__header">
-          <h2 className="task-dialog__title">{title}</h2>
-          <button className="task-dialog__close" onClick={onClose} type="button">
-            <X size={16} />
-          </button>
-        </div>
-
-        <form id="task-dialog-form" className="task-dialog__body" onSubmit={handleSubmit}>
-          <div className="task-dialog__field">
-            <label className="task-dialog__label" htmlFor="task-title">
-              Title *
-            </label>
-            <input
-              id="task-title"
-              className="task-dialog__input"
-              type="text"
-              value={form.title}
-              onChange={(e) => updateField('title', e.target.value)}
-              placeholder="Task title"
-            />
-            {errors.title && <span className="task-dialog__error">{errors.title}</span>}
+    <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay click-outside-to-close pattern */}
+      <div
+        className="task-dialog-overlay"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose()
+        }}
+      >
+        <div className="task-dialog">
+          <div className="task-dialog__header">
+            <h2 className="task-dialog__title">{title}</h2>
+            <button className="task-dialog__close" onClick={onClose} type="button">
+              <X size={16} />
+            </button>
           </div>
 
-          <div className="task-dialog__field">
-            <label className="task-dialog__label" htmlFor="task-desc">
-              Description
-            </label>
-            <textarea
-              id="task-desc"
-              className="task-dialog__textarea"
-              value={form.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              placeholder="Describe the task..."
-              rows={4}
-            />
-          </div>
-
-          <div className="task-dialog__row">
+          <form id="task-dialog-form" className="task-dialog__body" onSubmit={handleSubmit}>
             <div className="task-dialog__field">
-              <label className="task-dialog__label" htmlFor="task-status">
-                Status
-              </label>
-              <select
-                id="task-status"
-                className="task-dialog__select"
-                value={form.status}
-                onChange={(e) => updateField('status', e.target.value as KanbanStatus)}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="task-dialog__field">
-              <label className="task-dialog__label" htmlFor="task-priority">
-                Priority
-              </label>
-              <select
-                id="task-priority"
-                className="task-dialog__select"
-                value={form.priority}
-                onChange={(e) => updateField('priority', Number(e.target.value))}
-              >
-                {PRIORITY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="task-dialog__row">
-            <div className="task-dialog__field">
-              <label className="task-dialog__label" htmlFor="task-tags">
-                Tags
+              <label className="task-dialog__label" htmlFor="task-title">
+                Title *
               </label>
               <input
-                id="task-tags"
+                id="task-title"
                 className="task-dialog__input"
                 type="text"
-                value={tagsString}
-                onChange={(e) => handleTagsInput(e.target.value)}
-                placeholder="bug, feature, urgent"
+                value={form.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Task title"
               />
+              {errors.title && <span className="task-dialog__error">{errors.title}</span>}
             </div>
 
             <div className="task-dialog__field">
-              <label className="task-dialog__label" htmlFor="task-due">
-                Due Date
+              <label className="task-dialog__label" htmlFor="task-desc">
+                Description
               </label>
-              <input
-                id="task-due"
-                className="task-dialog__input"
-                type="date"
-                value={form.due_date ?? ''}
-                onChange={(e) => updateField('due_date', e.target.value || null)}
+              <textarea
+                id="task-desc"
+                className="task-dialog__textarea"
+                value={form.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                placeholder="Describe the task..."
+                rows={4}
               />
             </div>
-          </div>
 
-          {isEdit && (
-            <>
-              <div className="task-dialog__divider" />
-              <CommentThread
-                taskId={task.id}
-                fetchComments={fetchComments}
-                createComment={createComment}
-              />
-            </>
-          )}
-        </form>
+            <div className="task-dialog__row">
+              <div className="task-dialog__field">
+                <label className="task-dialog__label" htmlFor="task-status">
+                  Status
+                </label>
+                <select
+                  id="task-status"
+                  className="task-dialog__select"
+                  value={form.status}
+                  onChange={(e) => updateField('status', e.target.value as KanbanStatus)}
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        <div className="task-dialog__footer">
-          {isEdit && (
+              <div className="task-dialog__field">
+                <label className="task-dialog__label" htmlFor="task-priority">
+                  Priority
+                </label>
+                <select
+                  id="task-priority"
+                  className="task-dialog__select"
+                  value={form.priority}
+                  onChange={(e) => updateField('priority', Number(e.target.value))}
+                >
+                  {PRIORITY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="task-dialog__row">
+              <div className="task-dialog__field">
+                <label className="task-dialog__label" htmlFor="task-tags">
+                  Tags
+                </label>
+                <input
+                  id="task-tags"
+                  className="task-dialog__input"
+                  type="text"
+                  value={tagsString}
+                  onChange={(e) => handleTagsInput(e.target.value)}
+                  placeholder="bug, feature, urgent"
+                />
+              </div>
+
+              <div className="task-dialog__field">
+                <label className="task-dialog__label" htmlFor="task-due">
+                  Due Date
+                </label>
+                <input
+                  id="task-due"
+                  className="task-dialog__input"
+                  type="date"
+                  value={form.due_date ?? ''}
+                  onChange={(e) => updateField('due_date', e.target.value || null)}
+                />
+              </div>
+            </div>
+
+            {isEdit && (
+              <>
+                <div className="task-dialog__divider" />
+                <CommentThread
+                  taskId={task.id}
+                  fetchComments={fetchComments}
+                  createComment={createComment}
+                />
+              </>
+            )}
+          </form>
+
+          <div className="task-dialog__footer">
+            {isEdit && (
+              <button
+                className="task-dialog__btn task-dialog__btn--danger"
+                onClick={handleDelete}
+                disabled={deleting}
+                type="button"
+                style={{ marginRight: 'auto' }}
+              >
+                <Trash2 size={13} />
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
             <button
-              className="task-dialog__btn task-dialog__btn--danger"
-              onClick={handleDelete}
-              disabled={deleting}
+              className="task-dialog__btn task-dialog__btn--cancel"
+              onClick={onClose}
               type="button"
-              style={{ marginRight: 'auto' }}
             >
-              <Trash2 size={13} />
-              {deleting ? 'Deleting...' : 'Delete'}
+              Cancel
             </button>
-          )}
-          <button
-            className="task-dialog__btn task-dialog__btn--cancel"
-            onClick={onClose}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="task-dialog__btn task-dialog__btn--primary"
-            type="submit"
-            form="task-dialog-form"
-            disabled={saving || !form.title.trim()}
-          >
-            {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Task'}
-          </button>
+            <button
+              className="task-dialog__btn task-dialog__btn--primary"
+              type="submit"
+              form="task-dialog-form"
+              disabled={saving || !form.title.trim()}
+            >
+              {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Task'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

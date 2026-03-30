@@ -67,7 +67,9 @@ describe('WorkerContextMenu', () => {
     render(
       <div>
         <WorkerContextMenu {...props} onClose={onClose} />
-        <button id="outside">Outside</button>
+        <button type="button" id="outside">
+          Outside
+        </button>
       </div>,
     )
     act(() => {

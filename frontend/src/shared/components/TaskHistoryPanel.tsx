@@ -123,6 +123,7 @@ export function TaskHistoryPanel({
         </div>
         <div className="task-history-header-right">
           <button
+            type="button"
             className="task-history-btn"
             onClick={fetchHistory}
             disabled={loading}
@@ -131,7 +132,7 @@ export function TaskHistoryPanel({
             <RefreshCw size={13} className={loading ? 'task-history-spin' : ''} />
           </button>
           {!embedded && (
-            <button className="task-history-btn" onClick={onClose} title="Close">
+            <button type="button" className="task-history-btn" onClick={onClose} title="Close">
               <X size={15} />
             </button>
           )}
@@ -166,6 +167,7 @@ export function TaskHistoryPanel({
                 <span className="task-history-item-time">{formatTime(conv.started_at)}</span>
                 {conv.conv_status === 'in_progress' && (
                   <button
+                    type="button"
                     className="task-history-complete-btn"
                     onClick={() => markComplete(conv.id)}
                     title="标记为已完成"

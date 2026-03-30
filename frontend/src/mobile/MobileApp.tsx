@@ -31,7 +31,8 @@ function getAllPaneIds(sessions: TmuxSession[]): Set<string> {
 function getPaneKey(sessions: TmuxSession[], paneId: string): string | null {
   for (const s of sessions) {
     for (let wi = 0; wi < s.windows.length; wi++) {
-      const w = s.windows[wi]!
+      const w = s.windows[wi]
+      if (!w) continue
       for (let pi = 0; pi < w.panes.length; pi++) {
         if (w.panes[pi]?.paneId === paneId) {
           return `${s.sessionName}:${w.windowIndex}:${w.panes[pi]?.paneId}`
@@ -313,9 +314,20 @@ export default function MobileApp() {
         {tabs.length > 0 ? (
           <div className="mobile-tabs-bar">
             {tabs.map((tab) => (
-              <div
+              <button
                 key={tab.id}
+                type="button"
                 className={`mobile-tab ${tab.id === activeTabId ? 'active' : ''}`}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  font: 'inherit',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'inherit',
+                }}
                 onClick={() => handleSelectTab(tab.id)}
               >
                 <span className="mobile-tab-title">{tab.title}</span>
@@ -329,7 +341,7 @@ export default function MobileApp() {
                 >
                   <X size={12} />
                 </button>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
@@ -358,14 +370,18 @@ export default function MobileApp() {
       </header>
 
       {(drawerOpen || rightPanelOpen || imperialOpen) && (
-        <div
-          className="mobile-overlay"
-          onClick={() => {
-            setDrawerOpen(false)
-            setRightPanelOpen(false)
-            setImperialOpen(false)
-          }}
-        />
+        <>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
+          <div
+            className="mobile-overlay"
+            role="presentation"
+            onClick={() => {
+              setDrawerOpen(false)
+              setRightPanelOpen(false)
+              setImperialOpen(false)
+            }}
+          />
+        </>
       )}
 
       {imperialOpen && (

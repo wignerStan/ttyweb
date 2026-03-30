@@ -100,10 +100,21 @@ export function GlobalTaskOverview({
         ) : (
           <div className="task-group-list">
             {groupTasks.map((task) => (
-              <div
+              <button
                 key={task.id}
+                type="button"
                 className={`task-item status-${task.task_status}`}
                 onClick={() => handleTaskClick(task)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  font: 'inherit',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'inherit',
+                }}
               >
                 <div className="task-item-title">{task.task_title || 'Untitled Task'}</div>
                 <div className="task-item-meta">
@@ -118,7 +129,7 @@ export function GlobalTaskOverview({
                     })}
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -131,6 +142,7 @@ export function GlobalTaskOverview({
       <div className="global-task-header">
         <span className="global-task-title">Tasks</span>
         <button
+          type="button"
           className="global-task-refresh"
           onClick={fetchTasks}
           title="Refresh Tasks"
@@ -145,7 +157,9 @@ export function GlobalTaskOverview({
           <div className="global-task-error">
             <XCircle size={16} />
             <span>{error}</span>
-            <button onClick={fetchTasks}>Retry</button>
+            <button type="button" onClick={fetchTasks}>
+              Retry
+            </button>
           </div>
         ) : loading && tasks.length === 0 ? (
           <div className="global-task-loading">

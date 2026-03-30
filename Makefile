@@ -25,8 +25,8 @@ lint-go:
 
 # Lint frontend
 lint-frontend:
-	cd frontend && bunx biome check src/
-	cd frontend && bunx tsc --noEmit
+	cd frontend && bun run lint
+	cd frontend && bun run typecheck
 
 # Lint all
 lint: lint-go lint-frontend

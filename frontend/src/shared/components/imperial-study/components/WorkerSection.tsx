@@ -44,8 +44,19 @@ function WorkerCard({ worker, intent, onContextMenu, onWorkerClick }: WorkerCard
   }
 
   return (
-    <div
+    <button
+      type="button"
       className={`is-worker-card ${flash ? 'flash' : ''}`}
+      style={{
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        font: 'inherit',
+        color: 'inherit',
+        cursor: 'pointer',
+        width: '100%',
+        textAlign: 'inherit',
+      }}
       onClick={handleClick}
       onContextMenu={(e) => {
         e.preventDefault()
@@ -71,7 +82,7 @@ function WorkerCard({ worker, intent, onContextMenu, onWorkerClick }: WorkerCard
         {worker.project} · :{worker.port}
       </span>
       {intent && <span className="is-worker-intent">{intent}</span>}
-    </div>
+    </button>
   )
 }
 
@@ -105,11 +116,26 @@ export function WorkerSection({
   return (
     <div className="is-section">
       {/* Section Header */}
-      <div className="is-section__header" onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="is-section__header"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => setOpen((o) => !o)}
+      >
         <ChevronRight size={14} className={`is-section__chevron ${open ? 'open' : ''}`} />
         <span className="is-section__label">Workers</span>
         {onAddWorker && (
           <button
+            type="button"
             className="is-icon-btn is-section__action"
             onClick={(e) => {
               e.stopPropagation()
@@ -120,7 +146,7 @@ export function WorkerSection({
             <Plus size={14} />
           </button>
         )}
-      </div>
+      </button>
 
       {/* Section Body */}
       <div

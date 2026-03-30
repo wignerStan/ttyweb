@@ -77,6 +77,7 @@ export function NotepadTab({ note, onUpdate }: NotepadTabProps) {
               maxLength={128}
             />
             <button
+              type="button"
               className="notepad-title-save-btn"
               onClick={handleTitleSave}
               aria-label="Save title"
@@ -86,6 +87,7 @@ export function NotepadTab({ note, onUpdate }: NotepadTabProps) {
           </div>
         ) : (
           <button
+            type="button"
             className="notepad-title-display"
             onClick={() => setEditingTitle(true)}
             title="Click to rename"

@@ -26,15 +26,19 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
   // ── Collapsed: mini floating bubble ──
   if (collapsed) {
     return (
-      <div
-        className="is-floating-bubble"
-        style={{ left: position.x, top: position.y }}
-        onClick={toggleCollapse}
-        title="Open Imperial Study"
-      >
-        <ScrollText size={20} />
-        {unreadCount > 0 && <span className="is-floating-bubble__badge">{unreadCount}</span>}
-      </div>
+      <>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: floating toggle bubble */}
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: floating toggle bubble */}
+        <div
+          className="is-floating-bubble"
+          style={{ left: position.x, top: position.y }}
+          onClick={toggleCollapse}
+          title="Open Imperial Study"
+        >
+          <ScrollText size={20} />
+          {unreadCount > 0 && <span className="is-floating-bubble__badge">{unreadCount}</span>}
+        </div>
+      </>
     )
   }
 
@@ -53,6 +57,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
       }
     >
       {/* Drag handle (thin title bar) */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: drag handle requires mouseDown on div */}
       <div className="is-floating-panel__titlebar" onMouseDown={onDragStart}>
         <ScrollText size={12} className="is-floating-panel__icon" />
         <span className="is-floating-panel__title">Imperial Study</span>
@@ -72,6 +77,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
             title={`Opacity ${Math.round(opacity * 100)}%`}
           />
           <button
+            type="button"
             className="is-floating-panel__btn"
             onClick={(e) => {
               e.stopPropagation()
@@ -82,6 +88,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
             <Minus size={12} />
           </button>
           <button
+            type="button"
             className="is-floating-panel__btn is-floating-panel__btn--close"
             onClick={(e) => {
               e.stopPropagation()
@@ -100,6 +107,7 @@ export function FloatingImperialStudy({ activePaneKey, onClose }: FloatingImperi
       </div>
 
       {/* Resize handle */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: resize handle requires mouseDown on div */}
       <div className="is-floating-panel__resize" onMouseDown={onResizeStart} />
     </div>
   )
