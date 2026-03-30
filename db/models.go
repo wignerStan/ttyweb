@@ -2,6 +2,53 @@ package db
 
 import "time"
 
+func init() {
+	RegisterModel(&ProfileModel{})
+	RegisterModel(&GroupModel{})
+	RegisterModel(&SnippetModel{})
+	RegisterModel(&AiRoleModel{})
+}
+
+// ProfileModel persists workspace profiles to the database.
+type ProfileModel struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	ProfileKey string    `gorm:"size:128;uniqueIndex" json:"profile_key"`
+	Name       string    `gorm:"size:256" json:"name"`
+	SortOrder  int       `json:"sort_order"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// GroupModel persists session groups to the database.
+type GroupModel struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	GroupName  string    `gorm:"size:256" json:"group_name"`
+	SortOrder  int       `json:"sort_order"`
+	ProfileKey string    `gorm:"size:128;index" json:"profile_key"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// SnippetModel persists command snippets to the database.
+type SnippetModel struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Index     int       `json:"index"`
+	Name      string    `gorm:"size:256" json:"name"`
+	Command   string    `gorm:"type:text" json:"command"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// AiRoleModel persists custom AI roles to the database.
+type AiRoleModel struct {
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	Name         string    `gorm:"size:128;uniqueIndex" json:"name"`
+	Description  string    `gorm:"size:512" json:"description"`
+	SystemPrompt string    `gorm:"type:text" json:"system_prompt"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 // TaskSegment represents a single AI task within a terminal pane.
 type TaskSegment struct {
 	ID          string     `gorm:"primaryKey;size:32" json:"id"`
