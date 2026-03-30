@@ -33,6 +33,7 @@ func (server *Server) sessionManager() backend.SessionManager {
 // setupAPIHandlers registers REST API routes on the given mux.
 func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	apiPrefix := pathPrefix + "api/"
+	mux.HandleFunc(apiPrefix+"version", server.handleVersion)
 	mux.HandleFunc(apiPrefix+"sessions", server.handleListSessions)
 	mux.HandleFunc(apiPrefix+"sessions/", server.handleSessionDetail)
 	mux.HandleFunc(apiPrefix+"backends", server.handleListBackends)

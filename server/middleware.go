@@ -18,8 +18,7 @@ func (*Server) wrapLogger(handler http.Handler) http.Handler {
 
 func (*Server) wrapHeaders(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// todo add version
-		w.Header().Set("Server", "GoTTY")
+		w.Header().Set("Server", "ttyweb/"+getAppVersion().Version)
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "no-referrer")
