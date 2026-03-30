@@ -67,7 +67,7 @@ func TestAISessionDetail_NonExistent(t *testing.T) {
 
 func TestAISessionDetail_Success(t *testing.T) {
 	now := time.Now()
-	record := aiSessionService.Store().Upsert(ai.AISession{
+	record := aiSessionService.Store().Upsert(&ai.Session{
 		SessionID:             "detail-test",
 		Type:                  "claude",
 		FilePath:              "/tmp/detail-test.jsonl",
@@ -92,8 +92,8 @@ func TestAISessionDetail_Success(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -137,7 +137,7 @@ func TestAISessionRefresh_NonExistent(t *testing.T) {
 
 func TestAISessionConversation_Existing(t *testing.T) {
 	now := time.Now()
-	record := aiSessionService.Store().Upsert(ai.AISession{
+	record := aiSessionService.Store().Upsert(&ai.Session{
 		SessionID:             "conv-edge-test",
 		Type:                  "claude",
 		FilePath:              "/tmp/conv-edge-test.jsonl",
@@ -164,7 +164,7 @@ func TestAISessionConversation_Existing(t *testing.T) {
 
 func TestAISessionRefresh_Existing(t *testing.T) {
 	now := time.Now()
-	record := aiSessionService.Store().Upsert(ai.AISession{
+	record := aiSessionService.Store().Upsert(&ai.Session{
 		SessionID:             "refresh-edge-test",
 		Type:                  "claude",
 		FilePath:              "/tmp/refresh-edge-test.jsonl",
@@ -192,7 +192,7 @@ func TestAISessionRefresh_Existing(t *testing.T) {
 func TestNewAISessionResponse_AllFields(t *testing.T) {
 	now := time.Now()
 	lastMsg := now.Add(time.Hour)
-	r := newAISessionResponse(service.AISessionRecord{
+	record := service.AISessionRecord{
 		ID:                    42,
 		SessionID:             "sess-all-fields",
 		Type:                  "codex",
@@ -206,7 +206,8 @@ func TestNewAISessionResponse_AllFields(t *testing.T) {
 		AssistantMessageCount: 8,
 		FileModTime:           now,
 		FileSize:              4096,
-	})
+	}
+	r := newAISessionResponse(&record)
 
 	if r.ID != 42 {
 		t.Fatalf("expected ID 42, got %d", r.ID)

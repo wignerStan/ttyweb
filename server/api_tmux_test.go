@@ -20,8 +20,8 @@ func TestHandleTmuxConfig_GET(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -53,13 +53,13 @@ func TestHandleQuickDirs_GET(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
 	}
-	dirs, ok := resp.Data["dirs"].([]interface{})
+	dirs, ok := resp.Data["dirs"].([]any)
 	if !ok {
 		t.Fatal("expected dirs to be array")
 	}

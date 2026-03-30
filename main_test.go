@@ -59,9 +59,10 @@ func TestHostnameNotEmpty(t *testing.T) {
 func TestHostname_AlwaysString(t *testing.T) {
 	t.Parallel()
 	got := hostname()
-	if got != "localhost" && got != "" {
-		// hostname() returns os.Hostname() or "localhost"
-		// The error path returns "localhost"
+	// hostname() returns os.Hostname() or "localhost" (the error path).
+	// Any non-empty value that isn't "localhost" means os.Hostname() succeeded.
+	if got == "" {
+		t.Error("hostname() returned empty string")
 	}
 }
 
@@ -69,7 +70,7 @@ func TestHostnameIsString(t *testing.T) {
 	t.Parallel()
 	got := hostname()
 	// Hostname should be a non-empty printable string.
-	if len(got) == 0 || strings.TrimSpace(got) != got {
+	if got == "" || strings.TrimSpace(got) != got {
 		t.Errorf("hostname() = %q, want a clean hostname string", got)
 	}
 }
@@ -129,34 +130,34 @@ func TestSelectBackend_LocalDefaultShell(t *testing.T) {
 func TestSelectBackend_Tmux(t *testing.T) {
 	t.Parallel()
 	f, err := selectBackend("tmux", "s1", nil)
-	if commandExists("tmux") {
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if f == nil {
-			t.Fatal("expected non-nil factory")
-		}
-	} else {
+	if !commandExists("tmux") {
 		if err == nil {
 			t.Error("expected error when tmux not found")
 		}
+		return
+	}
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f == nil {
+		t.Fatal("expected non-nil factory")
 	}
 }
 
 func TestSelectBackend_Zellij(t *testing.T) {
 	t.Parallel()
 	f, err := selectBackend("zellij", "s1", nil)
-	if commandExists("zellij") {
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if f == nil {
-			t.Fatal("expected non-nil factory")
-		}
-	} else {
+	if !commandExists("zellij") {
 		if err == nil {
 			t.Error("expected error when zellij not found")
 		}
+		return
+	}
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f == nil {
+		t.Fatal("expected non-nil factory")
 	}
 }
 

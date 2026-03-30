@@ -135,44 +135,44 @@ func TestHandleSessionDetail_DELETE_WithSessionManager(t *testing.T) {
 // mockSessionManagerFactory is a mock factory that implements SessionManager.
 type mockSessionManagerFactory struct{}
 
-func (m *mockSessionManagerFactory) Name() string { return "mock-session" }
-func (m *mockSessionManagerFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
+func (*mockSessionManagerFactory) Name() string { return "mock-session" }
+func (*mockSessionManagerFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
 	return nil, nil
 }
 
-func (m *mockSessionManagerFactory) IsAvailable() bool { return true }
-func (m *mockSessionManagerFactory) ListSessions() (json.RawMessage, error) {
+func (*mockSessionManagerFactory) IsAvailable() bool { return true }
+func (*mockSessionManagerFactory) ListSessions() (json.RawMessage, error) {
 	return json.RawMessage(`[{"name":"test"}]`), nil
 }
-func (m *mockSessionManagerFactory) GetSessionDetail(name string) (json.RawMessage, error) {
+func (*mockSessionManagerFactory) GetSessionDetail(name string) (json.RawMessage, error) {
 	return json.RawMessage(`{"name":"` + name + `"}`), nil
 }
-func (m *mockSessionManagerFactory) CreateSession(name string, command ...string) (string, error) {
+func (*mockSessionManagerFactory) CreateSession(name string, command ...string) (string, error) {
 	if name == "" {
 		return "generated-session", nil
 	}
 	return name, nil
 }
-func (m *mockSessionManagerFactory) KillSession(name string) error { return nil }
+func (*mockSessionManagerFactory) KillSession(name string) error { return nil }
 
 // mockErrorSessionManager returns errors for session operations.
 type mockErrorSessionManager struct{}
 
-func (m *mockErrorSessionManager) Name() string { return "error-session" }
-func (m *mockErrorSessionManager) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
+func (*mockErrorSessionManager) Name() string { return "error-session" }
+func (*mockErrorSessionManager) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
 	return nil, nil
 }
-func (m *mockErrorSessionManager) IsAvailable() bool { return true }
-func (m *mockErrorSessionManager) ListSessions() (json.RawMessage, error) {
+func (*mockErrorSessionManager) IsAvailable() bool { return true }
+func (*mockErrorSessionManager) ListSessions() (json.RawMessage, error) {
 	return nil, io.ErrUnexpectedEOF
 }
-func (m *mockErrorSessionManager) GetSessionDetail(name string) (json.RawMessage, error) {
+func (*mockErrorSessionManager) GetSessionDetail(name string) (json.RawMessage, error) {
 	return nil, io.ErrUnexpectedEOF
 }
-func (m *mockErrorSessionManager) CreateSession(name string, command ...string) (string, error) {
+func (*mockErrorSessionManager) CreateSession(name string, command ...string) (string, error) {
 	return "", io.ErrUnexpectedEOF
 }
-func (m *mockErrorSessionManager) KillSession(name string) error { return io.ErrUnexpectedEOF }
+func (*mockErrorSessionManager) KillSession(name string) error { return io.ErrUnexpectedEOF }
 
 // Compile-time check that mocks satisfy the interfaces.
 var _ backend.Factory = (*mockSessionManagerFactory)(nil)

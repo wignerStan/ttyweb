@@ -6,19 +6,22 @@ import (
 	"time"
 )
 
-// AISessionEventType describes the type of change detected in a session file.
-type AISessionEventType string
+// SessionEventType describes the type of change detected in a session file.
+type SessionEventType string
 
 const (
-	AISessionEventNew       AISessionEventType = "new"
-	AISessionEventUpdated   AISessionEventType = "updated"
-	AISessionEventCompleted AISessionEventType = "completed"
+	// SessionEventNew indicates a newly discovered session.
+	SessionEventNew SessionEventType = "new"
+	// SessionEventUpdated indicates a session file has been modified.
+	SessionEventUpdated SessionEventType = "updated"
+	// SessionEventCompleted indicates a session file has been removed.
+	SessionEventCompleted SessionEventType = "completed"
 )
 
-// AISessionEvent represents a detected change in an AI session file.
-type AISessionEvent struct {
-	Type      AISessionEventType
-	Session   AISession
+// SessionEvent represents a detected change in an AI session file.
+type SessionEvent struct {
+	Type      SessionEventType
+	Session   Session
 	Timestamp time.Time
 }
 
@@ -29,8 +32,8 @@ type LogWatcher struct {
 	mu          sync.Mutex
 	projectPath string
 	interval    time.Duration
-	sessions    map[string]AISession // sessionID -> last known state
-	events      chan AISessionEvent
+	sessions    map[string]*Session // sessionID -> last known state
+	events      chan SessionEvent
 	cancel      context.CancelFunc
 	done        chan struct{}
 	started     bool // true after Watch() is called
@@ -47,15 +50,15 @@ func NewLogWatcher(projectPath string, interval time.Duration) *LogWatcher {
 	return &LogWatcher{
 		projectPath: projectPath,
 		interval:    interval,
-		sessions:    make(map[string]AISession),
-		events:      make(chan AISessionEvent, 32),
+		sessions:    make(map[string]*Session),
+		events:      make(chan SessionEvent, 32),
 		done:        make(chan struct{}),
 	}
 }
 
 // Watch starts polling session files and returns a channel of events.
 // The caller should call Stop to clean up resources.
-func (w *LogWatcher) Watch() <-chan AISessionEvent {
+func (w *LogWatcher) Watch() <-chan SessionEvent {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	w.mu.Lock()
@@ -139,20 +142,21 @@ func (w *LogWatcher) scanCodex() {
 // emitting events for new, updated, and completed sessions.
 // The completedFilter param restricts completed-event detection to sessions of that type;
 // an empty string means detect completions for all session types.
-func (w *LogWatcher) emitSessionChanges(current []AISession, completedFilter string) {
+func (w *LogWatcher) emitSessionChanges(current []Session, completedFilter string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	currentMap := make(map[string]AISession, len(current))
-	for _, session := range current {
+	currentMap := make(map[string]*Session, len(current))
+	for i := range current {
+		session := &current[i]
 		sessionID := session.SessionID
 		currentMap[sessionID] = session
 
 		prev, exists := w.sessions[sessionID]
 		if !exists {
-			w.sendEvent(AISessionEventNew, session)
+			w.sendEvent(SessionEventNew, session)
 		} else if session.FileModTime.After(prev.FileModTime) || session.FileSize != prev.FileSize {
-			w.sendEvent(AISessionEventUpdated, session)
+			w.sendEvent(SessionEventUpdated, session)
 		}
 	}
 
@@ -160,24 +164,25 @@ func (w *LogWatcher) emitSessionChanges(current []AISession, completedFilter str
 	for sessionID, prev := range w.sessions {
 		if _, exists := currentMap[sessionID]; !exists {
 			if completedFilter == "" || prev.Type == completedFilter {
-				w.sendEvent(AISessionEventCompleted, prev)
+				w.sendEvent(SessionEventCompleted, prev)
 				delete(w.sessions, sessionID)
 			}
 		}
 	}
 
 	for sessionID, session := range currentMap {
-		w.sessions[sessionID] = session
+		cp := *session
+		w.sessions[sessionID] = &cp
 	}
 }
 
 // sendEvent emits a session event, dropping it if the channel is full.
 // Must be called with w.mu held.
-func (w *LogWatcher) sendEvent(eventType AISessionEventType, session AISession) {
+func (w *LogWatcher) sendEvent(eventType SessionEventType, session *Session) {
 	select {
-	case w.events <- AISessionEvent{
+	case w.events <- SessionEvent{
 		Type:      eventType,
-		Session:   session,
+		Session:   *session,
 		Timestamp: time.Now(),
 	}:
 	default:
@@ -185,13 +190,13 @@ func (w *LogWatcher) sendEvent(eventType AISessionEventType, session AISession) 
 }
 
 // GetSessions returns a snapshot of currently tracked sessions.
-func (w *LogWatcher) GetSessions() []AISession {
+func (w *LogWatcher) GetSessions() []Session {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	result := make([]AISession, 0, len(w.sessions))
+	result := make([]Session, 0, len(w.sessions))
 	for _, session := range w.sessions {
-		result = append(result, session)
+		result = append(result, *session)
 	}
 	return result
 }

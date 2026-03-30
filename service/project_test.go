@@ -34,7 +34,7 @@ func initGitRepo(t *testing.T, path string) {
 
 func runGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
-	cmd := exec.CommandContext(context.Background(), "git", args...)
+	cmd := exec.CommandContext(context.Background(), "git", args...) //nolint:gosec // reason: test code
 	cmd.Dir = dir
 	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	out, err := cmd.CombinedOutput()
@@ -158,7 +158,7 @@ func TestAddProject_PathIsFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create temp file: %v", err)
 	}
-	file.Close()
+	_ = file.Close()
 
 	_, err = svc.AddProject("file-project", file.Name())
 	if err != ErrInvalidProjectPath {

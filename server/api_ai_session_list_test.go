@@ -39,7 +39,7 @@ func TestHandleAIListSessions_GET(t *testing.T) {
 	}
 
 	// Data should be an array (possibly empty).
-	var sessions []interface{}
+	var sessions []any
 	if err := json.Unmarshal(resp.Data, &sessions); err != nil {
 		t.Fatalf("expected data to be an array, got: %s", string(resp.Data))
 	}
@@ -98,7 +98,7 @@ func TestHandleAISessionSubroute_Detail_WithStore(t *testing.T) {
 	now := time.Now()
 
 	// Insert a session into the global service store, then retrieve it.
-	record := aiSessionService.Store().Upsert(ai.AISession{
+	record := aiSessionService.Store().Upsert(&ai.Session{
 		SessionID:             "test-sess",
 		Type:                  "claude",
 		FilePath:              "/tmp/test.jsonl",
@@ -121,8 +121,8 @@ func TestHandleAISessionSubroute_Detail_WithStore(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -146,8 +146,8 @@ func TestHandleAICleanupSessions_RemovesStale(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -172,7 +172,7 @@ func TestHandleAISession_Conversation_Success(t *testing.T) {
 	}
 
 	now := time.Now()
-	record := aiSessionService.Store().Upsert(ai.AISession{
+	record := aiSessionService.Store().Upsert(&ai.Session{
 		SessionID:             "conv-success",
 		Type:                  string(ai.AssistantTypeClaudeCode),
 		FilePath:              jsonlPath,
@@ -203,7 +203,7 @@ func TestHandleAISession_Conversation_Success(t *testing.T) {
 		t.Fatalf("expected success, got error")
 	}
 
-	var msgs []map[string]interface{}
+	var msgs []map[string]any
 	if err := json.Unmarshal(resp.Data, &msgs); err != nil {
 		t.Fatalf("expected array of messages, got: %s", string(resp.Data))
 	}
@@ -223,7 +223,7 @@ func TestHandleAISession_Refresh_Success(t *testing.T) {
 	}
 
 	now := time.Now()
-	record := aiSessionService.Store().Upsert(ai.AISession{
+	record := aiSessionService.Store().Upsert(&ai.Session{
 		SessionID:             "refresh-success",
 		Type:                  string(ai.AssistantTypeClaudeCode),
 		FilePath:              jsonlPath,

@@ -72,7 +72,7 @@ func TestFactoryNew_WithSession(t *testing.T) {
 	if err != nil {
 		t.Logf("New with session param failed (expected if zellij unavailable): %v", err)
 	} else {
-		defer slave.Close()
+		defer func() { _ = slave.Close() }()
 		t.Log("New with session param succeeded")
 	}
 }
@@ -84,7 +84,7 @@ func TestFactoryNew_DefaultSession(t *testing.T) {
 	if err != nil {
 		t.Logf("New with default session failed (expected if zellij unavailable): %v", err)
 	} else {
-		defer slave.Close()
+		defer func() { _ = slave.Close() }()
 		t.Log("New with default session succeeded")
 	}
 }

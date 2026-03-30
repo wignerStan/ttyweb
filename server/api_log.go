@@ -7,7 +7,7 @@ import (
 )
 
 // handleLog accepts client-side log entries and forwards them via log.Printf.
-func (server *Server) handleLog(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleLog(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
@@ -16,11 +16,11 @@ func (server *Server) handleLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Level   string                 `json:"level"`
-		Message string                 `json:"message"`
-		Data    map[string]interface{} `json:"data"`
-		UA      string                 `json:"ua"`
-		URL     string                 `json:"url"`
+		Level   string         `json:"level"`
+		Message string         `json:"message"`
+		Data    map[string]any `json:"data"`
+		UA      string         `json:"ua"`
+		URL     string         `json:"url"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid request body")

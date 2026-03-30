@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 
 	"ttyweb/ai"
 )
@@ -75,7 +76,7 @@ func (s *speechSession) sendError(msg string) {
 
 // handleSpeechWS handles WebSocket connections to /ws/speech.
 // It proxies audio between the browser and the Xunfei IAT STT service.
-func (server *Server) handleSpeechWS(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleSpeechWS(w http.ResponseWriter, r *http.Request) {
 	xunfeiCfg := ai.LoadXunfeiConfigFromEnv()
 
 	if !xunfeiCfg.IsConfigured() {
@@ -166,9 +167,17 @@ func (s *speechSession) run() {
 
 func (s *speechSession) buildAudioFrame(audio string) ([]byte, error) {
 	if s.seq == 1 {
-		return ai.BuildFirstFrame(s.xunfeiCfg, s.params, audio, s.seq)
+		frame, err := ai.BuildFirstFrame(s.xunfeiCfg, s.params, audio, s.seq)
+		if err != nil {
+			return nil, errors.Wrapf(err, "buildAudioFrame: first frame")
+		}
+		return frame, nil
 	}
-	return ai.BuildMiddleFrame(audio, s.seq)
+	frame, err := ai.BuildMiddleFrame(audio, s.seq)
+	if err != nil {
+		return nil, errors.Wrapf(err, "buildAudioFrame: middle frame")
+	}
+	return frame, nil
 }
 
 // handleStart connects to Xunfei and starts the result relay goroutine.

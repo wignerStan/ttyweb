@@ -15,7 +15,7 @@ import (
 func extractNoteID(t *testing.T, rec *httptest.ResponseRecorder) string {
 	t.Helper()
 	var resp struct {
-		Data map[string]interface{} `json:"data"`
+		Data map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
@@ -59,8 +59,8 @@ func TestHandleNotepad_POST(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -221,7 +221,7 @@ func TestHandleNotepad_GET_WithProjectFilter(t *testing.T) {
 	}
 
 	var listResp struct {
-		Data []map[string]interface{} `json:"data"`
+		Data []map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(listRec.Body).Decode(&listResp); err != nil {
 		t.Fatalf("failed to decode list response: %v", err)

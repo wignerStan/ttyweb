@@ -18,9 +18,15 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	ctx := context.Background()
 
 	const numWorktrees = 8
+	paths := stressCreateWorktrees(ctx, t, repo, repoLock, numWorktrees)
+	stressMixedOperations(ctx, t, sem, repo, numWorktrees, paths)
+	stressRemoveWorktrees(ctx, t, repo, repoLock, numWorktrees, paths)
+}
+
+func stressCreateWorktrees(ctx context.Context, t *testing.T, repo string, repoLock *RepoLock, numWorktrees int) []string {
+	t.Helper()
 	paths := make([]string, numWorktrees)
 
-	// Phase 1: Create all worktrees concurrently (serialized by repo lock).
 	var wg sync.WaitGroup
 	var createSuccess atomic.Int32
 
@@ -28,14 +34,14 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
-			unlock := repoLock.Lock(repo, ctx)
+			unlock := repoLock.Lock(ctx, repo)
 			if unlock == nil {
 				t.Errorf("CreateWorktree %d: repo lock cancelled", idx)
 				return
 			}
 			defer unlock()
 
-			branch := "stress-" + string(rune('A'+idx))
+			branch := "stress-" + string(rune('A'+idx)) //nolint:gosec // reason: test-only int→rune conversion, values are bounded
 			p, err := CreateWorktree(ctx, repo, branch, "main", true)
 			if err != nil {
 				t.Errorf("CreateWorktree %d: %v", idx, err)
@@ -47,14 +53,17 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	}
 	wg.Wait()
 
-	if got := createSuccess.Load(); got != numWorktrees {
+	if got := createSuccess.Load(); got != int32(numWorktrees) { //nolint:gosec // reason: test-only int→int32 conversion, numWorktrees is small
 		t.Fatalf("created %d/%d worktrees", got, numWorktrees)
 	}
 
-	// Phase 2: Mixed status + commit operations concurrently.
-	// Per-worktree mutexes prevent concurrent commits to the same worktree,
-	// which would race on git's index.lock.
-	var wtMu [numWorktrees]sync.Mutex
+	return paths
+}
+
+func stressMixedOperations(ctx context.Context, t *testing.T, sem *OperationSemaphore, repo string, numWorktrees int, paths []string) {
+	t.Helper()
+	var wg sync.WaitGroup
+	var wtMu [8]sync.Mutex
 	var opsSuccess atomic.Int64
 	const numOps = 50
 
@@ -108,9 +117,13 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	if got := opsSuccess.Load(); got < int64(numOps)-5 {
 		t.Errorf("only %d/%d operations succeeded", got, numOps)
 	}
+}
 
-	// Phase 3: Remove all worktrees concurrently (serialized by repo lock).
+func stressRemoveWorktrees(ctx context.Context, t *testing.T, repo string, repoLock *RepoLock, numWorktrees int, paths []string) {
+	t.Helper()
+	var wg sync.WaitGroup
 	var removeSuccess atomic.Int32
+
 	for i := 0; i < numWorktrees; i++ {
 		wg.Add(1)
 		go func(idx int) {
@@ -118,7 +131,7 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 			opCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
 
-			unlock := repoLock.Lock(repo, opCtx)
+			unlock := repoLock.Lock(opCtx, repo)
 			if unlock == nil {
 				t.Errorf("RemoveWorktree %d: repo lock cancelled", idx)
 				return
@@ -134,7 +147,7 @@ func TestStressConcurrentMixedOperations(t *testing.T) {
 	}
 	wg.Wait()
 
-	if got := removeSuccess.Load(); got != numWorktrees {
+	if got := removeSuccess.Load(); got != int32(numWorktrees) { //nolint:gosec // reason: test-only int→int32 conversion, numWorktrees is small
 		t.Errorf("removed %d/%d worktrees", got, numWorktrees)
 	}
 }

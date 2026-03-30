@@ -21,8 +21,8 @@ func TestHandleTasks_GET_Empty(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -38,7 +38,7 @@ func TestHandleTasks_GET_Empty(t *testing.T) {
 func TestHandleTasks_GET_WithPagination(t *testing.T) {
 	srv := newTestServer()
 	for i := 0; i < 5; i++ {
-		store.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "msg"})
+		store.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "msg"})
 	}
 
 	rec := httptest.NewRecorder()
@@ -50,8 +50,8 @@ func TestHandleTasks_GET_WithPagination(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -59,7 +59,7 @@ func TestHandleTasks_GET_WithPagination(t *testing.T) {
 	if resp.Data["total"] != float64(5) {
 		t.Fatalf("expected total 5, got %v", resp.Data["total"])
 	}
-	tasks := resp.Data["tasks"].([]interface{})
+	tasks := resp.Data["tasks"].([]any)
 	if len(tasks) != 2 {
 		t.Fatalf("expected 2 tasks, got %d", len(tasks))
 	}
@@ -144,9 +144,9 @@ func TestHandleTaskDetail_PostEvent_InvalidBody(t *testing.T) {
 func TestHandleTaskDetail_GetEventsByPane(t *testing.T) {
 	srv := newTestServer()
 	// Use a unique pane key to avoid interference from other tests.
-	store.AddTaskEvent(TaskEvent{PaneKey: "unique-pane-test", Event: "e1"})
-	store.AddTaskEvent(TaskEvent{PaneKey: "other-pane", Event: "e2"})
-	store.AddTaskEvent(TaskEvent{PaneKey: "unique-pane-test", Event: "e3"})
+	store.AddTaskEvent(&TaskEvent{PaneKey: "unique-pane-test", Event: "e1"})
+	store.AddTaskEvent(&TaskEvent{PaneKey: "other-pane", Event: "e2"})
+	store.AddTaskEvent(&TaskEvent{PaneKey: "unique-pane-test", Event: "e3"})
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tasks/events/unique-pane-test", nil)
@@ -194,7 +194,7 @@ func TestHandleTaskDetail_GetEvents_MethodNotAllowed(t *testing.T) {
 
 func TestHandleTaskDetail_CompleteTask(t *testing.T) {
 	srv := newTestServer()
-	te := store.AddTaskEvent(TaskEvent{PaneKey: "complete-test-pane", Event: "msg"})
+	te := store.AddTaskEvent(&TaskEvent{PaneKey: "complete-test-pane", Event: "msg"})
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, fmt.Sprintf("/api/tasks/%d/complete", te.ID), nil)

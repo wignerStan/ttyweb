@@ -241,11 +241,11 @@ func newMockMaster() *mockMaster {
 }
 
 func (mm *mockMaster) Read(buf []byte) (int, error) {
-	return mm.masterToGottyReader.Read(buf)
+	return mm.masterToGottyReader.Read(buf) //nolint:wrapcheck // test helper: io.PipeReader.Read
 }
 
 func (mm *mockMaster) Write(buf []byte) (int, error) {
-	return mm.gottyToMasterWriter.Write(buf)
+	return mm.gottyToMasterWriter.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
 func newMockSlave() *mockSlave {
@@ -256,14 +256,14 @@ func newMockSlave() *mockSlave {
 }
 
 func (ms *mockSlave) Read(buf []byte) (int, error) {
-	return ms.slaveToGottyReader.Read(buf)
+	return ms.slaveToGottyReader.Read(buf) //nolint:wrapcheck // test helper: io.PipeReader.Read
 }
 
 func (ms *mockSlave) Write(buf []byte) (int, error) {
-	return ms.gottyToSlaveWriter.Write(buf)
+	return ms.gottyToSlaveWriter.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
-func (ms *mockSlave) WindowTitleVariables() map[string]interface{} {
+func (*mockSlave) WindowTitleVariables() map[string]any {
 	return nil
 }
 
@@ -329,12 +329,12 @@ func newEOFReadMaster() *eofReadMaster {
 	return &eofReadMaster{writeTo: w}
 }
 
-func (m *eofReadMaster) Read(buf []byte) (int, error) {
+func (*eofReadMaster) Read(buf []byte) (int, error) {
 	return 0, io.EOF
 }
 
 func (m *eofReadMaster) Write(buf []byte) (int, error) {
-	return m.writeTo.Write(buf)
+	return m.writeTo.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
 // eofReadSlave is a mockSlave whose Read returns EOF immediately,
@@ -357,19 +357,19 @@ func newEOFReadSlave() *eofReadSlave {
 	return &eofReadSlave{writeTo: w}
 }
 
-func (s *eofReadSlave) Read(buf []byte) (int, error) {
+func (*eofReadSlave) Read(buf []byte) (int, error) {
 	return 0, io.EOF
 }
 
 func (s *eofReadSlave) Write(buf []byte) (int, error) {
-	return s.writeTo.Write(buf)
+	return s.writeTo.Write(buf) //nolint:wrapcheck // test helper: io.PipeWriter.Write
 }
 
-func (s *eofReadSlave) WindowTitleVariables() map[string]interface{} {
+func (*eofReadSlave) WindowTitleVariables() map[string]any {
 	return nil
 }
 
-func (s *eofReadSlave) ResizeTerminal(columns int, rows int) error {
+func (*eofReadSlave) ResizeTerminal(columns int, rows int) error {
 	return nil
 }
 
@@ -431,8 +431,8 @@ func TestRunSlaveReadError(t *testing.T) {
 	// Drain init messages in background so sendInitializeMessage completes
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	err = dt.Run(ctx)
@@ -670,8 +670,8 @@ func TestInitializationWithReconnectWriteError(t *testing.T) {
 	// Drain the pipe so the first 2 writes don't block
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	slave := newMockSlave()
@@ -704,8 +704,8 @@ func TestInitializationWithPreferencesWriteError(t *testing.T) {
 	// Drain the pipe so the first 2 writes don't block
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	slave := newMockSlave()
@@ -739,7 +739,7 @@ func TestInitializationBufferSizeWriteError(t *testing.T) {
 	// Drain the pipe so the first write doesn't block
 	go func() {
 		buf := make([]byte, 1024)
-		rawMaster.gottyToMasterReader.Read(buf)
+		_, _ = rawMaster.gottyToMasterReader.Read(buf)
 	}()
 
 	slave := newMockSlave()

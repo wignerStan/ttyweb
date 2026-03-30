@@ -137,8 +137,8 @@ func TestHandleListBackends_LocalBackend(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                     `json:"success"`
-		Data    []map[string]interface{} `json:"data"`
+		Success bool             `json:"success"`
+		Data    []map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -182,7 +182,7 @@ type mockFactory struct {
 }
 
 func (m *mockFactory) Name() string { return m.name }
-func (m *mockFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
+func (*mockFactory) New(params map[string][]string, headers map[string][]string) (backend.Slave, error) {
 	return nil, nil
 }
 

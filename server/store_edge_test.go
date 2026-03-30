@@ -144,9 +144,9 @@ func TestMemoryStore_ConcurrentReadsAndWrites(t *testing.T) {
 func TestMemoryStore_ListTasks_PageOne_LimitOne(t *testing.T) {
 	t.Parallel()
 	s := NewMemoryStore()
-	s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "first"})
-	s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "second"})
-	s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "third"})
+	s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "first"})
+	s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "second"})
+	s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "third"})
 
 	tasks, total := s.ListTasks(1, 1)
 	if total != 3 {
@@ -187,8 +187,8 @@ func TestMemoryStore_DeleteSnippet_Reindexes(t *testing.T) {
 func TestMemoryStore_AddTaskEvent_DefaultsID(t *testing.T) {
 	t.Parallel()
 	s := NewMemoryStore()
-	t1 := s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "e1"})
-	t2 := s.AddTaskEvent(TaskEvent{PaneKey: "p2", Event: "e2"})
+	t1 := s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "e1"})
+	t2 := s.AddTaskEvent(&TaskEvent{PaneKey: "p2", Event: "e2"})
 
 	if t2.ID <= t1.ID {
 		t.Fatalf("expected t2.ID > t1.ID, got %d <= %d", t2.ID, t1.ID)
@@ -199,7 +199,7 @@ func TestMemoryStore_CompleteTask_PreservesOtherFields(t *testing.T) {
 	t.Parallel()
 	s := NewMemoryStore()
 	ts := time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC)
-	te := s.AddTaskEvent(TaskEvent{
+	te := s.AddTaskEvent(&TaskEvent{
 		PaneKey:   "p1",
 		Event:     "msg",
 		Timestamp: ts,

@@ -66,10 +66,10 @@ func TestSetupHandlers_BasicAuth(t *testing.T) {
 
 	factory := &mockFactory{name: "test"}
 	srv, err := New(factory, &Options{
-		Path:             "/",
-		TitleFormat:      "{{ .server.Version }}",
-		EnableBasicAuth:  true,
-		Credential:       "user:pass",
+		Path:            "/",
+		TitleFormat:     "{{ .server.Version }}",
+		EnableBasicAuth: true,
+		Credential:      "user:pass",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

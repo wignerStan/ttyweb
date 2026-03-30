@@ -7,7 +7,7 @@ import (
 
 func TestWithCloseSignal(t *testing.T) {
 	t.Parallel()
-	var slave ZellijSlave
+	var slave Slave
 	opt := WithCloseSignal(9)
 	opt(&slave)
 	if slave.closeSignal != 9 {
@@ -17,7 +17,7 @@ func TestWithCloseSignal(t *testing.T) {
 
 func TestWithCloseTimeout(t *testing.T) {
 	t.Parallel()
-	var slave ZellijSlave
+	var slave Slave
 	opt := WithCloseTimeout(5 * time.Second)
 	opt(&slave)
 	if slave.closeTimeout != 5*time.Second {
@@ -27,7 +27,7 @@ func TestWithCloseTimeout(t *testing.T) {
 
 func TestCloseTimeoutC_Positive(t *testing.T) {
 	t.Parallel()
-	slave := &ZellijSlave{closeTimeout: 1 * time.Millisecond}
+	slave := &Slave{closeTimeout: 1 * time.Millisecond}
 	ch := slave.closeTimeoutC()
 	select {
 	case <-ch:
@@ -38,7 +38,7 @@ func TestCloseTimeoutC_Positive(t *testing.T) {
 
 func TestCloseTimeoutC_Negative(t *testing.T) {
 	t.Parallel()
-	slave := &ZellijSlave{closeTimeout: -1 * time.Second}
+	slave := &Slave{closeTimeout: -1 * time.Second}
 	ch := slave.closeTimeoutC()
 	select {
 	case <-ch:
@@ -87,7 +87,7 @@ func TestSlave_WindowTitleVariables(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	vars := slave.WindowTitleVariables()
 	if vars["command"] != "zellij" {
@@ -108,7 +108,7 @@ func TestSlave_WindowTitleVariables_EmptySession(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	vars := slave.WindowTitleVariables()
 	if vars["command"] != "zellij" {
@@ -126,7 +126,7 @@ func TestSlave_ResizeTerminal(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	err = slave.ResizeTerminal(80, 24)
 	if err != nil {
@@ -141,7 +141,7 @@ func TestSlave_ReadWrite(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: could not create slave: %v", err)
 	}
-	defer slave.Close()
+	defer func() { _ = slave.Close() }()
 
 	// Write some data to the PTY
 	n, err := slave.Write([]byte("hello"))
@@ -171,7 +171,7 @@ func TestSlave_ReadWrite(t *testing.T) {
 func TestSlave_Close(t *testing.T) {
 	requireZellij(t)
 
-	slave, err := NewZellijSlave("ttyweb-cls-" + randomHex(4),
+	slave, err := NewZellijSlave("ttyweb-cls-"+randomHex(4),
 		WithCloseTimeout(1*time.Second),
 	)
 	if err != nil {

@@ -272,7 +272,7 @@ func TestMemoryStore_DeleteRole_NotFound(t *testing.T) {
 func TestMemoryStore_ListTasks_DefaultPagination(t *testing.T) {
 	s := NewMemoryStore()
 	for i := 0; i < 5; i++ {
-		s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "msg"})
+		s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "msg"})
 	}
 	tasks, total := s.ListTasks(0, 0)
 	if total != 5 {
@@ -287,7 +287,7 @@ func TestMemoryStore_ListTasks_DefaultPagination(t *testing.T) {
 func TestMemoryStore_ListTasks_Pagination(t *testing.T) {
 	s := NewMemoryStore()
 	for i := 0; i < 10; i++ {
-		s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "msg"})
+		s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "msg"})
 	}
 	tasks, total := s.ListTasks(2, 3)
 	if total != 10 {
@@ -312,7 +312,7 @@ func TestMemoryStore_ListTasks_PageBeyondRange(t *testing.T) {
 
 func TestMemoryStore_AddTaskEvent_SetsTimestamp(t *testing.T) {
 	s := NewMemoryStore()
-	te := s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "msg"})
+	te := s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "msg"})
 	if te.ID != 1 {
 		t.Fatalf("expected ID 1, got %d", te.ID)
 	}
@@ -324,7 +324,7 @@ func TestMemoryStore_AddTaskEvent_SetsTimestamp(t *testing.T) {
 func TestMemoryStore_AddTaskEvent_PreservesTimestamp(t *testing.T) {
 	s := NewMemoryStore()
 	ts := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	te := s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "msg", Timestamp: ts})
+	te := s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "msg", Timestamp: ts})
 	if !te.Timestamp.Equal(ts) {
 		t.Fatalf("expected timestamp %v, got %v", ts, te.Timestamp)
 	}
@@ -332,7 +332,7 @@ func TestMemoryStore_AddTaskEvent_PreservesTimestamp(t *testing.T) {
 
 func TestMemoryStore_CompleteTask(t *testing.T) {
 	s := NewMemoryStore()
-	te := s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "msg"})
+	te := s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "msg"})
 	err := s.CompleteTask(te.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -353,9 +353,9 @@ func TestMemoryStore_CompleteTask_NotFound(t *testing.T) {
 
 func TestMemoryStore_GetTaskEventsByPane(t *testing.T) {
 	s := NewMemoryStore()
-	s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "e1"})
-	s.AddTaskEvent(TaskEvent{PaneKey: "p2", Event: "e2"})
-	s.AddTaskEvent(TaskEvent{PaneKey: "p1", Event: "e3"})
+	s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "e1"})
+	s.AddTaskEvent(&TaskEvent{PaneKey: "p2", Event: "e2"})
+	s.AddTaskEvent(&TaskEvent{PaneKey: "p1", Event: "e3"})
 	events := s.GetTaskEventsByPane("p1")
 	if len(events) != 2 {
 		t.Fatalf("expected 2 events for p1, got %d", len(events))

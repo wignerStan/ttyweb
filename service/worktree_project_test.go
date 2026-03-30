@@ -32,7 +32,7 @@ func initTestGitRepo(t *testing.T, path string) {
 
 func runTestGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
-	cmd := exec.CommandContext(context.Background(), "git", args...)
+	cmd := exec.CommandContext(context.Background(), "git", args...) //nolint:gosec // reason: test code
 	cmd.Dir = dir
 	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	out, err := cmd.CombinedOutput()
@@ -232,7 +232,7 @@ func TestWithStatus(t *testing.T) {
 		IsMain: true, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 
-	status := &worktree.WorktreeStatus{
+	status := &worktree.Status{
 		Ahead: 2, Behind: 1, Modified: 3,
 		Staged: 4, Untracked: 5, Conflicts: 1,
 	}

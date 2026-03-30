@@ -18,7 +18,7 @@ func TestTitleVariables(t *testing.T) {
 	srv := newTestServer()
 
 	order := []string{"server", "client"}
-	varUnits := map[string]map[string]interface{}{
+	varUnits := map[string]map[string]any{
 		"server": {"host": "localhost", "port": 8080},
 		"client": {"ip": "127.0.0.1"},
 	}
@@ -48,7 +48,7 @@ func TestTitleVariables_Override(t *testing.T) {
 	srv := newTestServer()
 
 	order := []string{"a", "b"}
-	varUnits := map[string]map[string]interface{}{
+	varUnits := map[string]map[string]any{
 		"a": {"key": "value-a"},
 		"b": {"key": "value-b"},
 	}
@@ -70,7 +70,7 @@ func TestTitleVariables_MissingKey(t *testing.T) {
 
 	srv := newTestServer()
 	order := []string{"missing"}
-	varUnits := map[string]map[string]interface{}{
+	varUnits := map[string]map[string]any{
 		"other": {},
 	}
 	srv.titleVariables(order, varUnits)

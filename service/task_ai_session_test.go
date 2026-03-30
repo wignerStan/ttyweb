@@ -48,7 +48,7 @@ func TestRequireFields_PanicsOnOddArgs(t *testing.T) {
 	}()
 
 	// Calling with odd args triggers a panic (tested via recover above).
-	//nolint:staticcheck
+	//nolint:staticcheck // intentionally triggering panic with odd args for recovery test
 	_ = requireFields("only_label")
 }
 

@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// AISession represents a detected AI assistant session.
-type AISession struct {
+// Session represents a detected AI assistant session.
+type Session struct {
 	SessionID             string     `json:"sessionId"`
 	Type                  string     `json:"type"`
 	ProjectPath           string     `json:"projectPath,omitempty"`
@@ -97,8 +97,8 @@ func ScanClaudeProjects() ([]string, error) {
 }
 
 // ScanClaudeSessions scans JSONL session files in ~/.claude/projects/<encoded-path>/.
-// Returns parsed AISession metadata for each session file found.
-func ScanClaudeSessions(projectPath string) ([]AISession, error) {
+// Returns parsed Session metadata for each session file found.
+func ScanClaudeSessions(projectPath string) ([]Session, error) {
 	projectsDir, err := claudeProjectsDir()
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func ScanClaudeSessions(projectPath string) ([]AISession, error) {
 		return nil, fmt.Errorf("failed to read session directory %q: %w", sessionDir, err)
 	}
 
-	sessions := make([]AISession, 0, len(entries))
+	sessions := make([]Session, 0, len(entries))
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -133,7 +133,7 @@ func ScanClaudeSessions(projectPath string) ([]AISession, error) {
 		}
 
 		sessionID := strings.TrimSuffix(name, ".jsonl")
-		session := AISession{
+		session := Session{
 			SessionID:   sessionID,
 			Type:        string(AssistantTypeClaudeCode),
 			ProjectPath: projectPath,
@@ -152,8 +152,8 @@ func ScanClaudeSessions(projectPath string) ([]AISession, error) {
 }
 
 // ScanCodexSessions scans session files under ~/.codex/sessions/<year>/<month>/<day>/.
-// Returns parsed AISession metadata for each rollout file found.
-func ScanCodexSessions() ([]AISession, error) {
+// Returns parsed Session metadata for each rollout file found.
+func ScanCodexSessions() ([]Session, error) {
 	sessionDir, err := codexSessionsDir()
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func ScanCodexSessions() ([]AISession, error) {
 		return nil, fmt.Errorf("failed to read codex session directory %q: %w", todayDir, err)
 	}
 
-	sessions := make([]AISession, 0, len(todayEntries))
+	sessions := make([]Session, 0, len(todayEntries))
 	for _, entry := range todayEntries {
 		if entry.IsDir() {
 			continue
@@ -192,7 +192,7 @@ func ScanCodexSessions() ([]AISession, error) {
 			continue
 		}
 
-		session := AISession{
+		session := Session{
 			SessionID:   sessionID,
 			Type:        string(AssistantTypeCodex),
 			FilePath:    filePath,

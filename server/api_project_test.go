@@ -154,8 +154,8 @@ func TestHandleProjects_POST_ValidProject(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool                   `json:"success"`
-		Data    map[string]interface{} `json:"data"`
+		Success bool           `json:"success"`
+		Data    map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -252,7 +252,7 @@ func TestHandleProjectDetail_GET_ValidProject(t *testing.T) {
 	srv.handleProjects(createRec, createReq)
 
 	var createResp struct {
-		Data map[string]interface{} `json:"data"`
+		Data map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(createRec.Body).Decode(&createResp); err != nil {
 		t.Fatalf("failed to decode create response: %v", err)
@@ -283,7 +283,7 @@ func TestHandleProjectDetail_PUT_ValidProject(t *testing.T) {
 	srv.handleProjects(createRec, createReq)
 
 	var createResp struct {
-		Data map[string]interface{} `json:"data"`
+		Data map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(createRec.Body).Decode(&createResp); err != nil {
 		t.Fatalf("failed to decode create response: %v", err)
@@ -315,7 +315,7 @@ func TestHandleProjectDetail_DELETE_ValidProject(t *testing.T) {
 	srv.handleProjects(createRec, createReq)
 
 	var createResp struct {
-		Data map[string]interface{} `json:"data"`
+		Data map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(createRec.Body).Decode(&createResp); err != nil {
 		t.Fatalf("failed to decode create response: %v", err)
@@ -354,7 +354,7 @@ func TestHandleProjectDetail_SyncRoute(t *testing.T) {
 	srv.handleProjects(createRec, createReq)
 
 	var createResp struct {
-		Data map[string]interface{} `json:"data"`
+		Data map[string]any `json:"data"`
 	}
 	if err := json.NewDecoder(createRec.Body).Decode(&createResp); err != nil {
 		t.Fatalf("failed to decode create response: %v", err)

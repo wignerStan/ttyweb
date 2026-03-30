@@ -6,7 +6,7 @@ import (
 
 // handleConfig returns the opencode configuration.
 // This is a stub that returns null configs since opencode is not integrated.
-func (server *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodGet {
@@ -14,7 +14,7 @@ func (server *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAPISuccess(w, map[string]interface{}{
+	writeAPISuccess(w, map[string]any{
 		"opencode":       nil,
 		"oh_my_opencode": nil,
 	})

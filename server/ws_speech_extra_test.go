@@ -331,18 +331,20 @@ func TestCloseBoth_WithXunfeiConn(t *testing.T) {
 	defer srv2.Close()
 
 	wsURL1 := "ws" + strings.TrimPrefix(srv1.URL, "http")
-	conn1, _, err := websocket.DefaultDialer.Dial(wsURL1, nil)
+	conn1, wsResp1, err := websocket.DefaultDialer.Dial(wsURL1, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() { _ = conn1.Close() }()
+	defer func() { _ = wsResp1.Body.Close() }()
 
 	wsURL2 := "ws" + strings.TrimPrefix(srv2.URL, "http")
-	conn2, _, err := websocket.DefaultDialer.Dial(wsURL2, nil)
+	conn2, wsResp2, err := websocket.DefaultDialer.Dial(wsURL2, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() { _ = conn2.Close() }()
+	defer func() { _ = wsResp2.Body.Close() }()
 
 	sess := &speechSession{
 		clientConn: conn1,
@@ -384,11 +386,12 @@ func TestCloseBoth_Idempotent(t *testing.T) {
 	defer srv.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	conn, wsResp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() { _ = conn.Close() }()
+	defer func() { _ = wsResp.Body.Close() }()
 
 	sess := &speechSession{
 		clientConn: conn,

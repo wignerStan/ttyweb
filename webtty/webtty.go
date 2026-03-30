@@ -74,9 +74,9 @@ func (wt *WebTTY) Run(ctx context.Context) error {
 		errs <- func() error {
 			buffer := make([]byte, wt.bufferSize)
 			for {
-				//base64 length
+				// base64 length
 				effectiveBufferSize := wt.bufferSize - 1
-				//max raw data length
+				// max raw data length
 				maxChunkSize := effectiveBufferSize / 4 * 3
 
 				n, err := wt.slave.Read(buffer[:maxChunkSize])
@@ -177,70 +177,82 @@ func (wt *WebTTY) handleMasterReadEvent(data []byte) error {
 
 	switch data[0] {
 	case Input:
-		if !wt.permitWrite {
-			return nil
-		}
-
-		if len(data) <= 1 {
-			return nil
-		}
-
-		var decodedBuffer = make([]byte, len(data))
-		n, err := wt.decoder.Decode(decodedBuffer, data[1:])
-		if err != nil {
-			return errors.Wrapf(err, "failed to decode received data")
-		}
-
-		_, err = wt.slave.Write(decodedBuffer[:n])
-		if err != nil {
-			return errors.Wrapf(err, "failed to write received data to slave")
-		}
-
+		return wt.handleInput(data)
 	case Ping:
-		err := wt.masterWrite([]byte{Pong})
-		if err != nil {
-			return errors.Wrapf(err, "failed to return Pong message to master")
-		}
-
+		return wt.handlePing()
 	case SetEncoding:
-		switch string(data[1:]) {
-		case "base64":
-			wt.decoder = base64.StdEncoding
-		case "null":
-			wt.decoder = NullCodec{}
-		}
-
+		wt.handleSetEncoding(data)
+		return nil
 	case ResizeTerminal:
-		if wt.columns != 0 && wt.rows != 0 {
-			break
-		}
-
-		if len(data) <= 1 {
-			return errors.New("received malformed remote command for terminal resize: empty payload")
-		}
-
-		var args argResizeTerminal
-		err := json.Unmarshal(data[1:], &args)
-		if err != nil {
-			return errors.Wrapf(err, "received malformed data for terminal resize")
-		}
-		rows := wt.rows
-		if rows == 0 {
-			rows = int(args.Rows)
-		}
-
-		columns := wt.columns
-		if columns == 0 {
-			columns = int(args.Columns)
-		}
-
-		if err := wt.slave.ResizeTerminal(columns, rows); err != nil {
-			return errors.Wrapf(err, "failed to resize terminal")
-		}
+		return wt.handleResizeTerminal(data)
 	default:
 		return errors.Errorf("unknown message type `%c`", data[0])
 	}
+}
 
+// handleInput decodes and forwards user input to the slave.
+func (wt *WebTTY) handleInput(data []byte) error {
+	if !wt.permitWrite || len(data) <= 1 {
+		return nil
+	}
+
+	decodedBuffer := make([]byte, len(data))
+	n, err := wt.decoder.Decode(decodedBuffer, data[1:])
+	if err != nil {
+		return errors.Wrapf(err, "failed to decode received data")
+	}
+
+	if _, err := wt.slave.Write(decodedBuffer[:n]); err != nil {
+		return errors.Wrapf(err, "failed to write received data to slave")
+	}
+	return nil
+}
+
+// handlePing responds with a Pong message.
+func (wt *WebTTY) handlePing() error {
+	if err := wt.masterWrite([]byte{Pong}); err != nil {
+		return errors.Wrapf(err, "failed to return Pong message to master")
+	}
+	return nil
+}
+
+// handleSetEncoding updates the decoder based on the encoding name in data[1:].
+func (wt *WebTTY) handleSetEncoding(data []byte) {
+	switch string(data[1:]) {
+	case "base64":
+		wt.decoder = base64.StdEncoding
+	case "null":
+		wt.decoder = NullCodec{}
+	}
+}
+
+// handleResizeTerminal parses resize arguments and resizes the slave terminal.
+func (wt *WebTTY) handleResizeTerminal(data []byte) error {
+	if wt.columns != 0 && wt.rows != 0 {
+		return nil
+	}
+
+	if len(data) <= 1 {
+		return errors.New("received malformed remote command for terminal resize: empty payload")
+	}
+
+	var args argResizeTerminal
+	if err := json.Unmarshal(data[1:], &args); err != nil {
+		return errors.Wrapf(err, "received malformed data for terminal resize")
+	}
+
+	rows := wt.rows
+	if rows == 0 {
+		rows = int(args.Rows)
+	}
+	columns := wt.columns
+	if columns == 0 {
+		columns = int(args.Columns)
+	}
+
+	if err := wt.slave.ResizeTerminal(columns, rows); err != nil {
+		return errors.Wrapf(err, "failed to resize terminal")
+	}
 	return nil
 }
 

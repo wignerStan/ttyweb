@@ -2,6 +2,7 @@ version: "2"
 
 linters:
   enable:
+    # --- Existing ---
     - errcheck
     - govet
     - staticcheck
@@ -17,6 +18,27 @@ linters:
     - depguard
     - errname
     - nilerr
+
+    # --- New: Security ---
+    - gosec
+
+    # --- New: Complexity ---
+    - gocyclo
+    - gocognit
+    - nestif
+
+    # --- New: Style & Idioms ---
+    - gocritic
+    - revive
+
+    # --- New: Meta Control ---
+    - nolintlint
+
+    # --- New: Correctness ---
+    - wrapcheck
+    - rowserrcheck
+    - sqlclosecheck
+
   settings:
     depguard:
       rules:
@@ -24,6 +46,97 @@ linters:
           deny:
             - pkg: io/ioutil
               desc: deprecated since Go 1.16, use io and os packages instead
+
+    gosec:
+      excludes:
+        # Errors not checked — tracked by errcheck instead
+        - G104
+        - G307
+        # File/dir permissions — test fixtures use permissive perms intentionally
+        - G301
+        - G302
+        - G306
+        # Log injection via taint analysis — standard HTTP access/connection logging
+        - G706
+        # SSRF via taint analysis — butler proxy intentionally forwards requests
+        - G704
+        # Goroutine uses context.Background — graceful shutdown must outlive request ctx
+        - G118
+        # Command injection via taint analysis — binary names hardcoded, args validated
+        - G702
+        # Path traversal via taint analysis — paths use random/validated names, not user input
+        - G703
+
+    gocyclo:
+      min-complexity: 15
+
+    gocognit:
+      min-complexity: 30
+
+    nestif:
+      min-complexity: 4
+
+    gocritic:
+      enabled-checks:
+        - deferInLoop
+        - hugeParam
+        - rangeValCopy
+        - sprintfQuotedString
+        - emptyStringTest
+        - typeAssertChain
+        - commentedOutCode
+        - nilValReturn
+        - weakCond
+        - initClause
+        - importShadow
+
+    revive:
+      rules:
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: error-return
+        - name: error-strings
+        - name: exported
+          arguments:
+            - "checkPrivateReceivers"
+        - name: increment-decrement
+        - name: indent-error-flow
+          arguments:
+            - "preserveScope"
+        - name: range
+        - name: time-naming
+        - name: var-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: use-any
+        - name: unused-receiver
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    wrapcheck:
+      ignoreSigs:
+        - "fmt.Errorf"
+        - "errors.New"
+        - "errors.Join"
+        - "errors.Errorf"
+        - "errors.Wrap"
+        - "errors.Wrapf"
+        - "errors.WithMessage"
+        - "errors.WithStack"
+        - "github.com/pkg/errors.Wrapf"
+        - "github.com/pkg/errors.Wrap"
+        - "github.com/pkg/errors.Errorf"
+        - "github.com/pkg/errors.New"
+        - "github.com/pkg/errors.WithMessage"
+        - "github.com/pkg/errors.WithStack"
+        - ".Error$"
+        - "gorm.io/gorm.ErrRecordNotFound"
+        - "github.com/gorilla/websocket\\."
+        - "github.com/go-git/go-git/v5\\."
+      ignorePackageGlobs:
+        - "*/**/*_test.go"
 
 formatters:
   enable:
@@ -40,7 +153,14 @@ severity:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-rules:
+    - linters: [gocritic]
+      text: "mapKeyAny"
+      path: server/api_
+    - linters: [revive]
+      text: "exported"
+      path: _test\.go
 
 run:
-  timeout: 3m
+  timeout: 5m
   tests: true

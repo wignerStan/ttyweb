@@ -20,7 +20,7 @@ func (server *Server) handleAuthCheck(w http.ResponseWriter, r *http.Request) {
 
 	// If basic auth is not enabled, always succeed.
 	if !server.options.EnableBasicAuth {
-		writeAPISuccess(w, map[string]interface{}{
+		writeAPISuccess(w, map[string]any{
 			"authenticated": true,
 			"auth_enabled":  false,
 		})
@@ -47,7 +47,7 @@ func (server *Server) handleAuthCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAPISuccess(w, map[string]interface{}{
+	writeAPISuccess(w, map[string]any{
 		"authenticated": true,
 		"auth_enabled":  true,
 	})

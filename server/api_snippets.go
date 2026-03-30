@@ -8,7 +8,7 @@ import (
 )
 
 // handleSnippets handles GET (list) and POST (create) for snippets.
-func (server *Server) handleSnippets(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleSnippets(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {

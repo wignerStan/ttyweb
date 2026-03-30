@@ -33,7 +33,7 @@ func initTestRepo(t *testing.T) string {
 func mustRun(t *testing.T, dir, name string, args ...string) {
 	t.Helper()
 	// Prepend "git" since all calls pass git subcommands.
-	cmd := exec.CommandContext(context.Background(), "git", append([]string{name}, args...)...)
+	cmd := exec.CommandContext(context.Background(), "git", append([]string{name}, args...)...) //nolint:gosec // reason: test code
 	cmd.Dir = dir
 	cmd.Env = FilterGitEnv(os.Environ())
 	out, err := cmd.CombinedOutput()
@@ -431,7 +431,7 @@ func TestGetWorktreeStatus_CleanRepo(t *testing.T) {
 }
 
 func TestCommitWorktree_EmptyPath(t *testing.T) {
-	err := CommitWorktree(context.Background(),"", "some message")
+	err := CommitWorktree(context.Background(), "", "some message")
 	if err == nil {
 		t.Fatal("expected error for empty path")
 	}
@@ -442,7 +442,7 @@ func TestCommitWorktree_EmptyPath(t *testing.T) {
 
 func TestCommitWorktree_EmptyMessage(t *testing.T) {
 	dir := t.TempDir()
-	err := CommitWorktree(context.Background(),dir, "")
+	err := CommitWorktree(context.Background(), dir, "")
 	if err == nil {
 		t.Fatal("expected error for empty message")
 	}
@@ -458,7 +458,7 @@ func TestCommitWorktree_Success(t *testing.T) {
 	mustWriteFile(t, filepath.Join(repo, "success.txt"), "data\n")
 	mustRun(t, repo, "add", "success.txt")
 
-	err := CommitWorktree(context.Background(),repo, "add success file")
+	err := CommitWorktree(context.Background(), repo, "add success file")
 	if err != nil {
 		t.Fatalf("CommitWorktree failed: %v", err)
 	}
@@ -476,7 +476,7 @@ func TestCommitWorktree_Success(t *testing.T) {
 func TestCommitWorktree_NothingToCommit(t *testing.T) {
 	repo := initTestRepo(t)
 
-	err := CommitWorktree(context.Background(),repo, "should fail - clean tree")
+	err := CommitWorktree(context.Background(), repo, "should fail - clean tree")
 	if err == nil {
 		t.Fatal("expected error when committing clean tree")
 	}

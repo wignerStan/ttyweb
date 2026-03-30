@@ -102,7 +102,7 @@ func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request)
 	case http.MethodGet:
 		sm := server.sessionManager()
 		if !sm.IsAvailable() {
-			writeAPISuccess(w, []interface{}{})
+			writeAPISuccess(w, []any{})
 			return
 		}
 		data, err := sm.ListSessions()
@@ -193,7 +193,7 @@ func (server *Server) handleListBackends(w http.ResponseWriter, r *http.Request)
 	sm := server.sessionManager()
 	current := server.factory.Name()
 
-	backends := []map[string]interface{}{
+	backends := []map[string]any{
 		{"name": "local", "available": true, "active": current == "local command"},
 		{"name": "tmux", "available": sm.IsAvailable() && current == "tmux", "active": current == "tmux"},
 		{"name": "zellij", "available": sm.IsAvailable() && current == "zellij", "active": current == "zellij"},
@@ -221,7 +221,7 @@ func (server *Server) handleListBackends(w http.ResponseWriter, r *http.Request)
 	writeAPISuccess(w, backends)
 }
 
-func writeAPISuccess(w http.ResponseWriter, data interface{}) {
+func writeAPISuccess(w http.ResponseWriter, data any) {
 	raw, err := json.Marshal(data)
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "failed to marshal response")

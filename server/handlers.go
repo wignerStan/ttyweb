@@ -95,23 +95,63 @@ func (server *Server) generateHandleWS(ctx context.Context, cancel context.Cance
 }
 
 func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, headers map[string][]string) error {
+	init, err := server.authenticateWS(conn)
+	if err != nil {
+		return err
+	}
+
+	params, err := server.parseInitArguments(init)
+	if err != nil {
+		return err
+	}
+
+	slave, err := server.factory.New(params, headers)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create backend")
+	}
+	defer func() { _ = slave.Close() }()
+
+	titleBuf, err := server.renderTitle(conn, slave)
+	if err != nil {
+		return err
+	}
+
+	opts := server.webttyOptions(titleBuf.Bytes())
+	tty, err := webtty.New(&wsWrapper{conn}, slave, opts...)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create webtty")
+	}
+
+	err = tty.Run(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "failed to run webtty")
+	}
+	return nil
+}
+
+// authenticateWS reads and validates the initial WebSocket message.
+func (server *Server) authenticateWS(conn *websocket.Conn) (*InitMessage, error) {
 	typ, initLine, err := conn.ReadMessage()
 	if err != nil {
-		return errors.Wrapf(err, "failed to authenticate websocket connection")
+		return nil, errors.Wrapf(err, "failed to authenticate websocket connection")
 	}
 	if typ != websocket.TextMessage {
-		return errors.New("failed to authenticate websocket connection: invalid message type")
+		return nil, errors.New("failed to authenticate websocket connection: invalid message type")
 	}
 
 	var init InitMessage
-	err = json.Unmarshal(initLine, &init)
-	if err != nil {
-		return errors.Wrapf(err, "failed to authenticate websocket connection")
+	if err := json.Unmarshal(initLine, &init); err != nil {
+		return nil, errors.Wrapf(err, "failed to authenticate websocket connection")
 	}
 	if subtle.ConstantTimeCompare([]byte(init.AuthToken), []byte(server.options.Credential)) != 1 {
-		return errors.New("failed to authenticate websocket connection")
+		return nil, errors.New("failed to authenticate websocket connection")
 	}
 
+	return &init, nil
+}
+
+// parseInitArguments parses and validates the init message's query arguments.
+func (server *Server) parseInitArguments(init *InitMessage) (url.Values, error) {
 	queryPath := "?"
 	if server.options.PermitArguments && init.Arguments != "" {
 		queryPath = init.Arguments
@@ -119,32 +159,29 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 
 	query, err := url.Parse(queryPath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to parse arguments")
+		return nil, errors.Wrapf(err, "failed to parse arguments")
 	}
 	params := query.Query()
 
-	// Validate user-supplied parameters before passing to backend factory.
 	if session := params.Get("session"); session != "" {
 		if err := validate.SessionName(session); err != nil {
-			return errors.Wrapf(err, "invalid session parameter")
+			return nil, errors.Wrapf(err, "invalid session parameter")
 		}
 	}
 	if pane := params.Get("pane"); pane != "" {
 		if err := validate.PaneID(pane); err != nil {
-			return errors.Wrapf(err, "invalid pane parameter")
+			return nil, errors.Wrapf(err, "invalid pane parameter")
 		}
 	}
 
-	var slave Slave
-	slave, err = server.factory.New(params, headers)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create backend")
-	}
-	defer func() { _ = slave.Close() }()
+	return params, nil
+}
 
+// renderTitle executes the title template with server, master, and slave variables.
+func (server *Server) renderTitle(conn *websocket.Conn, slave Slave) (*bytes.Buffer, error) {
 	titleVars := server.titleVariables(
 		[]string{"server", "master", "slave"},
-		map[string]map[string]interface{}{
+		map[string]map[string]any{
 			"server": server.options.TitleVariables,
 			"master": {
 				"remote_addr": conn.RemoteAddr(),
@@ -154,14 +191,15 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	)
 
 	titleBuf := new(bytes.Buffer)
-	err = server.titleTemplate.Execute(titleBuf, titleVars)
-	if err != nil {
-		return errors.Wrapf(err, "failed to fill window title template")
+	if err := server.titleTemplate.Execute(titleBuf, titleVars); err != nil {
+		return nil, errors.Wrapf(err, "failed to fill window title template")
 	}
+	return titleBuf, nil
+}
 
-	opts := []webtty.Option{
-		webtty.WithWindowTitle(titleBuf.Bytes()),
-	}
+// webttyOptions builds the webtty.Option slice from server configuration.
+func (server *Server) webttyOptions(title []byte) []webtty.Option {
+	opts := []webtty.Option{webtty.WithWindowTitle(title)}
 	if server.options.PermitWrite {
 		opts = append(opts, webtty.WithPermitWrite())
 	}
@@ -174,25 +212,18 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	if server.options.Height > 0 {
 		opts = append(opts, webtty.WithFixedRows(server.options.Height))
 	}
-	tty, err := webtty.New(&wsWrapper{conn}, slave, opts...)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create webtty")
-	}
-
-	err = tty.Run(ctx)
-
-	return err
+	return opts
 }
 
-func (server *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write(indexHTML)
 }
 
 // titleVariables merges maps in a specified order.
 // varUnits are name-keyed maps, whose names will be iterated using order.
-func (server *Server) titleVariables(order []string, varUnits map[string]map[string]interface{}) map[string]interface{} {
-	titleVars := map[string]interface{}{}
+func (*Server) titleVariables(order []string, varUnits map[string]map[string]any) map[string]any {
+	titleVars := map[string]any{}
 
 	for _, name := range order {
 		vars, ok := varUnits[name]

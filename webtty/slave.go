@@ -10,7 +10,7 @@ type Slave interface {
 
 	// WindowTitleVariables returns any values that can be used to fill out
 	// the title of a terminal.
-	WindowTitleVariables() map[string]interface{}
+	WindowTitleVariables() map[string]any
 
 	// ResizeTerminal sets a new size of the terminal.
 	ResizeTerminal(columns int, rows int) error

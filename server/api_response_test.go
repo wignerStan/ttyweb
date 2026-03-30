@@ -26,7 +26,7 @@ func compareGolden(t *testing.T, got []byte) {
 		_ = os.MkdirAll(filepath.Dir(golden), 0o755)
 		_ = os.WriteFile(golden, got, 0o644)
 	}
-	want, err := os.ReadFile(golden)
+	want, err := os.ReadFile(golden) //nolint:gosec // reason: test code, golden file path is deterministic
 	if err != nil {
 		t.Fatalf("read golden file: %v", err)
 	}

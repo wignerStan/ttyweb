@@ -8,7 +8,7 @@ import (
 )
 
 // handleGroups handles GET (list) and POST (create) for session groups.
-func (server *Server) handleGroups(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleGroups(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.Method {

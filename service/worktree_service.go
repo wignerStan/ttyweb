@@ -28,19 +28,19 @@ type WtProject struct {
 
 // WorktreeRecord represents a persisted worktree.
 type WorktreeRecord struct {
-	ID                string `json:"id"`
-	ProjectID         string `json:"projectId"`
-	BranchName        string `json:"branchName"`
-	Path              string `json:"path"`
-	IsMain            bool   `json:"isMain"`
-	HeadCommit        string `json:"headCommit,omitempty"`
-	HeadCommitMessage string `json:"headCommitMessage,omitempty"`
-	StatusAhead       int    `json:"statusAhead"`
-	StatusBehind      int    `json:"statusBehind"`
-	StatusModified    int    `json:"statusModified"`
-	StatusStaged      int    `json:"statusStaged"`
-	StatusUntracked   int    `json:"statusUntracked"`
-	StatusConflicts   int    `json:"statusConflicts"`
+	ID                string    `json:"id"`
+	ProjectID         string    `json:"projectId"`
+	BranchName        string    `json:"branchName"`
+	Path              string    `json:"path"`
+	IsMain            bool      `json:"isMain"`
+	HeadCommit        string    `json:"headCommit,omitempty"`
+	HeadCommitMessage string    `json:"headCommitMessage,omitempty"`
+	StatusAhead       int       `json:"statusAhead"`
+	StatusBehind      int       `json:"statusBehind"`
+	StatusModified    int       `json:"statusModified"`
+	StatusStaged      int       `json:"statusStaged"`
+	StatusUntracked   int       `json:"statusUntracked"`
+	StatusConflicts   int       `json:"statusConflicts"`
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
 }
@@ -49,7 +49,7 @@ type WorktreeRecord struct {
 type WorktreeService struct {
 	mu        sync.RWMutex
 	projects  map[string]WtProject
-	worktrees map[string]WorktreeRecord
+	worktrees map[string]*WorktreeRecord
 	nextID    atomic.Int64
 	repoLock  *worktree.RepoLock
 }
@@ -58,7 +58,7 @@ type WorktreeService struct {
 func NewWorktreeService() *WorktreeService {
 	return &WorktreeService{
 		projects:  make(map[string]WtProject),
-		worktrees: make(map[string]WorktreeRecord),
+		worktrees: make(map[string]*WorktreeRecord),
 		repoLock:  worktree.NewRepoLock(),
 	}
 }
@@ -142,7 +142,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 		return nil, errors.New("branch name is required")
 	}
 	if err := worktree.ValidateBranchName(branchName); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateWorktree: %w", err)
 	}
 
 	project, err := s.GetProject(projectID)
@@ -150,7 +150,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 		return nil, err
 	}
 
-	unlock := s.repoLock.Lock(project.Path, ctx)
+	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
 		return nil, context.Canceled
 	}
@@ -158,7 +158,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 
 	wtPath, err := worktree.CreateWorktree(ctx, project.Path, branchName, baseBranch, createBranch)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateWorktree: git worktree add: %w", err)
 	}
 
 	now := time.Now()
@@ -178,7 +178,7 @@ func (s *WorktreeService) CreateWorktree(ctx context.Context, projectID, branchN
 	}
 
 	s.mu.Lock()
-	s.worktrees[record.ID] = record
+	s.worktrees[record.ID] = &record
 	s.mu.Unlock()
 
 	return &record, nil
@@ -215,14 +215,14 @@ func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktre
 		return errors.New("cannot remove main worktree")
 	}
 
-	unlock := s.repoLock.Lock(project.Path, ctx)
+	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
 		return context.Canceled
 	}
 	defer unlock()
 
 	if err := worktree.RemoveWorktree(ctx, project.Path, record.Path, force); err != nil {
-		return err
+		return fmt.Errorf("RemoveWorktree: git worktree remove: %w", err)
 	}
 
 	s.mu.Lock()
@@ -264,7 +264,7 @@ func (s *WorktreeService) RefreshWorktree(ctx context.Context, projectID, worktr
 	}
 
 	s.mu.Lock()
-	s.worktrees[worktreeID] = record
+	s.worktrees[worktreeID] = &record
 	s.mu.Unlock()
 
 	return &record, nil
@@ -298,14 +298,14 @@ func (s *WorktreeService) CommitWorktree(ctx context.Context, projectID, worktre
 		return nil, err
 	}
 
-	unlock := s.repoLock.Lock(project.Path, ctx)
+	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
 		return nil, context.Canceled
 	}
 	defer unlock()
 
 	if err := worktree.CommitWorktree(ctx, record.Path, message); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CommitWorktree: git commit: %w", err)
 	}
 
 	return s.RefreshWorktree(ctx, projectID, worktreeID)
@@ -320,9 +320,9 @@ func (s *WorktreeService) worktreesForProject(projectID string) []WorktreeRecord
 	defer s.mu.RUnlock()
 
 	result := make([]WorktreeRecord, 0)
-	for _, wt := range s.worktrees {
-		if wt.ProjectID == projectID {
-			result = append(result, wt)
+	for i := range s.worktrees {
+		if s.worktrees[i].ProjectID == projectID {
+			result = append(result, *s.worktrees[i])
 		}
 	}
 	return result
@@ -335,7 +335,7 @@ func (s *WorktreeService) getWorktreeLocked(worktreeID, projectID string) (Workt
 	if !ok || record.ProjectID != projectID {
 		return WorktreeRecord{}, fmt.Errorf("worktree not found: %s", worktreeID)
 	}
-	return record, nil
+	return *record, nil
 }
 
 func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject) error {
@@ -344,7 +344,7 @@ func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject)
 
 	gitWorktrees, err := worktree.ListWorktrees(ctx, project.Path)
 	if err != nil {
-		return err
+		return fmt.Errorf("syncWorktrees: list worktrees: %w", err)
 	}
 
 	// Build map of existing DB worktrees by normalized path.
@@ -382,7 +382,7 @@ func (s *WorktreeService) syncWorktrees(ctx context.Context, project *WtProject)
 				CreatedAt:         now,
 				UpdatedAt:         now,
 			}
-			s.worktrees[record.ID] = record
+			s.worktrees[record.ID] = &record
 		}
 	}
 
@@ -403,7 +403,7 @@ func normalizePath(p string) string {
 }
 
 // withStatus returns a new WorktreeRecord with status fields populated.
-func (r WorktreeRecord) withStatus(status *worktree.WorktreeStatus) WorktreeRecord {
+func (r *WorktreeRecord) withStatus(status *worktree.Status) WorktreeRecord {
 	return WorktreeRecord{
 		ID:                r.ID,
 		ProjectID:         r.ProjectID,

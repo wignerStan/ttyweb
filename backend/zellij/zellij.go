@@ -10,11 +10,13 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/pkg/errors"
+
+	"ttyweb/pkg/validate"
 )
 
-// ZellijSlave is a zellij session attached via PTY.
+// Slave is a zellij session attached via PTY.
 // It implements server.Slave interface from ttyweb/server.
-type ZellijSlave struct {
+type Slave struct {
 	pty          *os.File
 	cmd          *exec.Cmd
 	session      string
@@ -24,26 +26,26 @@ type ZellijSlave struct {
 	ptyMu        sync.Mutex
 }
 
-// Option configures ZellijSlave behavior.
-type Option func(*ZellijSlave)
+// Option configures Slave behavior.
+type Option func(*Slave)
 
 // WithCloseSignal sets the signal sent on close.
 func WithCloseSignal(sig syscall.Signal) Option {
-	return func(s *ZellijSlave) {
+	return func(s *Slave) {
 		s.closeSignal = sig
 	}
 }
 
 // WithCloseTimeout sets how long to wait before SIGKILL.
 func WithCloseTimeout(d time.Duration) Option {
-	return func(s *ZellijSlave) {
+	return func(s *Slave) {
 		s.closeTimeout = d
 	}
 }
 
 // NewZellijSlave creates a PTY attached to a zellij session.
 // If session is empty, creates a new session.
-func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
+func NewZellijSlave(session string, options ...Option) (*Slave, error) {
 	args := []string{"zellij"}
 	if session == "" {
 		args = append(args, "new-session", "-s", "ttyweb")
@@ -60,7 +62,7 @@ func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
 	}
 	ptyClosed := make(chan struct{})
 
-	slave := &ZellijSlave{
+	slave := &Slave{
 		session:      session,
 		closeSignal:  syscall.SIGHUP,
 		closeTimeout: 10 * time.Second,
@@ -86,20 +88,29 @@ func NewZellijSlave(session string, options ...Option) (*ZellijSlave, error) {
 	return slave, nil
 }
 
-func (s *ZellijSlave) Read(p []byte) (n int, err error) {
+func (s *Slave) Read(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
-	return s.pty.Read(p)
+	n, err = s.pty.Read(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to read from zellij pty")
+	}
+	return n, nil
 }
 
-func (s *ZellijSlave) Write(p []byte) (n int, err error) {
+func (s *Slave) Write(p []byte) (n int, err error) {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
-	return s.pty.Write(p)
+	n, err = s.pty.Write(p)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to write to zellij pty")
+	}
+	return n, nil
 }
 
-func (s *ZellijSlave) WindowTitleVariables() map[string]interface{} {
-	vars := map[string]interface{}{
+// WindowTitleVariables returns template variables for the window title.
+func (s *Slave) WindowTitleVariables() map[string]any {
+	vars := map[string]any{
 		"command": "zellij",
 	}
 	if s.session != "" {
@@ -109,19 +120,25 @@ func (s *ZellijSlave) WindowTitleVariables() map[string]interface{} {
 	return vars
 }
 
-func (s *ZellijSlave) ResizeTerminal(width int, height int) error {
+// ResizeTerminal resizes the PTY to the given dimensions.
+func (s *Slave) ResizeTerminal(width int, height int) error {
 	s.ptyMu.Lock()
 	defer s.ptyMu.Unlock()
 	ws := pty.Winsize{
-		Rows: uint16(height),
-		Cols: uint16(width),
+		Rows: validate.Uint16(height),
+		Cols: validate.Uint16(width),
 		X:    0,
 		Y:    0,
 	}
-	return pty.Setsize(s.pty, &ws)
+	err := pty.Setsize(s.pty, &ws)
+	if err != nil {
+		return errors.Wrapf(err, "failed to resize zellij terminal")
+	}
+	return nil
 }
 
-func (s *ZellijSlave) Close() error {
+// Close terminates the zellij session attachment.
+func (s *Slave) Close() error {
 	if s.cmd != nil && s.cmd.Process != nil {
 		_ = s.cmd.Process.Signal(s.closeSignal)
 	}
@@ -135,7 +152,7 @@ func (s *ZellijSlave) Close() error {
 	}
 }
 
-func (s *ZellijSlave) closeTimeoutC() <-chan time.Time {
+func (s *Slave) closeTimeoutC() <-chan time.Time {
 	if s.closeTimeout >= 0 {
 		return time.After(s.closeTimeout)
 	}

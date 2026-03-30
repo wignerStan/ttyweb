@@ -9,7 +9,7 @@ import (
 func TestWithCloseSignal(t *testing.T) {
 	t.Parallel()
 	opt := WithCloseSignal(9) // SIGKILL
-	s := &TmuxSlave{}
+	s := &Slave{}
 	opt(s)
 	if s.closeSignal != 9 {
 		t.Fatalf("expected signal 9, got %d", s.closeSignal)
@@ -19,7 +19,7 @@ func TestWithCloseSignal(t *testing.T) {
 func TestWithCloseTimeout(t *testing.T) {
 	t.Parallel()
 	opt := WithCloseTimeout(5)
-	s := &TmuxSlave{}
+	s := &Slave{}
 	opt(s)
 	if s.closeTimeout != 5 {
 		t.Fatalf("expected timeout 5, got %d", s.closeTimeout)
@@ -28,7 +28,7 @@ func TestWithCloseTimeout(t *testing.T) {
 
 func TestCloseTimeoutC_Positive(t *testing.T) {
 	t.Parallel()
-	s := &TmuxSlave{
+	s := &Slave{
 		closeTimeout: 1 * time.Millisecond,
 		ptyClosed:    make(chan struct{}),
 	}
@@ -44,7 +44,7 @@ func TestCloseTimeoutC_Positive(t *testing.T) {
 
 func TestCloseTimeoutC_Negative(t *testing.T) {
 	t.Parallel()
-	s := &TmuxSlave{
+	s := &Slave{
 		closeTimeout: -1,
 		ptyClosed:    make(chan struct{}),
 	}
@@ -60,7 +60,7 @@ func TestCloseTimeoutC_Negative(t *testing.T) {
 
 func TestCloseTimeoutC_Zero(t *testing.T) {
 	t.Parallel()
-	s := &TmuxSlave{
+	s := &Slave{
 		closeTimeout: 0,
 		ptyClosed:    make(chan struct{}),
 	}
@@ -126,7 +126,7 @@ func TestNewTmuxSlave_WithSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	// Attach to it
 	slave, err := NewTmuxSlave(sessionName, "", WithCloseTimeout(1*time.Second))
@@ -172,7 +172,7 @@ func TestNewTmuxSlave_WithPane(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	// Get the current pane ID
 	paneID, err := CurrentPane(created)
@@ -314,7 +314,7 @@ func TestTmuxSlave_ResizeTerminal_WithPane(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession failed: %v", err)
 	}
-	defer KillSession(sessionName)
+	defer func() { _ = KillSession(sessionName) }()
 
 	paneID, err := CurrentPane(created)
 	if err != nil {

@@ -34,7 +34,7 @@ func Init(dsn string) error {
 	}
 
 	dir := filepath.Dir(dsn)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		available = false
 		return fmt.Errorf("create database directory %s: %w", dir, err)
 	}

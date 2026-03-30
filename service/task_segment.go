@@ -117,7 +117,7 @@ func (s *TaskSegmentService) UpdateSegment(id string, title *string, status stri
 		return nil, fmt.Errorf("at least one of task_title or task_status is required")
 	}
 
-	updates := map[string]interface{}{}
+	updates := map[string]any{}
 
 	if title != nil {
 		updates["task_title"] = *title

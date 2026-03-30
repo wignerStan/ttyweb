@@ -116,6 +116,8 @@ func GetSessionDetail(session string) (*SessionDetail, error) {
 }
 
 // CreateSession creates a new detached tmux session.
+// The command parameter is intentionally passed through to tmux —
+// this is a terminal emulator, arbitrary command execution is expected behavior.
 func CreateSession(name string, command ...string) (string, error) {
 	if name != "" {
 		if err := validate.SessionName(name); err != nil {
@@ -237,7 +239,11 @@ func SessionsJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(sessions)
+	data, err := json.Marshal(sessions)
+	if err != nil {
+		return nil, fmt.Errorf("SessionsJSON: marshal: %w", err)
+	}
+	return data, nil
 }
 
 // SessionDetailJSON returns a session with panes as JSON.
@@ -246,24 +252,28 @@ func SessionDetailJSON(name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(detail)
+	data, err := json.Marshal(detail)
+	if err != nil {
+		return nil, fmt.Errorf("SessionDetailJSON: marshal: %w", err)
+	}
+	return data, nil
 }
 
 // tmuxOutput runs a tmux command and returns stdout.
 func tmuxOutput(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "tmux", args...)
+	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: tmux CLI wrapper — callers responsible for arg safety
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	if err := cmd.Run(); err != nil {
-		return "", err
+		return "", fmt.Errorf("tmux %s: %w", strings.Join(args, " "), err)
 	}
 	return out.String(), nil
 }
 
 // tmuxExec runs a tmux command (ignoring output).
 func tmuxExec(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "tmux", args...)
+	cmd := exec.CommandContext(context.Background(), "tmux", args...) //nolint:gosec // reason: tmux CLI wrapper — callers responsible for arg safety
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out

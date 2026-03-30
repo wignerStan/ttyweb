@@ -19,8 +19,8 @@ type Config struct {
 
 // LLMConfig holds settings for the AI/LLM backend.
 type LLMConfig struct {
-	ApiKey      string `json:"apiKey"`
-	ApiURL      string `json:"apiUrl"`
+	APIKey      string `json:"apiKey"`
+	APIURL      string `json:"apiUrl"`
 	Model       string `json:"model"`
 	DefaultRole string `json:"defaultRole"`
 }
@@ -28,8 +28,8 @@ type LLMConfig struct {
 // XunfeiConfig holds credentials for Xunfei speech recognition.
 type XunfeiConfig struct {
 	AppID     string `json:"appId"`
-	ApiKey    string `json:"apiKey"`
-	ApiSecret string `json:"apiSecret"`
+	APIKey    string `json:"apiKey"`
+	APISecret string `json:"apiSecret"`
 }
 
 // ButlerConfig holds connection details for the butler orchestration proxy.
@@ -58,12 +58,12 @@ var envOverride = []struct {
 	key string
 	set func(*Config, string)
 }{
-	{"LLM_API_KEY", func(c *Config, v string) { c.LLM.ApiKey = v }},
-	{"LLM_API_URL", func(c *Config, v string) { c.LLM.ApiURL = v }},
+	{"LLM_API_KEY", func(c *Config, v string) { c.LLM.APIKey = v }},
+	{"LLM_API_URL", func(c *Config, v string) { c.LLM.APIURL = v }},
 	{"LLM_MODEL", func(c *Config, v string) { c.LLM.Model = v }},
 	{"XFYUN_APP_ID", func(c *Config, v string) { c.Xunfei.AppID = v }},
-	{"XFYUN_API_KEY", func(c *Config, v string) { c.Xunfei.ApiKey = v }},
-	{"XFYUN_API_SECRET", func(c *Config, v string) { c.Xunfei.ApiSecret = v }},
+	{"XFYUN_API_KEY", func(c *Config, v string) { c.Xunfei.APIKey = v }},
+	{"XFYUN_API_SECRET", func(c *Config, v string) { c.Xunfei.APISecret = v }},
 	{"BUTLER_HOST", func(c *Config, v string) { c.Butler.Host = v }},
 	{"BUTLER_PORT", func(c *Config, v string) { c.Butler.Port = v }},
 }
@@ -80,7 +80,7 @@ func copyConfig(cfg *Config) *Config {
 func Load(path string) (*Config, error) {
 	base := DefaultConfig()
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // reason: path is CLI-provided config file path, not user input
 	if err != nil {
 		if os.IsNotExist(err) {
 			return applyEnvOverrides(base), nil

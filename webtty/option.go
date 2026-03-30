@@ -50,7 +50,7 @@ func WithReconnect(timeInSeconds int) Option {
 }
 
 // WithMasterPreferences sets an optional configuration of master.
-func WithMasterPreferences(preferences interface{}) Option {
+func WithMasterPreferences(preferences any) Option {
 	return func(wt *WebTTY) error {
 		prefs, err := json.Marshal(preferences)
 		if err != nil {

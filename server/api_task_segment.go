@@ -68,80 +68,14 @@ func (server *Server) handleSegmentDetail(w http.ResponseWriter, r *http.Request
 
 	// Check sub-routes that share the pattern: extract ID from suffix, require GET.
 	if id, suffix, ok := splitSubRoute(relative); ok {
-		switch suffix {
-		case "detail":
-			if r.Method != http.MethodGet {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-				return
-			}
-			if id == "" {
-				writeAPIError(w, http.StatusBadRequest, "segment ID required")
-				return
-			}
-			detail, err := server.segmentService.GetSegmentDetail(id)
-			if err != nil {
-				writeAPIError(w, http.StatusNotFound, err.Error())
-				return
-			}
-			writeAPISuccess(w, detail)
-			return
-
-		case "messages":
-			if r.Method != http.MethodGet {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-				return
-			}
-			if id == "" {
-				writeAPIError(w, http.StatusBadRequest, "segment ID required")
-				return
-			}
-			messages, err := server.segmentService.ListMessages(id)
-			if err != nil {
-				writeAPIError(w, http.StatusInternalServerError, "failed to list messages: "+err.Error())
-				return
-			}
-			writeAPISuccess(w, messages)
-			return
-
-		case "commands":
-			if r.Method != http.MethodGet {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-				return
-			}
-			if id == "" {
-				writeAPIError(w, http.StatusBadRequest, "segment ID required")
-				return
-			}
-			commands, err := server.segmentService.ListCommands(id)
-			if err != nil {
-				writeAPIError(w, http.StatusInternalServerError, "failed to list commands: "+err.Error())
-				return
-			}
-			writeAPISuccess(w, commands)
+		if server.handleSegmentSubRoute(w, r, id, suffix) {
 			return
 		}
 	}
 
 	// Route: PATCH /api/segments/{id}
 	if r.Method == http.MethodPatch {
-		var body struct {
-			TaskTitle  *string `json:"task_title"`
-			TaskStatus string  `json:"task_status"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeAPIError(w, http.StatusBadRequest, "invalid request body")
-			return
-		}
-		if body.TaskTitle == nil && body.TaskStatus == "" {
-			writeAPIError(w, http.StatusBadRequest, "task_title or task_status is required")
-			return
-		}
-		segment, err := server.segmentService.UpdateSegment(relative, body.TaskTitle, body.TaskStatus)
-		if err != nil {
-			writeAPIError(w, http.StatusNotFound, err.Error())
-			return
-		}
-		writeAPISuccess(w, segment)
+		server.handleSegmentPatch(w, r, relative)
 		return
 	}
 
@@ -157,6 +91,67 @@ func (server *Server) handleSegmentDetail(w http.ResponseWriter, r *http.Request
 	}
 
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+// handleSegmentPatch handles PATCH /api/segments/{id}.
+func (server *Server) handleSegmentPatch(w http.ResponseWriter, r *http.Request, id string) {
+	var body struct {
+		TaskTitle  *string `json:"task_title"`
+		TaskStatus string  `json:"task_status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.TaskTitle == nil && body.TaskStatus == "" {
+		writeAPIError(w, http.StatusBadRequest, "task_title or task_status is required")
+		return
+	}
+	segment, err := server.segmentService.UpdateSegment(id, body.TaskTitle, body.TaskStatus)
+	if err != nil {
+		writeAPIError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	writeAPISuccess(w, segment)
+}
+
+// handleSegmentSubRoute handles GET sub-routes for segments (detail, messages, commands).
+// Returns true if the request was handled.
+func (server *Server) handleSegmentSubRoute(w http.ResponseWriter, r *http.Request, id, suffix string) bool {
+	if r.Method != http.MethodGet {
+		return false
+	}
+	if id == "" {
+		writeAPIError(w, http.StatusBadRequest, "segment ID required")
+		return true
+	}
+
+	switch suffix {
+	case "detail":
+		detail, err := server.segmentService.GetSegmentDetail(id)
+		if err != nil {
+			writeAPIError(w, http.StatusNotFound, err.Error())
+		} else {
+			writeAPISuccess(w, detail)
+		}
+	case "messages":
+		messages, err := server.segmentService.ListMessages(id)
+		if err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "failed to list messages: "+err.Error())
+		} else {
+			writeAPISuccess(w, messages)
+		}
+	case "commands":
+		commands, err := server.segmentService.ListCommands(id)
+		if err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "failed to list commands: "+err.Error())
+		} else {
+			writeAPISuccess(w, commands)
+		}
+	default:
+		return false
+	}
+	return true
 }
 
 // splitSubRoute splits a path like "abc123/detail" into ("abc123", "detail", true).

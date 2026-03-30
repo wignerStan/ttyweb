@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"ttyweb/ai"
 	"ttyweb/service"
 )
@@ -42,7 +44,7 @@ func formatOptionalTime(t *time.Time) *string {
 }
 
 // newAISessionResponse converts a service record to an API response.
-func newAISessionResponse(r service.AISessionRecord) aiSessionResponse {
+func newAISessionResponse(r *service.AISessionRecord) aiSessionResponse {
 	return aiSessionResponse{
 		ID:                    r.ID,
 		SessionID:             r.SessionID,
@@ -86,7 +88,7 @@ func (server *Server) handleAISessions(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleAIListSessions handles GET /api/ai/sessions.
-func (server *Server) handleAIListSessions(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleAIListSessions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -100,22 +102,22 @@ func (server *Server) handleAIListSessions(w http.ResponseWriter, r *http.Reques
 
 	sessions := aiSessionService.GetSessions(project)
 	data := make([]aiSessionResponse, 0, len(sessions))
-	for _, s := range sessions {
-		data = append(data, newAISessionResponse(s))
+	for i := range sessions {
+		data = append(data, newAISessionResponse(&sessions[i]))
 	}
 
 	writeAPISuccess(w, data)
 }
 
 // handleAICleanupSessions handles POST /api/ai/sessions/cleanup.
-func (server *Server) handleAICleanupSessions(w http.ResponseWriter, r *http.Request) {
+func (*Server) handleAICleanupSessions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	removed := aiSessionService.CleanupStaleSessions()
-	writeAPISuccess(w, map[string]interface{}{"removed": removed})
+	writeAPISuccess(w, map[string]any{"removed": removed})
 }
 
 // handleAISessionSubroute dispatches to detail/conversation/refresh handlers.
@@ -146,7 +148,7 @@ func (server *Server) handleAISessionSubroute(w http.ResponseWriter, r *http.Req
 }
 
 // aiSessionDetail handles GET /api/ai/sessions/:id.
-func (server *Server) aiSessionDetail(w http.ResponseWriter, r *http.Request, id int) {
+func (*Server) aiSessionDetail(w http.ResponseWriter, r *http.Request, id int) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -158,13 +160,13 @@ func (server *Server) aiSessionDetail(w http.ResponseWriter, r *http.Request, id
 		return
 	}
 
-	writeAPISuccess(w, newAISessionResponse(record))
+	writeAPISuccess(w, newAISessionResponse(&record))
 }
 
 // aiSessionConversationOrRefresh handles GET /api/ai/sessions/:id/conversation
 // and GET /api/ai/sessions/:id/refresh. When refresh is true, it re-parses
 // the session file before returning the conversation.
-func (server *Server) aiSessionConversationOrRefresh(w http.ResponseWriter, r *http.Request, id int, refresh bool) {
+func (*Server) aiSessionConversationOrRefresh(w http.ResponseWriter, r *http.Request, id int, refresh bool) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -198,36 +200,50 @@ func (server *Server) aiSessionConversationOrRefresh(w http.ResponseWriter, r *h
 // and upserts results into the store.
 func refreshSessionsFromDisk(projectPath string) error {
 	if projectPath != "" {
-		claudeSessions, err := ai.ScanClaudeSessions(projectPath)
-		if err != nil {
+		if err := upsertClaudeSessions(projectPath); err != nil {
 			return err
 		}
-		for _, s := range claudeSessions {
-			aiSessionService.Store().Upsert(s)
-		}
-	} else {
-		projects, err := ai.ScanClaudeProjects()
-		if err != nil {
-			return err
-		}
-		for _, project := range projects {
-			sessions, scanErr := ai.ScanClaudeSessions(project)
-			if scanErr != nil {
-				continue
-			}
-			for _, s := range sessions {
-				aiSessionService.Store().Upsert(s)
-			}
-		}
+	} else if err := upsertAllClaudeSessions(); err != nil {
+		return err
 	}
 
 	codexSessions, err := ai.ScanCodexSessions()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "refreshSessionsFromDisk: scanning codex sessions")
 	}
-	for _, s := range codexSessions {
-		aiSessionService.Store().Upsert(s)
+	for i := range codexSessions {
+		aiSessionService.Store().Upsert(&codexSessions[i])
 	}
 
+	return nil
+}
+
+// upsertClaudeSessions scans a single project path for Claude sessions.
+func upsertClaudeSessions(projectPath string) error {
+	claudeSessions, err := ai.ScanClaudeSessions(projectPath)
+	if err != nil {
+		return errors.Wrapf(err, "upsertClaudeSessions: scanning %q", projectPath)
+	}
+	for i := range claudeSessions {
+		aiSessionService.Store().Upsert(&claudeSessions[i])
+	}
+	return nil
+}
+
+// upsertAllClaudeSessions scans all known Claude projects for sessions.
+func upsertAllClaudeSessions() error {
+	projects, err := ai.ScanClaudeProjects()
+	if err != nil {
+		return errors.Wrapf(err, "upsertAllClaudeSessions: scanning projects")
+	}
+	for _, project := range projects {
+		sessions, scanErr := ai.ScanClaudeSessions(project)
+		if scanErr != nil {
+			continue
+		}
+		for i := range sessions {
+			aiSessionService.Store().Upsert(&sessions[i])
+		}
+	}
 	return nil
 }

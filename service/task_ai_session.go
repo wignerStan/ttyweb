@@ -17,7 +17,7 @@ func requireFields(pairs ...string) error {
 	if len(pairs)%2 != 0 {
 		panic("requireFields: must receive an even number of arguments (label, value pairs)")
 	}
-	for i := 0; i < len(pairs); i += 2 {
+	for i := 0; i+1 < len(pairs); i += 2 {
 		if pairs[i+1] == "" {
 			return fmt.Errorf("%s is required", pairs[i])
 		}

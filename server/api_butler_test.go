@@ -159,7 +159,7 @@ func TestHandleButlerProxy_NormalGET(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status": "ok",
 		})
 	}))
@@ -188,7 +188,7 @@ func TestHandleButlerProxy_NormalGET(t *testing.T) {
 		t.Errorf("Content-Type = %q, want application/json", contentType)
 	}
 
-	var body map[string]interface{}
+	var body map[string]any
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("failed to decode response body: %v", err)
 	}
@@ -210,7 +210,7 @@ func TestHandleButlerProxy_NormalPOST(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"created": true,
 		})
 	}))
@@ -232,7 +232,7 @@ func TestHandleButlerProxy_NormalPOST(t *testing.T) {
 		t.Fatalf("expected status 201, got %d", rec.Code)
 	}
 
-	var body map[string]interface{}
+	var body map[string]any
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("failed to decode response body: %v", err)
 	}
@@ -507,7 +507,7 @@ func TestHandleButlerProxy_UpstreamNotFound(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"error": "not found",
 		})
 	}))
@@ -528,7 +528,7 @@ func TestHandleButlerProxy_UpstreamNotFound(t *testing.T) {
 		t.Fatalf("expected status 404, got %d", rec.Code)
 	}
 
-	var body map[string]interface{}
+	var body map[string]any
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("failed to decode response body: %v", err)
 	}
@@ -727,7 +727,7 @@ func TestHandleButlerProxy_PathTraversalReturns400(t *testing.T) {
 				t.Fatalf("expected status 400, got %d", rec.Code)
 			}
 
-			var resp map[string]interface{}
+			var resp map[string]any
 			if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 				t.Fatalf("failed to decode response: %v", err)
 			}

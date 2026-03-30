@@ -32,7 +32,7 @@ func (rl *RepoLock) Remove(path string) {
 
 // Lock acquires an exclusive (write) lock for the repository at path.
 // Returns an unlock function, or nil if ctx is cancelled before the lock is acquired.
-func (rl *RepoLock) Lock(path string, ctx context.Context) func() {
+func (rl *RepoLock) Lock(ctx context.Context, path string) func() {
 	entry := rl.getEntry(path)
 	for {
 		select {
@@ -50,7 +50,7 @@ func (rl *RepoLock) Lock(path string, ctx context.Context) func() {
 // RLock acquires a shared (read) lock for the repository at path.
 // Multiple readers can hold RLock simultaneously, but writers block.
 // Returns an unlock function. The caller must invoke it when done.
-func (rl *RepoLock) RLock(path string, ctx context.Context) func() {
+func (rl *RepoLock) RLock(ctx context.Context, path string) func() {
 	entry := rl.getEntry(path)
 	for {
 		select {

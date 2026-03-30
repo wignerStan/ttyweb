@@ -41,7 +41,7 @@ func TestGenerateID_HexChars(t *testing.T) {
 		t.Fatalf("generateID error: %v", err)
 	}
 	for _, c := range id {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
 			t.Errorf("non-hex char in ID: %c", c)
 		}
 	}

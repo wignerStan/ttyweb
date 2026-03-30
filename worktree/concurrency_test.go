@@ -35,7 +35,7 @@ func TestConcurrentCreateWorktree(t *testing.T) {
 			}
 			defer guard.Release()
 
-			branch := "parallel-branch-" + string(rune('A'+idx))
+			branch := "parallel-branch-" + string(rune('A'+idx)) //nolint:gosec // reason: test-only int→rune conversion, values are bounded
 			_, err = CreateWorktree(ctx, repo, branch, "main", true)
 			if err != nil {
 				errs[idx] = err
@@ -146,7 +146,7 @@ func TestConcurrentStatusAndCommit(t *testing.T) {
 			defer guard.Release()
 
 			if idx%2 == 0 {
-				testFile := filepath.Join(wtPath, "race-"+string(rune('0'+idx))+".txt")
+				testFile := filepath.Join(wtPath, "race-"+string(rune('0'+idx))+".txt") //nolint:gosec // reason: test-only int→rune conversion, values are bounded
 				_ = os.WriteFile(testFile, []byte("data\n"), 0o644)
 				wtMu.Lock()
 				err := CommitWorktree(ctx, wtPath, "race commit")

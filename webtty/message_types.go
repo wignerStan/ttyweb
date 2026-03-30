@@ -5,31 +5,31 @@ package webtty
 var Protocols = []string{"webtty"}
 
 const (
-	// Unknown message type, maybe sent by a bug
+	// UnknownInput is an unknown message type, maybe sent by a bug.
 	UnknownInput = '0'
-	// User input typically from a keyboard
+	// Input represents user input, typically from a keyboard.
 	Input = '1'
-	// Ping to the server
+	// Ping represents a ping to the server.
 	Ping = '2'
-	// Notify that the browser size has been changed
+	// ResizeTerminal notifies that the browser size has been changed.
 	ResizeTerminal = '3'
-	// Change encoding
+	// SetEncoding changes the character encoding.
 	SetEncoding = '4'
 )
 
 const (
-	// Unknown message type, maybe set by a bug
+	// UnknownOutput is an unknown message type, maybe set by a bug.
 	UnknownOutput = '0'
-	// Normal output to the terminal
+	// Output represents normal output to the terminal.
 	Output = '1'
-	// Pong to the browser
+	// Pong represents a pong to the browser.
 	Pong = '2'
-	// Set window title of the terminal
+	// SetWindowTitle sets the window title of the terminal.
 	SetWindowTitle = '3'
-	// Set terminal preference
+	// SetPreferences sets terminal preferences.
 	SetPreferences = '4'
-	// Make terminal to reconnect
+	// SetReconnect makes the terminal reconnect.
 	SetReconnect = '5'
-	// Set the input buffer size
+	// SetBufferSize sets the input buffer size.
 	SetBufferSize = '6'
 )

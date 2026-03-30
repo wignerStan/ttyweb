@@ -40,6 +40,8 @@ func ListSessions() ([]Session, error) {
 }
 
 // CreateSession creates a new detached zellij session.
+// The command parameter is intentionally passed through to zellij —
+// this is a terminal emulator, arbitrary command execution is expected behavior.
 func CreateSession(name string, command ...string) (string, error) {
 	if name != "" {
 		if err := validate.SessionName(name); err != nil {
@@ -92,12 +94,16 @@ func SessionsJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(sessions)
+	data, err := json.Marshal(sessions)
+	if err != nil {
+		return nil, fmt.Errorf("SessionsJSON: marshal: %w", err)
+	}
+	return data, nil
 }
 
 // zellijOutput runs a zellij command and returns stdout.
 func zellijOutput(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "zellij", args...)
+	cmd := exec.CommandContext(context.Background(), "zellij", args...) //nolint:gosec // reason: zellij CLI wrapper — callers responsible for arg safety
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -109,7 +115,7 @@ func zellijOutput(args ...string) (string, error) {
 
 // zellijExec runs a zellij command (ignoring output).
 func zellijExec(args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "zellij", args...)
+	cmd := exec.CommandContext(context.Background(), "zellij", args...) //nolint:gosec // reason: zellij CLI wrapper — callers responsible for arg safety
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
