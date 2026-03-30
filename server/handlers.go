@@ -63,7 +63,7 @@ func (server *Server) generateHandleWS(ctx context.Context, cancel context.Cance
 
 		log.Printf("New client connected: %s, connections: %d/%d", r.RemoteAddr, num, server.options.MaxConnection)
 
-		if r.Method != "GET" {
+		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
@@ -75,22 +75,13 @@ func (server *Server) generateHandleWS(ctx context.Context, cancel context.Cance
 		}
 		defer func() { _ = conn.Close() }()
 
+		headers := map[string][]string(nil)
 		if server.options.PassHeaders {
-			err = server.processWSConn(ctx, conn, r.Header)
-		} else {
-			err = server.processWSConn(ctx, conn, nil)
+			headers = r.Header
 		}
+		err = server.processWSConn(ctx, conn, headers)
 
-		switch err {
-		case ctx.Err():
-			closeReason = "cancelation"
-		case webtty.ErrSlaveClosed:
-			closeReason = server.factory.Name()
-		case webtty.ErrMasterClosed:
-			closeReason = "client"
-		default:
-			closeReason = fmt.Sprintf("an error: %s", err)
-		}
+		closeReason = classifyWSCloseError(err, server.factory.Name())
 	}
 }
 
@@ -217,6 +208,22 @@ func (server *Server) webttyOptions(title []byte) []webtty.Option {
 		opts = append(opts, webtty.WithFixedRows(server.options.Height))
 	}
 	return opts
+}
+
+// classifyWSCloseError returns a human-readable close reason for a WebSocket error.
+func classifyWSCloseError(err error, backendName string) string {
+	switch err {
+	case nil:
+		return "normal close"
+	case context.Canceled:
+		return "cancelation"
+	case webtty.ErrSlaveClosed:
+		return backendName
+	case webtty.ErrMasterClosed:
+		return "client"
+	default:
+		return fmt.Sprintf("an error: %s", err)
+	}
 }
 
 func (*Server) handleIndex(w http.ResponseWriter, r *http.Request) {

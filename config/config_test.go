@@ -24,6 +24,14 @@ func TestDefaultConfigValues(t *testing.T) {
 	}
 }
 
+// assertConfigField is a test helper that checks a config field value.
+func assertConfigField(t *testing.T, name, got, want string) {
+	t.Helper()
+	if got != want {
+		t.Errorf("%s = %q, want %q", name, got, want)
+	}
+}
+
 func TestLoadFromJSON(t *testing.T) {
 	content := `{
 		"llm": {
@@ -60,39 +68,17 @@ func TestLoadFromJSON(t *testing.T) {
 		t.Fatalf("Load failed: %v", err)
 	}
 
-	if cfg.LLM.APIKey != "test-key" {
-		t.Errorf("LLM.APIKey = %q, want %q", cfg.LLM.APIKey, "test-key")
-	}
-	if cfg.LLM.APIURL != "https://example.com/v1/chat" {
-		t.Errorf("LLM.APIURL = %q, want %q", cfg.LLM.APIURL, "https://example.com/v1/chat")
-	}
-	if cfg.LLM.Model != "my-model" {
-		t.Errorf("LLM.Model = %q, want %q", cfg.LLM.Model, "my-model")
-	}
-	if cfg.LLM.DefaultRole != "cli" {
-		t.Errorf("LLM.DefaultRole = %q, want %q", cfg.LLM.DefaultRole, "cli")
-	}
-	if cfg.Xunfei.AppID != "xf-app" {
-		t.Errorf("Xunfei.AppID = %q, want %q", cfg.Xunfei.AppID, "xf-app")
-	}
-	if cfg.Xunfei.APIKey != "xf-key" {
-		t.Errorf("Xunfei.APIKey = %q, want %q", cfg.Xunfei.APIKey, "xf-key")
-	}
-	if cfg.Xunfei.APISecret != "xf-secret" {
-		t.Errorf("Xunfei.APISecret = %q, want %q", cfg.Xunfei.APISecret, "xf-secret")
-	}
-	if cfg.Butler.Host != "butler-host" {
-		t.Errorf("Butler.Host = %q, want %q", cfg.Butler.Host, "butler-host")
-	}
-	if cfg.Butler.Port != "9000" {
-		t.Errorf("Butler.Port = %q, want %q", cfg.Butler.Port, "9000")
-	}
-	if cfg.DB.Path != "/tmp/test.db" {
-		t.Errorf("DB.Path = %q, want %q", cfg.DB.Path, "/tmp/test.db")
-	}
-	if cfg.Worktree.BasePath != "/tmp/worktrees" {
-		t.Errorf("Worktree.BasePath = %q, want %q", cfg.Worktree.BasePath, "/tmp/worktrees")
-	}
+	assertConfigField(t, "LLM.APIKey", cfg.LLM.APIKey, "test-key")
+	assertConfigField(t, "LLM.APIURL", cfg.LLM.APIURL, "https://example.com/v1/chat")
+	assertConfigField(t, "LLM.Model", cfg.LLM.Model, "my-model")
+	assertConfigField(t, "LLM.DefaultRole", cfg.LLM.DefaultRole, "cli")
+	assertConfigField(t, "Xunfei.AppID", cfg.Xunfei.AppID, "xf-app")
+	assertConfigField(t, "Xunfei.APIKey", cfg.Xunfei.APIKey, "xf-key")
+	assertConfigField(t, "Xunfei.APISecret", cfg.Xunfei.APISecret, "xf-secret")
+	assertConfigField(t, "Butler.Host", cfg.Butler.Host, "butler-host")
+	assertConfigField(t, "Butler.Port", cfg.Butler.Port, "9000")
+	assertConfigField(t, "DB.Path", cfg.DB.Path, "/tmp/test.db")
+	assertConfigField(t, "Worktree.BasePath", cfg.Worktree.BasePath, "/tmp/worktrees")
 }
 
 func TestLoadMissingFile(t *testing.T) {
