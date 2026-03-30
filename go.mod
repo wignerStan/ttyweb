@@ -7,7 +7,7 @@ require (
 	github.com/creack/pty v1.1.11
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.17.0
-	github.com/gorilla/websocket v1.4.2
+	github.com/gorilla/websocket v1.5.3
 	github.com/pkg/errors v0.9.1
 	golang.org/x/time v0.15.0
 	gorm.io/driver/sqlite v1.6.0
