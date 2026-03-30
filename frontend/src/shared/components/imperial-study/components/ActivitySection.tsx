@@ -23,10 +23,24 @@ export function ActivitySection({ events, onActivityClick }: ActivitySectionProp
 
   return (
     <div className="is-section">
-      <div className="is-section__header" onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="is-section__header"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => setOpen((o) => !o)}
+      >
         <ChevronRight size={14} className={`is-section__chevron ${open ? 'open' : ''}`} />
         <span className="is-section__label">Activity</span>
-      </div>
+      </button>
       <div
         className={`is-section__body ${open ? '' : 'collapsed'}`}
         style={{ maxHeight: open ? '200px' : '0' }}
@@ -40,9 +54,20 @@ export function ActivitySection({ events, onActivityClick }: ActivitySectionProp
               const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 
               return (
-                <div
+                <button
                   key={ev.id}
+                  type="button"
                   className={`is-activity-row ${onActivityClick ? 'is-clickable' : ''}`}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    font: 'inherit',
+                    color: 'inherit',
+                    cursor: onActivityClick ? 'pointer' : 'default',
+                    width: '100%',
+                    textAlign: 'inherit',
+                  }}
                   onClick={() => onActivityClick?.(ev)}
                   data-clickable={onActivityClick ? true : undefined}
                 >
@@ -56,7 +81,7 @@ export function ActivitySection({ events, onActivityClick }: ActivitySectionProp
                     {ev.summary}
                   </span>
                   {ev.detail && <span className="is-activity-detail">{ev.detail}</span>}
-                </div>
+                </button>
               )
             })}
           </div>

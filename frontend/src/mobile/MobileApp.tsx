@@ -314,9 +314,20 @@ export default function MobileApp() {
         {tabs.length > 0 ? (
           <div className="mobile-tabs-bar">
             {tabs.map((tab) => (
-              <div
+              <button
                 key={tab.id}
+                type="button"
                 className={`mobile-tab ${tab.id === activeTabId ? 'active' : ''}`}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  font: 'inherit',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'inherit',
+                }}
                 onClick={() => handleSelectTab(tab.id)}
               >
                 <span className="mobile-tab-title">{tab.title}</span>
@@ -330,7 +341,7 @@ export default function MobileApp() {
                 >
                   <X size={12} />
                 </button>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
@@ -361,6 +372,7 @@ export default function MobileApp() {
       {(drawerOpen || rightPanelOpen || imperialOpen) && (
         <div
           className="mobile-overlay"
+          role="presentation"
           onClick={() => {
             setDrawerOpen(false)
             setRightPanelOpen(false)

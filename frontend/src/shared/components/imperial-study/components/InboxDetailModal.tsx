@@ -34,7 +34,7 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
   }
 
   return (
-    <div className="is-modal-overlay" onClick={handleOverlayClick}>
+    <div className="is-modal-overlay" role="presentation" onClick={handleOverlayClick}>
       <div className="is-modal">
         <div className="is-modal__header">
           <span className="is-modal__header-title">Inbox Detail</span>

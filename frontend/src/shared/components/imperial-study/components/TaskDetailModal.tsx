@@ -45,7 +45,7 @@ export function TaskDetailModal({ runId, onClose }: TaskDetailModalProps) {
   )
 
   return (
-    <div className="is-modal-overlay" onClick={handleOverlayClick}>
+    <div className="is-modal-overlay" role="presentation" onClick={handleOverlayClick}>
       <div className="is-modal is-task-detail-modal">
         <div className="is-modal__header">
           <span className="is-modal__header-title">

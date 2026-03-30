@@ -17,8 +17,19 @@ function InboxCard({ item, onClick }: InboxCardProps) {
   const color = cfg?.color ?? INBOX_KIND_DEFAULT_COLOR
 
   return (
-    <div
+    <button
+      type="button"
       className={`is-inbox-card ${item.status}`}
+      style={{
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        font: 'inherit',
+        color: 'inherit',
+        cursor: 'pointer',
+        width: '100%',
+        textAlign: 'inherit',
+      }}
       onClick={() => onClick(item)}
       title="Click to view details"
     >
@@ -31,7 +42,7 @@ function InboxCard({ item, onClick }: InboxCardProps) {
       <div className="is-inbox-card__ts">
         {item.updated_at ? new Date(item.updated_at).toLocaleTimeString() : ''}
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -46,10 +57,24 @@ export function InboxSection({ items, onItemClick }: InboxSectionProps) {
 
   return (
     <div className="is-section">
-      <div className="is-section__header" onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="is-section__header"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => setOpen((o) => !o)}
+      >
         <ChevronRight size={14} className={`is-section__chevron ${open ? 'open' : ''}`} />
         <span className="is-section__label">Inbox ({items.length})</span>
-      </div>
+      </button>
       <div
         className={`is-section__body ${open ? '' : 'collapsed'}`}
         style={{ maxHeight: open ? `${items.length * 64 + 20}px` : '0' }}

@@ -126,8 +126,8 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
   const customRoles = roles.filter((r) => r.isCustom)
 
   return (
-    <div className="role-modal-overlay" onClick={onClose}>
-      <div className="role-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="role-modal-overlay" role="presentation" onClick={onClose}>
+      <div className="role-modal" role="presentation" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="role-modal-header">
           <span className="role-modal-title">自定义角色</span>

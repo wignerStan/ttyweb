@@ -124,7 +124,21 @@ export function Sidebar({ onSelect }: SidebarProps) {
       <div style={styles.list}>
         {sessions.map((s) => (
           <div key={s.name}>
-            <div style={styles.sessionRow} onClick={() => handleToggle(s.name)}>
+            <button
+              type="button"
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                font: 'inherit',
+                color: 'inherit',
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'inherit',
+                ...styles.sessionRow,
+              }}
+              onClick={() => handleToggle(s.name)}
+            >
               <span style={styles.expandIcon}>{expanded === s.name ? '▼' : '▶'}</span>
               <span style={styles.sessionName} data-testid="session-name">
                 {s.name}
@@ -141,20 +155,49 @@ export function Sidebar({ onSelect }: SidebarProps) {
               >
                 ×
               </button>
-            </div>
+            </button>
 
             {expanded === s.name && details[s.name] && (
               <div style={styles.paneList}>
                 {details[s.name]?.panes.map((p) => (
-                  <div key={p.id} style={styles.paneRow} onClick={() => onSelect(s.name, p.id)}>
+                  <button
+                    key={p.id}
+                    type="button"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      font: 'inherit',
+                      color: 'inherit',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'inherit',
+                      ...styles.paneRow,
+                    }}
+                    onClick={() => onSelect(s.name, p.id)}
+                  >
                     <span style={styles.paneId}>{p.id}</span>
                     <span style={styles.paneCmd}>{p.current_command}</span>
                     {!p.running && <span style={styles.deadBadge}>dead</span>}
-                  </div>
+                  </button>
                 ))}
-                <div style={styles.connectAll} onClick={() => onSelect(s.name)}>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    font: 'inherit',
+                    color: 'inherit',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'inherit',
+                    ...styles.connectAll,
+                  }}
+                  onClick={() => onSelect(s.name)}
+                >
                   Connect to session
-                </div>
+                </button>
               </div>
             )}
           </div>
