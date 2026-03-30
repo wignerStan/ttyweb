@@ -32,6 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.0'
       - uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
@@ -40,6 +42,9 @@ jobs:
       - run: cd frontend && bun install
       - run: cd frontend && bun run lint
       - run: cd frontend && bun run typecheck
+      # Security: check for known vulnerabilities in frontend dependencies
+      - name: Audit frontend dependencies
+        run: cd frontend && bun audit
 
   test-go:
     runs-on: ubuntu-latest
@@ -54,6 +59,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
+      # Security: check for known vulnerabilities in Go dependencies
+      - name: Go vulnerability check
+        run: go vuln check ./...
       - run: go test ./... -race -count=1 -coverprofile=coverage.out
       - name: Coverage gate
         run: |
@@ -110,3 +118,12 @@ jobs:
             echo "=== E2E iteration $i/3 ==="
             cd frontend && bunx playwright test || exit 1
           done
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 30
