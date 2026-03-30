@@ -7,6 +7,7 @@ JSON configuration system with environment variable overrides.
 ```
 config.go    Load(), Get(), LoadOrDefault(), applyEnvOverrides()
 defaults.go  DefaultConfig(), DefaultConfigPath()
+watch.go     Reload(), Watch() — hot-reload via fsnotify
 ```
 
 ## Configuration Sections
@@ -30,6 +31,8 @@ defaults.go  DefaultConfig(), DefaultConfigPath()
 **Missing File OK**: `Load()` returns defaults if config file doesn't exist. Only fails on parse errors.
 
 **Defaults**: OpenAI API (`https://api.openai.com/v1/chat/completions`), `gpt-4o` model, Butler at `localhost:8215`.
+
+**Hot Reload**: `Reload(path)` re-reads the config file and swaps `globalConfig`. `Watch(path)` monitors the file via fsnotify and publishes updates to a channel. Caller owns the stop function.
 
 ## Testing
 
