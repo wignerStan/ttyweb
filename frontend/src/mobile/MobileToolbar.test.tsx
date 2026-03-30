@@ -89,4 +89,26 @@ describe('MobileToolbar', () => {
 
     expect(onSendText).toHaveBeenCalledWith('\x1b[B')
   })
+
+  it('renders reconnect button when onReconnect is provided', () => {
+    render(<MobileToolbar onSendText={vi.fn()} onReconnect={vi.fn()} />)
+
+    expect(screen.getByText('\u21BB')).toBeInTheDocument()
+  })
+
+  it('does not render reconnect button when onReconnect is not provided', () => {
+    render(<MobileToolbar onSendText={vi.fn()} />)
+
+    expect(screen.queryByText('\u21BB')).not.toBeInTheDocument()
+  })
+
+  it('calls onReconnect when reconnect button is clicked', async () => {
+    const onReconnect = vi.fn()
+    const user = userEvent.setup()
+
+    render(<MobileToolbar onSendText={vi.fn()} onReconnect={onReconnect} />)
+    await user.click(screen.getByText('\u21BB'))
+
+    expect(onReconnect).toHaveBeenCalledTimes(1)
+  })
 })

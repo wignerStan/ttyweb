@@ -12,9 +12,10 @@ const KEYS = {
 interface Props {
   onSendText: (text: string) => void
   onPaste?: () => void
+  onReconnect?: () => void
 }
 
-export function MobileToolbar({ onSendText, onPaste }: Props) {
+export function MobileToolbar({ onSendText, onPaste, onReconnect }: Props) {
   const [ctrlActive, setCtrlActive] = useState(false)
 
   const handleKey = useCallback(
@@ -85,6 +86,15 @@ export function MobileToolbar({ onSendText, onPaste }: Props) {
       <button className="mobile-toolbar-key mobile-toolbar-paste" onClick={onPaste} type="button">
         Paste
       </button>
+      {onReconnect && (
+        <button
+          className="mobile-toolbar-key mobile-toolbar-reconnect"
+          onClick={onReconnect}
+          type="button"
+        >
+          ↻
+        </button>
+      )}
     </div>
   )
 }
