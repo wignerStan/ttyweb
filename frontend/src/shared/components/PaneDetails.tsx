@@ -38,7 +38,21 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
 
   return (
     <div className={`conv-card ${conv.conv_status}`}>
-      <div className="conv-card-header" onClick={() => hasReply && setExpanded(!expanded)}>
+      <button
+        type="button"
+        className="conv-card-header"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => hasReply && setExpanded(!expanded)}
+      >
         <div className="conv-card-left">
           <span className={`conv-status-dot ${conv.conv_status}`} />
           <span className="conv-user-msg">{conv.user_message || '—'}</span>
@@ -52,7 +66,7 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
               <ChevronRight size={12} className="conv-chevron" />
             ))}
         </div>
-      </div>
+      </button>
 
       <div className="conv-card-meta">
         <span className={`conv-badge ${conv.conv_status}`}>

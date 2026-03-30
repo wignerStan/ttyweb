@@ -123,9 +123,9 @@ describe('App', () => {
 
     fireEvent.click(tabClose)
 
-    // After closing: sidebar mock select, toggle, notepad remain
+    // After closing: sidebar mock select, toggle, notepad, view tabs, kanban remain
     const buttonsAfter = screen.getAllByRole('button')
-    expect(buttonsAfter.length).toBe(3)
+    expect(buttonsAfter.length).toBe(6)
     // Tab close button is gone
     expect(screen.queryByTitle('Close tab')).not.toBeInTheDocument()
   })

@@ -92,29 +92,56 @@ function DesktopLayout() {
           >
             {sidebarOpen ? '\u25C0' : '\u25B6'}
           </button>
-          <div
+          <button
+            type="button"
             style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              font: 'inherit',
+              color: 'inherit',
+              cursor: 'pointer',
+              width: '100%',
+              textAlign: 'inherit',
               ...styles.viewTab,
               ...(activeView === 'terminal' ? styles.viewTabActive : {}),
             }}
             onClick={() => setActiveView('terminal')}
           >
             Terminal
-          </div>
-          <div
+          </button>
+          <button
+            type="button"
             style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              font: 'inherit',
+              color: 'inherit',
+              cursor: 'pointer',
+              width: '100%',
+              textAlign: 'inherit',
               ...styles.viewTab,
               ...(activeView === 'conversations' ? styles.viewTabActive : {}),
             }}
             onClick={() => setActiveView('conversations')}
           >
             Conversations
-          </div>
+          </button>
           {activeView === 'terminal' &&
             tabs.map((tab) => (
-              <div
+              <button
                 key={tab.id}
+                type="button"
                 style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  font: 'inherit',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'inherit',
                   ...styles.tab,
                   ...(tab.id === activeTabId ? styles.tabActive : {}),
                 }}
@@ -137,17 +164,26 @@ function DesktopLayout() {
                     \u00D7
                   </button>
                 )}
-              </div>
+              </button>
             ))}
-          <div
+          <button
+            type="button"
             style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              font: 'inherit',
+              color: 'inherit',
+              cursor: 'pointer',
+              width: '100%',
+              textAlign: 'inherit',
               ...styles.tab,
               ...(viewMode === 'kanban' ? styles.tabActive : {}),
             }}
             onClick={() => setViewMode('kanban')}
           >
             <span style={styles.tabLabel}>Kanban</span>
-          </div>
+          </button>
           <button
             type="button"
             onClick={openNotepad}

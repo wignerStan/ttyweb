@@ -130,7 +130,8 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
       })
       const remaining = profiles.filter((p) => p.id !== currentProfile.id)
       setProfiles(remaining)
-      if (remaining.length > 0) onProfileChange(remaining[0])
+      const first = remaining[0]
+      if (first) onProfileChange(first)
       setIsEditing(false)
     } catch (_err) {
     } finally {
@@ -148,20 +149,45 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
 
   return (
     <div className="profile-selector" ref={dropdownRef}>
-      <div className="profile-current" onClick={() => setIsOpen(!isOpen)}>
+      <button
+        type="button"
+        className="profile-current"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'inherit',
+        }}
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <span className="profile-name">{currentProfile?.name || 'Select Profile'}</span>
         <span className="profile-chevron">
           {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </span>
-      </div>
+      </button>
 
       {isOpen && (
         <div className="profile-dropdown">
           <div className="profile-list">
             {profiles.map((profile) => (
-              <div
+              <button
                 key={profile.id}
+                type="button"
                 className={`profile-item ${profile.id === currentProfile?.id ? 'active' : ''}`}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  font: 'inherit',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'inherit',
+                }}
                 onClick={() => {
                   onProfileChange(profile)
                   setIsOpen(false)
@@ -169,7 +195,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
               >
                 <span>{profile.name}</span>
                 {profile.id === currentProfile?.id && <Check size={14} className="check" />}
-              </div>
+              </button>
             ))}
           </div>
 
