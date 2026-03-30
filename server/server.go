@@ -43,6 +43,7 @@ type Server struct {
 	srvErrCh        chan error
 	eventBus        *TaskEventBus
 	sseHandler      *SSEHandler
+	statsService    *service.StatsService
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
