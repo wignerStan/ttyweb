@@ -97,6 +97,8 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	setupBranchRoutes(mux, apiPrefix)
 	// Kanban task-AI session linking
 	mux.HandleFunc(apiPrefix+"kanban/tasks/", server.handleTaskAISessionLinks)
+	// File browser
+	mux.HandleFunc(apiPrefix+"fs", server.handleFSList)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
