@@ -62,8 +62,6 @@ linters:
         - G704
         # Goroutine uses context.Background — graceful shutdown must outlive request ctx
         - G118
-        # Command injection via taint analysis — binary names hardcoded, args validated
-        - G702
         # Path traversal via taint analysis — paths use random/validated names, not user input
         - G703
 

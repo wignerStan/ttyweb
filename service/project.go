@@ -2,19 +2,18 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
+	goGit "github.com/go-git/go-git/v5"
 	"gorm.io/gorm"
 
 	"ttyweb/db"
-	"ttyweb/worktree"
 )
 
 func init() {
@@ -49,19 +48,6 @@ func (r *UpdateProjectRequest) toUpdates() map[string]any {
 		updates["worktree_base_path"] = *r.WorktreeBasePath
 	}
 	return updates
-}
-
-// runGitCommand executes a git command in the given directory and returns its
-// trimmed stdout. Returns an error if the command fails.
-func runGitCommand(dir string, args ...string) (string, error) {
-	cmd := exec.CommandContext(context.Background(), "git", args...) //nolint:gosec // reason: hardcoded binary, args are static git subcommands
-	cmd.Dir = dir
-	cmd.Env = worktree.FilterGitEnv(os.Environ())
-	out, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("git %v: %w", args, err)
-	}
-	return strings.TrimSpace(string(out)), nil
 }
 
 // Project represents a tracked git repository with metadata.
@@ -290,25 +276,38 @@ func validateGitRepo(path string) error {
 // gitRemoteURL returns the fetch URL of the origin remote, or an empty string
 // if no origin remote is configured.
 func gitRemoteURL(repoPath string) (string, error) {
-	url, err := runGitCommand(repoPath, "remote", "get-url", "origin")
+	repo, err := goGit.PlainOpen(repoPath)
 	if err != nil {
-		// No origin remote configured is not an error.
-		return "", nil //nolint:nilerr // intentional: no origin remote is expected, not an error
+		slog.Debug("gitRemoteURL: not a git repo", "path", repoPath, "error", err)
+		return "", nil
 	}
-	return url, nil
+	remote, err := repo.Remote("origin")
+	if err != nil {
+		slog.Debug("gitRemoteURL: no origin remote", "path", repoPath, "error", err)
+		return "", nil
+	}
+	config := remote.Config()
+	if len(config.URLs) == 0 {
+		return "", nil
+	}
+	return config.URLs[0], nil
 }
 
 // gitDefaultBranch returns the default branch name (HEAD symbolic ref).
-// Returns "main" as a fallback if the symbolic-ref command fails (detached HEAD
-// or no commits).
+// Returns "main" as a fallback if HEAD is detached or the repo cannot be opened.
 func gitDefaultBranch(repoPath string) (string, error) {
-	branch, err := runGitCommand(repoPath, "symbolic-ref", "--short", "HEAD")
-	//nolint:nilerr // detached HEAD is an expected state, not an error
+	repo, err := goGit.PlainOpen(repoPath)
 	if err != nil {
+		slog.Debug("gitDefaultBranch: not a git repo", "path", repoPath, "error", err)
 		return "main", nil
 	}
-	if branch == "" {
+	head, err := repo.Head()
+	if err != nil {
+		slog.Debug("gitDefaultBranch: detached or no HEAD", "path", repoPath, "error", err)
 		return "main", nil
 	}
-	return branch, nil
+	if !head.Name().IsBranch() {
+		return "main", nil
+	}
+	return head.Name().Short(), nil
 }

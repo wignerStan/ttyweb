@@ -1,5 +1,5 @@
 // Package worktree provides git worktree management operations.
-// It wraps git CLI commands and go-git for repository-level introspection.
+// It uses go-git for repository-level introspection and worktree management.
 package worktree
 
 import (
@@ -7,14 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
-	"sync"
 
 	goGit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/revlist"
 )
 
 // Info describes a single worktree in a repository.
@@ -59,12 +58,6 @@ func ValidateBranchName(name string) error {
 
 // --- git command helpers ---
 
-var (
-	gitCommandEnv   = buildGitCommandEnv()
-	testEnvOverride []string
-	testEnvMu       sync.RWMutex
-)
-
 // FilterGitEnv removes git repository discovery variables from env.
 // This prevents child git processes from discovering the parent repo.
 func FilterGitEnv(env []string) []string {
@@ -82,46 +75,6 @@ func FilterGitEnv(env []string) []string {
 	return filtered
 }
 
-func buildGitCommandEnv() []string {
-	env := FilterGitEnv(os.Environ())
-	env = append(env,
-		"GIT_TERMINAL_PROMPT=0",
-		"GIT_MERGE_AUTOEDIT=no",
-		"GIT_ASKPASS=",
-		"SSH_ASKPASS=",
-	)
-	return env
-}
-
-// SetTestEnv allows tests to inject extra env vars for git commands.
-func SetTestEnv(env []string) {
-	testEnvMu.Lock()
-	defer testEnvMu.Unlock()
-	testEnvOverride = env
-}
-
-// newGitCmd creates a git exec.Cmd with safe env defaults.
-func newGitCmd(dir string, args ...string) *exec.Cmd {
-	return newGitCmdContext(context.Background(), dir, args...)
-}
-
-// newGitCmdContext creates a git exec.Cmd with safe env defaults, honouring ctx for cancellation.
-func newGitCmdContext(ctx context.Context, dir string, args ...string) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // reason: hardcoded binary, args are static git subcommands
-	cmd.Env = append([]string(nil), gitCommandEnv...)
-
-	testEnvMu.RLock()
-	if len(testEnvOverride) > 0 {
-		cmd.Env = append(cmd.Env, testEnvOverride...)
-	}
-	testEnvMu.RUnlock()
-
-	if dir != "" {
-		cmd.Dir = dir
-	}
-	return cmd
-}
-
 // --- repository detection ---
 
 // IsGitRepo returns true if path is a git repository.
@@ -131,6 +84,24 @@ func IsGitRepo(path string) bool {
 }
 
 // --- worktree operations ---
+
+// createBranchFromBase creates a new branch from baseBranch in repo.
+func createBranchFromBase(repo *goGit.Repository, branchName, baseBranch string) error {
+	baseRefName := plumbing.ReferenceName("refs/heads/" + baseBranch)
+	baseRef, err := repo.Reference(baseRefName, false)
+	if err != nil {
+		return &OpError{Kind: KindNotFound, Detail: fmt.Sprintf("base branch %q not found", baseBranch), Cause: err}
+	}
+	branchRef := plumbing.ReferenceName("refs/heads/" + branchName)
+	if _, err := repo.Reference(branchRef, false); err == nil {
+		return &OpError{Kind: KindAlreadyExists, Detail: fmt.Sprintf("branch %q already exists", branchName)}
+	}
+	newRef := plumbing.NewHashReference(branchRef, baseRef.Hash())
+	if err := repo.Storer.SetReference(newRef); err != nil {
+		return &OpError{Kind: KindGitFailed, Detail: fmt.Sprintf("create branch %q", branchName), Cause: err}
+	}
+	return nil
+}
 
 // CreateWorktree creates a new worktree for the repo at repoPath, checking out
 // branchName. When createBranch is true, the branch is created from baseBranch
@@ -149,7 +120,11 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 		return "", fmt.Errorf("resolve repo path: %w", err)
 	}
 
-	// Create branch first if requested.
+	repo, err := defaultCache.Open(absRepo)
+	if err != nil {
+		return "", &OpError{Kind: KindGitFailed, Path: absRepo, Detail: "open repo", Cause: err}
+	}
+
 	if createBranch {
 		base := strings.TrimSpace(baseBranch)
 		if base == "" {
@@ -158,24 +133,18 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 		if base == "" {
 			base = "main"
 		}
-		if out, err := runGitCmdWithOutput(ctx, absRepo, "branch", branchName, base); err != nil {
-			return "", fmt.Errorf("create branch failed: %s", strings.TrimSpace(string(out)))
+		if err := createBranchFromBase(repo, branchName, base); err != nil {
+			return "", err
 		}
 	}
 
-	// Determine worktree directory.
 	worktreePath := filepath.Join(absRepo, ".worktrees", sanitizeBranchName(branchName))
-	if err := os.MkdirAll(filepath.Dir(worktreePath), 0o750); err != nil {
-		return "", fmt.Errorf("create worktree parent dir: %w", err)
-	}
-
-	// Add the worktree.
-	if out, err := runGitCmdWithOutput(ctx, absRepo, "worktree", "add", worktreePath, branchName); err != nil {
-		// Clean up the branch if we just created it.
+	if err := addWorktree(absRepo, worktreePath, branchName); err != nil {
 		if createBranch {
-			_ = runGitCmdContext(ctx, absRepo, "branch", "-D", branchName)
+			branchRef := plumbing.ReferenceName("refs/heads/" + branchName)
+			_ = repo.Storer.RemoveReference(branchRef)
 		}
-		return "", fmt.Errorf("add worktree failed: %s", strings.TrimSpace(string(out)))
+		return "", err
 	}
 
 	return worktreePath, nil
@@ -183,38 +152,22 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 
 // ListWorktrees enumerates all worktrees attached to the repository.
 func ListWorktrees(ctx context.Context, repoPath string) ([]Info, error) {
+	_ = ctx // ctx reserved for future cancellation support
 	repoPath = strings.TrimSpace(repoPath)
 	if repoPath == "" {
 		return nil, errEmptyPath
 	}
-
 	absRepo, err := filepath.Abs(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("resolve repo path: %w", err)
 	}
-
-	// Prune stale entries first.
-	_ = runGitCmdContext(ctx, absRepo, "worktree", "prune")
-
-	output, err := runGitCmdWithOutput(ctx, absRepo, "worktree", "list", "--porcelain")
-	if err != nil {
-		return nil, fmt.Errorf("list worktrees failed: %s", strings.TrimSpace(string(output)))
-	}
-
-	infos := parseWorktreeList(string(output))
-	for i := range infos {
-		if EqualPath(infos[i].Path, absRepo) {
-			infos[i].IsMain = true
-		}
-		// Fetch head commit message.
-		infos[i].HeadMessage = headCommitMessage(ctx, infos[i].Path)
-	}
-
-	return infos, nil
+	return listWorktreesManual(absRepo)
 }
 
-// RemoveWorktree removes a worktree. If force is true, --force is passed.
+// RemoveWorktree removes a worktree. If force is true, uncommitted changes
+// are ignored.
 func RemoveWorktree(ctx context.Context, repoPath, worktreePath string, force bool) error {
+	_ = ctx // ctx reserved for future cancellation support
 	repoPath = strings.TrimSpace(repoPath)
 	if repoPath == "" {
 		return errEmptyPath
@@ -223,27 +176,23 @@ func RemoveWorktree(ctx context.Context, repoPath, worktreePath string, force bo
 	if worktreePath == "" {
 		return errors.New("worktree path is required")
 	}
-
 	absRepo, err := filepath.Abs(repoPath)
 	if err != nil {
 		return fmt.Errorf("resolve repo path: %w", err)
 	}
-
-	args := []string{"worktree", "remove"}
-	if force {
-		args = append(args, "--force")
+	absWorktree, err := filepath.Abs(worktreePath)
+	if err != nil {
+		return fmt.Errorf("resolve worktree path: %w", err)
 	}
-	args = append(args, worktreePath)
 
-	if out, err := runGitCmdWithOutput(ctx, absRepo, args...); err != nil {
-		errMsg := strings.TrimSpace(string(out))
-		if strings.Contains(errMsg, "is not a working tree") || strings.Contains(errMsg, "not found") {
-			_ = runGitCmdContext(ctx, absRepo, "worktree", "prune")
-			return nil
-		}
-		return fmt.Errorf("remove worktree failed: %s", errMsg)
+	// If worktree path doesn't exist, just prune metadata.
+	if _, err := os.Stat(absWorktree); os.IsNotExist(err) {
+		worktreeName := filepath.Base(absWorktree)
+		_ = os.RemoveAll(filepath.Join(absRepo, ".git", "worktrees", worktreeName))
+		return nil
 	}
-	return nil
+
+	return removeWorktreeManual(absRepo, absWorktree, force)
 }
 
 // GetWorktreeStatus returns the working-directory status of the worktree.
@@ -258,11 +207,6 @@ func GetWorktreeStatus(ctx context.Context, worktreePath string) (*Status, error
 		return nil, fmt.Errorf("resolve worktree path: %w", err)
 	}
 
-	// Try porcelain=v2 first for richer info.
-	if status, err := collectStatusPorcelainContext(ctx, absPath); err == nil {
-		return status, nil
-	}
-	// Fallback to go-git.
 	return collectStatusGoGit(absPath)
 }
 
@@ -282,54 +226,32 @@ func CommitWorktree(ctx context.Context, worktreePath, message string) error {
 		return fmt.Errorf("resolve worktree path: %w", err)
 	}
 
-	if err := runGitCmdContext(ctx, absPath, "add", "--all"); err != nil {
-		return fmt.Errorf("stage all: %w", err)
+	repo, err := defaultCache.Open(absPath)
+	if err != nil {
+		return &OpError{Kind: KindGitFailed, Path: absPath, Detail: "open repo", Cause: err}
 	}
-	if err := runGitCmdContext(ctx, absPath, "commit", "-m", message); err != nil {
-		if strings.Contains(err.Error(), "nothing to commit") {
+
+	wt, err := repo.Worktree()
+	if err != nil {
+		return &OpError{Kind: KindGitFailed, Path: absPath, Detail: "get worktree", Cause: err}
+	}
+
+	if err := wt.AddWithOptions(&goGit.AddOptions{All: true}); err != nil {
+		return &OpError{Kind: KindGitFailed, Path: absPath, Detail: "stage all", Cause: err}
+	}
+
+	_, err = wt.Commit(message, &goGit.CommitOptions{})
+	if err != nil {
+		if errors.Is(err, goGit.ErrEmptyCommit) {
 			return errors.New("nothing to commit: working tree clean")
 		}
-		return fmt.Errorf("commit: %w", err)
+		return &OpError{Kind: KindGitFailed, Path: absPath, Detail: "commit", Cause: err}
 	}
+
 	return nil
 }
 
 // --- internal helpers ---
-
-func runGitCmd(dir string, args ...string) error {
-	return runGitCmdContext(context.Background(), dir, args...)
-}
-
-// runGitCmdContext acquires a semaphore permit then runs a git command.
-func runGitCmdContext(ctx context.Context, dir string, args ...string) error {
-	guard, err := DefaultSemaphore().Acquire(ctx)
-	if err != nil {
-		return &OpError{Kind: KindCancelled, Path: dir, Detail: "semaphore acquire cancelled", Cause: err}
-	}
-	defer guard.Release()
-
-	cmd := newGitCmdContext(ctx, dir, args...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return &OpError{Kind: KindGitFailed, Path: dir, Detail: fmt.Sprintf("git %s failed: %s", strings.Join(args, " "), strings.TrimSpace(string(out))), Cause: err}
-	}
-	return nil
-}
-
-// runGitCmdWithOutput acquires a semaphore permit then runs a git command, returning its output.
-func runGitCmdWithOutput(ctx context.Context, dir string, args ...string) ([]byte, error) {
-	guard, err := DefaultSemaphore().Acquire(ctx)
-	if err != nil {
-		return nil, &OpError{Kind: KindCancelled, Path: dir, Detail: "semaphore acquire cancelled", Cause: err}
-	}
-	defer guard.Release()
-
-	cmd := newGitCmdContext(ctx, dir, args...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return out, &OpError{Kind: KindGitFailed, Path: dir, Detail: fmt.Sprintf("git %s failed: %s", strings.Join(args, " "), strings.TrimSpace(string(out))), Cause: err}
-	}
-	return out, nil
-}
 
 func sanitizeBranchName(branch string) string {
 	replacer := strings.NewReplacer(
@@ -345,57 +267,17 @@ func sanitizeBranchName(branch string) string {
 	return replacer.Replace(strings.TrimSpace(branch))
 }
 
-func resolveDefaultBranch(ctx context.Context, repoPath string) string {
-	for _, name := range []string{"main", "master", "develop"} {
-		if _, err := runGitCmdWithOutput(ctx, repoPath, "rev-parse", "--verify", "--quiet", "refs/heads/"+name); err == nil {
-			return name
+func resolveDefaultBranch(_ context.Context, repoPath string) string {
+	repo, err := defaultCache.Open(repoPath)
+	if err != nil {
+		return ""
+	}
+	for _, name := range []string{"refs/heads/main", "refs/heads/master", "refs/heads/develop"} {
+		if _, err := repo.Reference(plumbing.ReferenceName(name), false); err == nil {
+			return strings.TrimPrefix(name, "refs/heads/")
 		}
 	}
 	return ""
-}
-
-func parseWorktreeList(output string) []Info {
-	lines := strings.Split(output, "\n")
-	result := make([]Info, 0)
-	var current Info
-
-	flush := func() {
-		if current.Path != "" {
-			result = append(result, current)
-		}
-		current = Info{}
-	}
-
-	for _, raw := range lines {
-		line := strings.TrimSpace(raw)
-		if line == "" {
-			flush()
-			continue
-		}
-
-		parts := strings.SplitN(line, " ", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		key, val := parts[0], strings.TrimSpace(parts[1])
-
-		switch key {
-		case "worktree":
-			current.Path = val
-		case "branch":
-			current.Branch = strings.TrimPrefix(val, "refs/heads/")
-		case "HEAD":
-			if len(val) >= 7 {
-				current.HeadCommit = val[:7]
-			} else {
-				current.HeadCommit = val
-			}
-		case "detached":
-			current.Branch = val
-		}
-	}
-	flush()
-	return result
 }
 
 // EqualPath compares two file paths for equality, resolving symlinks on POSIX.
@@ -411,117 +293,34 @@ func EqualPath(a, b string) bool {
 	return cleanA == cleanB
 }
 
-func headCommitMessage(ctx context.Context, path string) string {
-	out, err := runGitCmdWithOutput(ctx, path, "log", "-1", "--pretty=format:%s")
-	if err != nil || len(out) == 0 {
+func headCommitMessage(_ context.Context, path string) string {
+	repo, err := defaultCache.Open(path)
+	if err != nil {
 		return ""
 	}
-	return strings.TrimSpace(string(out))
-}
-
-func collectStatusPorcelain(path string) (*Status, error) {
-	return collectStatusPorcelainContext(context.Background(), path)
-}
-
-func collectStatusPorcelainContext(ctx context.Context, path string) (*Status, error) {
-	guard, err := DefaultSemaphore().Acquire(ctx)
+	head, err := repo.Head()
 	if err != nil {
-		return nil, &OpError{Kind: KindCancelled, Path: path, Cause: err}
+		return ""
 	}
-	defer guard.Release()
-
-	cmd := newGitCmdContext(ctx, path, "status", "--porcelain=2", "--branch")
-	output, err := cmd.Output()
+	commit, err := repo.CommitObject(head.Hash())
 	if err != nil {
-		return nil, fmt.Errorf("collectStatusPorcelain: git status: %w", err)
+		return ""
 	}
-	return parsePorcelainStatus(string(output)), nil
-}
-
-func parsePorcelainStatus(output string) *Status {
-	if strings.TrimSpace(output) == "" {
-		return &Status{}
-	}
-
-	status := &Status{}
-	lines := strings.Split(output, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		if strings.HasPrefix(line, "# ") {
-			parseStatusHeader(status, strings.TrimSpace(line[2:]))
-			continue
-		}
-		switch line[0] {
-		case '?':
-			status.Untracked++
-		case '1', '2':
-			parseTrackedLine(status, line)
-		case 'u':
-			status.Conflicts++
-		}
-	}
-	return status
-}
-
-func parseStatusHeader(status *Status, line string) {
-	fields := strings.Fields(line)
-	if len(fields) == 0 {
-		return
-	}
-	if fields[0] == "branch.ab" {
-		if len(fields) >= 3 {
-			status.Ahead = parseCount(fields[1])
-			status.Behind = parseCount(fields[2])
-		}
-	}
-}
-
-func parseTrackedLine(status *Status, line string) {
-	fields := strings.Fields(line)
-	if len(fields) < 2 {
-		return
-	}
-	xy := fields[1]
-	if len(xy) < 2 {
-		return
-	}
-	x, y := rune(xy[0]), rune(xy[1])
-	if x == 'U' || y == 'U' {
-		status.Conflicts++
-		return
-	}
-	if x != '.' {
-		status.Staged++
-	}
-	if y != '.' {
-		status.Modified++
-	}
-}
-
-func parseCount(token string) int {
-	token = strings.TrimLeft(strings.TrimSpace(token), "+-")
-	n, err := strconv.Atoi(token)
-	if err != nil {
-		return 0
-	}
-	return n
+	return strings.TrimSpace(commit.Message)
 }
 
 func collectStatusGoGit(path string) (*Status, error) {
-	repo, err := goGit.PlainOpen(path)
+	repo, err := defaultCache.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("collectStatusGoGit: open repo: %w", err)
 	}
 
-	worktree, err := repo.Worktree()
+	wt, err := repo.Worktree()
 	if err != nil {
 		return nil, fmt.Errorf("collectStatusGoGit: get worktree: %w", err)
 	}
 
-	snap, err := worktree.Status()
+	snap, err := wt.Status()
 	if err != nil {
 		return nil, fmt.Errorf("collectStatusGoGit: get status: %w", err)
 	}
@@ -537,14 +336,56 @@ func collectStatusGoGit(path string) (*Status, error) {
 			continue
 		}
 		switch fs.Worktree {
-		case goGit.Modified, goGit.Added, goGit.Deleted, goGit.Renamed:
+		case goGit.Modified, goGit.Added, goGit.Deleted, goGit.Renamed, goGit.Copied:
 			status.Modified++
-		case goGit.Unmodified, goGit.Untracked, goGit.Copied, goGit.UpdatedButUnmerged:
-			// handled above or no-op
+		case goGit.Unmodified:
+			// No change — clean file
+		case goGit.Untracked, goGit.UpdatedButUnmerged:
+			// Already handled by continue above; unreachable here.
 		}
 		if fs.Staging != goGit.Unmodified && fs.Staging != goGit.Untracked {
 			status.Staged++
 		}
 	}
+
+	status.Ahead, status.Behind = computeAheadBehind(repo)
 	return status, nil
+}
+
+// computeAheadBehind counts commits ahead/behind a tracking branch.
+// Returns (0, 0) if no tracking branch or detached HEAD.
+func computeAheadBehind(repo *goGit.Repository) (int, int) {
+	head, err := repo.Head()
+	if err != nil || !head.Name().IsBranch() {
+		return 0, 0
+	}
+
+	upstreamName := plumbing.ReferenceName("refs/remotes/origin/" + head.Name().Short())
+	upstream, err := repo.Reference(upstreamName, false)
+	if err != nil {
+		return 0, 0
+	}
+
+	ahead, err := revlist.Objects(repo.Storer, []plumbing.Hash{head.Hash()}, []plumbing.Hash{upstream.Hash()})
+	if err != nil {
+		return 0, 0
+	}
+	behind, err := revlist.Objects(repo.Storer, []plumbing.Hash{upstream.Hash()}, []plumbing.Hash{head.Hash()})
+	if err != nil {
+		return 0, 0
+	}
+
+	return countCommits(repo, ahead), countCommits(repo, behind)
+}
+
+// countCommits filters a list of object hashes to only commit objects.
+func countCommits(repo *goGit.Repository, hashes []plumbing.Hash) int {
+	count := 0
+	for _, h := range hashes {
+		obj, err := repo.Storer.EncodedObject(plumbing.CommitObject, h)
+		if err == nil && obj != nil {
+			count++
+		}
+	}
+	return count
 }

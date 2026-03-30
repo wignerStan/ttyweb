@@ -625,6 +625,56 @@ func TestSyncProject_DetachedHead(t *testing.T) {
 	}
 }
 
+func TestGitRemoteURL_NoRemote(t *testing.T) {
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+	url, err := gitRemoteURL(repoDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url != "" {
+		t.Errorf("expected empty URL, got %q", url)
+	}
+}
+
+func TestGitRemoteURL_WithRemote(t *testing.T) {
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+	runGit(t, repoDir, "remote", "add", "origin", "https://github.com/example/repo.git")
+	url, err := gitRemoteURL(repoDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url != "https://github.com/example/repo.git" {
+		t.Errorf("expected remote URL, got %q", url)
+	}
+}
+
+func TestGitDefaultBranch_OnBranch(t *testing.T) {
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+	branch, err := gitDefaultBranch(repoDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if branch != "main" {
+		t.Errorf("expected 'main', got %q", branch)
+	}
+}
+
+func TestGitDefaultBranch_DetachedHEAD(t *testing.T) {
+	repoDir := t.TempDir()
+	initGitRepo(t, repoDir)
+	runGit(t, repoDir, "checkout", "--detach", "HEAD")
+	branch, err := gitDefaultBranch(repoDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if branch != "main" {
+		t.Errorf("expected 'main' fallback, got %q", branch)
+	}
+}
+
 func TestGenerateID_InProjectContext(t *testing.T) {
 	id1, err := generateID()
 	if err != nil {
