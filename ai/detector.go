@@ -12,6 +12,12 @@ const (
 	AssistantTypeClaudeCode AssistantType = "claude_code"
 	// AssistantTypeCodex represents a Codex assistant.
 	AssistantTypeCodex AssistantType = "codex"
+	// AssistantTypeQwenCode represents a Qwen Code assistant.
+	AssistantTypeQwenCode AssistantType = "qwen_code"
+	// AssistantTypeGemini represents a Gemini assistant.
+	AssistantTypeGemini AssistantType = "gemini"
+	// AssistantTypeCursor represents a Cursor assistant.
+	AssistantTypeCursor AssistantType = "cursor"
 )
 
 // String returns the string representation of the assistant type.
@@ -26,6 +32,12 @@ func (t AssistantType) DisplayName() string {
 		return "Claude Code"
 	case AssistantTypeCodex:
 		return "OpenAI Codex"
+	case AssistantTypeQwenCode:
+		return "Qwen Code"
+	case AssistantTypeGemini:
+		return "Gemini"
+	case AssistantTypeCursor:
+		return "Cursor"
 	case AssistantTypeUnknown:
 		return ""
 	default:
@@ -58,9 +70,34 @@ var detectionRules = []detectionRule{
 			"/codex",
 		},
 	},
+	{
+		assistantType: AssistantTypeQwenCode,
+		patterns: []string{
+			"@alicloud/qwen-code",
+			"qwen-code",
+			"qwen_code",
+			"/qwen",
+		},
+	},
+	{
+		assistantType: AssistantTypeGemini,
+		patterns: []string{
+			"@google/gemini-cli",
+			"gemini-cli",
+			"/gemini",
+		},
+	},
+	{
+		assistantType: AssistantTypeCursor,
+		patterns: []string{
+			"cursor-agent",
+			"/cursor",
+			".cursor/",
+		},
+	},
 }
 
-// DetectAssistant checks if a command string indicates running Claude Code or Codex.
+// DetectAssistant checks if a command string indicates running an AI assistant.
 // Returns the detected assistant type and true if detected, or empty string and false otherwise.
 func DetectAssistant(command string) (AssistantType, bool) {
 	if command == "" {
