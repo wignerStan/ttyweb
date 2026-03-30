@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 
+	"ttyweb/config"
 	"ttyweb/pkg/validate"
 )
 
@@ -25,7 +26,7 @@ func (*Server) handleTmuxConfig(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleQuickDirs returns quick-access directories (stub).
+// handleQuickDirs returns quick-access directories from config.
 func (*Server) handleQuickDirs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -34,9 +35,13 @@ func (*Server) handleQuickDirs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAPISuccess(w, map[string]any{
-		"dirs": []any{},
-	})
+	cfg := config.Get()
+	dirs := cfg.QuickDirs
+	if dirs == nil {
+		dirs = []config.QuickDir{}
+	}
+
+	writeAPISuccess(w, dirs)
 }
 
 // handleTmuxNewWindow creates a new tmux window in a session.
