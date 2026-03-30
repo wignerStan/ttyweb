@@ -38,8 +38,8 @@ jobs:
           key: bun-${{ hashFiles('frontend/bun.lockb') }}
           restore-keys: bun-
       - run: cd frontend && bun install
-      - run: cd frontend && bunx biome check src/
-      - run: cd frontend && bunx tsc --noEmit
+      - run: cd frontend && bun run lint
+      - run: cd frontend && bun run typecheck
 
   test-go:
     runs-on: ubuntu-latest

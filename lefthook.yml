@@ -13,7 +13,7 @@ pre-commit:
       run: go test ./... -count=1 -short
     biome-check:
       tags: [frontend]
-      run: cd frontend && bunx biome check src/
+      run: cd frontend && bun run lint
     tsc:
       tags: [frontend]
       run: cd frontend && bunx tsc --noEmit
