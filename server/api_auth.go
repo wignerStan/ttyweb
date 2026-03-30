@@ -10,6 +10,14 @@ import (
 // handleAuthCheck checks whether the client is authenticated.
 // If basic auth is enabled, it validates the Authorization header.
 // If basic auth is not configured, it always returns success.
+//
+// @Summary Check auth status
+// @Description Returns whether basic auth is enabled and if the client is authenticated
+// @Tags auth
+// @Produce json
+// @Success 200 {object} map[string]any
+// @Failure 401 {object} map[string]any
+// @Router /auth/check [get]
 func (server *Server) handleAuthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

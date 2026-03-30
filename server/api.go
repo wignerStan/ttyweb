@@ -113,6 +113,8 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"fs", server.handleFSList)
 	// Editor
 	mux.HandleFunc(apiPrefix+"editor/open", server.handleEditorOpen)
+	// Swagger docs
+	mux.HandleFunc(apiPrefix+"docs/", handleSwaggerDocs)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {

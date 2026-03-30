@@ -35,6 +35,14 @@ func getAppVersion() VersionInfo {
 	return VersionInfo{Version: appVersion, GoVersion: goVer, Commit: commit}
 }
 
+// handleVersion returns server version metadata.
+//
+// @Summary Get version info
+// @Description Returns server version, Go version, and commit hash
+// @Tags system
+// @Produce json
+// @Success 200 {object} VersionInfo
+// @Router /version [get]
 func (*Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 	writeAPISuccess(w, getAppVersion())
 }
