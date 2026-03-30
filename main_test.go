@@ -297,3 +297,71 @@ func TestLoadConfig_Default(t *testing.T) {
 		t.Logf("loadConfig with default path: %v (may be expected)", err)
 	}
 }
+
+func TestLoadConfig_ValidFile(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	cfgPath := tmpDir + "/config.json"
+	if err := os.WriteFile(cfgPath, []byte(`{"llm":{"api_url":"https://example.com","model":"test"}}`), 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	if err := loadConfig(cfgPath); err != nil {
+		t.Fatalf("loadConfig valid file: %v", err)
+	}
+}
+
+func TestLoadConfig_InvalidFile(t *testing.T) {
+	t.Parallel()
+	tmpDir := t.TempDir()
+	cfgPath := tmpDir + "/config.json"
+	if err := os.WriteFile(cfgPath, []byte(`{invalid json`), 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	if err := loadConfig(cfgPath); err == nil {
+		t.Error("expected error for invalid JSON config")
+	}
+}
+
+func TestBuildOptions_EnvCredential(t *testing.T) {
+	t.Parallel()
+	orig := os.Getenv("TTYWEB_CREDENTIAL")
+	defer os.Setenv("TTYWEB_CREDENTIAL", orig)
+	os.Setenv("TTYWEB_CREDENTIAL", "env:user:pass")
+
+	opts := buildOptions("", "", "", "local", "flag:user:pass", "", false, false, "", "")
+	if !opts.EnableBasicAuth {
+		t.Error("expected EnableBasicAuth true")
+	}
+	if opts.Credential != "env:user:pass" {
+		t.Errorf("Credential = %q, want env var to take precedence", opts.Credential)
+	}
+}
+
+func TestBuildOptions_DeprecatedCredentialFlag(t *testing.T) {
+	t.Parallel()
+	orig := os.Getenv("TTYWEB_CREDENTIAL")
+	defer os.Setenv("TTYWEB_CREDENTIAL", orig)
+	os.Unsetenv("TTYWEB_CREDENTIAL")
+
+	opts := buildOptions("", "", "", "local", "user:pass", "", false, false, "", "")
+	if !opts.EnableBasicAuth {
+		t.Error("expected EnableBasicAuth true")
+	}
+	if opts.Credential != "user:pass" {
+		t.Errorf("Credential = %q, want 'user:pass'", opts.Credential)
+	}
+}
+
+func TestBuildOptions_TLSWithCertAndKey(t *testing.T) {
+	t.Parallel()
+	opts := buildOptions("", "", "", "local", "", "", false, true, "/crt", "/key")
+	if !opts.EnableTLS {
+		t.Error("expected EnableTLS true")
+	}
+	if opts.TLSCrtFile != "/crt" {
+		t.Errorf("TLSCrtFile = %q", opts.TLSCrtFile)
+	}
+	if opts.TLSKeyFile != "/key" {
+		t.Errorf("TLSKeyFile = %q", opts.TLSKeyFile)
+	}
+}
