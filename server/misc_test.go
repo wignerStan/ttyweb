@@ -23,7 +23,10 @@ func TestTitleVariables(t *testing.T) {
 		"client": {"ip": "127.0.0.1"},
 	}
 
-	result := srv.titleVariables(order, varUnits)
+	result, err := srv.titleVariables(order, varUnits)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if result["host"] != "localhost" {
 		t.Fatalf("expected host=localhost, got %v", result["host"])
@@ -53,7 +56,10 @@ func TestTitleVariables_Override(t *testing.T) {
 		"b": {"key": "value-b"},
 	}
 
-	result := srv.titleVariables(order, varUnits)
+	result, err := srv.titleVariables(order, varUnits)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	// 'b' comes after 'a', so 'b' should win.
 	if result["key"] != "value-b" {
@@ -62,16 +68,13 @@ func TestTitleVariables_Override(t *testing.T) {
 }
 
 func TestTitleVariables_MissingKey(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatal("expected panic for missing varUnit key")
-		}
-	}()
-
 	srv := newTestServer()
 	order := []string{"missing"}
 	varUnits := map[string]map[string]any{
 		"other": {},
 	}
-	srv.titleVariables(order, varUnits)
+	_, err := srv.titleVariables(order, varUnits)
+	if err == nil {
+		t.Fatal("expected error for missing varUnit key, got nil")
+	}
 }

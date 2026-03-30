@@ -144,6 +144,12 @@ func buildOptions(addr, port, path, backendName, cred, titleFmt string, write bo
 		},
 	}
 
+	// Credential: env var takes precedence over CLI flag
+	if envCred := os.Getenv("TTYWEB_CREDENTIAL"); envCred != "" {
+		cred = envCred
+	} else if cred != "" {
+		log.Printf("WARNING: -credential flag is deprecated (visible in process list). Use TTYWEB_CREDENTIAL environment variable instead.")
+	}
 	if cred != "" {
 		options.EnableBasicAuth = true
 		options.Credential = cred

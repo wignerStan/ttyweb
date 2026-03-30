@@ -235,6 +235,12 @@ func writeAPISuccessRaw(w http.ResponseWriter, data json.RawMessage) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
+func (*Server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	writeAPISuccess(w, map[string]string{
+		"status": "ok",
+	})
+}
+
 func writeAPIError(w http.ResponseWriter, code int, message string) {
 	w.WriteHeader(code)
 	resp := apiResponse{Success: false, Error: message}

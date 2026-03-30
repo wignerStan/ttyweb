@@ -111,7 +111,10 @@ func TestTitleVariables_MergeOrder(t *testing.T) {
 		"a": {"key1": "val1", "key2": "val2"},
 		"b": {"key2": "override", "key3": "val3"},
 	}
-	result := srv.titleVariables(order, varUnits)
+	result, err := srv.titleVariables(order, varUnits)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if result["key2"] != "override" {
 		t.Errorf("key2 = %v, want 'override'", result["key2"])
 	}
@@ -136,7 +139,10 @@ func TestTitleVariables_SingleSource(t *testing.T) {
 	varUnits := map[string]map[string]any{
 		"only": {"key": "value"},
 	}
-	result := srv.titleVariables(order, varUnits)
+	result, err := srv.titleVariables(order, varUnits)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if result["key"] != "value" {
 		t.Errorf("key = %v, want 'value'", result["key"])
 	}
