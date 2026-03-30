@@ -1,0 +1,2 @@
+{"time":"TIMESTAMP","level":"WARN","msg":"should appear","severity":"high"}
+{"time":"TIMESTAMP","level":"ERROR","msg":"also appears","code":500}
