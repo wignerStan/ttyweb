@@ -10,13 +10,14 @@ interface TerminalTabProps {
   session: string
   pane: string
   onMetadata?: (metadata: Metadata) => void
+  onTabRename?: (summary: string) => void
 }
 
 // Message types in gotty/webtty protocol:
 // Client -> Server: '0'=Output (base64), '1'=Input, '2'=Ping, '3'=Resize, '4'=SetWindowTitle (unused)
 // Server -> Client: '0'=Output (base64), '1'=Input (unused), '2'=Pong, '3'=SetWindowTitle
 
-export function TerminalTab({ session, pane, onMetadata }: TerminalTabProps) {
+export function TerminalTab({ session, pane, onMetadata, onTabRename }: TerminalTabProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
@@ -106,6 +107,9 @@ export function TerminalTab({ session, pane, onMetadata }: TerminalTabProps) {
             const metaJSON = atob(payload)
             const metadata: Metadata = JSON.parse(metaJSON)
             onMetadata?.(metadata)
+            if (metadata.type === 'tab_rename' && metadata.data?.summary && onTabRename) {
+              onTabRename(String(metadata.data.summary))
+            }
           } catch {
             // malformed metadata — ignore
           }
@@ -158,7 +162,7 @@ export function TerminalTab({ session, pane, onMetadata }: TerminalTabProps) {
       termRef.current = null
       fitRef.current = null
     }
-  }, [session, pane, onMetadata])
+  }, [session, pane, onMetadata, onTabRename])
 
   const statusColor =
     status === 'connected' ? '#9ece6a' : status === 'connecting' ? '#e0af68' : '#f7768e'

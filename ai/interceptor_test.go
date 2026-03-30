@@ -2,6 +2,7 @@ package ai
 
 import (
 	"testing"
+	"unicode/utf8"
 )
 
 func TestANSIIntercept_WorkingPattern(t *testing.T) {
@@ -61,5 +62,113 @@ func TestANSIIntercept_EmptyInput(t *testing.T) {
 	metadata := i.Intercept([]byte{})
 	if len(metadata) != 0 {
 		t.Error("expected no metadata for empty input")
+	}
+}
+
+func TestANSIIntercept_CapturesUserInputOnWorking(t *testing.T) {
+	i := NewANSITerminalInterceptor()
+
+	// First: trigger working state
+	metadata1 := i.Intercept([]byte("Use Read tool to read main.go\r\n"))
+	foundWorking := false
+	for _, m := range metadata1 {
+		if m.Type == "ai_state_change" && m.Data["state"] == "working" {
+			foundWorking = true
+		}
+	}
+	if !foundWorking {
+		t.Fatal("expected working state")
+	}
+
+	// Next: terminal output that looks like user input
+	metadata2 := i.Intercept([]byte("fix the authentication bug in login handler\r\n"))
+	foundRename := false
+	for _, m := range metadata2 {
+		if m.Type == "tab_rename" {
+			foundRename = true
+			summary, ok := m.Data["summary"].(string)
+			if !ok || summary == "" {
+				t.Error("expected non-empty summary in tab_rename")
+			}
+			if utf8.RuneCountInString(summary) > 64 {
+				t.Errorf("summary should be truncated to 64 chars, got %d", utf8.RuneCountInString(summary))
+			}
+		}
+	}
+	if !foundRename {
+		t.Error("expected tab_rename metadata when in working state")
+	}
+}
+
+func TestANSIIntercept_NoTabRenameWhenIdle(t *testing.T) {
+	i := NewANSITerminalInterceptor()
+
+	// Output that looks like user input, but no working state has been triggered
+	metadata := i.Intercept([]byte("fix the authentication bug\r\n"))
+	for _, m := range metadata {
+		if m.Type == "tab_rename" {
+			t.Error("expected no tab_rename when not in working state")
+		}
+	}
+}
+
+func TestANSIIntercept_NoTabRenameForToolOutput(t *testing.T) {
+	i := NewANSITerminalInterceptor()
+
+	// Trigger working state
+	i.Intercept([]byte("Use Read tool to read main.go\r\n"))
+
+	// Output that looks like tool execution, not user input
+	metadata := i.Intercept([]byte("Reading file config/settings.json\r\n"))
+	for _, m := range metadata {
+		if m.Type == "tab_rename" {
+			t.Error("expected no tab_rename for tool-like output")
+		}
+	}
+}
+
+func TestANSIIntercept_TabRenameClearedOnIdle(t *testing.T) {
+	i := NewANSITerminalInterceptor()
+
+	// Trigger working, then user input, then idle
+	i.Intercept([]byte("Use Read tool to read main.go\r\n"))
+	i.Intercept([]byte("fix the authentication bug\r\n"))
+	i.Intercept([]byte("Human:\r\n"))
+
+	// Now in idle state — user input should not produce tab_rename
+	metadata := i.Intercept([]byte("do something else\r\n"))
+	for _, m := range metadata {
+		if m.Type == "tab_rename" {
+			t.Error("expected no tab_rename after idle state")
+		}
+	}
+}
+
+func TestANSIIntercept_TabRenameTruncation(t *testing.T) {
+	i := NewANSITerminalInterceptor()
+
+	// Trigger working state
+	i.Intercept([]byte("Use Read tool to read main.go\r\n"))
+
+	// Long input exceeding 64 chars
+	longInput := "this is a very long user input that should definitely be truncated because it exceeds the maximum allowed length of sixty-four characters"
+	metadata := i.Intercept([]byte(longInput + "\r\n"))
+	foundRename := false
+	for _, m := range metadata {
+		if m.Type == "tab_rename" {
+			foundRename = true
+			summary, _ := m.Data["summary"].(string)
+			if utf8.RuneCountInString(summary) > 65 {
+				t.Errorf("summary should be <= 65 runes (64 + ellipsis), got %d: %q", utf8.RuneCountInString(summary), summary)
+			}
+			runes := []rune(longInput)
+			expected := string(runes[:64]) + "\u2026"
+			if summary != expected {
+				t.Errorf("expected truncated summary with ellipsis, got %q", summary)
+			}
+		}
+	}
+	if !foundRename {
+		t.Error("expected tab_rename for long input")
 	}
 }
