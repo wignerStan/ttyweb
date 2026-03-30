@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "ttyweb",
+    "loading": "Loading...",
+    "error": "An error occurred"
+  },
+  "sidebar": {
+    "title": "Sessions",
+    "newWindow": "New Window",
+    "refresh": "Refresh",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "noSessions": "No sessions found"
+  },
+  "terminal": {
+    "title": "Terminal",
+    "close": "Close tab",
+    "fitWindow": "Fit to window",
+    "newTab": "New tab"
+  },
+  "conversations": {
+    "title": "Conversations",
+    "noSessions": "No AI sessions found",
+    "selectSession": "Select a session to view",
+    "back": "Back"
+  },
+  "notepad": {
+    "title": "Notepad",
+    "open": "Open Notepad",
+    "newTab": "New tab",
+    "close": "Close"
+  },
+  "kanban": {
+    "title": "Kanban",
+    "newTask": "New task",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "theme": {
+    "dark": "Dark",
+    "light": "Light",
+    "toggle": "Toggle theme"
+  },
+  "mobile": {
+    "title": "ttyweb",
+    "menu": "Menu",
+    "paste": "Paste",
+    "reconnect": "Reconnect",
+    "selectMode": "Select mode",
+    "copy": "Copy",
+    "copied": "Copied",
+    "exitSelect": "Exit",
+    "fontSize": "Font size",
+    "voiceInput": "Voice input",
+    "noTerminal": "No terminal connected"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "error": "Authentication failed"
+  },
+  "toolbar": {
+    "esc": "Esc",
+    "tab": "Tab",
+    "ctrl": "Ctrl",
+    "up": "Up",
+    "down": "Down",
+    "left": "Left",
+    "right": "Right"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "rename": "Rename",
+    "copy": "Copy",
+    "close": "Close",
+    "refresh": "Refresh"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "ttyweb",
+    "loading": "加载中...",
+    "error": "发生错误"
+  },
+  "sidebar": {
+    "title": "会话",
+    "newWindow": "新窗口",
+    "refresh": "刷新",
+    "collapse": "折叠",
+    "expand": "展开",
+    "noSessions": "未找到会话"
+  },
+  "terminal": {
+    "title": "终端",
+    "close": "关闭标签",
+    "fitWindow": "适应窗口",
+    "newTab": "新标签"
+  },
+  "conversations": {
+    "title": "对话",
+    "noSessions": "未找到AI会话",
+    "selectSession": "选择一个会话查看",
+    "back": "返回"
+  },
+  "notepad": {
+    "title": "记事本",
+    "open": "打开记事本",
+    "newTab": "新标签",
+    "close": "关闭"
+  },
+  "kanban": {
+    "title": "看板",
+    "newTask": "新任务",
+    "edit": "编辑",
+    "delete": "删除"
+  },
+  "theme": {
+    "dark": "深色",
+    "light": "浅色",
+    "toggle": "切换主题"
+  },
+  "mobile": {
+    "title": "ttyweb",
+    "menu": "菜单",
+    "paste": "粘贴",
+    "reconnect": "重新连接",
+    "selectMode": "选择模式",
+    "copy": "复制",
+    "copied": "已复制",
+    "exitSelect": "退出",
+    "fontSize": "字体大小",
+    "voiceInput": "语音输入",
+    "noTerminal": "未连接终端"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出",
+    "username": "用户名",
+    "password": "密码",
+    "error": "认证失败"
+  },
+  "toolbar": {
+    "esc": "Esc",
+    "tab": "Tab",
+    "ctrl": "Ctrl",
+    "up": "上",
+    "down": "下",
+    "left": "左",
+    "right": "右"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "rename": "重命名",
+    "copy": "复制",
+    "close": "关闭",
+    "refresh": "刷新"
+  }
+}
