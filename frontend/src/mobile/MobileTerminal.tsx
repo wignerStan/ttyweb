@@ -522,7 +522,7 @@ export function MobileTerminal({
     const shouldSuppressBurstIOS = (data: string, now: number): boolean => {
       if (data === ' ') {
         spaceTimestamps.push(now)
-        while (spaceTimestamps.length > 0 && now - spaceTimestamps[0]! > SPACE_BURST_WINDOW_MS) {
+        while (spaceTimestamps.length > 0 && now - (spaceTimestamps[0] ?? 0) > SPACE_BURST_WINDOW_MS) {
           spaceTimestamps.shift()
         }
         if (spaceTimestamps.length >= SPACE_BURST_COUNT) {
@@ -542,7 +542,7 @@ export function MobileTerminal({
       }
       if (data === '\r' || data === '\n') {
         enterTimestamps.push(now)
-        while (enterTimestamps.length > 0 && now - enterTimestamps[0]! > ENTER_BURST_WINDOW_MS) {
+        while (enterTimestamps.length > 0 && now - (enterTimestamps[0] ?? 0) > ENTER_BURST_WINDOW_MS) {
           enterTimestamps.shift()
         }
         if (enterTimestamps.length >= ENTER_BURST_COUNT) {
@@ -585,7 +585,7 @@ export function MobileTerminal({
     const shouldSuppressBurstAndroid = (data: string, now: number): boolean => {
       if (data === ' ') {
         spaceTimestamps.push(now)
-        while (spaceTimestamps.length > 0 && now - spaceTimestamps[0]! > SPACE_BURST_WINDOW_MS) {
+        while (spaceTimestamps.length > 0 && now - (spaceTimestamps[0] ?? 0) > SPACE_BURST_WINDOW_MS) {
           spaceTimestamps.shift()
         }
         if (spaceTimestamps.length >= SPACE_BURST_COUNT) {
@@ -605,7 +605,7 @@ export function MobileTerminal({
       }
       if (data === '\r' || data === '\n') {
         enterTimestamps.push(now)
-        while (enterTimestamps.length > 0 && now - enterTimestamps[0]! > ENTER_BURST_WINDOW_MS) {
+        while (enterTimestamps.length > 0 && now - (enterTimestamps[0] ?? 0) > ENTER_BURST_WINDOW_MS) {
           enterTimestamps.shift()
         }
         if (enterTimestamps.length >= ENTER_BURST_COUNT) {

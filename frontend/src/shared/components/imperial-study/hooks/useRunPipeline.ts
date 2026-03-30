@@ -25,7 +25,8 @@ function deriveStage(events: ActivityEvent[]): {
   result?: string
 } {
   for (let i = events.length - 1; i >= 0; i--) {
-    const ev = events[i]!
+    const ev = events[i]
+    if (!ev) continue
     if (ev.event_type === 'task_completed') {
       return { stage: 'return', status: 'success', result: ev.summary }
     }

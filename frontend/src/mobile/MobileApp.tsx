@@ -31,7 +31,8 @@ function getAllPaneIds(sessions: TmuxSession[]): Set<string> {
 function getPaneKey(sessions: TmuxSession[], paneId: string): string | null {
   for (const s of sessions) {
     for (let wi = 0; wi < s.windows.length; wi++) {
-      const w = s.windows[wi]!
+      const w = s.windows[wi]
+      if (!w) continue
       for (let pi = 0; pi < w.panes.length; pi++) {
         if (w.panes[pi]?.paneId === paneId) {
           return `${s.sessionName}:${w.windowIndex}:${w.panes[pi]?.paneId}`
