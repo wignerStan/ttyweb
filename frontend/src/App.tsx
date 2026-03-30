@@ -10,6 +10,7 @@ import { KanbanBoard } from './kanban'
 import MobileApp from './mobile/MobileApp'
 import { NotepadPanel } from './notepad/NotepadPanel'
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy'
+import { NotificationProvider } from './shared/components/NotificationProvider'
 
 type AppView = 'terminal' | 'conversations'
 
@@ -223,10 +224,12 @@ function DesktopLayout() {
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/m" element={<MobileApp />} />
-      <Route path="/*" element={<DesktopLayout />} />
-    </Routes>
+    <NotificationProvider>
+      <Routes>
+        <Route path="/m" element={<MobileApp />} />
+        <Route path="/*" element={<DesktopLayout />} />
+      </Routes>
+    </NotificationProvider>
   )
 }
 
