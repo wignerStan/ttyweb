@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+
+	"ttyweb/ai"
 )
 
 // WebTTY bridges a PTY slave and its PTY master.
@@ -25,6 +27,8 @@ type WebTTY struct {
 	reconnect   int // in seconds
 	masterPrefs []byte
 	decoder     Decoder
+
+	interceptor ai.OutputInterceptor
 
 	bufferSize int
 	writeMutex sync.Mutex
@@ -153,6 +157,14 @@ func (wt *WebTTY) handleSlaveReadEvent(data []byte) error {
 	err := wt.masterWrite(append([]byte{Output}, []byte(safeMessage)...))
 	if err != nil {
 		return errors.Wrapf(err, "failed to send message to master")
+	}
+
+	if wt.interceptor != nil {
+		for _, m := range wt.interceptor.Intercept(data) {
+			metaJSON, _ := json.Marshal(m)
+			encoded := base64.StdEncoding.EncodeToString(metaJSON)
+			_ = wt.masterWrite(append([]byte{SetMetadata}, []byte(encoded)...))
+		}
 	}
 
 	return nil
