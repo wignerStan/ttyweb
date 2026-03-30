@@ -34,14 +34,15 @@ type Server struct {
 	factory Factory
 	options *Options
 
-	upgrader       *websocket.Upgrader
-	titleTemplate  *noesctmpl.Template
-	noteSvc        *service.NoteService
-	segmentService *service.TaskSegmentService
-	stateMachine   *ai.StateMachine
-	srvErrCh       chan error
-	eventBus       *TaskEventBus
-	sseHandler     *SSEHandler
+	upgrader        *websocket.Upgrader
+	titleTemplate   *noesctmpl.Template
+	noteSvc         *service.NoteService
+	segmentService  *service.TaskSegmentService
+	summaryService  *service.SummaryService
+	stateMachine    *ai.StateMachine
+	srvErrCh        chan error
+	eventBus        *TaskEventBus
+	sseHandler      *SSEHandler
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
