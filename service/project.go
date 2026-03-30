@@ -4,6 +4,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -277,11 +278,13 @@ func validateGitRepo(path string) error {
 func gitRemoteURL(repoPath string) (string, error) {
 	repo, err := goGit.PlainOpen(repoPath)
 	if err != nil {
-		return "", nil //nolint:nilerr // intentional: not a git repo
+		slog.Debug("gitRemoteURL: not a git repo", "path", repoPath, "error", err)
+		return "", nil
 	}
 	remote, err := repo.Remote("origin")
 	if err != nil {
-		return "", nil //nolint:nilerr // intentional: no origin remote
+		slog.Debug("gitRemoteURL: no origin remote", "path", repoPath, "error", err)
+		return "", nil
 	}
 	config := remote.Config()
 	if len(config.URLs) == 0 {
@@ -295,11 +298,13 @@ func gitRemoteURL(repoPath string) (string, error) {
 func gitDefaultBranch(repoPath string) (string, error) {
 	repo, err := goGit.PlainOpen(repoPath)
 	if err != nil {
-		return "main", nil //nolint:nilerr // intentional: not a git repo
+		slog.Debug("gitDefaultBranch: not a git repo", "path", repoPath, "error", err)
+		return "main", nil
 	}
 	head, err := repo.Head()
 	if err != nil {
-		return "main", nil //nolint:nilerr // intentional: detached HEAD
+		slog.Debug("gitDefaultBranch: detached or no HEAD", "path", repoPath, "error", err)
+		return "main", nil
 	}
 	if !head.Name().IsBranch() {
 		return "main", nil

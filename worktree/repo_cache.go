@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"fmt"
 	"path/filepath"
 	"sync"
 
@@ -47,7 +48,7 @@ func (c *RepoCache) Open(path string) (*goGit.Repository, error) {
 
 	r, err := goGit.PlainOpenWithOptions(key, &goGit.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open repo %s: %w", key, err)
 	}
 	c.repos[key] = r
 	return r, nil

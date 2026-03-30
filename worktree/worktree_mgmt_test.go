@@ -14,14 +14,14 @@ func TestCreateWorktree_Native(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWorktree failed: %v", err)
 	}
-	defer os.RemoveAll(wtPath)
+	defer os.RemoveAll(wtPath) //nolint:errcheck // test cleanup
 
 	if _, err := os.Stat(wtPath); err != nil {
 		t.Fatalf("worktree path does not exist: %s", wtPath)
 	}
 
 	// Verify .git is a file with gitdir prefix.
-	gitFile, err := os.ReadFile(filepath.Join(wtPath, ".git"))
+	gitFile, err := os.ReadFile(filepath.Join(wtPath, ".git")) //nolint:gosec // test code
 	if err != nil {
 		t.Fatalf("read .git file: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestAddWorktree_Subdirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWorktree with subdirectory files failed: %v", err)
 	}
-	defer os.RemoveAll(wtPath)
+	defer os.RemoveAll(wtPath) //nolint:errcheck // test cleanup
 
 	if _, err := os.Stat(filepath.Join(wtPath, "sub", "dir.txt")); err != nil {
 		t.Error("expected subdirectory file to be checked out")
@@ -149,7 +149,7 @@ func TestListWorktrees_StaleEntry(t *testing.T) {
 	}
 
 	// Manually remove the worktree directory but leave metadata.
-	os.RemoveAll(wtPath)
+	_ = os.RemoveAll(wtPath)
 
 	// ListWorktrees should prune the stale entry automatically.
 	worktrees, err := ListWorktrees(context.Background(), repo)
@@ -240,7 +240,7 @@ func TestRemoveWorktree_AlreadyGone(t *testing.T) {
 	}
 
 	// Remove the worktree directory directly.
-	os.RemoveAll(wtPath)
+	_ = os.RemoveAll(wtPath)
 
 	// RemoveWorktree should prune metadata without error.
 	err = RemoveWorktree(context.Background(), repo, wtPath, false)
@@ -365,7 +365,7 @@ func TestCreateWorktree_WithStagedChanges(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWorktree failed: %v", err)
 	}
-	defer os.RemoveAll(wtPath)
+	defer os.RemoveAll(wtPath) //nolint:errcheck // test cleanup
 
 	if _, err := os.Stat(filepath.Join(wtPath, "staged.txt")); err != nil {
 		t.Error("worktree should contain committed file")
@@ -457,7 +457,7 @@ func TestCheckoutTree_WithSymlink(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWorktree failed: %v", err)
 	}
-	defer os.RemoveAll(wtPath)
+	defer os.RemoveAll(wtPath) //nolint:errcheck // test cleanup
 
 	// Verify the symlink was checked out.
 	target, err := os.Readlink(filepath.Join(wtPath, "link.md"))

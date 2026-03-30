@@ -85,6 +85,24 @@ func IsGitRepo(path string) bool {
 
 // --- worktree operations ---
 
+// createBranchFromBase creates a new branch from baseBranch in repo.
+func createBranchFromBase(repo *goGit.Repository, branchName, baseBranch string) error {
+	baseRefName := plumbing.ReferenceName("refs/heads/" + baseBranch)
+	baseRef, err := repo.Reference(baseRefName, false)
+	if err != nil {
+		return &OpError{Kind: KindNotFound, Detail: fmt.Sprintf("base branch %q not found", baseBranch), Cause: err}
+	}
+	branchRef := plumbing.ReferenceName("refs/heads/" + branchName)
+	if _, err := repo.Reference(branchRef, false); err == nil {
+		return &OpError{Kind: KindAlreadyExists, Detail: fmt.Sprintf("branch %q already exists", branchName)}
+	}
+	newRef := plumbing.NewHashReference(branchRef, baseRef.Hash())
+	if err := repo.Storer.SetReference(newRef); err != nil {
+		return &OpError{Kind: KindGitFailed, Detail: fmt.Sprintf("create branch %q", branchName), Cause: err}
+	}
+	return nil
+}
+
 // CreateWorktree creates a new worktree for the repo at repoPath, checking out
 // branchName. When createBranch is true, the branch is created from baseBranch
 // first. Returns the absolute path of the new worktree.
@@ -115,18 +133,8 @@ func CreateWorktree(ctx context.Context, repoPath, branchName, baseBranch string
 		if base == "" {
 			base = "main"
 		}
-		baseRefName := plumbing.ReferenceName("refs/heads/" + base)
-		baseRef, err := repo.Reference(baseRefName, false)
-		if err != nil {
-			return "", &OpError{Kind: KindNotFound, Path: absRepo, Detail: fmt.Sprintf("base branch %q not found", base), Cause: err}
-		}
-		branchRef := plumbing.ReferenceName("refs/heads/" + branchName)
-		if _, err := repo.Reference(branchRef, false); err == nil {
-			return "", &OpError{Kind: KindAlreadyExists, Path: absRepo, Detail: fmt.Sprintf("branch %q already exists", branchName)}
-		}
-		newRef := plumbing.NewHashReference(branchRef, baseRef.Hash())
-		if err := repo.Storer.SetReference(newRef); err != nil {
-			return "", &OpError{Kind: KindGitFailed, Path: absRepo, Detail: fmt.Sprintf("create branch %q", branchName), Cause: err}
+		if err := createBranchFromBase(repo, branchName, base); err != nil {
+			return "", err
 		}
 	}
 
@@ -328,8 +336,12 @@ func collectStatusGoGit(path string) (*Status, error) {
 			continue
 		}
 		switch fs.Worktree {
-		case goGit.Modified, goGit.Added, goGit.Deleted, goGit.Renamed:
+		case goGit.Modified, goGit.Added, goGit.Deleted, goGit.Renamed, goGit.Copied:
 			status.Modified++
+		case goGit.Unmodified:
+			// No change — clean file
+		case goGit.Untracked, goGit.UpdatedButUnmerged:
+			// Already handled by continue above; unreachable here.
 		}
 		if fs.Staging != goGit.Unmodified && fs.Staging != goGit.Untracked {
 			status.Staged++

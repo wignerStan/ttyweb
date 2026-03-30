@@ -3,6 +3,7 @@ package worktree
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,37 +54,37 @@ func addWorktree(repoPath, worktreePath, branchName string) error {
 	// Write .git file in worktree (points to metadata dir).
 	gitFileContent := fmt.Sprintf("gitdir: %s\n", gitdir)
 	if err := os.WriteFile(filepath.Join(worktreePath, ".git"), []byte(gitFileContent), 0o644); err != nil {
-		os.RemoveAll(worktreePath)
+		_ = os.RemoveAll(worktreePath)
 		return fmt.Errorf("write .git file: %w", err)
 	}
 
 	// Create metadata directory.
 	if err := os.MkdirAll(wtMetaDir, 0o750); err != nil {
-		os.RemoveAll(worktreePath)
+		_ = os.RemoveAll(worktreePath)
 		return fmt.Errorf("create worktree metadata dir: %w", err)
 	}
 
 	// Write gitdir (points back to worktree).
 	if err := os.WriteFile(filepath.Join(wtMetaDir, "gitdir"), []byte(worktreePath+"\n"), 0o644); err != nil {
-		os.RemoveAll(worktreePath)
+		_ = os.RemoveAll(worktreePath)
 		return fmt.Errorf("write gitdir: %w", err)
 	}
 
 	// Write HEAD.
 	if err := os.WriteFile(filepath.Join(wtMetaDir, "HEAD"), []byte("ref: refs/heads/"+branchName+"\n"), 0o644); err != nil {
-		os.RemoveAll(worktreePath)
+		_ = os.RemoveAll(worktreePath)
 		return fmt.Errorf("write HEAD: %w", err)
 	}
 
 	// Write commondir (points to main .git).
 	if err := os.WriteFile(filepath.Join(wtMetaDir, "commondir"), []byte(filepath.Join(repoPath, ".git")+"\n"), 0o644); err != nil {
-		os.RemoveAll(worktreePath)
+		_ = os.RemoveAll(worktreePath)
 		return fmt.Errorf("write commondir: %w", err)
 	}
 
 	// Checkout files from the tree and build an index.
 	if err := checkoutTree(repo, worktreePath, wtMetaDir, tree); err != nil {
-		os.RemoveAll(worktreePath)
+		_ = os.RemoveAll(worktreePath)
 		return &OpError{Kind: KindGitFailed, Path: worktreePath, Detail: "checkout files", Cause: err}
 	}
 
@@ -116,13 +117,13 @@ func checkoutTree(repo *goGit.Repository, worktreePath, wtMetaDir string, tree *
 		if err != nil {
 			return fmt.Errorf("read blob %s: %w", f.Name, err)
 		}
-		defer from.Close()
+		defer func() { _ = from.Close() }()
 
-		to, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(f.Mode))
+		to, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(f.Mode)) //nolint:gosec // G304: path constructed from repo tree, not user input
 		if err != nil {
 			return fmt.Errorf("create file %s: %w", f.Name, err)
 		}
-		defer to.Close()
+		defer func() { _ = to.Close() }()
 
 		if _, err := io.Copy(to, from); err != nil {
 			return fmt.Errorf("write file %s: %w", f.Name, err)
@@ -134,29 +135,29 @@ func checkoutTree(repo *goGit.Repository, worktreePath, wtMetaDir string, tree *
 			return fmt.Errorf("stat file %s: %w", f.Name, err)
 		}
 		idx.Entries = append(idx.Entries, &index.Entry{
-			Name:        filepath.ToSlash(f.Name),
-			Mode:        filemode.FileMode(os.FileMode(f.Mode)),
-			Hash:        f.Hash,
-			Size:        uint32(fi.Size()),
-			CreatedAt:   fi.ModTime(),
-			ModifiedAt:  fi.ModTime(),
-			Dev:         0,
-			Inode:       0,
-			UID:         0,
-			GID:         0,
+			Name:       filepath.ToSlash(f.Name),
+			Mode:       filemode.FileMode(os.FileMode(f.Mode)),
+			Hash:       f.Hash,
+			Size:       uint32(fi.Size()), //nolint:gosec // G115: file sizes in repos fit in uint32
+			CreatedAt:  fi.ModTime(),
+			ModifiedAt: fi.ModTime(),
+			Dev:        0,
+			Inode:      0,
+			UID:        0,
+			GID:        0,
 		})
 		return nil
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("walk tree: %w", err)
 	}
 
 	// Write index file.
-	idxFile, err := os.Create(filepath.Join(wtMetaDir, "index"))
+	idxFile, err := os.Create(filepath.Join(wtMetaDir, "index")) //nolint:gosec // G304: wtMetaDir is internal
 	if err != nil {
 		return fmt.Errorf("create index file: %w", err)
 	}
-	defer idxFile.Close()
+	defer func() { _ = idxFile.Close() }()
 
 	if err := index.NewEncoder(idxFile).Encode(idx); err != nil {
 		return fmt.Errorf("write index: %w", err)
@@ -192,7 +193,7 @@ func listWorktreesManual(repoPath string) ([]Info, error) {
 		}
 		metaDir := filepath.Join(wtDir, entry.Name())
 
-		gitdirPath, err := os.ReadFile(filepath.Join(metaDir, "gitdir"))
+		gitdirPath, err := os.ReadFile(filepath.Join(metaDir, "gitdir")) //nolint:gosec // G304: metaDir is internal path
 		if err != nil {
 			pruneStaleEntry(metaDir)
 			continue
@@ -205,8 +206,9 @@ func listWorktreesManual(repoPath string) ([]Info, error) {
 			continue
 		}
 
-		headContent, err := os.ReadFile(filepath.Join(metaDir, "HEAD"))
+		headContent, err := os.ReadFile(filepath.Join(metaDir, "HEAD")) //nolint:gosec // G304: metaDir is internal path
 		if err != nil {
+			slog.Debug("skipping worktree entry: cannot read HEAD", "meta_dir", metaDir, "error", err)
 			continue
 		}
 
@@ -237,18 +239,8 @@ func removeWorktreeManual(repoPath, worktreePath string, force bool) error {
 	wtMetaDir := filepath.Join(repoPath, ".git", "worktrees", worktreeName)
 
 	// Check for uncommitted changes when not forcing.
-	if !force {
-		if repo, err := defaultCache.Open(worktreePath); err == nil {
-			if wt, err := repo.Worktree(); err == nil {
-				if status, err := wt.Status(); err == nil {
-					for _, s := range status {
-						if s.Staging != goGit.Unmodified || s.Worktree != goGit.Unmodified {
-							return &OpError{Kind: KindConflict, Path: worktreePath, Detail: "worktree has uncommitted changes"}
-						}
-					}
-				}
-			}
-		}
+	if !force && hasUncommittedChanges(worktreePath) {
+		return &OpError{Kind: KindConflict, Path: worktreePath, Detail: "worktree has uncommitted changes"}
 	}
 
 	if err := os.RemoveAll(worktreePath); err != nil {
@@ -258,6 +250,30 @@ func removeWorktreeManual(repoPath, worktreePath string, force bool) error {
 	_ = os.RemoveAll(wtMetaDir)
 	defaultCache.Remove(worktreePath)
 	return nil
+}
+
+// hasUncommittedChanges checks whether a worktree at the given path has any
+// staged or unstaged modifications. Returns false if the worktree cannot be
+// opened or its status cannot be read (best-effort).
+func hasUncommittedChanges(path string) bool {
+	repo, err := defaultCache.Open(path)
+	if err != nil {
+		return false
+	}
+	wt, err := repo.Worktree()
+	if err != nil {
+		return false
+	}
+	status, err := wt.Status()
+	if err != nil {
+		return false
+	}
+	for _, s := range status {
+		if s.Staging != goGit.Unmodified || s.Worktree != goGit.Unmodified {
+			return true
+		}
+	}
+	return false
 }
 
 // mainWorktreeInfo builds an Info struct for the main (primary) worktree.

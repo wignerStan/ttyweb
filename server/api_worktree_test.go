@@ -206,7 +206,7 @@ func TestHandleWorktreeItem_MethodNotAllowed(t *testing.T) {
 func createRealGitRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	cmd := exec.CommandContext(context.Background(), "git", "init")
+	cmd := exec.CommandContext(context.Background(), "git", "init") //nolint:gosec // reason: test code
 	cmd.Dir = dir
 	cmd.Env = worktree.FilterGitEnv(os.Environ())
 	if out, err := cmd.CombinedOutput(); err != nil {
