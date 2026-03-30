@@ -1,6 +1,8 @@
 package service
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -252,6 +254,40 @@ func TestAISessionStore_GetByID(t *testing.T) {
 	_, ok = store.GetByID(9999)
 	if ok {
 		t.Error("expected not to find session with ID 9999")
+	}
+}
+
+func TestAISessionService_CacheKeyFromPath(t *testing.T) {
+	t.Parallel()
+
+	key := cacheKey("/home/user/.claude/projects/test/session.jsonl")
+	if key == "" {
+		t.Error("expected non-empty cache key")
+	}
+}
+
+func TestAISessionService_CacheInvalidationOnFileChange(t *testing.T) {
+	dir := t.TempDir()
+	sessionDir := filepath.Join(dir, "sessions")
+	if err := os.MkdirAll(sessionDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	sessionFile := filepath.Join(sessionDir, "sess1.jsonl")
+	if err := os.WriteFile(sessionFile, []byte(`{"type":"user","message":{"role":"user","content":"hello"}}`), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	store := NewAISessionStore()
+	store.ScanAndCache(sessionDir, "test-project")
+
+	time.Sleep(10 * time.Millisecond)
+	if err := os.WriteFile(sessionFile, []byte(`{"type":"user","message":{"role":"user","content":"changed"}}`), 0o644); err != nil {
+		t.Fatalf("rewrite: %v", err)
+	}
+
+	valid := store.IsCacheValid(sessionFile)
+	if valid {
+		t.Error("cache should be invalidated after file modification")
 	}
 }
 

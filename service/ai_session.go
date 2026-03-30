@@ -2,7 +2,10 @@ package service
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,11 +53,19 @@ func toRecord(id int, session *ai.Session) AISessionRecord {
 	}
 }
 
+// cacheEntry tracks a file's metadata for invalidation.
+type cacheEntry struct {
+	Path    string
+	ModTime time.Time
+	Size    int64
+}
+
 // AISessionStore provides in-memory CRUD for AI sessions.
 type AISessionStore struct {
 	mu      sync.RWMutex
 	records []AISessionRecord
 	nextID  int
+	cache   map[string]cacheEntry
 }
 
 // NewAISessionStore creates a new AISessionStore.
@@ -62,6 +73,7 @@ func NewAISessionStore() *AISessionStore {
 	return &AISessionStore{
 		records: make([]AISessionRecord, 0),
 		nextID:  1,
+		cache:   make(map[string]cacheEntry),
 	}
 }
 
@@ -146,6 +158,59 @@ func (s *AISessionStore) DeleteMissingFiles(existingPaths map[string]bool) int {
 	}
 	s.records = kept
 	return removed
+}
+
+// cacheKey returns the cache key for a file path.
+func cacheKey(filePath string) string {
+	return filePath
+}
+
+// ScanAndCache scans a session directory and caches metadata for files
+// older than 24 hours. Recent files are not cached since they may still
+// be actively written to and should be scanned immediately.
+func (s *AISessionStore) ScanAndCache(sessionDir, projectKey string) {
+	entries, err := os.ReadDir(sessionDir)
+	if err != nil {
+		return
+	}
+	cutoff := time.Now().Add(-24 * time.Hour)
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".jsonl") {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+		if info.ModTime().After(cutoff) {
+			continue
+		}
+		s.mu.Lock()
+		s.cache[cacheKey(filepath.Join(sessionDir, entry.Name()))] = cacheEntry{
+			Path:    filepath.Join(sessionDir, entry.Name()),
+			ModTime: info.ModTime(),
+			Size:    info.Size(),
+		}
+		s.mu.Unlock()
+	}
+}
+
+// IsCacheValid checks whether the cached metadata for a file is still
+// current by comparing mtime and size against the actual file.
+func (s *AISessionStore) IsCacheValid(filePath string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	entry, ok := s.cache[cacheKey(filePath)]
+	if !ok {
+		return false
+	}
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return false
+	}
+	return info.ModTime().Equal(entry.ModTime) && info.Size() == entry.Size
 }
 
 // AISessionService provides high-level operations for AI session management.
