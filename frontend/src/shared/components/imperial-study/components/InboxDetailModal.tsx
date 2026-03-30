@@ -34,79 +34,82 @@ export function InboxDetailModal({ item, onClose, onReplied }: InboxDetailModalP
   }
 
   return (
-    <div className="is-modal-overlay" role="presentation" onClick={handleOverlayClick}>
-      <div className="is-modal">
-        <div className="is-modal__header">
-          <span className="is-modal__header-title">Inbox Detail</span>
-          <button
-            type="button"
-            className="is-icon-btn is-modal__close"
-            onClick={onClose}
-            title="Close"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="is-modal__meta">
-          <div className="is-modal__meta-row">
-            <span className="is-modal__meta-label">Kind:</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Icon size={14} style={{ color: iconColor }} />
-              {item.kind}
-            </span>
+    <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
+      <div className="is-modal-overlay" role="presentation" onClick={handleOverlayClick}>
+        <div className="is-modal">
+          <div className="is-modal__header">
+            <span className="is-modal__header-title">Inbox Detail</span>
+            <button
+              type="button"
+              className="is-icon-btn is-modal__close"
+              onClick={onClose}
+              title="Close"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <div className="is-modal__meta-row">
-            <span className="is-modal__meta-label">From:</span>
-            <span>{item.worker_id}</span>
+
+          <div className="is-modal__meta">
+            <div className="is-modal__meta-row">
+              <span className="is-modal__meta-label">Kind:</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Icon size={14} style={{ color: iconColor }} />
+                {item.kind}
+              </span>
+            </div>
+            <div className="is-modal__meta-row">
+              <span className="is-modal__meta-label">From:</span>
+              <span>{item.worker_id}</span>
+            </div>
+            <div className="is-modal__meta-row">
+              <span className="is-modal__meta-label">Time:</span>
+              <span>{item.created_at ? new Date(item.created_at).toLocaleString() : '\u2014'}</span>
+            </div>
           </div>
-          <div className="is-modal__meta-row">
-            <span className="is-modal__meta-label">Time:</span>
-            <span>{item.created_at ? new Date(item.created_at).toLocaleString() : '\u2014'}</span>
+
+          <div className="is-modal__body">{item.body}</div>
+
+          <div className="is-modal__reply">
+            <textarea
+              className="is-modal__textarea"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Reply message..."
+              disabled={loading}
+              rows={3}
+            />
           </div>
-        </div>
 
-        <div className="is-modal__body">{item.body}</div>
-
-        <div className="is-modal__reply">
-          <textarea
-            className="is-modal__textarea"
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            placeholder="Reply message..."
-            disabled={loading}
-            rows={3}
-          />
-        </div>
-
-        <div className="is-modal__actions">
-          <button
-            type="button"
-            className="is-btn is-btn--approve"
-            onClick={() => handleAction('approved')}
-            disabled={loading}
-          >
-            Approve
-          </button>
-          <button
-            type="button"
-            className="is-btn is-btn--reject"
-            onClick={() => handleAction('rejected')}
-            disabled={loading}
-          >
-            Reject
-          </button>
-          <button
-            type="button"
-            className="is-btn is-btn--reply"
-            onClick={() => handleAction('custom')}
-            disabled={loading || !replyText.trim()}
-            style={{ marginLeft: 'auto' }}
-          >
-            Reply
-          </button>
+          <div className="is-modal__actions">
+            <button
+              type="button"
+              className="is-btn is-btn--approve"
+              onClick={() => handleAction('approved')}
+              disabled={loading}
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              className="is-btn is-btn--reject"
+              onClick={() => handleAction('rejected')}
+              disabled={loading}
+            >
+              Reject
+            </button>
+            <button
+              type="button"
+              className="is-btn is-btn--reply"
+              onClick={() => handleAction('custom')}
+              disabled={loading || !replyText.trim()}
+              style={{ marginLeft: 'auto' }}
+            >
+              Reply
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

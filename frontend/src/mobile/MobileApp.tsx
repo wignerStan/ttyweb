@@ -370,15 +370,18 @@ export default function MobileApp() {
       </header>
 
       {(drawerOpen || rightPanelOpen || imperialOpen) && (
-        <div
-          className="mobile-overlay"
-          role="presentation"
-          onClick={() => {
-            setDrawerOpen(false)
-            setRightPanelOpen(false)
-            setImperialOpen(false)
-          }}
-        />
+        <>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
+          <div
+            className="mobile-overlay"
+            role="presentation"
+            onClick={() => {
+              setDrawerOpen(false)
+              setRightPanelOpen(false)
+              setImperialOpen(false)
+            }}
+          />
+        </>
       )}
 
       {imperialOpen && (
