@@ -100,29 +100,36 @@ export function GlobalTaskOverview({
         ) : (
           <div className="task-group-list">
             {groupTasks.map((task) => (
-              <>
-                {/* biome-ignore lint/a11y/noStaticElementInteractions: task list item with click handler */}
-                {/* biome-ignore lint/a11y/useKeyWithClickEvents: task list item with click handler */}
-                <div
-                  key={task.id}
-                  className={`task-item status-${task.task_status}`}
-                  onClick={() => handleTaskClick(task)}
-                >
-                  <div className="task-item-title">{task.task_title || 'Untitled Task'}</div>
-                  <div className="task-item-meta">
-                    <TerminalSquare size={10} />
-                    <span>
-                      {task.session_name}:{task.window_index}
-                    </span>
-                    <span className="task-item-time">
-                      {new Date(task.mtime * 1000).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
+              <button
+                key={task.id}
+                type="button"
+                className={`task-item status-${task.task_status}`}
+                onClick={() => handleTaskClick(task)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  font: 'inherit',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'inherit',
+                }}
+              >
+                <div className="task-item-title">{task.task_title || 'Untitled Task'}</div>
+                <div className="task-item-meta">
+                  <TerminalSquare size={10} />
+                  <span>
+                    {task.session_name}:{task.window_index}
+                  </span>
+                  <span className="task-item-time">
+                    {new Date(task.mtime * 1000).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
                 </div>
-              </>
+              </button>
             ))}
           </div>
         )}

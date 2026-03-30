@@ -13,6 +13,18 @@ import { FloatingImperialStudy } from './shared/components/imperial-study/compon
 
 type AppView = 'terminal' | 'conversations'
 
+/** Reset native button styles to behave like a neutral inline element. */
+const BUTTON_RESET: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  font: 'inherit',
+  color: 'inherit',
+  cursor: 'pointer',
+  width: '100%',
+  textAlign: 'inherit',
+}
+
 const NOTEPAD_TAB_ID = '__notepad__'
 
 interface Tab {
@@ -95,14 +107,7 @@ function DesktopLayout() {
           <button
             type="button"
             style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              font: 'inherit',
-              color: 'inherit',
-              cursor: 'pointer',
-              width: '100%',
-              textAlign: 'inherit',
+              ...BUTTON_RESET,
               ...styles.viewTab,
               ...(activeView === 'terminal' ? styles.viewTabActive : {}),
             }}
@@ -113,14 +118,7 @@ function DesktopLayout() {
           <button
             type="button"
             style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              font: 'inherit',
-              color: 'inherit',
-              cursor: 'pointer',
-              width: '100%',
-              textAlign: 'inherit',
+              ...BUTTON_RESET,
               ...styles.viewTab,
               ...(activeView === 'conversations' ? styles.viewTabActive : {}),
             }}
@@ -134,14 +132,7 @@ function DesktopLayout() {
                 key={tab.id}
                 type="button"
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'inherit',
+                  ...BUTTON_RESET,
                   ...styles.tab,
                   ...(tab.id === activeTabId ? styles.tabActive : {}),
                 }}
@@ -169,14 +160,7 @@ function DesktopLayout() {
           <button
             type="button"
             style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              font: 'inherit',
-              color: 'inherit',
-              cursor: 'pointer',
-              width: '100%',
-              textAlign: 'inherit',
+              ...BUTTON_RESET,
               ...styles.tab,
               ...(viewMode === 'kanban' ? styles.tabActive : {}),
             }}
