@@ -53,18 +53,21 @@ func TestHandleQuickDirs_GET(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool           `json:"success"`
-		Data    map[string]any `json:"data"`
+		Success bool  `json:"success"`
+		Data    []any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
 	}
-	dirs, ok := resp.Data["dirs"].([]any)
-	if !ok {
-		t.Fatal("expected dirs to be array")
+	if !resp.Success {
+		t.Fatal("expected success")
 	}
-	if len(dirs) != 0 {
-		t.Fatalf("expected empty dirs, got %d", len(dirs))
+	if resp.Data == nil {
+		t.Fatal("expected data to be non-nil array")
+	}
+	// Default config has no quick dirs, so expect empty array.
+	if len(resp.Data) != 0 {
+		t.Fatalf("expected empty dirs, got %d", len(resp.Data))
 	}
 }
 

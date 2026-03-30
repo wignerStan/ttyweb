@@ -8,13 +8,20 @@ import (
 	"sync"
 )
 
+// QuickDir represents a user-defined quick-access directory entry.
+type QuickDir struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
 // Config holds all application configuration sections.
 type Config struct {
-	LLM      LLMConfig      `json:"llm"`
-	Xunfei   XunfeiConfig   `json:"xfyun"`
-	Butler   ButlerConfig   `json:"butler"`
-	DB       DBConfig       `json:"db"`
-	Worktree WorktreeConfig `json:"worktree"`
+	LLM       LLMConfig      `json:"llm"`
+	Xunfei    XunfeiConfig   `json:"xfyun"`
+	Butler    ButlerConfig   `json:"butler"`
+	DB        DBConfig       `json:"db"`
+	Worktree  WorktreeConfig `json:"worktree"`
+	QuickDirs []QuickDir     `json:"quickDirs"`
 }
 
 // LLMConfig holds settings for the AI/LLM backend.
