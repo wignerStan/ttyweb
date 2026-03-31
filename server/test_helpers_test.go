@@ -25,7 +25,7 @@ func testDB(t *testing.T) {
 // It resets the global MemoryStore and project service singleton to ensure test isolation.
 func newTestServerWithDB(t *testing.T) *Server {
 	t.Helper()
-	store = NewMemoryStore()
+	resetStore()
 	testDB(t)
 
 	// Reset the projectService singleton so it re-initializes with the new DB.

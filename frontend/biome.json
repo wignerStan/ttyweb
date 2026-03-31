@@ -15,7 +15,11 @@
       },
       "correctness": {
         "noUnusedFunctionParameters": "error",
-        "noUnusedImports": "error"
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "warn"
       }
     }
   },

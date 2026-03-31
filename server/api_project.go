@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -12,11 +12,9 @@ import (
 
 // handleProjects handles GET (list) and POST (create) for projects.
 func (*Server) handleProjects(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	svc, err := projectService()
 	if err != nil {
-		log.Printf("failed to initialize project service: %v", err)
+		slog.Error("failed to initialize project service", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service")
 		return
 	}
@@ -25,70 +23,74 @@ func (*Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		projects, err := svc.ListProjects()
 		if err != nil {
-			log.Printf("failed to list projects: %v", err)
+			slog.Error("failed to list projects", "error", err)
 			writeAPIError(w, http.StatusInternalServerError, "failed to list projects")
 			return
 		}
 		writeAPISuccess(w, projects)
 
 	case http.MethodPost:
-		var body struct {
-			Name             string `json:"name"`
-			Path             string `json:"path"`
-			Description      string `json:"description"`
-			WorktreeBasePath string `json:"worktree_base_path"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeAPIError(w, http.StatusBadRequest, "invalid request body")
-			return
-		}
-
-		var opts []service.ProjectOption
-		if body.Description != "" {
-			opts = append(opts, service.WithDescription(body.Description))
-		}
-		if body.WorktreeBasePath != "" {
-			opts = append(opts, service.WithWorktreeBasePath(body.WorktreeBasePath))
-		}
-
-		project, err := svc.AddProject(body.Name, body.Path, opts...)
-		if err != nil {
-			switch err {
-			case service.ErrProjectNameRequired:
-				writeAPIError(w, http.StatusBadRequest, "name is required")
-				return
-			case service.ErrProjectPathRequired:
-				writeAPIError(w, http.StatusBadRequest, "path is required")
-				return
-			case service.ErrInvalidProjectPath:
-				writeAPIError(w, http.StatusBadRequest, "path must be an absolute path to a directory containing .git")
-				return
-			case service.ErrProjectAlreadyExists:
-				writeAPIError(w, http.StatusConflict, "a project with this path already exists")
-				return
-			default:
-				log.Printf("failed to create project: %v", err)
-				writeAPIError(w, http.StatusInternalServerError, "failed to create project")
-				return
-			}
-		}
-
-		w.WriteHeader(http.StatusCreated)
-		writeAPISuccess(w, project)
+		createProject(w, r, svc)
 
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
+// createProject handles the POST /api/projects request body decoding and project creation.
+func createProject(w http.ResponseWriter, r *http.Request, svc *service.ProjectService) {
+	var body struct {
+		Name             string `json:"name"`
+		Path             string `json:"path"`
+		Description      string `json:"description"`
+		WorktreeBasePath string `json:"worktree_base_path"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	var opts []service.ProjectOption
+	if body.Description != "" {
+		opts = append(opts, service.WithDescription(body.Description))
+	}
+	if body.WorktreeBasePath != "" {
+		opts = append(opts, service.WithWorktreeBasePath(body.WorktreeBasePath))
+	}
+
+	project, err := svc.AddProject(body.Name, body.Path, opts...)
+	if err != nil {
+		writeProjectCreateError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	writeAPISuccess(w, project)
+}
+
+// writeProjectCreateError maps project creation errors to HTTP responses.
+func writeProjectCreateError(w http.ResponseWriter, err error) {
+	switch err {
+	case service.ErrProjectNameRequired:
+		writeAPIError(w, http.StatusBadRequest, "name is required")
+	case service.ErrProjectPathRequired:
+		writeAPIError(w, http.StatusBadRequest, "path is required")
+	case service.ErrInvalidProjectPath:
+		writeAPIError(w, http.StatusBadRequest, "path must be an absolute path to a directory containing .git")
+	case service.ErrProjectAlreadyExists:
+		writeAPIError(w, http.StatusConflict, "a project with this path already exists")
+	default:
+		slog.Error("failed to create project", "error", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to create project")
+	}
+}
+
 // handleProjectDetail handles GET, PUT, DELETE for a specific project,
 // as well as POST /api/projects/:id/sync.
 func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	svc, err := projectService()
 	if err != nil {
-		log.Printf("failed to initialize project service: %v", err)
+		slog.Error("failed to initialize project service", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service")
 		return
 	}
@@ -117,40 +119,50 @@ func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request
 		writeAPISuccess(w, project)
 
 	case http.MethodPut:
-		var body service.UpdateProjectRequest
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeAPIError(w, http.StatusBadRequest, "invalid request body")
-			return
-		}
-
-		project, err := svc.UpdateProject(relative, body)
-		if err != nil {
-			if errors.Is(err, service.ErrProjectNotFound) {
-				writeAPIError(w, http.StatusNotFound, "project not found")
-				return
-			}
-			log.Printf("failed to update project: %v", err)
-			writeAPIError(w, http.StatusInternalServerError, "failed to update project")
-			return
-		}
-		writeAPISuccess(w, project)
+		updateProject(w, r, svc, relative)
 
 	case http.MethodDelete:
-		err := svc.DeleteProject(relative)
-		if err != nil {
-			if errors.Is(err, service.ErrProjectNotFound) {
-				writeAPIError(w, http.StatusNotFound, "project not found")
-				return
-			}
-			log.Printf("failed to delete project: %v", err)
-			writeAPIError(w, http.StatusInternalServerError, "failed to delete project")
-			return
-		}
-		writeAPISuccess(w, map[string]string{"status": "deleted"})
+		deleteProject(w, svc, relative)
 
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// updateProject handles PUT /api/projects/{id}.
+func updateProject(w http.ResponseWriter, r *http.Request, svc *service.ProjectService, id string) {
+	var body service.UpdateProjectRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	project, err := svc.UpdateProject(id, body)
+	if err != nil {
+		if errors.Is(err, service.ErrProjectNotFound) {
+			writeAPIError(w, http.StatusNotFound, "project not found")
+			return
+		}
+		slog.Error("failed to update project", "error", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to update project")
+		return
+	}
+	writeAPISuccess(w, project)
+}
+
+// deleteProject handles DELETE /api/projects/{id}.
+func deleteProject(w http.ResponseWriter, svc *service.ProjectService, id string) {
+	err := svc.DeleteProject(id)
+	if err != nil {
+		if errors.Is(err, service.ErrProjectNotFound) {
+			writeAPIError(w, http.StatusNotFound, "project not found")
+			return
+		}
+		slog.Error("failed to delete project", "error", err)
+		writeAPIError(w, http.StatusInternalServerError, "failed to delete project")
+		return
+	}
+	writeAPISuccess(w, map[string]string{"status": "deleted"})
 }
 
 // handleProjectSync handles POST /api/projects/:id/sync.
@@ -162,7 +174,7 @@ func (*Server) handleProjectSync(w http.ResponseWriter, r *http.Request, id stri
 
 	svc, err := projectService()
 	if err != nil {
-		log.Printf("failed to initialize project service: %v", err)
+		slog.Error("failed to initialize project service", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service")
 		return
 	}
@@ -173,7 +185,7 @@ func (*Server) handleProjectSync(w http.ResponseWriter, r *http.Request, id stri
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
 		}
-		log.Printf("failed to sync project: %v", err)
+		slog.Error("failed to sync project", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to sync project")
 		return
 	}

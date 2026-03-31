@@ -1,7 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import './i18n'
 import { App } from './App'
+import './styles/theme.css'
 import './index.css'
 
 const root = document.getElementById('root')

@@ -1,0 +1,12 @@
++staged change
++unstaged change
+-original
+-original
+-to be deleted
+@@ -1,1 +1,0 @@
+@@ -1,1 +1,1 @@
+@@ -1,1 +1,1 @@
+deleted file mode 100644
+diff --git a/deleted.txt b/deleted.txt
+diff --git a/modified.txt b/modified.txt
+diff --git a/staged.txt b/staged.txt

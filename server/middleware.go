@@ -3,7 +3,7 @@ package server
 import (
 	"crypto/subtle"
 	"encoding/base64"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -12,14 +12,13 @@ func (*Server) wrapLogger(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rw := &logResponseWriter{w, 200}
 		handler.ServeHTTP(rw, r)
-		log.Printf("%s %d %s %s", r.RemoteAddr, rw.status, r.Method, r.URL.Path)
+		slog.Info("request", "remote", r.RemoteAddr, "status", rw.status, "method", r.Method, "path", r.URL.Path)
 	})
 }
 
 func (*Server) wrapHeaders(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// todo add version
-		w.Header().Set("Server", "GoTTY")
+		w.Header().Set("Server", "ttyweb/"+getAppVersion().Version)
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "no-referrer")
@@ -50,7 +49,7 @@ func (*Server) wrapBasicAuth(handler http.Handler, credential string) http.Handl
 			return
 		}
 
-		log.Printf("Basic Authentication Succeeded: %s", r.RemoteAddr)
+		slog.Info("basic auth succeeded", "remote", r.RemoteAddr)
 		handler.ServeHTTP(w, r)
 	})
 }

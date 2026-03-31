@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
+	"ttyweb/ai"
 	"ttyweb/bindata"
 	"ttyweb/db"
 	"ttyweb/pkg/homedir"
@@ -37,7 +38,12 @@ type Server struct {
 	titleTemplate  *noesctmpl.Template
 	noteSvc        *service.NoteService
 	segmentService *service.TaskSegmentService
+	summaryService *service.SummaryService
+	stateMachine   *ai.StateMachine
 	srvErrCh       chan error
+	eventBus       *TaskEventBus
+	sseHandler     *SSEHandler
+	statsService   *service.StatsService
 }
 
 // indexHTML holds the SPA index.html content, loaded at init time.
@@ -83,7 +89,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 	}
 	noteSvc := service.NewNoteService(database)
 
-	return &Server{
+	server := &Server{
 		factory: factory,
 		options: options,
 
@@ -96,8 +102,20 @@ func New(factory Factory, options *Options) (*Server, error) {
 		titleTemplate:  titleTemplate,
 		noteSvc:        noteSvc,
 		segmentService: service.NewTaskSegmentService(database),
+		stateMachine:   ai.NewStateMachine(),
 		srvErrCh:       make(chan error, 1),
-	}, nil
+		eventBus:       NewTaskEventBus(),
+	}
+	server.sseHandler = NewSSEHandler(server.eventBus)
+
+	registerAIStateChangeHandlers(server.stateMachine)
+
+	return server, nil
+}
+
+// EventBus returns the server's TaskEventBus for publishing events.
+func (s *Server) EventBus() *TaskEventBus {
+	return s.eventBus
 }
 
 // Run starts the main process of the Server.
@@ -221,6 +239,9 @@ func (server *Server) serveBackground(srv *http.Server, listener net.Listener) {
 }
 
 func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFunc, pathPrefix string, counter *counter) http.Handler {
+	// Register the current working directory as the default file browser root.
+	initFSDefaults()
+
 	staticFS, err := fs.Sub(bindata.Fs, "static")
 	if err != nil {
 		log.Fatalf("failed to open static/ subdirectory of embedded filesystem: %v", err)

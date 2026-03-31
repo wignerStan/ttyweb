@@ -1,0 +1,30 @@
+[
+  {
+    "id": "sum-002",
+    "year": 2026,
+    "mon": 3,
+    "segment_id": "seg-002",
+    "session_name": "session1",
+    "window_index": 1,
+    "window_name": "win2",
+    "command_summary": "Second task: added user registration",
+    "output_summary": "",
+    "summary_status": "completed",
+    "generated_at": "<time>",
+    "created_at": "<time>"
+  },
+  {
+    "id": "sum-001",
+    "year": 2026,
+    "mon": 3,
+    "segment_id": "seg-001",
+    "session_name": "session1",
+    "window_index": 0,
+    "window_name": "win1",
+    "command_summary": "First task: added login page",
+    "output_summary": "",
+    "summary_status": "completed",
+    "generated_at": "<time>",
+    "created_at": "<time>"
+  }
+]

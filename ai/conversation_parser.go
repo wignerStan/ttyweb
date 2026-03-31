@@ -49,30 +49,13 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 
 		ts, _ := time.Parse(time.RFC3339, entry.Timestamp)
 
-		var msgContent struct {
-			Role    string `json:"role"`
-			Content any    `json:"content"`
-		}
+		var msgContent claudeMsgContent
 		if err := json.Unmarshal(entry.Message, &msgContent); err != nil {
 			continue
 		}
 
-		switch entry.Type {
-		case "user":
-			if entry.IsMeta || msgContent.Role != "user" {
-				continue
-			}
-			msgs := parseClaudeUserContent(msgContent.Content, ts)
+		if msgs, ok := processClaudeEntry(entry.Type, entry.IsMeta, msgContent, ts); ok {
 			messages = append(messages, msgs...)
-
-		case "assistant":
-			if msgContent.Role != "assistant" {
-				continue
-			}
-			msg := parseClaudeAssistantContent(msgContent.Content, ts)
-			if msg.Content != "" || len(msg.ToolUse) > 0 {
-				messages = append(messages, msg)
-			}
 		}
 	}
 
@@ -80,6 +63,34 @@ func ParseClaudeConversation(filePath string) ([]ConversationMessage, error) {
 		return nil, fmt.Errorf("ParseClaudeConversation: scanning %q: %w", filePath, err)
 	}
 	return messages, nil
+}
+
+// claudeMsgContent is a Claude message content entry.
+type claudeMsgContent struct {
+	Role    string `json:"role"`
+	Content any    `json:"content"`
+}
+
+// processClaudeEntry processes a single Claude JSONL entry, returning messages if applicable.
+func processClaudeEntry(entryType string, isMeta bool, msgContent claudeMsgContent, ts time.Time) ([]ConversationMessage, bool) {
+	switch entryType {
+	case "user":
+		if isMeta || msgContent.Role != "user" {
+			return nil, false
+		}
+		return parseClaudeUserContent(msgContent.Content, ts), true
+	case "assistant":
+		if msgContent.Role != "assistant" {
+			return nil, false
+		}
+		msg := parseClaudeAssistantContent(msgContent.Content, ts)
+		if msg.Content != "" || len(msg.ToolUse) > 0 {
+			return []ConversationMessage{msg}, true
+		}
+		return nil, false
+	default:
+		return nil, false
+	}
 }
 
 // isSkippableContent returns true for empty strings or Claude Code internal commands.
@@ -270,43 +281,13 @@ func ParseCodexConversation(filePath string) ([]ConversationMessage, error) {
 			continue
 		}
 
-		var payload struct {
-			MsgType string `json:"type"`
-			Message string `json:"message"`
-			Text    string `json:"text"`
-		}
+		var payload codexPayload
 		if err := json.Unmarshal(entry.Payload, &payload); err != nil {
 			continue
 		}
 
-		switch payload.MsgType {
-		case "user_message":
-			if payload.Message == "" {
-				continue
-			}
-			messages = append(messages, ConversationMessage{
-				Role:      "user",
-				Content:   payload.Message,
-				Timestamp: ts,
-			})
-		case "agent_message":
-			if payload.Message == "" {
-				continue
-			}
-			messages = append(messages, ConversationMessage{
-				Role:      "assistant",
-				Content:   payload.Message,
-				Timestamp: ts,
-			})
-		case "agent_reasoning":
-			if payload.Text == "" {
-				continue
-			}
-			messages = append(messages, ConversationMessage{
-				Role:      "assistant",
-				Content:   payload.Text,
-				Timestamp: ts,
-			})
+		if msg, ok := codexPayloadToMessage(payload, ts); ok {
+			messages = append(messages, msg)
 		}
 	}
 
@@ -314,4 +295,34 @@ func ParseCodexConversation(filePath string) ([]ConversationMessage, error) {
 		return nil, fmt.Errorf("ParseCodexConversation: scanning %q: %w", filePath, err)
 	}
 	return messages, nil
+}
+
+// codexPayload is a Codex event message payload.
+type codexPayload struct {
+	MsgType string `json:"type"`
+	Message string `json:"message"`
+	Text    string `json:"text"`
+}
+
+// codexPayloadToMessage converts a Codex event payload to a conversation message.
+func codexPayloadToMessage(payload codexPayload, ts time.Time) (ConversationMessage, bool) {
+	switch payload.MsgType {
+	case "user_message":
+		if payload.Message == "" {
+			return ConversationMessage{}, false
+		}
+		return ConversationMessage{Role: "user", Content: payload.Message, Timestamp: ts}, true
+	case "agent_message":
+		if payload.Message == "" {
+			return ConversationMessage{}, false
+		}
+		return ConversationMessage{Role: "assistant", Content: payload.Message, Timestamp: ts}, true
+	case "agent_reasoning":
+		if payload.Text == "" {
+			return ConversationMessage{}, false
+		}
+		return ConversationMessage{Role: "assistant", Content: payload.Text, Timestamp: ts}, true
+	default:
+		return ConversationMessage{}, false
+	}
 }

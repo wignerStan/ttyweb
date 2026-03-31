@@ -1,0 +1,1 @@
+{"success":true,"data":[{"name":"a_first_dir","is_dir":true,"size":0,"mod_time":"2025-01-15 10:30:00"},{"name":"b_second_dir","is_dir":true,"size":0,"mod_time":"2025-01-15 10:30:00"},{"name":"m_middle.go","is_dir":false,"size":4,"mod_time":"2025-01-15 10:30:00"},{"name":"z_last.txt","is_dir":false,"size":4,"mod_time":"2025-01-15 10:30:00"}]}

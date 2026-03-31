@@ -1,24 +1,33 @@
 # CLAUDE.md — frontend/
 
-React SPA (Vite + TypeScript) providing terminal UI with desktop and mobile layouts.
+React SPA (Vite + TypeScript) providing terminal UI with desktop and mobile layouts. Uses **bun** as package manager.
 
 ## Build & Dev
 
 ```bash
-npm install          # Install dependencies
-npm run build        # Build to ../bindata/static/ (Go embed target)
-npm run dev          # Dev server on :5173, proxies /api and /ws to :8080
+bun install          # Install dependencies
+bun run build        # Build to ../bindata/static/ (Go embed target)
+bun run dev          # Dev server on :5173, proxies /api and /ws to :8080
 ```
 
 ## Testing
 
 ```bash
-npx vitest run                    # Unit tests
-npx vitest run -t "renders"       # Single test by name
-npx tsc --noEmit                  # Type checking
-npx playwright test               # E2E (all backends)
-npx playwright test --project=local  # E2E (single backend)
-npx playwright test -g "auth"     # E2E (by test name)
+bunx vitest run                    # Unit tests
+bunx vitest run -t "renders"       # Single test by name
+bun run typecheck                  # Type checking (tsc --noEmit)
+bunx playwright test               # E2E (all backends)
+bunx playwright test --project=local  # E2E (single backend)
+bunx playwright test -g "auth"     # E2E (by test name)
+```
+
+## Linting & Formatting
+
+```bash
+bun run lint           # Biome check src/
+bun run lint:fix       # Biome auto-fix
+bun run format         # Biome format --write src/
+bun run format:check   # Biome format check
 ```
 
 ## Architecture
@@ -31,9 +40,15 @@ src/
 │   ├── Sidebar.tsx    Session/pane tree navigation
 │   └── TerminalTab.tsx xterm.js terminal (FitAddon, WebLinksAddon)
 ├── hooks/
-│   ├── useWebSocket.ts  WebSocket connection + auto-reconnect
-│   ├── useTerminal.ts   xterm.js lifecycle management
-│   └── mobile/           Mobile-specific hooks
+│   ├── useNewWindow.ts     Open terminal in new browser window
+│   ├── useAIConversations.ts  AI session/conversation data
+│   ├── useTmuxPrefix.ts    Tmux prefix key configuration
+│   ├── useShakeDetect.ts   Shake-to-record on mobile
+│   ├── useKeyboardAvoider.ts  Mobile keyboard avoidance
+│   └── useVisualViewport.ts  Viewport handling
+├── conversations/       AI conversation history viewer
+├── kanban/              Task board with drag-and-drop (@dnd-kit)
+├── notepad/             Multi-tab notepad
 ├── mobile/
 │   ├── MobileApp.tsx      Mobile route handler
 │   ├── MobileTerminal.tsx Mobile xterm.js instance
@@ -61,7 +76,9 @@ src/
 
 **Styling**: Tokyo Night color scheme hardcoded in inline styles (no CSS framework). Monospace font stack: JetBrains Mono → Fira Code → Cascadia Code → monospace.
 
-**Mobile Route** (`/m`): Separate optimized layout with tab management, font size slider, voice input, shake detection, and keyboard toolbox. Viewport set per-test via `mobileViewport()` in E2E.
+**Mobile Route** (`/m`): Separate optimized layout with tab management, font size slider, voice input, shake detection, and keyboard toolbox.
+
+**Linting**: Biome (not ESLint) for linting and formatting. Config in `biome.json`.
 
 ## E2E Tests
 

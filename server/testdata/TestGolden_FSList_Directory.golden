@@ -1,0 +1,1 @@
+{"success":true,"data":[{"name":"subdir","is_dir":true,"size":0,"mod_time":"2025-01-15 10:30:00"},{"name":"hello.txt","is_dir":false,"size":5,"mod_time":"2025-01-15 10:30:00"},{"name":"world.go","is_dir":false,"size":12,"mod_time":"2025-01-15 10:30:00"}]}

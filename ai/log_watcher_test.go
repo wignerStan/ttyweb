@@ -7,6 +7,14 @@ import (
 	"time"
 )
 
+func TestLogWatcher_ZeroInterval(t *testing.T) {
+	watcher := NewLogWatcher("", 0)
+	if watcher.interval != 2*time.Second {
+		t.Errorf("expected default interval 2s, got %v", watcher.interval)
+	}
+	watcher.Stop()
+}
+
 func TestLogWatcher_NewAndStop(t *testing.T) {
 	watcher := NewLogWatcher("", 100*time.Millisecond)
 

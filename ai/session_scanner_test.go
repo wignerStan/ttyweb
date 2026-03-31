@@ -111,14 +111,21 @@ func TestScanClaudeProjects_NonexistentDir(t *testing.T) {
 	}
 }
 
-func TestScanClaudeSessions(t *testing.T) {
+// setupClaudeProjectDir creates a temporary Claude project directory with session files.
+// Returns the home directory and the project directory path.
+func setupClaudeProjectDir(t *testing.T, projectPath string) (string, string) {
+	t.Helper()
 	homeDir := t.TempDir()
-	claudeDir := filepath.Join(homeDir, ".claude", "projects")
-	projectDir := filepath.Join(claudeDir, "-home-user-myproject")
-
+	projectDir := filepath.Join(homeDir, ".claude", "projects", EncodeProjectPath(projectPath))
 	if err := os.MkdirAll(projectDir, 0755); err != nil {
 		t.Fatal(err)
 	}
+	return homeDir, projectDir
+}
+
+func TestScanClaudeSessions(t *testing.T) {
+	homeDir, projectDir := setupClaudeProjectDir(t, "/home/user/myproject")
+	t.Setenv("HOME", homeDir)
 
 	// Create session files.
 	content := `{"type":"user","message":{"role":"user","content":"Hello!"},"timestamp":"2025-12-01T10:00:00Z","sessionId":"sess-1"}`
@@ -136,8 +143,6 @@ func TestScanClaudeSessions(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(projectDir, "readme.txt"), []byte("hi"), 0644); err != nil {
 		t.Fatal(err)
 	}
-
-	t.Setenv("HOME", homeDir)
 
 	sessions, err := ScanClaudeSessions("/home/user/myproject")
 	if err != nil {

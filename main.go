@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -15,10 +15,13 @@ import (
 	"ttyweb/backend/zellij"
 	"ttyweb/config"
 	"ttyweb/db"
+	"ttyweb/internal/slogutil"
 	"ttyweb/server"
 )
 
 func main() {
+	slog.SetDefault(slogutil.New(os.Stderr, "info"))
+
 	var (
 		configFile string
 		addr       string
@@ -68,29 +71,32 @@ func main() {
 	args := flag.Args()
 
 	if err := loadConfig(configFile); err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		slog.Error("failed to load config", "error", err)
+		os.Exit(1)
 	}
 
 	dbPath = resolveDBPath(dbPath)
 	if err := db.Init(dbPath); err != nil {
-		log.Printf("warning: database initialization failed: %v", err)
+		slog.Warn("database initialization failed", "error", err)
 	}
 
 	options := buildOptions(addr, port, path, backend, cred, titleFmt, write, enableTLS, tlsCrt, tlsKey)
 
 	factory, err := selectBackend(backend, session, args)
 	if err != nil {
-		log.Fatalf("failed to create backend: %v", err)
+		slog.Error("failed to create backend", "error", err)
+		os.Exit(1)
 	}
 
 	srv, err := server.New(factory, options)
 	if err != nil {
-		log.Fatalf("failed to create server: %v", err)
+		slog.Error("failed to create server", "error", err)
+		os.Exit(1)
 	}
 
 	defer func() {
 		if err := db.Close(); err != nil {
-			log.Printf("warning: database close failed: %v", err)
+			slog.Warn("database close failed", "error", err)
 		}
 	}()
 
@@ -99,11 +105,11 @@ func main() {
 
 	go func() {
 		<-gracefulCtx.Done()
-		log.Println("Received signal, shutting down...")
+		slog.Info("received signal, shutting down")
 	}()
 
 	if err := srv.Run(context.Background(), server.WithGracefulContext(gracefulCtx)); err != nil {
-		log.Printf("Server exited: %v", err)
+		slog.Error("server exited", "error", err)
 	}
 }
 
@@ -148,7 +154,7 @@ func buildOptions(addr, port, path, backendName, cred, titleFmt string, write bo
 	if envCred := os.Getenv("TTYWEB_CREDENTIAL"); envCred != "" {
 		cred = envCred
 	} else if cred != "" {
-		log.Printf("WARNING: -credential flag is deprecated (visible in process list). Use TTYWEB_CREDENTIAL environment variable instead.")
+		slog.Warn("credential flag is deprecated (visible in process list), use TTYWEB_CREDENTIAL environment variable instead")
 	}
 	if cred != "" {
 		options.EnableBasicAuth = true

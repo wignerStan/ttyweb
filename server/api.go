@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -33,6 +33,7 @@ func (server *Server) sessionManager() backend.SessionManager {
 // setupAPIHandlers registers REST API routes on the given mux.
 func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	apiPrefix := pathPrefix + "api/"
+	mux.HandleFunc(apiPrefix+"version", server.handleVersion)
 	mux.HandleFunc(apiPrefix+"sessions", server.handleListSessions)
 	mux.HandleFunc(apiPrefix+"sessions/", server.handleSessionDetail)
 	mux.HandleFunc(apiPrefix+"backends", server.handleListBackends)
@@ -54,6 +55,7 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"roles/", server.handleRoleDetail)
 	// Tasks
 	mux.HandleFunc(apiPrefix+"tasks", server.handleTasks)
+	mux.HandleFunc(apiPrefix+"tasks/stats", server.handleTaskStats)
 	mux.HandleFunc(apiPrefix+"tasks/", server.handleTaskDetail)
 	// Panes
 	mux.HandleFunc(apiPrefix+"panes/status", server.handlePaneStatus)
@@ -88,12 +90,32 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"notepad", server.handleNotepad)
 	mux.HandleFunc(apiPrefix+"notepad/", server.handleNotepadDetail)
 	// Task Segments
+	mux.HandleFunc(apiPrefix+"segments/summaries", server.handleListSummaries)
 	mux.HandleFunc(apiPrefix+"segments", server.handleSegments)
-	mux.HandleFunc(apiPrefix+"segments/", server.handleSegmentDetail)
+	mux.HandleFunc(apiPrefix+"segments/", func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/summarize"):
+			server.handleSummarizeSegment(w, r)
+		case strings.HasSuffix(r.URL.Path, "/summary"):
+			server.handleGetSummary(w, r)
+		default:
+			server.handleSegmentDetail(w, r)
+		}
+	})
+	// SSE Task Events
+	mux.HandleFunc(apiPrefix+"tasks/events/stream", server.sseHandler.ServeHTTP)
 	// Worktree
 	setupWorktreeRoutes(mux, apiPrefix)
+	// Branches
+	setupBranchRoutes(mux, apiPrefix)
 	// Kanban task-AI session linking
 	mux.HandleFunc(apiPrefix+"kanban/tasks/", server.handleTaskAISessionLinks)
+	// File browser
+	mux.HandleFunc(apiPrefix+"fs", server.handleFSList)
+	// Editor
+	mux.HandleFunc(apiPrefix+"editor/open", server.handleEditorOpen)
+	// Swagger docs
+	mux.HandleFunc(apiPrefix+"docs/", handleSwaggerDocs)
 }
 
 func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +130,7 @@ func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request)
 		}
 		data, err := sm.ListSessions()
 		if err != nil {
-			log.Printf("failed to list sessions: %v", err)
+			slog.Error("failed to list sessions", "error", err)
 			writeAPIError(w, http.StatusInternalServerError, "failed to list sessions")
 			return
 		}
@@ -136,7 +158,7 @@ func (server *Server) handleListSessions(w http.ResponseWriter, r *http.Request)
 		}
 		name, err := sm.CreateSession(body.Name, body.Command...)
 		if err != nil {
-			log.Printf("failed to create session: %v", err)
+			slog.Error("failed to create session", "error", err)
 			writeAPIError(w, http.StatusInternalServerError, "failed to create session")
 			return
 		}
@@ -173,7 +195,7 @@ func (server *Server) handleSessionDetail(w http.ResponseWriter, r *http.Request
 	case http.MethodGet:
 		data, err := sm.GetSessionDetail(path)
 		if err != nil {
-			log.Printf("session not found: %v", err)
+			slog.Error("session not found", "error", err)
 			writeAPIError(w, http.StatusNotFound, "session not found")
 			return
 		}
@@ -181,7 +203,7 @@ func (server *Server) handleSessionDetail(w http.ResponseWriter, r *http.Request
 
 	case http.MethodDelete:
 		if err := sm.KillSession(path); err != nil {
-			log.Printf("failed to kill session: %v", err)
+			slog.Error("failed to kill session", "error", err)
 			writeAPIError(w, http.StatusInternalServerError, "failed to kill session")
 			return
 		}

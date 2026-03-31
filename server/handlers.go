@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"sync/atomic"
@@ -14,6 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
+	"ttyweb/ai"
 	"ttyweb/pkg/validate"
 	"ttyweb/webtty"
 )
@@ -63,7 +65,7 @@ func (server *Server) generateHandleWS(ctx context.Context, cancel context.Cance
 
 		log.Printf("New client connected: %s, connections: %d/%d", r.RemoteAddr, num, server.options.MaxConnection)
 
-		if r.Method != "GET" {
+		if r.Method != http.MethodGet {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
@@ -75,22 +77,13 @@ func (server *Server) generateHandleWS(ctx context.Context, cancel context.Cance
 		}
 		defer func() { _ = conn.Close() }()
 
+		headers := map[string][]string(nil)
 		if server.options.PassHeaders {
-			err = server.processWSConn(ctx, conn, r.Header)
-		} else {
-			err = server.processWSConn(ctx, conn, nil)
+			headers = r.Header
 		}
+		err = server.processWSConn(ctx, conn, headers)
 
-		switch err {
-		case ctx.Err():
-			closeReason = "cancelation"
-		case webtty.ErrSlaveClosed:
-			closeReason = server.factory.Name()
-		case webtty.ErrMasterClosed:
-			closeReason = "client"
-		default:
-			closeReason = fmt.Sprintf("an error: %s", err)
-		}
+		closeReason = classifyWSCloseError(err, server.factory.Name())
 	}
 }
 
@@ -117,6 +110,27 @@ func (server *Server) processWSConn(ctx context.Context, conn *websocket.Conn, h
 	}
 
 	opts := server.webttyOptions(titleBuf.Bytes())
+
+	// Build a pane key for the state machine from session/pane params.
+	paneKey := params.Get("session")
+	if pane := params.Get("pane"); pane != "" {
+		if paneKey != "" {
+			paneKey = paneKey + ":" + pane
+		} else {
+			paneKey = pane
+		}
+	}
+	if paneKey == "" {
+		paneKey = "default"
+	}
+
+	bridge := &aiStateMachineBridge{
+		inner:   ai.NewANSITerminalInterceptor(),
+		sm:      server.stateMachine,
+		paneKey: paneKey,
+	}
+	opts = append(opts, webtty.WithOutputInterceptor(bridge))
+
 	tty, err := webtty.New(&wsWrapper{conn}, slave, opts...)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create webtty")
@@ -219,6 +233,22 @@ func (server *Server) webttyOptions(title []byte) []webtty.Option {
 	return opts
 }
 
+// classifyWSCloseError returns a human-readable close reason for a WebSocket error.
+func classifyWSCloseError(err error, backendName string) string {
+	switch err {
+	case nil:
+		return "normal close"
+	case context.Canceled:
+		return "cancelation"
+	case webtty.ErrSlaveClosed:
+		return backendName
+	case webtty.ErrMasterClosed:
+		return "client"
+	default:
+		return fmt.Sprintf("an error: %s", err)
+	}
+}
+
 func (*Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write(indexHTML)
@@ -245,4 +275,62 @@ func (*Server) titleVariables(order []string, varUnits map[string]map[string]any
 	}
 
 	return titleVars, nil
+}
+
+// aiStateMachineBridge connects the ANSI interceptor's pattern matching
+// to the per-pane state machine's transitions.
+type aiStateMachineBridge struct {
+	inner   ai.OutputInterceptor
+	sm      *ai.StateMachine
+	paneKey string
+}
+
+// Intercept delegates to the inner interceptor and transitions the state
+// machine for any ai_state_change metadata.
+func (b *aiStateMachineBridge) Intercept(data []byte) []ai.Metadata {
+	metadata := b.inner.Intercept(data)
+	for _, m := range metadata {
+		if m.Type == "ai_state_change" {
+			if state, ok := m.Data["state"].(string); ok {
+				b.sm.Transition(b.paneKey, ai.AIState(state))
+			}
+		}
+	}
+	return metadata
+}
+
+// registerAIStateChangeHandlers wires up the state machine to auto-create
+// task events when the AI transitions to/from working state.
+func registerAIStateChangeHandlers(sm *ai.StateMachine) {
+	sm.OnStateChange(func(paneKey string, from, to ai.AIState) {
+		if to == ai.AIStateWorking {
+			slog.Info("AI started working, auto-creating task",
+				"pane", paneKey,
+				"from_state", string(from),
+			)
+
+			store.AddTaskEvent(&TaskEvent{
+				PaneKey: paneKey,
+				Event:   "ai_started_working",
+				Data: map[string]any{
+					"from_state": string(from),
+					"pane_key":   paneKey,
+				},
+			})
+
+			return
+		}
+
+		if to == ai.AIStateIdle && from == ai.AIStateWorking {
+			slog.Info("AI task completed",
+				"pane", paneKey,
+			)
+
+			store.AddTaskEvent(&TaskEvent{
+				PaneKey: paneKey,
+				Event:   "ai_completed",
+				Data:    map[string]any{"pane_key": paneKey},
+			})
+		}
+	})
 }

@@ -37,58 +37,65 @@ func (server *Server) handleTaskAISessionLinks(w http.ResponseWriter, r *http.Re
 		aiSessionID = segments[2]
 	}
 
-	methodNotAllowed := func() {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-
-	// Dispatch by HTTP method.
 	switch r.Method {
 	case http.MethodPost:
-		if aiSessionID != "" {
-			methodNotAllowed()
-			return
-		}
-		var body struct {
-			AISessionID string `json:"ai_session_id"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeAPIError(w, http.StatusBadRequest, "invalid request body")
-			return
-		}
-		link, err := taskAISessionSvc.LinkSession(taskID, body.AISessionID)
-		if err != nil {
-			log.Printf("failed to link AI session: %v", err)
-			writeAPIError(w, http.StatusBadRequest, "failed to link AI session")
-			return
-		}
-		writeAPISuccess(w, link)
-
+		linkTaskAISession(w, r, taskID, aiSessionID)
 	case http.MethodGet:
-		if aiSessionID != "" {
-			methodNotAllowed()
-			return
-		}
-		links, err := taskAISessionSvc.ListLinkedSessions(taskID)
-		if err != nil {
-			log.Printf("failed to list linked sessions: %v", err)
-			writeAPIError(w, http.StatusBadRequest, "failed to list linked sessions")
-			return
-		}
-		writeAPISuccess(w, links)
-
+		listTaskAISessions(w, taskID, aiSessionID)
 	case http.MethodDelete:
-		if aiSessionID == "" {
-			methodNotAllowed()
-			return
-		}
-		if err := taskAISessionSvc.UnlinkSession(taskID, aiSessionID); err != nil {
-			log.Printf("failed to unlink AI session: %v", err)
-			writeAPIError(w, http.StatusNotFound, "failed to unlink AI session")
-			return
-		}
-		writeAPISuccess(w, map[string]string{"status": "unlinked"})
-
+		unlinkTaskAISession(w, taskID, aiSessionID)
 	default:
-		methodNotAllowed()
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// linkTaskAISession handles POST /api/kanban/tasks/{id}/sessions.
+func linkTaskAISession(w http.ResponseWriter, r *http.Request, taskID, aiSessionID string) {
+	if aiSessionID != "" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var body struct {
+		AISessionID string `json:"ai_session_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	link, err := taskAISessionSvc.LinkSession(taskID, body.AISessionID)
+	if err != nil {
+		log.Printf("failed to link AI session: %v", err)
+		writeAPIError(w, http.StatusBadRequest, "failed to link AI session")
+		return
+	}
+	writeAPISuccess(w, link)
+}
+
+// listTaskAISessions handles GET /api/kanban/tasks/{id}/sessions.
+func listTaskAISessions(w http.ResponseWriter, taskID, aiSessionID string) {
+	if aiSessionID != "" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	links, err := taskAISessionSvc.ListLinkedSessions(taskID)
+	if err != nil {
+		log.Printf("failed to list linked sessions: %v", err)
+		writeAPIError(w, http.StatusBadRequest, "failed to list linked sessions")
+		return
+	}
+	writeAPISuccess(w, links)
+}
+
+// unlinkTaskAISession handles DELETE /api/kanban/tasks/{id}/sessions/{sid}.
+func unlinkTaskAISession(w http.ResponseWriter, taskID, aiSessionID string) {
+	if aiSessionID == "" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if err := taskAISessionSvc.UnlinkSession(taskID, aiSessionID); err != nil {
+		log.Printf("failed to unlink AI session: %v", err)
+		writeAPIError(w, http.StatusNotFound, "failed to unlink AI session")
+		return
+	}
+	writeAPISuccess(w, map[string]string{"status": "unlinked"})
 }

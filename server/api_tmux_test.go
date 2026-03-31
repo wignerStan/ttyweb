@@ -53,18 +53,21 @@ func TestHandleQuickDirs_GET(t *testing.T) {
 	}
 
 	var resp struct {
-		Success bool           `json:"success"`
-		Data    map[string]any `json:"data"`
+		Success bool  `json:"success"`
+		Data    []any `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("failed to decode: %v", err)
 	}
-	dirs, ok := resp.Data["dirs"].([]any)
-	if !ok {
-		t.Fatal("expected dirs to be array")
+	if !resp.Success {
+		t.Fatal("expected success")
 	}
-	if len(dirs) != 0 {
-		t.Fatalf("expected empty dirs, got %d", len(dirs))
+	if resp.Data == nil {
+		t.Fatal("expected data to be non-nil array")
+	}
+	// Default config has no quick dirs, so expect empty array.
+	if len(resp.Data) != 0 {
+		t.Fatalf("expected empty dirs, got %d", len(resp.Data))
 	}
 }
 
@@ -204,7 +207,7 @@ func TestHandleTmuxSendKeys_MethodNotAllowed(t *testing.T) {
 func TestHandleTmuxPaneMode_GET(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tmux/pane-mode", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tmux/pane-mode?pane=pane1", nil)
 	srv.handleTmuxPaneMode(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -223,10 +226,73 @@ func TestHandleTmuxPaneMode_GET(t *testing.T) {
 	}
 }
 
+func TestHandleTmuxPaneMode_POST(t *testing.T) {
+	srv := newTestServer()
+	body := `{"mode":"control"}`
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/tmux/pane-mode?pane=pane1", bytes.NewReader([]byte(body)))
+	req.Header.Set("Content-Type", "application/json")
+	srv.handleTmuxPaneMode(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var resp struct {
+		Success bool              `json:"success"`
+		Data    map[string]string `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode: %v", err)
+	}
+	if resp.Data["mode"] != "control" {
+		t.Fatalf("expected 'control', got %q", resp.Data["mode"])
+	}
+
+	// Verify the mode persists via GET.
+	rec2 := httptest.NewRecorder()
+	req2 := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tmux/pane-mode?pane=pane1", nil)
+	srv.handleTmuxPaneMode(rec2, req2)
+
+	var resp2 struct {
+		Success bool              `json:"success"`
+		Data    map[string]string `json:"data"`
+	}
+	if err := json.NewDecoder(rec2.Body).Decode(&resp2); err != nil {
+		t.Fatalf("failed to decode: %v", err)
+	}
+	if resp2.Data["mode"] != "control" {
+		t.Fatalf("expected persisted 'control', got %q", resp2.Data["mode"])
+	}
+}
+
+func TestHandleTmuxPaneMode_MissingPane(t *testing.T) {
+	srv := newTestServer()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tmux/pane-mode", nil)
+	srv.handleTmuxPaneMode(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleTmuxPaneMode_InvalidBody(t *testing.T) {
+	srv := newTestServer()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/tmux/pane-mode?pane=pane1", bytes.NewReader([]byte("bad")))
+	req.Header.Set("Content-Type", "application/json")
+	srv.handleTmuxPaneMode(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
 func TestHandleTmuxPaneMode_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/tmux/pane-mode", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodDelete, "/api/tmux/pane-mode?pane=pane1", nil)
 	srv.handleTmuxPaneMode(rec, req)
 
 	if rec.Code != http.StatusMethodNotAllowed {

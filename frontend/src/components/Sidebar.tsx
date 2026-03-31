@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
+import { BUTTON_RESET } from '../shared/styles'
 
 interface Session {
   name: string
@@ -126,17 +127,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
           <div key={s.name}>
             <button
               type="button"
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                font: 'inherit',
-                color: 'inherit',
-                cursor: 'pointer',
-                width: '100%',
-                textAlign: 'inherit',
-                ...styles.sessionRow,
-              }}
+              style={{ ...BUTTON_RESET, ...styles.sessionRow }}
               onClick={() => handleToggle(s.name)}
             >
               <span style={styles.expandIcon}>{expanded === s.name ? '▼' : '▶'}</span>
@@ -163,17 +154,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
                   <button
                     key={p.id}
                     type="button"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      font: 'inherit',
-                      color: 'inherit',
-                      cursor: 'pointer',
-                      width: '100%',
-                      textAlign: 'inherit',
-                      ...styles.paneRow,
-                    }}
+                    style={{ ...BUTTON_RESET, ...styles.paneRow }}
                     onClick={() => onSelect(s.name, p.id)}
                   >
                     <span style={styles.paneId}>{p.id}</span>
@@ -183,17 +164,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
                 ))}
                 <button
                   type="button"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    font: 'inherit',
-                    color: 'inherit',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'inherit',
-                    ...styles.connectAll,
-                  }}
+                  style={{ ...BUTTON_RESET, ...styles.connectAll }}
                   onClick={() => onSelect(s.name)}
                 >
                   Connect to session

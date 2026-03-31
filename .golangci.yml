@@ -18,6 +18,8 @@ linters:
     - depguard
     - errname
     - nilerr
+    - copyloopvar
+    - usestdlibvars
 
     # --- New: Security ---
     - gosec
@@ -66,7 +68,7 @@ linters:
         - G703
 
     gocyclo:
-      min-complexity: 15
+      min-complexity: 12
 
     gocognit:
       min-complexity: 30

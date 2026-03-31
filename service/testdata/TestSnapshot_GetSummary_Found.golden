@@ -1,0 +1,14 @@
+{
+  "id": "sum-001",
+  "year": 2026,
+  "mon": 3,
+  "segment_id": "seg-001",
+  "session_name": "session1",
+  "window_index": 0,
+  "window_name": "win1",
+  "command_summary": "Implemented auth module with JWT tokens",
+  "output_summary": "",
+  "summary_status": "completed",
+  "generated_at": "<time>",
+  "created_at": "<time>"
+}

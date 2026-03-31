@@ -11,7 +11,7 @@ import (
 // newTestServer creates a minimal Server for testing middleware methods.
 // It resets the global MemoryStore to ensure test isolation.
 func newTestServer() *Server {
-	store = NewMemoryStore()
+	resetStore()
 	return &Server{
 		options: &Options{Path: "/"},
 	}
@@ -28,7 +28,6 @@ func TestWrapHeaders_SetsSecurityHeaders(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	headers := map[string]string{
-		"Server":                 "GoTTY",
 		"X-Content-Type-Options": "nosniff",
 		"X-Frame-Options":        "DENY",
 		"Referrer-Policy":        "no-referrer",
@@ -40,6 +39,15 @@ func TestWrapHeaders_SetsSecurityHeaders(t *testing.T) {
 		if got != expected {
 			t.Errorf("Header %q: expected %q, got %q", name, expected, got)
 		}
+	}
+
+	// Server header includes dynamic version, verify prefix
+	server := rec.Header().Get("Server")
+	if server == "" {
+		t.Fatal(`Header "Server" is empty`)
+	}
+	if server[:6] != "ttyweb" {
+		t.Errorf(`Header "Server": expected "ttyweb/..." prefix, got %q`, server)
 	}
 }
 

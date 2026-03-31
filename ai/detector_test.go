@@ -258,3 +258,147 @@ func TestDetectAssistant_CodexBinPath(t *testing.T) {
 		t.Errorf("got %q, want %q", got, AssistantTypeCodex)
 	}
 }
+
+func TestDetectAssistant_QwenCode(t *testing.T) {
+	tests := []struct {
+		name    string
+		command string
+		want    AssistantType
+		found   bool
+	}{
+		{
+			name:    "qwen code binary",
+			command: "/usr/bin/qwen code chat",
+			want:    AssistantTypeQwenCode,
+			found:   true,
+		},
+		{
+			name:    "qwen code npm package",
+			command: "node /home/user/.npm-global/lib/node_modules/@alicloud/qwen-code/cli.js",
+			want:    AssistantTypeQwenCode,
+			found:   true,
+		},
+		{
+			name:    "qwen-code hyphenated binary",
+			command: "/usr/local/bin/qwen-code",
+			want:    AssistantTypeQwenCode,
+			found:   true,
+		},
+		{
+			name:    "qwen_code underscore binary",
+			command: "/home/user/.local/bin/qwen_code",
+			want:    AssistantTypeQwenCode,
+			found:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := DetectAssistant(tt.command)
+			if ok != tt.found {
+				t.Errorf("DetectAssistant(%q) found = %v, want %v", tt.command, ok, tt.found)
+			}
+			if ok && got != tt.want {
+				t.Errorf("DetectAssistant(%q) = %q, want %q", tt.command, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDetectAssistant_Gemini(t *testing.T) {
+	tests := []struct {
+		name    string
+		command string
+		want    AssistantType
+		found   bool
+	}{
+		{
+			name:    "gemini-cli binary",
+			command: "gemini-cli --model gemini-pro",
+			want:    AssistantTypeGemini,
+			found:   true,
+		},
+		{
+			name:    "gemini npm package",
+			command: "node /home/user/.npm-global/lib/node_modules/@google/gemini-cli/cli.js",
+			want:    AssistantTypeGemini,
+			found:   true,
+		},
+		{
+			name:    "gemini binary path",
+			command: "/usr/local/bin/gemini",
+			want:    AssistantTypeGemini,
+			found:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := DetectAssistant(tt.command)
+			if ok != tt.found {
+				t.Errorf("DetectAssistant(%q) found = %v, want %v", tt.command, ok, tt.found)
+			}
+			if ok && got != tt.want {
+				t.Errorf("DetectAssistant(%q) = %q, want %q", tt.command, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDetectAssistant_Cursor(t *testing.T) {
+	tests := []struct {
+		name    string
+		command string
+		want    AssistantType
+		found   bool
+	}{
+		{
+			name:    "cursor-agent binary",
+			command: "/opt/cursor/bin/cursor-agent",
+			want:    AssistantTypeCursor,
+			found:   true,
+		},
+		{
+			name:    "cursor binary path",
+			command: "/usr/local/bin/cursor",
+			want:    AssistantTypeCursor,
+			found:   true,
+		},
+		{
+			name:    "cursor config path",
+			command: "node /home/user/.cursor/extensions/agent/dist/index.js",
+			want:    AssistantTypeCursor,
+			found:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := DetectAssistant(tt.command)
+			if ok != tt.found {
+				t.Errorf("DetectAssistant(%q) found = %v, want %v", tt.command, ok, tt.found)
+			}
+			if ok && got != tt.want {
+				t.Errorf("DetectAssistant(%q) = %q, want %q", tt.command, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAssistantType_DisplayNameNewTypes(t *testing.T) {
+	tests := []struct {
+		atype AssistantType
+		want  string
+	}{
+		{AssistantTypeQwenCode, "Qwen Code"},
+		{AssistantTypeGemini, "Gemini"},
+		{AssistantTypeCursor, "Cursor"},
+	}
+
+	for _, tt := range tests {
+		got := tt.atype.DisplayName()
+		if got != tt.want {
+			t.Errorf("AssistantType(%q).DisplayName() = %q, want %q", tt.atype, got, tt.want)
+		}
+	}
+}

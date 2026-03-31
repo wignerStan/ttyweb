@@ -9,6 +9,22 @@ import (
 )
 
 // handleProfiles handles GET (list) and POST (create) for profiles.
+//
+// @Summary List profiles
+// @Description Returns all saved profiles
+// @Tags profiles
+// @Produce json
+// @Success 200 {array} Profile
+// @Router /profiles [get]
+//
+// @Summary Create profile
+// @Description Creates a new profile
+// @Tags profiles
+// @Accept json
+// @Produce json
+// @Param body body object true "Profile data"
+// @Success 200 {object} Profile
+// @Router /profiles [post]
 func (*Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

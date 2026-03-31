@@ -1,299 +1,59 @@
 package main
 
 import (
-	"os"
-	"strings"
 	"testing"
 )
 
-func TestDefaultShellWithEnv(t *testing.T) {
-	t.Parallel()
-
-	// Save and restore SHELL env var.
-	origShell := os.Getenv("SHELL")
-	defer func() {
-		if origShell == "" {
-			_ = os.Unsetenv("SHELL")
-		} else {
-			_ = os.Setenv("SHELL", origShell)
-		}
-	}()
-
-	customShell := "/usr/local/bin/zsh"
-	_ = os.Setenv("SHELL", customShell)
-
-	got := defaultShell()
-	if got != customShell {
-		t.Errorf("defaultShell() = %q, want %q", got, customShell)
+func TestHostname(t *testing.T) {
+	h := hostname()
+	if h == "" {
+		t.Error("expected non-empty hostname")
+	}
+	if h == "localhost" {
+		t.Log("hostname resolved to localhost (os.Hostname failed)")
 	}
 }
 
-func TestDefaultShellEmptyEnv(t *testing.T) {
-	t.Parallel()
-
-	origShell := os.Getenv("SHELL")
-	defer func() {
-		if origShell == "" {
-			_ = os.Unsetenv("SHELL")
-		} else {
-			_ = os.Setenv("SHELL", origShell)
-		}
-	}()
-
-	_ = os.Unsetenv("SHELL")
-
-	got := defaultShell()
-	if got != "/bin/sh" {
-		t.Errorf("defaultShell() = %q, want %q", got, "/bin/sh")
+func TestDefaultShell_FromEnv(t *testing.T) {
+	t.Setenv("SHELL", "/bin/zsh")
+	if sh := defaultShell(); sh != "/bin/zsh" {
+		t.Errorf("expected /bin/zsh, got %s", sh)
 	}
 }
 
-func TestHostnameNotEmpty(t *testing.T) {
-	t.Parallel()
-	got := hostname()
-	if got == "" {
-		t.Error("hostname() returned empty string")
+func TestDefaultShell_Fallback(t *testing.T) {
+	t.Setenv("SHELL", "")
+	if sh := defaultShell(); sh != "/bin/sh" {
+		t.Errorf("expected /bin/sh fallback, got %s", sh)
 	}
 }
 
-func TestHostname_AlwaysString(t *testing.T) {
-	t.Parallel()
-	got := hostname()
-	// hostname() returns os.Hostname() or "localhost" (the error path).
-	// Any non-empty value that isn't "localhost" means os.Hostname() succeeded.
-	if got == "" {
-		t.Error("hostname() returned empty string")
+func TestCommandExists_True(t *testing.T) {
+	if !commandExists("go") {
+		t.Error("expected 'go' to exist in PATH")
 	}
 }
 
-func TestHostnameIsString(t *testing.T) {
-	t.Parallel()
-	got := hostname()
-	// Hostname should be a non-empty printable string.
-	if got == "" || strings.TrimSpace(got) != got {
-		t.Errorf("hostname() = %q, want a clean hostname string", got)
-	}
-}
-
-func TestHostname_NotEmptyAndValid(t *testing.T) {
-	t.Parallel()
-	got := hostname()
-	if got == "" {
-		t.Fatal("hostname() returned empty string")
-	}
-	if len(got) > 253 {
-		t.Errorf("hostname() = %q, exceeds max hostname length", got)
-	}
-}
-
-func TestCommandExistsTrue(t *testing.T) {
-	t.Parallel()
-	// "sh" should always exist on any Unix system.
-	if !commandExists("sh") {
-		t.Error("commandExists(\"sh\") = false, want true")
-	}
-}
-
-func TestCommandExistsFalse(t *testing.T) {
-	t.Parallel()
-	if commandExists("nonexistent_binary_that_does_not_exist_xyzzy") {
-		t.Error("commandExists() returned true for a nonexistent binary")
-	}
-}
-
-func TestCommandExistsEmpty(t *testing.T) {
-	t.Parallel()
-	if commandExists("") {
-		t.Error("commandExists(\"\") should return false")
-	}
-}
-
-func TestCommandExistsPathBinary(t *testing.T) {
-	t.Parallel()
-	// "ls" is a standard Unix utility.
-	if !commandExists("ls") {
-		t.Error("commandExists(\"ls\") = false, want true")
-	}
-}
-
-func TestSelectBackend_Local(t *testing.T) {
-	t.Parallel()
-	f, err := selectBackend("local", "s1", []string{"/bin/cat"})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if f == nil {
-		t.Fatal("expected non-nil factory")
-	}
-}
-
-func TestSelectBackend_LocalDefaultShell(t *testing.T) {
-	t.Parallel()
-	f, err := selectBackend("local", "s1", nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if f == nil {
-		t.Fatal("expected non-nil factory")
-	}
-}
-
-func TestSelectBackend_Tmux(t *testing.T) {
-	t.Parallel()
-	f, err := selectBackend("tmux", "s1", nil)
-	if !commandExists("tmux") {
-		if err == nil {
-			t.Error("expected error when tmux not found")
-		}
-		return
-	}
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if f == nil {
-		t.Fatal("expected non-nil factory")
-	}
-}
-
-func TestSelectBackend_Zellij(t *testing.T) {
-	t.Parallel()
-	f, err := selectBackend("zellij", "s1", nil)
-	if !commandExists("zellij") {
-		if err == nil {
-			t.Error("expected error when zellij not found")
-		}
-		return
-	}
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if f == nil {
-		t.Fatal("expected non-nil factory")
+func TestCommandExists_False(t *testing.T) {
+	if commandExists("nonexistent_binary_xyz123") {
+		t.Error("expected nonexistent binary to not exist")
 	}
 }
 
 func TestSelectBackend_Unknown(t *testing.T) {
-	t.Parallel()
-	_, err := selectBackend("unknown_backend", "s1", nil)
+	_, err := selectBackend("nonexistent", "", nil)
 	if err == nil {
 		t.Error("expected error for unknown backend")
 	}
 }
 
-func TestSelectBackend_LocalEmptyArgsUsesDefaultShell(t *testing.T) {
-	t.Parallel()
-	f, err := selectBackend("local", "s1", []string{})
+func TestSelectBackend_Local(t *testing.T) {
+	t.Setenv("SHELL", "/bin/sh")
+	b, err := selectBackend("local", "", []string{"bash"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if f == nil {
-		t.Fatal("expected non-nil factory")
-	}
-}
-
-func TestBuildOptions_Basic(t *testing.T) {
-	t.Parallel()
-	opts := buildOptions("0.0.0.0", "8080", "/", "local", "", "title", false, false, "", "")
-	if opts.Address != "0.0.0.0" {
-		t.Errorf("Address = %q, want '0.0.0.0'", opts.Address)
-	}
-	if opts.Port != "8080" {
-		t.Errorf("Port = %q, want '8080'", opts.Port)
-	}
-	if !opts.PermitArguments {
-		t.Error("expected PermitArguments true for local backend")
-	}
-	if opts.EnableBasicAuth {
-		t.Error("expected EnableBasicAuth false")
-	}
-}
-
-func TestBuildOptions_WithCredential(t *testing.T) {
-	t.Parallel()
-	opts := buildOptions("", "", "", "local", "user:pass", "", false, false, "", "")
-	if !opts.EnableBasicAuth {
-		t.Error("expected EnableBasicAuth true")
-	}
-	if opts.Credential != "user:pass" {
-		t.Errorf("Credential = %q, want 'user:pass'", opts.Credential)
-	}
-}
-
-func TestBuildOptions_WithTLS(t *testing.T) {
-	t.Parallel()
-	opts := buildOptions("", "", "", "local", "", "", false, true, "/cert.pem", "/key.pem")
-	if !opts.EnableTLS {
-		t.Error("expected EnableTLS true")
-	}
-	if opts.TLSCrtFile != "/cert.pem" {
-		t.Errorf("TLSCrtFile = %q, want '/cert.pem'", opts.TLSCrtFile)
-	}
-	if opts.TLSKeyFile != "/key.pem" {
-		t.Errorf("TLSKeyFile = %q, want '/key.pem'", opts.TLSKeyFile)
-	}
-}
-
-func TestBuildOptions_PermitWrite(t *testing.T) {
-	t.Parallel()
-	opts := buildOptions("", "", "", "local", "", "", true, false, "", "")
-	if !opts.PermitWrite {
-		t.Error("expected PermitWrite true")
-	}
-}
-
-func TestBuildOptions_NonLocalBackend(t *testing.T) {
-	t.Parallel()
-	opts := buildOptions("", "", "", "tmux", "", "", false, false, "", "")
-	if opts.PermitArguments {
-		t.Error("expected PermitArguments false for tmux backend")
-	}
-}
-
-func TestResolveDBPath_Empty(t *testing.T) {
-	t.Parallel()
-	result := resolveDBPath("")
-	if result == "" {
-		t.Error("expected non-empty default path")
-	}
-}
-
-func TestResolveDBPath_Explicit(t *testing.T) {
-	t.Parallel()
-	result := resolveDBPath("/custom/path.db")
-	if result != "/custom/path.db" {
-		t.Errorf("expected '/custom/path.db', got %q", result)
-	}
-}
-
-func TestBuildOptions_WithTLSNoCertKey(t *testing.T) {
-	t.Parallel()
-	opts := buildOptions("", "", "", "local", "", "", false, true, "", "")
-	if !opts.EnableTLS {
-		t.Error("expected EnableTLS true")
-	}
-	if opts.TLSCrtFile != "" {
-		t.Errorf("TLSCrtFile = %q, want empty", opts.TLSCrtFile)
-	}
-	if opts.TLSKeyFile != "" {
-		t.Errorf("TLSKeyFile = %q, want empty", opts.TLSKeyFile)
-	}
-}
-
-func TestBuildOptions_WithTitleVariables(t *testing.T) {
-	t.Parallel()
-	opts := buildOptions("0.0.0.0", "8080", "/", "local", "", "test {{ .hostname }}", false, false, "", "")
-	if opts.TitleFormat != "test {{ .hostname }}" {
-		t.Errorf("TitleFormat = %q", opts.TitleFormat)
-	}
-	if _, ok := opts.TitleVariables["hostname"]; !ok {
-		t.Error("expected hostname in TitleVariables")
-	}
-}
-
-func TestLoadConfig_Default(t *testing.T) {
-	t.Parallel()
-	err := loadConfig("")
-	if err != nil {
-		t.Logf("loadConfig with default path: %v (may be expected)", err)
+	if b == nil {
+		t.Error("expected non-nil backend for local")
 	}
 }

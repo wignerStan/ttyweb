@@ -392,6 +392,55 @@ func TestMemoryStore_GetPaneStatuses_Copy(t *testing.T) {
 	}
 }
 
+// --- Pane Mode ---
+
+func TestMemoryStore_GetPaneMode_Default(t *testing.T) {
+	s := NewMemoryStore()
+	mode := s.GetPaneMode("pane1")
+	if mode != "" {
+		t.Fatalf("expected empty string for unset mode, got %q", mode)
+	}
+}
+
+func TestMemoryStore_SetPaneMode(t *testing.T) {
+	s := NewMemoryStore()
+	s.SetPaneMode("pane1", "control")
+	mode := s.GetPaneMode("pane1")
+	if mode != "control" {
+		t.Fatalf("expected 'control', got %q", mode)
+	}
+}
+
+func TestMemoryStore_SetPaneMode_Invalid(t *testing.T) {
+	s := NewMemoryStore()
+	s.SetPaneMode("pane1", "invalid")
+	mode := s.GetPaneMode("pane1")
+	if mode != "" {
+		t.Fatalf("expected empty string for invalid mode, got %q", mode)
+	}
+}
+
+func TestMemoryStore_SetPaneMode_Pane(t *testing.T) {
+	s := NewMemoryStore()
+	s.SetPaneMode("pane1", "pane")
+	mode := s.GetPaneMode("pane1")
+	if mode != "pane" {
+		t.Fatalf("expected 'pane', got %q", mode)
+	}
+}
+
+func TestMemoryStore_SetPaneMode_DifferentPanes(t *testing.T) {
+	s := NewMemoryStore()
+	s.SetPaneMode("pane1", "control")
+	s.SetPaneMode("pane2", "pane")
+	if s.GetPaneMode("pane1") != "control" {
+		t.Fatalf("expected pane1=control, got %q", s.GetPaneMode("pane1"))
+	}
+	if s.GetPaneMode("pane2") != "pane" {
+		t.Fatalf("expected pane2=pane, got %q", s.GetPaneMode("pane2"))
+	}
+}
+
 // --- Thread Safety ---
 
 func TestMemoryStore_ConcurrentAccess(t *testing.T) {
