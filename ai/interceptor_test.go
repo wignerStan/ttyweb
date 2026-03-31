@@ -144,6 +144,58 @@ func TestANSIIntercept_TabRenameClearedOnIdle(t *testing.T) {
 	}
 }
 
+func TestLooksLikeToolOutput_True(t *testing.T) {
+	cases := []string{
+		"Use Read tool to read file",
+		"Applying patch to main.go",
+		"Reading config.json",
+		"Editing source file",
+		"Writing new test file",
+		"[INFO] Build succeeded",
+		"# This is a comment",
+		"$ git status",
+	}
+	for _, c := range cases {
+		if !looksLikeToolOutput(c) {
+			t.Errorf("expected looksLikeToolOutput(%q) = true", c)
+		}
+	}
+}
+
+func TestLooksLikeToolOutput_False(t *testing.T) {
+	cases := []string{
+		"fix the authentication bug",
+		"add a new feature",
+		"hello world",
+		"please review my code",
+		"run the tests",
+	}
+	for _, c := range cases {
+		if looksLikeToolOutput(c) {
+			t.Errorf("expected looksLikeToolOutput(%q) = false", c)
+		}
+	}
+}
+
+func TestTruncate(t *testing.T) {
+	// No truncation needed
+	if got := truncate("hello", 10); got != "hello" {
+		t.Errorf("expected 'hello', got %q", got)
+	}
+	// Exact length
+	if got := truncate("hello", 5); got != "hello" {
+		t.Errorf("expected 'hello', got %q", got)
+	}
+	// Truncation with ellipsis
+	if got := truncate("hello world", 5); got != "hello\u2026" {
+		t.Errorf("expected 'hello...', got %q", got)
+	}
+	// Empty string
+	if got := truncate("", 5); got != "" {
+		t.Errorf("expected empty string, got %q", got)
+	}
+}
+
 func TestANSIIntercept_TabRenameTruncation(t *testing.T) {
 	i := NewANSITerminalInterceptor()
 

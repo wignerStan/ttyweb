@@ -33,7 +33,7 @@
 }
 
 /* Light Theme */
-[data-theme='light'] {
+[data-theme="light"] {
   --bg-primary: #f5f5f5;
   --bg-secondary: #e8e8e8;
   --bg-tertiary: #ffffff;

@@ -102,3 +102,77 @@ func TestGolden_BranchDetail_NoRepo(t *testing.T) {
 
 	compareGolden(t, rec.Body.Bytes())
 }
+
+// TestGolden_BranchMerge_Success covers the successful merge path.
+func TestGolden_BranchMerge_Success(t *testing.T) {
+	repoDir := initTestGitRepo(t)
+
+	// Create a branch that is ahead of main.
+	mustGit(t, repoDir, "branch", "to-merge")
+	mustGit(t, repoDir, "checkout", "to-merge")
+	mustGit(t, repoDir, "-c", "user.name=test", "-c", "user.email=test@test.com", "commit", "--allow-empty", "-m", "merge me")
+	mustGit(t, repoDir, "checkout", "main")
+
+	rec := httptest.NewRecorder()
+	body := bytes.NewReader([]byte(`{"source":"to-merge","target":"main"}`))
+	req := httptest.NewRequestWithContext(
+		context.Background(), http.MethodPost,
+		"/api/branches/merge?repo="+repoDir, body,
+	)
+	req.Header.Set("Content-Type", "application/json")
+	handleBranchDetail(rec, req)
+
+	compareGolden(t, rec.Body.Bytes())
+}
+
+// TestGolden_BranchDelete_Success covers the successful branch deletion path.
+func TestGolden_BranchDelete_Success(t *testing.T) {
+	repoDir := initTestGitRepo(t)
+
+	// Create a branch to delete.
+	mustGit(t, repoDir, "branch", "to-delete")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequestWithContext(
+		context.Background(), http.MethodDelete,
+		"/api/branches/to-delete?repo="+repoDir, nil,
+	)
+	handleBranchDetail(rec, req)
+
+	compareGolden(t, rec.Body.Bytes())
+}
+
+// TestGolden_BranchCreate_Success covers the successful branch creation path.
+func TestGolden_BranchCreate_Success(t *testing.T) {
+	repoDir := initTestGitRepo(t)
+
+	rec := httptest.NewRecorder()
+	body := bytes.NewReader([]byte(`{"name":"success-branch"}`))
+	req := httptest.NewRequestWithContext(
+		context.Background(), http.MethodPost,
+		"/api/branches?repo="+repoDir, body,
+	)
+	req.Header.Set("Content-Type", "application/json")
+	handleBranches(rec, req)
+
+	compareGolden(t, rec.Body.Bytes())
+}
+
+// TestGolden_BranchCreate_AlreadyExists covers creating a branch that already exists.
+func TestGolden_BranchCreate_AlreadyExists(t *testing.T) {
+	repoDir := initTestGitRepo(t)
+
+	// Pre-create the branch.
+	mustGit(t, repoDir, "branch", "existing-branch")
+
+	rec := httptest.NewRecorder()
+	body := bytes.NewReader([]byte(`{"name":"existing-branch"}`))
+	req := httptest.NewRequestWithContext(
+		context.Background(), http.MethodPost,
+		"/api/branches?repo="+repoDir, body,
+	)
+	req.Header.Set("Content-Type", "application/json")
+	handleBranches(rec, req)
+
+	compareGolden(t, rec.Body.Bytes())
+}
