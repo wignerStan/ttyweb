@@ -146,8 +146,8 @@ describe('App', () => {
     const user = userEvent.setup()
     renderApp()
     await user.click(screen.getByText('Conversations'))
-    expect(screen.getByTestId('conversation-list')).toBeInTheDocument()
-    expect(screen.getByTestId('conversation-viewer')).toBeInTheDocument()
+    expect(await screen.findByTestId('conversation-list')).toBeInTheDocument()
+    expect(await screen.findByTestId('conversation-viewer')).toBeInTheDocument()
   })
 
   it('switches back to Terminal view from Conversations', async () => {
@@ -167,14 +167,14 @@ describe('App', () => {
     const user = userEvent.setup()
     renderApp()
     await user.click(screen.getByText('Kanban'))
-    expect(screen.getByTestId('kanban-board')).toBeInTheDocument()
+    expect(await screen.findByTestId('kanban-board')).toBeInTheDocument()
   })
 
   it('opens Notepad when notepad button clicked', async () => {
     const user = userEvent.setup()
     renderApp()
     await user.click(screen.getByTitle('Open Notepad'))
-    expect(screen.getByTestId('notepad-panel')).toBeInTheDocument()
+    expect(await screen.findByTestId('notepad-panel')).toBeInTheDocument()
   })
 
   it('does not duplicate notepad tab on multiple clicks', async () => {
