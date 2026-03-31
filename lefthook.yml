@@ -29,10 +29,12 @@ pre-push:
       tags: [go, coverage]
       run: |
         go test ./... -coverprofile=cover.out -count=1
-        COVERAGE=$(go tool cover -func=cover.out | grep total | awk '{print $3}' | tr -d '%')
-        echo "Go coverage: ${COVERAGE}%"
+        # Exclude CLI entry point (needs full server) and Xunfei speech (needs external API)
+        grep -v "main.go:" cover.out | grep -v "ws_speech.go:" > cover_filtered.out
+        COVERAGE=$(go tool cover -func=cover_filtered.out | grep total | awk '{print $3}' | tr -d '%')
+        echo "Go coverage (excl main/speech): ${COVERAGE}%"
         if awk "BEGIN {exit !($COVERAGE < 90)}"; then
           echo "FAIL: coverage ${COVERAGE}% < 90%"
           exit 1
         fi
-        rm -f cover.out
+        rm -f cover.out cover_filtered.out
