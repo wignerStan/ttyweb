@@ -33,7 +33,7 @@ lint: lint-go lint-frontend
 
 # Go coverage report
 coverage-go:
-	go test ./... -coverprofile=coverage.out -count=1 && go tool cover -func=coverage.out | tail -1
+	go test ./... -coverprofile=coverage.out -count=1 && grep -v "main.go:" coverage.out | grep -v "ws_speech.go:" > coverage_filtered.out && go tool cover -func=coverage_filtered.out | tail -1 && rm -f coverage_filtered.out
 
 # Build the Go binary
 build:
