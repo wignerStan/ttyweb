@@ -13,6 +13,8 @@ session_scanner.go     Scan Claude/Codex session directories for JSONL files
 conversation_parser.go Parse JSONL conversation files (messages, tool use blocks)
 xunfei.go              Xunfei STT WebSocket proxy (HMAC-SHA256 auth)
 log_watcher.go         Watch AI agent log files for new activity
+state_machine.go      Per-pane AI assistant state machine (idle/working/waiting_approval)
+interceptor.go        Terminal output interceptor for AI state detection (ANSI stripping, pattern matching)
 types.go               Shared types (Session, ParsedMessage, ToolUse, etc.)
 ```
 
@@ -27,6 +29,10 @@ types.go               Shared types (Session, ParsedMessage, ToolUse, etc.)
 **Streaming**: `stream.go` pipes LLM responses to WebSocket clients with role-based system prompts.
 
 **Xunfei STT**: WebSocket proxy with HMAC-SHA256 authentication. Credentials from `config.Get().Xunfei`.
+
+**State Machine**: `state_machine.go` tracks AI assistant lifecycle per terminal pane. States: idle → working → waiting_approval → idle. Supports state change handlers for notification and task creation triggers.
+
+**Terminal Interceptor**: `interceptor.go` wraps terminal output, strips ANSI codes, matches patterns to detect AI working/approval/idle transitions, and emits metadata events to the WebSocket master.
 
 ## Testing
 

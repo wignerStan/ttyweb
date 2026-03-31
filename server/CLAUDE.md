@@ -23,6 +23,17 @@ api_*.go           Split API handlers by domain:
   api_telemetry.go POST /api/telemetry
   api_tmux.go      /api/tmux/* extensions
   api_upload.go    POST /api/upload
+  api_branch.go    CRUD /api/branches (list, create, delete, merge)
+  api_commit_message.go  POST .../ai-commit-message (LLM-generated commit messages)
+  api_editor.go    POST /api/editor/open (vscode:// / cursor:// URLs)
+  api_fs.go        GET /api/fs (file browser directory listing)
+  api_pr_checkout.go     POST .../pr-checkout (create worktree from GitHub PR)
+  api_stats.go     GET /api/tasks/stats (aggregate task statistics)
+  api_summary.go   POST /api/segments/{id}/summarize, GET summary/summaries
+  api_swagger.go   GET /api/docs (Swagger UI)
+  event_bus.go     TaskEventBus pub/sub with SSE streaming
+  version.go       GET /version (build info, Go version, commit hash)
+  update_checker.go  GitHub release update checker
 middleware.go      Logger, security headers, basic auth
 store.go          MemoryStore — thread-safe in-memory CRUD
 slave.go          type Factory = backend.Factory
@@ -75,5 +86,19 @@ slave.go          type Factory = backend.Factory
 | `/api/log` | GET | all | Server logs |
 | `/api/opencode-config` | GET | all | OpenCode config |
 | `/api/butler/*` | GET/POST | all | Butler proxy (stub) |
+| `/api/branches` | GET/POST | all | Branch list/create |
+| `/api/branches/{name}` | DELETE | all | Delete branch |
+| `/api/branches/merge` | POST | all | Merge branches |
+| `/api/fs` | GET | all | File browser directory listing |
+| `/api/editor/open` | POST | all | Open in external editor |
+| `/api/tasks/stats` | GET | all | Aggregate task statistics |
+| `/api/segments/{id}/summarize` | POST | all | AI task summary generation |
+| `/api/segments/{id}/summary` | GET | all | Get task summary |
+| `/api/segments/summaries` | GET | all | List all summaries |
+| `/api/docs` | GET | all | Swagger UI |
+| `/version` | GET | all | Build version info |
+| `/api/worktree/.../ai-commit-message` | POST | all | AI commit message from diff |
+| `/api/worktree/.../pr-checkout` | POST | all | PR checkout to worktree |
+| `/api/tasks/events/stream` | GET (SSE) | all | SSE task event stream |
 
 Local backend returns empty arrays or 503 for session-dependent endpoints.

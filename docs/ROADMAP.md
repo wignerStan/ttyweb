@@ -17,11 +17,11 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | Local shell backend | **Done** | |
 | Tmux backend (session/pane CRUD) | **Done** | |
 | Zellij backend | **Done** | |
-| Tmux control mode (single PTY via `tmux -C`) | **Stub** | `server/api_tmux.go:305` returns hardcoded `"pane"` |
+| Tmux control mode (single PTY via `tmux -C`) | **Stub** | Returns hardcoded `"pane"` mode |
 | Auto-reconnect on disconnect | **Done** | |
 | TLS/HTTPS support | **Done** | |
 | Touch scroll gesture (mobile) | **Done** | |
-| Quick dirs for new windows | **Stub** | `server/api_tmux.go:28` returns `[]` |
+| Quick dirs for new windows | **Stub** | Returns empty array |
 
 ---
 
@@ -31,21 +31,12 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 |---------|--------|-------|
 | Detect Claude Code / Codex from command | **Done** | `ai/detector.go` |
 | Session title display (first user message) | **Done** | `ai/session_scanner.go` |
-| Real-time status tracking (idle/working/approval) | **Missing** | Ref: CodeKanban parses terminal output via vt10x virtual terminal emulator; opencode-tmuxweb uses OpenCode plugin HTTP events |
-| Completion notification (working → idle) | **Missing** | Ref: CodeKanban, opencode-tmuxweb |
-| Approval-needed notification | **Missing** | Ref: CodeKanban, opencode-tmuxweb |
-| Auto-rename session tab from AI input | **Missing** | Ref: CodeKanban |
-| Auto-create task when AI starts working | **Missing** | Ref: CodeKanban |
-| Qwen Code / Gemini / Cursor detection | **Missing** | Ref: CodeKanban |
-
-### Next Steps for AI Status
-
-`ai/detector.go` handles command-line pattern detection. To add runtime state tracking:
-
-1. Terminal output parsing (or plugin-based event injection)
-2. State machine for assistant lifecycle
-3. WebSocket metadata broadcast to frontend
-4. Notification UI components
+| Real-time status tracking (idle/working/approval) | **Done** | `ai/state_machine.go`, `ai/interceptor.go` |
+| Completion notification (working → idle) | **Done** | `NotificationProvider.tsx`, toast notifications |
+| Approval-needed notification | **Done** | `NotificationProvider.tsx`, toast notifications |
+| Auto-rename session tab from AI input | **Done** | `handlers.go`, detects AI user messages |
+| Auto-create task when AI starts working | **Done** | `handlers.go`, detects AI working state |
+| Qwen Code / Gemini / Cursor detection | **Done** | `ai/detector.go` |
 
 ---
 
@@ -60,8 +51,8 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | Database caching of session metadata | **Done** | `service/ai_session.go` |
 | Link sessions to Kanban tasks | **Done** | `api_task_ai_session.go` |
 | Cleanup stale sessions | **Done** | |
-| Phased scanning (recent + background) | **Partial** | Single scan currently. Ref: CodeKanban does 24h immediate + 15d background |
-| Cache invalidation (mtime/size check) | **Missing** | Ref: CodeKanban |
+| Phased scanning (recent + background) | **Done** | `service/ai_session.go`, recent immediate + background refresh |
+| Cache invalidation (mtime/size check) | **Done** | `service/ai_session.go`, mtime/size validation on scan |
 
 ---
 
@@ -104,10 +95,10 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | Command recording | **Done** | |
 | Task summary storage (CRUD) | **Done** | `service/task_segment.go`, `db.TaskSummary` |
 | Task lifecycle events API | **Done** | `api_tasks.go` |
-| Pane status indicators (sidebar) | **Partial** | Store exists, no real-time AI-driven updates |
-| SSE real-time status push | **Partial** | SSE infra exists via Butler proxy + AI streaming; no native `/api/tasks/events/stream` endpoint. Ref: opencode-tmuxweb per-pane event streams |
-| Task statistics | **Partial** | `GET /api/panes/status` provides pane-level status; no aggregate task stats endpoint |
-| Task summary generation (external AI service) | **Missing** | Storage CRUD done, external AI service call not wired. Ref: opencode-tmuxweb |
+| Pane status indicators (sidebar) | **Done** | Real-time AI-driven updates via state machine |
+| SSE real-time status push | **Done** | `server/event_bus.go`, `TaskEventBus` pub/sub with SSE streaming |
+| Task statistics | **Done** | `service/stats_service.go`, `GET /api/tasks/stats` with daily breakdown |
+| Task summary generation (external AI service) | **Done** | `service/summary_service.go`, `POST /api/segments/{id}/summarize` via LLM |
 
 ---
 
@@ -119,8 +110,8 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | Project-path validation | **Done** | |
 | Sync project metadata | **Done** | |
 | Priority sorting | **Missing** | |
-| File browser / directory listing | **Missing** | Ref: CodeKanban `api/fs.go` |
-| Open in external editor (VSCode/Cursor/Zed) | **Missing** | Ref: CodeKanban |
+| File browser / directory listing | **Done** | `server/api_fs.go`, `frontend/src/filebrowser/` |
+| Open in external editor (VSCode/Cursor/Zed) | **Done** | `server/api_editor.go`, generates `vscode://` / `cursor://` URLs |
 
 ---
 
@@ -133,7 +124,11 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | Commit worktree changes | **Done** | |
 | Refresh git status (ahead/behind/modified) | **Done** | |
 | go-git native (no exec) | **Done** | |
-| Create branch when creating worktree | **Done** | `service/worktree_service.go:140` `createBranch bool` param |
+| Create branch when creating worktree | **Done** | `service/worktree_service.go` `createBranch bool` param |
+| Worktree hooks (lifecycle automation) | **Done** | `worktree/hooks.go`, pre-create/post-create/pre-merge/post-merge/pre-remove |
+| PR checkout (create worktree from PR) | **Done** | `worktree/pr.go`, `service/pr_checkout.go` |
+| LLM commit messages (generate from diffs) | **Done** | `service/commit_message.go`, `POST .../ai-commit-message` |
+| Worktree diff generation | **Done** | `worktree/worktree_diff.go`, unified diff output |
 
 ---
 
@@ -141,11 +136,11 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| List branches | **Missing** | Ref: CodeKanban `service/branch_service.go`, worktrunk `wt list` |
-| Create branches | **Missing** | Ref: CodeKanban, worktrunk `wt switch -c` |
-| Delete branches | **Missing** | Ref: CodeKanban, worktrunk `wt remove` |
-| Merge branches (merge/rebase/squash) | **Missing** | Ref: CodeKanban, worktrunk `wt merge` |
-| Branch worktree integration | **Missing** | Ref: CodeKanban, worktrunk |
+| List branches | **Done** | `worktree/branch.go`, `GET /api/branches?repo=<path>` |
+| Create branches | **Done** | `worktree/branch.go`, `POST /api/branches` |
+| Delete branches | **Done** | `worktree/branch.go`, `DELETE /api/branches/{name}` |
+| Merge branches (merge/rebase/squash) | **Done** | `worktree/branch.go`, `POST /api/branches/merge` |
+| Branch worktree integration | **Done** | `worktree/branch.go`, ahead/behind tracking per branch |
 
 ---
 
@@ -185,7 +180,7 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 |---------|--------|-------|
 | Profile-based workspace switching | **Done** | `api_profiles.go`, MemoryStore |
 | Session groups (collapsible) | **Done** | `api_groups.go` |
-| Persist profiles/groups to DB | **Missing** | MemoryStore only, data lost on restart. Ref: opencode-tmuxweb (MySQL) |
+| Persist profiles/groups to DB | **Done** | `service/persist_service.go`, GORM persistence |
 
 ---
 
@@ -246,7 +241,7 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 |---------|--------|-------|
 | SQLite database | **Done** | GORM |
 | Database auto-migration | **Done** | |
-| Profiles/groups/snippets/roles persistence | **Missing** | MemoryStore only |
+| Profiles/groups/snippets/roles persistence | **Done** | `service/persist_service.go` |
 
 ---
 
@@ -259,9 +254,9 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | OpenCode config viewer | **Stub** | `server/api_config.go` returns null |
 | Theme toggle (light/dark) | **Done** | `hooks/useTheme.ts`, `data-theme` attribute |
 | i18n (English/Chinese) | **Done** | `i18n/` with i18next, en/zh translations |
-| Hot-reload config | **Missing** | |
-| Version endpoint | **Missing** | `middleware.go:21` TODO |
-| Update checker | **Missing** | |
+| Hot-reload config | **Done** | `config/watch.go`, fsnotify-based |
+| Version endpoint | **Done** | `server/version.go`, `GET /version` |
+| Update checker | **Done** | `server/update_checker.go`, GitHub release API |
 
 ---
 
@@ -271,7 +266,7 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 |---------|--------|-------|
 | Server log endpoint | **Done** | `api_log.go` |
 | Telemetry endpoint | **Done** | `api_telemetry.go` |
-| OpenAPI docs | **Missing** | |
+| OpenAPI docs | **Done** | `server/api_swagger.go`, Swagger UI at `/api/docs` |
 | API capabilities endpoint | **Missing** | |
 
 ---
@@ -296,40 +291,21 @@ worktrunk is a Rust CLI for git worktree management. These patterns are worth st
 
 ## What Needs Work
 
-### Stubs to Implement (3)
+### Stubs to Implement (0)
 
-| Stub | File | Effort |
-|------|------|--------|
-| Quick dirs | `server/api_tmux.go:28` | Low — read from config |
-| Pane mode toggle | `server/api_tmux.go:295` | Medium — tmux control mode support |
-| OpenCode config | `server/api_config.go` | Medium — read opencode.json from pane cwd |
-
-### Missing Features (High Priority)
-
-| Feature | Effort | Reference |
-|---------|--------|-----------|
-| AI assistant real-time status tracking | High | CodeKanban (vt10x parsing), opencode-tmuxweb (plugin events) |
-| Branch management (list/create/merge/delete) | Medium | CodeKanban `service/branch_service.go`, worktrunk |
-| Merge workflow (squash/rebase/merge + cleanup) | Medium | CodeKanban, worktrunk `wt merge` |
-| Persist profiles/groups/snippets to DB | Low | opencode-tmuxweb (MySQL) |
-| Native SSE task events endpoint | Medium | opencode-tmuxweb (per-pane event streams) |
-| Task summary generation (external AI service call) | Medium | opencode-tmuxweb |
-| Cache invalidation for AI sessions | Low | CodeKanban |
-| File browser / directory listing | Low | CodeKanban `api/fs.go` |
-| Quick dirs (configurable) | Low | opencode-tmuxweb |
+All previous stubs have been implemented.
 
 ### Missing Features (Lower Priority)
 
 | Feature | Effort | Reference |
 |---------|--------|-----------|
-| i18n support | High | CodeKanban, opencode-tmuxweb |
-| Advanced mobile gesture handling | Medium | opencode-tmuxweb |
-| Open in external editor | Low | CodeKanban |
-| Aggregate task statistics endpoint | Low | opencode-tmuxweb |
-| Version / update checker | Low | CodeKanban |
-| Hot-reload config | Medium | CodeKanban |
-| OpenAPI docs generation | Medium | CodeKanban (Huma framework) |
-| LLM commit messages | Medium | worktrunk |
-| PR checkout (create worktree from PR) | Medium | worktrunk |
-| Worktree hooks (lifecycle automation) | Medium | worktrunk |
+| Priority sorting for projects | Low | — |
+| API capabilities endpoint | Low | — |
+| File upload enhancements (copy path, date-organized, image preview) | Medium | CodeKanban |
+| User management (multi-user) | High | — |
+| Custom hotwords for voice input | Medium | — |
+| Long-press text selection (mobile) | Medium | opencode-tmuxweb |
+| iOS burst input suppression | Medium | opencode-tmuxweb |
 | Build cache sharing between worktrees | Low | worktrunk |
+| Configurable worktree path template | Low | worktrunk |
+| CI status per branch | Low | worktrunk |

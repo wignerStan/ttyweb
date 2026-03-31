@@ -43,7 +43,7 @@ cd frontend && bunx vitest run -t "renders sidebar"
 cd frontend && bunx playwright test -g "auth"
 
 # Go coverage report
-make coverage-go     # prints total coverage percentage
+make coverage-go     # prints total coverage percentage (excludes main.go, ws_speech.go)
 ```
 
 Coverage gate: 90% minimum (enforced in CI and lefthook pre-push).
@@ -72,15 +72,16 @@ Configured in `lefthook.yml`:
 
 ```
 main.go                  CLI flags, backend selection, server startup
-├── server/              HTTP server, WebSocket handler, REST API, auth
+├── server/              HTTP server, WebSocket handler, REST API (70+ endpoints), SSE, Swagger
 ├── webtty/              Core protocol: bridges backend.Slave ↔ WebSocket
 ├── backend/             Pluggable terminal backends (Factory pattern)
-├── ai/                  LLM client, session scanner, conversation parser, streaming
+├── ai/                  LLM client, session scanner, state machine, interceptor, streaming, STT
 ├── db/                  SQLite + GORM (WAL mode, auto-migrate, CGO-free)
-├── config/              JSON config + env var overrides
-├── worktree/            Git worktree CRUD via go-git (no exec.Command)
-├── service/             Business logic: AI sessions, notepad, projects, tasks, worktree ops
-├── pkg/                 Internal utilities (validate, homedir, randomstring)
+├── config/              JSON config + env var overrides + hot-reload (fsnotify)
+├── worktree/            Git worktree/branch/PR CRUD via go-git, hooks, diff generation
+├── service/             Business logic: AI sessions, notepad, projects, tasks, persist, stats, summaries
+├── internal/            Internal utilities (slogutil — structured JSON logging)
+├── pkg/                 Shared utilities (validate, homedir, randomstring)
 ├── frontend/            React SPA (Vite + TypeScript, bun)
 └── bindata/static/      Built frontend assets (Go embed target)
 ```
@@ -89,15 +90,15 @@ main.go                  CLI flags, backend selection, server startup
 
 Each major package has its own `CLAUDE.md` with module-specific patterns:
 
-- **[server/CLAUDE.md](server/CLAUDE.md)** — Server setup, middleware, REST API routing, MemoryStore, API response envelope
+- **[server/CLAUDE.md](server/CLAUDE.md)** — Server setup, middleware, REST API routing, MemoryStore, API response envelope, SSE events, Swagger docs
 - **[backend/CLAUDE.md](backend/CLAUDE.md)** — Factory pattern, Slave/SessionManager interfaces, backend implementations
 - **[webtty/CLAUDE.md](webtty/CLAUDE.md)** — WebTTY binary protocol, codecs, master/slave bridge
-- **[frontend/CLAUDE.md](frontend/CLAUDE.md)** — React architecture, hooks, mobile views, E2E test setup
-- **[ai/CLAUDE.md](ai/CLAUDE.md)** — OpenAI client, session detection/scanning, streaming, STT
+- **[frontend/CLAUDE.md](frontend/CLAUDE.md)** — React architecture, hooks, mobile views, i18n, theme, E2E test setup
+- **[ai/CLAUDE.md](ai/CLAUDE.md)** — OpenAI client, session detection/scanning, state machine, interceptor, streaming, STT
 - **[db/CLAUDE.md](db/CLAUDE.md)** — SQLite singleton, GORM models, time-partitioned tables
-- **[config/CLAUDE.md](config/CLAUDE.md)** — JSON config loading, env var overrides, defaults
-- **[worktree/CLAUDE.md](worktree/CLAUDE.md)** — go-git worktree ops, RepoLock, OperationSemaphore
-- **[service/CLAUDE.md](service/CLAUDE.md)** — AI sessions, notepad, projects, task segments, worktree service
+- **[config/CLAUDE.md](config/CLAUDE.md)** — JSON config loading, env var overrides, hot-reload
+- **[worktree/CLAUDE.md](worktree/CLAUDE.md)** — go-git worktree ops, branch CRUD, PR checkout, hooks, diff, RepoLock
+- **[service/CLAUDE.md](service/CLAUDE.md)** — AI sessions, notepad, projects, tasks, persist, stats, summaries, commit messages, PR checkout
 
 ### Cross-Module Patterns
 

@@ -7,7 +7,7 @@ JSON configuration system with environment variable overrides.
 ```
 config.go    Load(), Get(), LoadOrDefault(), applyEnvOverrides()
 defaults.go  DefaultConfig(), DefaultConfigPath()
-watch.go     Reload(), Watch() — hot-reload via fsnotify
+watch.go      Reload(), Watch() — hot-reload via fsnotify, atomic config swap
 ```
 
 ## Configuration Sections
@@ -32,7 +32,7 @@ watch.go     Reload(), Watch() — hot-reload via fsnotify
 
 **Defaults**: OpenAI API (`https://api.openai.com/v1/chat/completions`), `gpt-4o` model, Butler at `localhost:8215`.
 
-**Hot Reload**: `Reload(path)` re-reads the config file and swaps `globalConfig`. `Watch(path)` monitors the file via fsnotify and publishes updates to a channel. Caller owns the stop function.
+**Hot Reload**: `watch.go` monitors the config file with fsnotify. `Reload()` atomically swaps the global config using `atomic.Pointer` (resolves data race). `Watch()` publishes updates to a channel. Caller owns the stop function.
 
 ## Testing
 

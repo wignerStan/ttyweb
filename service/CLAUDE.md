@@ -11,6 +11,12 @@ project.go             Project CRUD with git directory validation
 task_segment.go        Task lifecycle: segments, chat messages, command records
 task_ai_session.go     Many-to-many task↔AI session linking
 worktree_service.go    Worktree operations with project binding
+persist_service.go     Database persistence for profiles, groups, and snippets (replaces MemoryStore)
+commit_message.go      AI-powered conventional commit message generation from git diffs
+summary_service.go     AI-powered task summary generation using commands + chat context
+stats_service.go       Aggregate task statistics (counts, daily completions, status breakdown)
+pr_checkout.go         PR checkout orchestration (fetch PR, validate, create worktree)
+cache.go               Generic SharedCache with TTL expiration
 helpers.go             Shared utility functions
 ```
 
@@ -25,6 +31,18 @@ helpers.go             Shared utility functions
 **Task Tracking**: `task_segment.go` manages the full task lifecycle — segments represent AI tasks within terminal panes, linked to chat messages and command records.
 
 **Project Validation**: `project.go` validates that project paths contain valid git repositories before creation.
+
+**Persistence Service**: `persist_service.go` provides GORM-backed CRUD for profiles, groups, and snippets. Replaces in-memory MemoryStore for these entities. Used by `server/api_profiles.go`, `api_groups.go`, `api_snippets.go`.
+
+**AI Commit Messages**: `commit_message.go` generates conventional commit messages from git diffs using the configured LLM. Returns type, scope, subject, and body.
+
+**Task Summaries**: `summary_service.go` generates AI summaries for task segments using command records and chat messages as context. Stored in `db.TaskSummary`.
+
+**Task Statistics**: `stats_service.go` provides aggregate counts, daily completion breakdowns, and status distribution from task segment data.
+
+**PR Checkout**: `pr_checkout.go` orchestrates the full PR checkout workflow — fetches PR details from GitHub, validates repo state, creates local worktree branch.
+
+**SharedCache**: `cache.go` is a generic TTL-based cache used by AI session scanning and other services. Thread-safe with automatic cleanup.
 
 ## Testing
 
