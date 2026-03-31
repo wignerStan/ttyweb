@@ -68,16 +68,16 @@ Open `http://localhost:5173` for hot-reloading frontend development.
 ### Testing
 
 ```bash
-make test          # Go unit tests + frontend vitest
-make test-e2e      # Playwright E2E (needs built binary)
-make test-all      # Everything
-make coverage-go   # Go coverage percentage
+just test          # Go unit tests + frontend vitest
+just test-e2e      # Playwright E2E (needs built binary)
+just test-all      # Everything
+just coverage-go   # Go coverage percentage
 ```
 
 ### Linting
 
 ```bash
-make lint          # golangci-lint + biome + tsc
+just lint          # golangci-lint + biome + tsc
 ```
 
 ## CLI Flags

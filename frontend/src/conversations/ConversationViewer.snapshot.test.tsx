@@ -7,7 +7,7 @@ const mockMessages: ConversationMessage[] = [
   { role: 'user', content: 'How do I run tests?', timestamp: '2026-01-01T10:00:00Z' },
   {
     role: 'assistant',
-    content: 'Run `make test` from the project root.',
+    content: 'Run `just test` from the project root.',
     timestamp: '2026-01-01T10:00:05Z',
   },
 ]

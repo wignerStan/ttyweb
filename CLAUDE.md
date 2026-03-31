@@ -27,11 +27,11 @@ cd frontend && bun run dev
 ## Testing
 
 ```bash
-make test            # Go unit tests + frontend vitest
-make test-go         # go test ./... -count=1
-make test-frontend   # cd frontend && bunx vitest run
-make test-e2e        # Playwright (needs built binary at ./ttyweb)
-make test-all        # Everything
+just test            # Go unit tests + frontend vitest
+just test-go         # go test ./... -count=1
+just test-frontend   # cd frontend && bunx vitest run
+just test-e2e        # Playwright (needs built binary at ./ttyweb)
+just test-all        # Everything
 
 # Single Go test
 go test ./webtty/... -run TestWebTTY -v
@@ -43,7 +43,7 @@ cd frontend && bunx vitest run -t "renders sidebar"
 cd frontend && bunx playwright test -g "auth"
 
 # Go coverage report
-make coverage-go     # prints total coverage percentage (excludes main.go, ws_speech.go)
+just coverage-go     # prints total coverage percentage (excludes main.go, ws_speech.go)
 ```
 
 Coverage gate: 90% minimum (enforced in CI and lefthook pre-push).
@@ -51,9 +51,9 @@ Coverage gate: 90% minimum (enforced in CI and lefthook pre-push).
 ## Linting
 
 ```bash
-make lint            # golangci-lint + biome + tsc
-make lint-go         # go vet + golangci-lint run ./...
-make lint-frontend   # biome check + tsc --noEmit
+just lint            # golangci-lint + biome + tsc
+just lint-go         # go vet + golangci-lint run ./...
+just lint-frontend   # biome check + tsc --noEmit
 
 # Auto-fix frontend
 cd frontend && bun run lint:fix

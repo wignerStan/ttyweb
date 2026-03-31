@@ -42,3 +42,6 @@ Thumbs.db
 
 # Worktrees
 .worktrees/
+
+# Lefthook local overrides
+.lefthook-local.yml
