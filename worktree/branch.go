@@ -241,11 +241,11 @@ func fastForwardMerge(repo *goGit.Repository, absRepo, source, target string, so
 	// After fast-forward, update the worktree if target is currently checked out.
 	wt, wtErr := repo.Worktree()
 	if wtErr != nil || wt == nil {
-		return nil
+		return nil //nolint:nilerr // best-effort worktree update
 	}
 	head, headErr := repo.Head()
 	if headErr != nil || head == nil || head.Name().Short() != target {
-		return nil
+		return nil //nolint:nilerr // best-effort worktree update
 	}
 	_ = wt.Reset(&goGit.ResetOptions{
 		Mode:   goGit.HardReset,
