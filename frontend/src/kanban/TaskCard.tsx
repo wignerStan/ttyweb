@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AlertTriangle, Calendar } from 'lucide-react'
-import { memo, type CSSProperties } from 'react'
+import { type CSSProperties, memo } from 'react'
 import { getTagColorClass } from './tagColors'
 import type { KanbanTask } from './types'
 
