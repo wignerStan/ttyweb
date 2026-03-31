@@ -6,7 +6,7 @@ Internal utilities not intended for external import.
 
 ```
 slogutil/           Structured JSON logging factory
-  slogutil.go       New() creates slog.Logger with configurable level
+  slogutil.go       New(w, level) creates slog.Logger with configurable level
 ```
 
 ## Key Patterns
