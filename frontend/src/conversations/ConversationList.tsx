@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { BUTTON_RESET } from '../shared/styles'
+import { formatRelativeTime } from '../utils/format'
 import type { AISession } from './types'
 import { useConversations } from './useConversations'
 import './conversations.css'
@@ -21,25 +22,6 @@ function groupByType(sessions: AISession[]): Map<string, AISession[]> {
     }
   }
   return groups
-}
-
-function formatRelativeTime(timestamp?: string): string {
-  if (!timestamp) return ''
-  try {
-    const date = new Date(timestamp)
-    if (Number.isNaN(date.getTime())) return ''
-    const now = Date.now()
-    const diffMs = now - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    if (diffMins < 1) return 'just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    const diffHours = Math.floor(diffMins / 60)
-    if (diffHours < 24) return `${diffHours}h ago`
-    const diffDays = Math.floor(diffHours / 24)
-    return `${diffDays}d ago`
-  } catch {
-    return ''
-  }
 }
 
 const TYPE_ORDER: Record<string, number> = {
@@ -126,7 +108,11 @@ export function ConversationList({ selectedSessionId, onSelectSession }: Convers
                     <div className="conv-session-meta">
                       <span className="conv-session-badge">{session.model}</span>
                       <span>{session.message_count} msgs</span>
-                      <span>{formatRelativeTime(session.timestamp)}</span>
+                      <span>
+                        {session.timestamp
+                          ? formatRelativeTime(new Date(session.timestamp).getTime())
+                          : ''}
+                      </span>
                     </div>
                   </button>
                 ))}

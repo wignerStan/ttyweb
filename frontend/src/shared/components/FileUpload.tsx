@@ -1,6 +1,7 @@
 import { Check, Copy, File, FileText, TerminalSquare, Upload, X } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
+import { formatSize } from '../../utils/format'
 
 interface UploadResult {
   filename: string
@@ -15,12 +16,6 @@ interface FileUploadProps {
   onUploaded?: (result: UploadResult) => void
   onSend?: (text: string) => void
   compact?: boolean
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
 function isImage(mimetype: string): boolean {

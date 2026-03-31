@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAIConversations } from '../../hooks/useAIConversations'
 import type { AiConversation, PaneStatus, Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
+import { formatDuration, formatRelativeTime } from '../../utils/format'
 import { BUTTON_RESET } from '../styles'
 import { LogAccordion } from './LogAccordion'
 import { TaskCard } from './TaskCard'
@@ -13,24 +14,6 @@ interface Props {
   profileKey: string
   onClose: () => void
   onStatusChanged?: () => void
-}
-
-function formatRelativeTime(unixSeconds: number): string {
-  const now = Date.now() / 1000
-  const diff = now - unixSeconds
-  if (diff < 60) return 'just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
-  return new Date(unixSeconds * 1000).toLocaleDateString()
-}
-
-function formatDuration(startedAt: number, completedAt: number | null): string {
-  const end = completedAt || Date.now() / 1000
-  const diff = end - startedAt
-  if (diff < 60) return `${Math.floor(diff)}s`
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ${Math.floor(diff % 60)}s`
-  return `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m`
 }
 
 function ConversationCardInner({ conv }: { conv: AiConversation }) {
@@ -50,7 +33,7 @@ function ConversationCardInner({ conv }: { conv: AiConversation }) {
           <span className="conv-user-msg">{conv.user_message || '—'}</span>
         </div>
         <div className="conv-card-right">
-          <span className="conv-time">{formatRelativeTime(conv.started_at)}</span>
+          <span className="conv-time">{formatRelativeTime(conv.started_at * 1000)}</span>
           {hasReply &&
             (expanded ? (
               <ChevronDown size={12} className="conv-chevron" />
@@ -70,7 +53,9 @@ function ConversationCardInner({ conv }: { conv: AiConversation }) {
                 ? 'waiting'
                 : conv.conv_status}
         </span>
-        <span className="conv-duration">{formatDuration(conv.started_at, conv.completed_at)}</span>
+        <span className="conv-duration">
+          {formatDuration((conv.completed_at ?? Date.now() / 1000) - conv.started_at)}
+        </span>
       </div>
 
       {conv.conv_status === 'in_progress' && (

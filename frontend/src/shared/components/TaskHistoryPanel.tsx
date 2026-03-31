@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
+import { formatDuration } from '../../utils/format'
 import './TaskHistoryPanel.css'
 
 interface Conversation {
@@ -45,13 +46,6 @@ const StatusIcon = memo(StatusIconInner)
 
 function formatTime(ts: number): string {
   return new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-function formatDuration(start: number, end: number | null): string {
-  const secs = (end ?? Math.floor(Date.now() / 1000)) - start
-  if (secs < 60) return `${secs}s`
-  if (secs < 3600) return `${Math.floor(secs / 60)}m ${secs % 60}s`
-  return `${Math.floor(secs / 3600)}h ${Math.floor((secs % 3600) / 60)}m`
 }
 
 export function TaskHistoryPanel({
@@ -184,7 +178,9 @@ export function TaskHistoryPanel({
               <div className="task-history-item-meta">
                 <span className="task-history-badge">{conv.conv_status}</span>
                 <span className="task-history-badge">
-                  {formatDuration(conv.started_at, conv.completed_at)}
+                  {formatDuration(
+                    (conv.completed_at ?? Math.floor(Date.now() / 1000)) - conv.started_at,
+                  )}
                 </span>
               </div>
             </div>

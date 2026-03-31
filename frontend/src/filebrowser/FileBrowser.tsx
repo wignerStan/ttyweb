@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BUTTON_RESET } from '../shared/styles'
+import { formatSize } from '../utils/format'
 import { type FSEntry, useFileBrowser } from './useFileBrowser'
 
 const styles: Record<string, React.CSSProperties> = {
@@ -101,13 +102,6 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100%',
     color: '#565f89',
   },
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
 interface FileBrowserProps {
