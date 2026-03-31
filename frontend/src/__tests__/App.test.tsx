@@ -86,7 +86,7 @@ describe('App', () => {
   it('renders tab bar with toggle button', () => {
     renderApp()
     // Toggle button (◀ or ▶)
-    const toggleBtn = screen.getByRole('button', { name: /◀|▶/ })
+    const toggleBtn = screen.getByRole('button', { name: /Toggle sidebar/ })
     expect(toggleBtn).toBeInTheDocument()
   })
 
@@ -97,7 +97,7 @@ describe('App', () => {
     const sidebar = screen.getByTestId('sidebar')
     expect(sidebar).toBeInTheDocument()
 
-    const toggleBtn = screen.getByRole('button', { name: /◀/ })
+    const toggleBtn = screen.getByRole('button', { name: /Toggle sidebar/ })
     await user.click(toggleBtn)
 
     expect(sidebar).not.toBeInTheDocument()
@@ -215,10 +215,10 @@ describe('App', () => {
   it('re-opens sidebar after toggle back', async () => {
     const user = userEvent.setup()
     renderApp()
-    const toggleBtn = screen.getByRole('button', { name: /◀/ })
+    const toggleBtn = screen.getByRole('button', { name: /Toggle sidebar/ })
     await user.click(toggleBtn)
     expect(screen.queryByTestId('sidebar')).not.toBeInTheDocument()
-    const expandBtn = screen.getByRole('button', { name: /▶/ })
+    const expandBtn = screen.getByRole('button', { name: /Toggle sidebar/ })
     await user.click(expandBtn)
     expect(screen.getByTestId('sidebar')).toBeInTheDocument()
   })

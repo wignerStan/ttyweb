@@ -58,14 +58,21 @@ function TaskCardInner({ task, onSelect }: TaskCardProps) {
 
   return (
     <>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: dnd-kit requires div wrapper */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: dnd-kit requires div wrapper */}
+      {/* biome-ignore lint/a11y/useSemanticElements: dnd-kit requires div wrapper */}
       <div
         ref={setNodeRef}
         style={style}
         className={`task-card ${isDragging ? 'task-card--dragging' : ''}`}
         onClick={() => onSelect(task)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect(task)
+          }
+        }}
         {...attributes}
+        role="button"
+        tabIndex={0}
       >
         <div className="task-card__header" ref={setActivatorNodeRef} {...listeners}>
           <span className="task-card__title">{task.title}</span>

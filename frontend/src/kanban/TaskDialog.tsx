@@ -163,7 +163,12 @@ function TaskDialog({
         <div className="task-dialog">
           <div className="task-dialog__header">
             <h2 className="task-dialog__title">{title}</h2>
-            <button className="task-dialog__close" onClick={onClose} type="button">
+            <button
+              className="task-dialog__close"
+              onClick={onClose}
+              type="button"
+              aria-label="Close dialog"
+            >
               <X size={16} />
             </button>
           </div>
@@ -180,6 +185,8 @@ function TaskDialog({
                 value={form.title}
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder="Task title"
+                // biome-ignore lint/a11y/noAutofocus: dialog should focus title input
+                autoFocus
               />
               {errors.title && <span className="task-dialog__error">{errors.title}</span>}
             </div>

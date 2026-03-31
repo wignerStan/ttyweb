@@ -163,8 +163,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
 
   return (
     <div className="file-upload">
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: file drop zone with click-to-upload */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: file drop zone with click-to-upload */}
+      {/* biome-ignore lint/a11y/useSemanticElements: drop zone requires div for drag-and-drop */}
       <div
         className={`file-upload-zone${dragging ? ' dragging' : ''}${uploading ? ' uploading' : ''}${compact ? ' compact' : ''}`}
         onDragEnter={handleDragEnter}
@@ -172,6 +171,14 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClick()
+          }
+        }}
+        role="button"
+        tabIndex={0}
       >
         <input
           ref={fileInputRef}
@@ -196,7 +203,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
       {error && (
         <div className="file-upload-error">
           {error}
-          <button type="button" onClick={() => setError(null)}>
+          <button type="button" onClick={() => setError(null)} aria-label="Dismiss error">
             <X size={12} />
           </button>
         </div>

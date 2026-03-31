@@ -157,6 +157,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
           className="group-add-btn"
           onClick={() => setIsCreating(true)}
           title="Create group"
+          aria-label="Add group"
         >
           <Plus size={14} />
         </button>
@@ -231,6 +232,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                       setEditName(group.group_name)
                     }}
                     title="Rename"
+                    aria-label="Rename group"
                   >
                     <Pencil size={12} />
                   </button>
@@ -239,6 +241,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                     className="btn-icon btn-danger"
                     onClick={() => deleteGroup(group.id)}
                     title="Delete"
+                    aria-label="Delete group"
                   >
                     <Trash2 size={12} />
                   </button>

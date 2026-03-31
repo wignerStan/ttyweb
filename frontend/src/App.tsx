@@ -107,6 +107,7 @@ function DesktopLayout() {
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             style={styles.toggleBtn}
+            aria-label="Toggle sidebar"
           >
             {sidebarOpen ? '\u25C0' : '\u25B6'}
           </button>
@@ -157,6 +158,7 @@ function DesktopLayout() {
                     }}
                     style={styles.tabClose}
                     title="Close tab"
+                    aria-label="Close tab"
                   >
                     \u00D7
                   </button>
@@ -179,6 +181,7 @@ function DesktopLayout() {
             onClick={openNotepad}
             style={styles.notepadBtn}
             title="Open Notepad"
+            aria-label="Open notepad"
           >
             <span style={{ fontSize: '14px' }}>{'\u270E'}</span>
           </button>

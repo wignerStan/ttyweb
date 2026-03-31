@@ -309,7 +309,12 @@ export default function MobileApp() {
   return (
     <div className="mobile-app">
       <header className="mobile-header">
-        <button className="mobile-menu-btn" onClick={toggleDrawer} type="button">
+        <button
+          className="mobile-menu-btn"
+          onClick={toggleDrawer}
+          type="button"
+          aria-label="Open menu"
+        >
           <Menu size={24} />
         </button>
         {tabs.length > 0 ? (
@@ -330,6 +335,7 @@ export default function MobileApp() {
                     handleCloseTab(tab.id)
                   }}
                   type="button"
+                  aria-label="Close tab"
                 >
                   <X size={12} />
                 </button>
@@ -346,6 +352,7 @@ export default function MobileApp() {
               onClick={() => setImperialOpen(true)}
               type="button"
               title="Imperial Study"
+              aria-label="Imperial Study"
             >
               <ScrollText size={22} />
             </button>
@@ -354,6 +361,7 @@ export default function MobileApp() {
               onClick={toggleRightPanel}
               type="button"
               title="Task history"
+              aria-label="Task history"
             >
               <History size={22} />
             </button>

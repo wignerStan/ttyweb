@@ -534,7 +534,12 @@ function SortableSession({
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button type="button" className="expand-btn" onClick={() => setExpanded(!expanded)}>
+        <button
+          type="button"
+          className="expand-btn"
+          onClick={() => setExpanded(!expanded)}
+          aria-label={expanded ? 'Collapse session' : 'Expand session'}
+        >
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         <Terminal size={14} style={{ color: 'var(--blue-500)' }} />
@@ -645,6 +650,7 @@ function SortableSession({
                       setEditingWindowIndex(window.windowIndex)
                     }}
                     title="Rename window"
+                    aria-label="Rename window"
                   >
                     <Pencil size={12} />
                   </button>
@@ -656,18 +662,25 @@ function SortableSession({
               const paneStatus = statusMap[paneKey] || 'idle'
               return (
                 <>
-                  {/* biome-ignore lint/a11y/noStaticElementInteractions: tree pane node with click handler */}
-                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: tree pane node with click handler */}
+                  {/* biome-ignore lint/a11y/useSemanticElements: tree pane node requires div for context menu */}
                   <div
                     key={pane.paneId}
                     className="pane-node"
                     onClick={() =>
                       onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onSelectPane(pane.paneId, `${session.sessionName}:${window.windowIndex}`)
+                      }
+                    }}
                     onContextMenu={(e) => {
                       e.preventDefault()
                       onPaneContextMenu?.(paneKey)
                     }}
+                    role="button"
+                    tabIndex={0}
                   >
                     <span className="pane-id">{pane.paneId}</span>
                     {/* biome-ignore lint/a11y/noStaticElementInteractions: pane status click target */}
@@ -692,6 +705,7 @@ function SortableSession({
                           onPaneContextMenu(paneKey)
                         }}
                         title="View details"
+                        aria-label="Pane details"
                       >
                         <MoreHorizontal size={14} />
                       </button>
@@ -735,7 +749,12 @@ function SortableGroup({ item, group, children, isOver }: SortableGroupProps) {
         <span {...attributes} {...listeners}>
           <DragHandle />
         </span>
-        <button type="button" className="expand-btn" onClick={() => setExpanded(!expanded)}>
+        <button
+          type="button"
+          className="expand-btn"
+          onClick={() => setExpanded(!expanded)}
+          aria-label={expanded ? 'Collapse group' : 'Expand group'}
+        >
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         {expanded ? (

@@ -219,6 +219,7 @@ function KanbanBoard() {
             disabled={loading}
             title="Refresh tasks"
             type="button"
+            aria-label="Refresh tasks"
           >
             <RefreshCw size={14} className={loading ? 'status-icon--spinning' : ''} />
           </button>

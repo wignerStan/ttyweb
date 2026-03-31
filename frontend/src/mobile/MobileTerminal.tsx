@@ -732,6 +732,7 @@ export function MobileTerminal({
           className="mobile-fit-window-btn"
           onClick={handleFitWindow}
           title="Fit window"
+          aria-label="Fit window"
         >
           <Maximize2 size={12} />
           <span>Fit</span>

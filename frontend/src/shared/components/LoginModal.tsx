@@ -45,6 +45,8 @@ export function LoginModal({ onLogin }: Props) {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
             disabled={loading}
+            // biome-ignore lint/a11y/noAutofocus: login modal should focus username input
+            autoFocus
           />
         </div>
 

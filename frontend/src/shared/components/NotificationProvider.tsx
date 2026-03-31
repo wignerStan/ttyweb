@@ -99,7 +99,7 @@ export function NotificationProvider({
   return (
     <NotificationContext.Provider value={{ notifications, notify, dismiss }}>
       {children}
-      <div style={CONTAINER_STYLE}>
+      <div style={CONTAINER_STYLE} aria-live="polite" aria-atomic="false" role="log">
         {notifications.map((n) => (
           <button
             key={n.id}

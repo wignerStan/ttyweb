@@ -24,6 +24,7 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
         class="kanban-board__actions"
       >
         <button
+          aria-label="Refresh tasks"
           class="kanban-board__btn kanban-board__btn--icon-only"
           title="Refresh tasks"
           type="button"
@@ -107,6 +108,7 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
             </span>
           </div>
           <button
+            aria-label="Add task"
             class="task-column__add-btn"
             title="Add task to Todo"
             type="button"
@@ -193,6 +195,7 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
             </span>
           </div>
           <button
+            aria-label="Add task"
             class="task-column__add-btn"
             title="Add task to In Progress"
             type="button"
@@ -311,6 +314,7 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
             </span>
           </div>
           <button
+            aria-label="Add task"
             class="task-column__add-btn"
             title="Add task to Done"
             type="button"
@@ -368,6 +372,7 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
             </span>
           </div>
           <button
+            aria-label="Add task"
             class="task-column__add-btn"
             title="Add task to Archived"
             type="button"

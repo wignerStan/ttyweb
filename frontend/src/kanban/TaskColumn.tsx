@@ -37,6 +37,7 @@ function TaskColumn({ status, title, tasks, onSelectTask, onAddTask }: TaskColum
           onClick={() => onAddTask(status)}
           title={`Add task to ${title}`}
           type="button"
+          aria-label="Add task"
         >
           <Plus size={14} />
         </button>

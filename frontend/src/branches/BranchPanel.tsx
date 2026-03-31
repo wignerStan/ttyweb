@@ -82,6 +82,7 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
               onClick={refetch}
               title="Refresh"
               disabled={loading}
+              aria-label="Refresh branches"
             >
               {loading ? <Loader2 size={12} className="spinning" /> : null}
             </button>
@@ -91,6 +92,7 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
             className="branch-add-btn"
             onClick={() => setIsCreating(true)}
             title="Create branch"
+            aria-label="Create branch"
           >
             <Plus size={14} />
           </button>
@@ -185,6 +187,7 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
                   onClick={() => handleDelete(branch.name)}
                   title={`Delete ${branch.name}`}
                   disabled={deletingBranch === branch.name}
+                  aria-label="Delete branch"
                 >
                   {deletingBranch === branch.name ? (
                     <Loader2 size={12} className="spinning" />

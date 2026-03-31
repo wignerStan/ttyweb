@@ -114,7 +114,12 @@ export function Sidebar({ onSelect }: SidebarProps) {
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="new session"
           />
-          <button type="button" style={styles.createBtn} onClick={handleCreate}>
+          <button
+            type="button"
+            style={styles.createBtn}
+            onClick={handleCreate}
+            aria-label="New session"
+          >
             +
           </button>
         </div>
@@ -143,6 +148,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
                   handleKill(s.name)
                 }}
                 title="Kill session"
+                aria-label="Kill session"
               >
                 ×
               </button>

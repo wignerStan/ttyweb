@@ -165,13 +165,14 @@ describe('TmuxTree', () => {
     expect(screen.queryByText('0: main')).not.toBeInTheDocument()
 
     // Click expand button
-    const expandBtn = screen.getByRole('button', { name: '' })
+    const expandBtn = screen.getByRole('button', { name: /Expand session/ })
     await user.click(expandBtn)
 
     expect(screen.getByText('0: main')).toBeInTheDocument()
 
     // Collapse again
-    await user.click(expandBtn)
+    const collapseBtn = screen.getByRole('button', { name: /Collapse session/ })
+    await user.click(collapseBtn)
     expect(screen.queryByText('0: main')).not.toBeInTheDocument()
   })
 
