@@ -21,7 +21,9 @@ const FloatingImperialStudy = lazy(() =>
     default: m.FloatingImperialStudy,
   })),
 )
-const NotepadPanel = lazy(() => import('./notepad/NotepadPanel').then((m) => ({ default: m.NotepadPanel })))
+const NotepadPanel = lazy(() =>
+  import('./notepad/NotepadPanel').then((m) => ({ default: m.NotepadPanel })),
+)
 
 const KanbanBoard = lazy(() => import('./kanban').then((m) => ({ default: m.KanbanBoard })))
 
