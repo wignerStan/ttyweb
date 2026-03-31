@@ -69,7 +69,7 @@ exports[`ConversationViewer snapshot > renders conversation with messages 1`] = 
         <div
           class="conv-msg-content"
         >
-          Run \`make test\` from the project root.
+          Run \`just test\` from the project root.
         </div>
         <div
           class="conv-msg-timestamp"
