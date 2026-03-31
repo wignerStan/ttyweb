@@ -73,7 +73,16 @@ export function Sidebar({ onSelect }: SidebarProps) {
   useEffect(() => {
     fetchSessions()
     const interval = setInterval(fetchSessions, 3000)
-    return () => clearInterval(interval)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSessions()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [fetchSessions])
 
   const handleToggle = (name: string) => {

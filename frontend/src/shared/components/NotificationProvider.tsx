@@ -1,4 +1,12 @@
-import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 export interface Notification {
   id: string
@@ -96,8 +104,13 @@ export function NotificationProvider({
     [dismiss, autoDismissMs],
   )
 
+  const value = useMemo(
+    () => ({ notifications, notify, dismiss }),
+    [notifications, notify, dismiss],
+  )
+
   return (
-    <NotificationContext.Provider value={{ notifications, notify, dismiss }}>
+    <NotificationContext.Provider value={value}>
       {children}
       <div style={CONTAINER_STYLE} aria-live="polite" aria-atomic="false" role="log">
         {notifications.map((n) => (

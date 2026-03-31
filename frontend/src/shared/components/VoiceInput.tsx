@@ -1,5 +1,6 @@
 import { Loader2, Mic, MicOff } from 'lucide-react'
-import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react'
+import type React from 'react'
+import { useCallback, useImperativeHandle, useRef, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
 import './VoiceInput.css'
 
@@ -7,6 +8,7 @@ interface Props {
   onText: (text: string) => void
   onPartial?: (text: string) => void
   disabled?: boolean
+  ref?: React.Ref<VoiceInputHandle | null>
 }
 
 export interface VoiceInputHandle {
@@ -18,10 +20,7 @@ type Status = 'idle' | 'connecting' | 'recording' | 'processing'
 
 const CONNECT_TIMEOUT_MS = 10000
 
-export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function VoiceInput(
-  { onText, onPartial, disabled },
-  ref,
-) {
+export function VoiceInput({ onText, onPartial, disabled, ref }: Props) {
   const [status, setStatus] = useState<Status>('idle')
   const [partialText, setPartialText] = useState('')
   const wsRef = useRef<WebSocket | null>(null)
@@ -297,4 +296,4 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       {partialText && <div className="voice-preview">{partialText}</div>}
     </div>
   )
-})
+}

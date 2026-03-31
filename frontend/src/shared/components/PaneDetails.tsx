@@ -1,5 +1,5 @@
 import { Bot, Briefcase, ChevronDown, ChevronRight, X } from 'lucide-react'
-import { memo, useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAIConversations } from '../../hooks/useAIConversations'
 import type { AiConversation, PaneStatus, Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
@@ -169,11 +169,14 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     } catch (_err) {}
   }
 
+  const sortedConversations = useMemo(
+    () => [...aiConversations].sort((a, b) => b.started_at - a.started_at),
+    [aiConversations],
+  )
+
   if (!paneKey) return null
 
   const { session, window: win, pane } = parsePaneKey(paneKey)
-
-  const sortedConversations = [...aiConversations].sort((a, b) => b.started_at - a.started_at)
   const runningCount = aiConversations.filter((c) => c.conv_status === 'in_progress').length
 
   const allTasks = tasks

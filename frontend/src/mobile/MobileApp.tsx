@@ -428,26 +428,19 @@ export default function MobileApp() {
       <main className="mobile-main">
         {tabs.length > 0 ? (
           <div className="mobile-tabs-content">
-            {tabs.map((tab) => (
-              <div
-                key={tab.id}
-                className={`mobile-tab-panel ${tab.id === activeTabId ? 'visible' : 'hidden'}`}
-              >
+            {activeTab && (
+              <div key={activeTab.id} className="mobile-tab-panel visible">
                 <MobileTerminal
-                  session={tab.session}
-                  pane={tab.paneId}
+                  session={activeTab.session}
+                  pane={activeTab.paneId}
                   fontSize={fontSize}
                   onFontSizeChange={handleFontSizeChange}
-                  voiceRef={tab.id === activeTabId ? voiceRef : undefined}
-                  taskHistoryPaneKey={tab.id === activeTabId ? historyPaneKey : null}
-                  onStatusChange={
-                    tab.id === activeTabId
-                      ? () => setStatusRefreshToken((prev) => prev + 1)
-                      : undefined
-                  }
+                  voiceRef={voiceRef}
+                  taskHistoryPaneKey={historyPaneKey}
+                  onStatusChange={() => setStatusRefreshToken((prev) => prev + 1)}
                 />
               </div>
-            ))}
+            )}
           </div>
         ) : (
           <div className="mobile-placeholder">
