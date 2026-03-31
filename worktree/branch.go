@@ -223,29 +223,35 @@ func MergeBranch(ctx context.Context, repoPath, source, target string) error {
 	}
 
 	if isAncestor {
-		// Fast-forward: just move target ref to source hash.
-		newRef := plumbing.NewHashReference(plumbing.ReferenceName("refs/heads/"+target), sourceRef.Hash())
-		if err := repo.Storer.SetReference(newRef); err != nil {
-			return &OpError{Kind: KindGitFailed, Path: absRepo, Detail: fmt.Sprintf("fast-forward merge %q into %q", source, target), Cause: err}
-		}
-
-		// After fast-forward, update the worktree if target is currently checked out.
-		wt, wtErr := repo.Worktree()
-		if wtErr == nil && wt != nil {
-			head, headErr := repo.Head()
-			if headErr == nil && head != nil && head.Name().Short() == target {
-				_ = wt.Reset(&goGit.ResetOptions{
-					Mode:   goGit.HardReset,
-					Commit: sourceRef.Hash(),
-				})
-			}
-		}
-
-		return nil
+		return fastForwardMerge(repo, absRepo, source, target, sourceRef)
 	}
 
 	// Fall back to git CLI for complex merges.
 	return mergeViaCLI(ctx, absRepo, source, target)
+}
+
+// fastForwardMerge moves the target branch ref to the source hash and resets
+// the worktree if the target branch is currently checked out.
+func fastForwardMerge(repo *goGit.Repository, absRepo, source, target string, sourceRef *plumbing.Reference) error {
+	newRef := plumbing.NewHashReference(plumbing.ReferenceName("refs/heads/"+target), sourceRef.Hash())
+	if err := repo.Storer.SetReference(newRef); err != nil {
+		return &OpError{Kind: KindGitFailed, Path: absRepo, Detail: fmt.Sprintf("fast-forward merge %q into %q", source, target), Cause: err}
+	}
+
+	// After fast-forward, update the worktree if target is currently checked out.
+	wt, wtErr := repo.Worktree()
+	if wtErr != nil || wt == nil {
+		return nil
+	}
+	head, headErr := repo.Head()
+	if headErr != nil || head == nil || head.Name().Short() != target {
+		return nil
+	}
+	_ = wt.Reset(&goGit.ResetOptions{
+		Mode:   goGit.HardReset,
+		Commit: sourceRef.Hash(),
+	})
+	return nil
 }
 
 // computeBranchAheadBehind computes ahead/behind counts for a local branch
