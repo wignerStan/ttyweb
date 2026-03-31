@@ -23,17 +23,13 @@ export interface UseFileBrowserReturn {
 
 async function fetchEntries(path: string): Promise<FSEntry[]> {
   const params = new URLSearchParams({ path })
-  const headers: Record<string, string> = {}
   const auth = getAuthHeader()
-  if (auth) {
-    headers.Authorization = auth
-  }
+  const headers: Record<string, string> | undefined = auth ? { Authorization: auth } : undefined
 
   const res = await fetch(`/api/fs?${params.toString()}`, { headers })
   if (!res.ok) {
     const body = await res.json().catch(() => null)
-    const msg = body?.error ?? `HTTP ${res.status}`
-    throw new Error(msg)
+    throw new Error(body?.error ?? `HTTP ${res.status}`)
   }
 
   const json: ApiResponse<FSEntry[]> = await res.json()
@@ -44,7 +40,7 @@ async function fetchEntries(path: string): Promise<FSEntry[]> {
   return json.data
 }
 
-export function useFileBrowser(_initialPath: string = '.'): UseFileBrowserReturn {
+export function useFileBrowser(): UseFileBrowserReturn {
   const [entries, setEntries] = useState<FSEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

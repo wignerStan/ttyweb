@@ -12,20 +12,9 @@ import { NotepadPanel } from './notepad/NotepadPanel'
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy'
 import { NotificationProvider } from './shared/components/NotificationProvider'
 import { ThemeToggle } from './shared/components/ThemeToggle'
+import { BUTTON_RESET } from './shared/styles'
 
 type AppView = 'terminal' | 'conversations'
-
-/** Reset native button styles to behave like a neutral inline element. */
-const BUTTON_RESET: React.CSSProperties = {
-  background: 'none',
-  border: 'none',
-  padding: 0,
-  font: 'inherit',
-  color: 'inherit',
-  cursor: 'pointer',
-  width: '100%',
-  textAlign: 'inherit',
-}
 
 const NOTEPAD_TAB_ID = '__notepad__'
 

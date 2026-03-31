@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { BUTTON_RESET } from '../shared/styles'
 import { type FSEntry, useFileBrowser } from './useFileBrowser'
 
 const styles: Record<string, React.CSSProperties> = {
@@ -204,16 +205,10 @@ export function FileBrowser({ initialPath = '.' }: FileBrowserProps) {
             key={entry.name}
             type="button"
             style={{
+              ...BUTTON_RESET,
               ...styles.row,
               ...(hoveredIndex === index ? styles.rowHover : {}),
               cursor: entry.is_dir ? 'pointer' : 'default',
-              background: 'none',
-              border: 'none',
-              font: 'inherit',
-              color: 'inherit',
-              textAlign: 'inherit',
-              width: '100%',
-              padding: '4px 12px',
             }}
             onClick={() => handleEntryClick(entry)}
             onMouseEnter={() => setHoveredIndex(index)}

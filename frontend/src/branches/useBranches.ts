@@ -11,6 +11,18 @@ export interface BranchInfo {
   behind: number
 }
 
+function authHeaders(): Record<string, string> | undefined {
+  const auth = getAuthHeader()
+  return auth ? { Authorization: auth } : undefined
+}
+
+async function assertOk(res: Response): Promise<void> {
+  if (!res.ok) {
+    const data = await res.json().catch(() => null)
+    throw new Error(data?.error || `HTTP ${res.status}`)
+  }
+}
+
 export function useBranches(repoPath: string | null) {
   const [branches, setBranches] = useState<BranchInfo[]>([])
   const [loading, setLoading] = useState(false)
@@ -21,14 +33,10 @@ export function useBranches(repoPath: string | null) {
     setLoading(true)
     setError(null)
     try {
-      const authHeader = getAuthHeader()
       const res = await fetch(`/api/branches?repo=${encodeURIComponent(repoPath)}`, {
-        headers: authHeader ? { Authorization: authHeader } : undefined,
+        headers: authHeaders(),
       })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || `HTTP ${res.status}`)
-      }
+      await assertOk(res)
       const json = await res.json()
       setBranches(json.data || [])
     } catch (err: unknown) {
@@ -46,18 +54,16 @@ export function useBranches(repoPath: string | null) {
   const createBranch = useCallback(
     async (name: string) => {
       if (!repoPath) return
-      const authHeader = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (authHeader) headers.Authorization = authHeader
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      }
       const res = await fetch(`/api/branches?repo=${encodeURIComponent(repoPath)}`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ name }),
       })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || `HTTP ${res.status}`)
-      }
+      await assertOk(res)
       await fetchBranches()
     },
     [repoPath, fetchBranches],
@@ -66,18 +72,14 @@ export function useBranches(repoPath: string | null) {
   const deleteBranch = useCallback(
     async (name: string) => {
       if (!repoPath) return
-      const authHeader = getAuthHeader()
       const res = await fetch(
         `/api/branches/${encodeURIComponent(name)}?repo=${encodeURIComponent(repoPath)}`,
         {
           method: 'DELETE',
-          headers: authHeader ? { Authorization: authHeader } : undefined,
+          headers: authHeaders(),
         },
       )
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || `HTTP ${res.status}`)
-      }
+      await assertOk(res)
       await fetchBranches()
     },
     [repoPath, fetchBranches],
