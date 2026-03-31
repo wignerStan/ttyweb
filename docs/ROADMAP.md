@@ -223,7 +223,7 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | iOS keyboard viewport fix | **Done** | `useVisualViewport.ts` |
 | iOS burst input suppression | **Partial** | |
 | Long-press text selection | **Missing** | |
-| Manual reconnect UI | **Missing** | |
+| Manual reconnect UI | **Done** | `MobileToolbar.tsx`, long-press guarded |
 
 ---
 
@@ -257,8 +257,8 @@ Legend: **Done** = fully implemented | **Partial** = structure exists, gaps rema
 | JSON config file | **Done** | `config/` |
 | Environment variable overrides | **Done** | |
 | OpenCode config viewer | **Stub** | `server/api_config.go` returns null |
-| Theme toggle (light/dark) | **Missing** | |
-| i18n (English/Chinese) | **Missing** | |
+| Theme toggle (light/dark) | **Done** | `hooks/useTheme.ts`, `data-theme` attribute |
+| i18n (English/Chinese) | **Done** | `i18n/` with i18next, en/zh translations |
 | Hot-reload config | **Missing** | |
 | Version endpoint | **Missing** | `middleware.go:21` TODO |
 | Update checker | **Missing** | |
@@ -323,7 +323,6 @@ worktrunk is a Rust CLI for git worktree management. These patterns are worth st
 | Feature | Effort | Reference |
 |---------|--------|-----------|
 | i18n support | High | CodeKanban, opencode-tmuxweb |
-| Theme toggle (light/dark) | Medium | CodeKanban |
 | Advanced mobile gesture handling | Medium | opencode-tmuxweb |
 | Open in external editor | Low | CodeKanban |
 | Aggregate task statistics endpoint | Low | opencode-tmuxweb |

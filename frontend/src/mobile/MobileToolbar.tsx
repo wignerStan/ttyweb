@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react'
 
+import { useLongPress } from '../hooks/useLongPress'
+
 const KEYS = {
   ESC: '\x1b',
   TAB: '\t',
@@ -17,6 +19,15 @@ interface Props {
 
 export function MobileToolbar({ onSendText, onPaste, onReconnect }: Props) {
   const [ctrlActive, setCtrlActive] = useState(false)
+
+  const reconnectLongPress = useLongPress({
+    threshold: 500,
+    onLongPress: useCallback(() => {
+      if (onReconnect) {
+        onReconnect()
+      }
+    }, [onReconnect]),
+  })
 
   const handleKey = useCallback(
     (key: string) => {
@@ -90,6 +101,9 @@ export function MobileToolbar({ onSendText, onPaste, onReconnect }: Props) {
         <button
           className="mobile-toolbar-key mobile-toolbar-reconnect"
           onClick={onReconnect}
+          onTouchStart={reconnectLongPress.onTouchStart}
+          onTouchEnd={reconnectLongPress.onTouchEnd}
+          onTouchMove={reconnectLongPress.onTouchMove}
           type="button"
         >
           ↻
