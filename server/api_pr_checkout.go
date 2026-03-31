@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -56,6 +57,6 @@ func handlePRCheckout(w http.ResponseWriter, r *http.Request, projectID string) 
 
 	writeAPISuccess(w, map[string]string{
 		"path":   worktreePath,
-		"branch": "pr-" + strings.TrimSpace(body.RepoSlug) + "-" + strings.TrimSuffix(body.RepoSlug, ".git"),
+		"branch": fmt.Sprintf("pr-%d", body.PRNumber),
 	})
 }
