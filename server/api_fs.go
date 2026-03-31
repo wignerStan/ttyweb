@@ -105,10 +105,14 @@ func (*Server) handleFSList(w http.ResponseWriter, r *http.Request) {
 		if infoErr != nil {
 			continue
 		}
+		size := info.Size()
+		if e.IsDir() {
+			size = 0 // directory size is filesystem-specific; report 0 for portability
+		}
 		result = append(result, FSEntry{
 			Name:    e.Name(),
 			IsDir:   e.IsDir(),
-			Size:    info.Size(),
+			Size:    size,
 			ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
 		})
 	}

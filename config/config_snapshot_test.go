@@ -28,12 +28,12 @@ func compareGoldenCfg(t *testing.T, got []byte) {
 }
 
 func TestSnapshot_DefaultConfigPath(t *testing.T) {
-	// Clear XDG to use home directory fallback.
+	// Use a fixed HOME so the golden file is portable across environments.
+	t.Setenv("HOME", "/home/testuser")
 	t.Setenv("XDG_CONFIG_HOME", "")
 
 	path := DefaultConfigPath()
 
-	// Snapshot the path as-is; it depends on $HOME.
 	compareGoldenCfg(t, []byte(path))
 }
 

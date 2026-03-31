@@ -25,6 +25,7 @@ func setFixedMtime(t *testing.T, path string) {
 
 // TestGolden_FSList_Directory lists a directory with files and subdirectories.
 func TestGolden_FSList_Directory(t *testing.T) {
+	t.Setenv("TZ", "UTC")
 	dir := t.TempDir()
 	registerFSRoot(dir)
 
@@ -75,6 +76,7 @@ func TestGolden_FSList_PathTraversal(t *testing.T) {
 
 // TestGolden_FSList_DotfilesFiltered confirms dotfiles are excluded from listings.
 func TestGolden_FSList_DotfilesFiltered(t *testing.T) {
+	t.Setenv("TZ", "UTC")
 	dir := t.TempDir()
 	registerFSRoot(dir)
 
@@ -100,6 +102,7 @@ func TestGolden_FSList_DotfilesFiltered(t *testing.T) {
 // TestGolden_FSList_SortedDirsFirst verifies directories appear before files,
 // each group sorted alphabetically.
 func TestGolden_FSList_SortedDirsFirst(t *testing.T) {
+	t.Setenv("TZ", "UTC")
 	dir := t.TempDir()
 	registerFSRoot(dir)
 

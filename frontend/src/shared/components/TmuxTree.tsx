@@ -386,19 +386,16 @@ function useLongPress(callback: (pos: { x: number; y: number }) => void, ms = 50
     }
   }, [])
 
-  const end = useCallback(
-    (e: React.TouchEvent | React.MouseEvent) => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-        timerRef.current = null
-      }
-      // Suppress synthetic click on mobile after long-press
-      if (firedRef.current && 'preventDefault' in e) {
-        e.preventDefault()
-      }
-    },
-    [],
-  )
+  const end = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    // Suppress synthetic click on mobile after long-press
+    if (firedRef.current && 'preventDefault' in e) {
+      e.preventDefault()
+    }
+  }, [])
 
   return {
     onTouchStart: start,
