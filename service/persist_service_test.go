@@ -48,7 +48,7 @@ func newPersistService(t *testing.T) *PersistService {
 func TestPersistService_CreateProfile(t *testing.T) {
 	svc := newPersistService(t)
 
-	profile, err := svc.CreateProfile(db.ProfileModel{
+	profile, err := svc.CreateProfile(&db.ProfileModel{
 		ProfileKey: "default",
 		Name:       "Default Profile",
 		SortOrder:  0,
@@ -64,14 +64,14 @@ func TestPersistService_CreateProfile(t *testing.T) {
 func TestPersistService_CreateProfile_DuplicateKey(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, err := svc.CreateProfile(db.ProfileModel{
+	_, err := svc.CreateProfile(&db.ProfileModel{
 		ProfileKey: "dup",
 		Name:       "First",
 		SortOrder:  0,
 	})
 	require.NoError(t, err)
 
-	_, err = svc.CreateProfile(db.ProfileModel{
+	_, err = svc.CreateProfile(&db.ProfileModel{
 		ProfileKey: "dup",
 		Name:       "Second",
 		SortOrder:  1,
@@ -83,9 +83,9 @@ func TestPersistService_CreateProfile_DuplicateKey(t *testing.T) {
 func TestPersistService_ListProfiles(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, _ = svc.CreateProfile(db.ProfileModel{ProfileKey: "c", Name: "C", SortOrder: 2})
-	_, _ = svc.CreateProfile(db.ProfileModel{ProfileKey: "a", Name: "A", SortOrder: 0})
-	_, _ = svc.CreateProfile(db.ProfileModel{ProfileKey: "b", Name: "B", SortOrder: 1})
+	_, _ = svc.CreateProfile(&db.ProfileModel{ProfileKey: "c", Name: "C", SortOrder: 2})
+	_, _ = svc.CreateProfile(&db.ProfileModel{ProfileKey: "a", Name: "A", SortOrder: 0})
+	_, _ = svc.CreateProfile(&db.ProfileModel{ProfileKey: "b", Name: "B", SortOrder: 1})
 
 	profiles, err := svc.ListProfiles()
 	require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestPersistService_ListProfiles(t *testing.T) {
 func TestPersistService_GetProfile(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateProfile(db.ProfileModel{
+	created, err := svc.CreateProfile(&db.ProfileModel{
 		ProfileKey: "default",
 		Name:       "My Profile",
 		SortOrder:  5,
@@ -124,14 +124,14 @@ func TestPersistService_GetProfile_NotFound(t *testing.T) {
 func TestPersistService_UpdateProfile(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateProfile(db.ProfileModel{
+	created, err := svc.CreateProfile(&db.ProfileModel{
 		ProfileKey: "default",
 		Name:       "Original",
 		SortOrder:  0,
 	})
 	require.NoError(t, err)
 
-	updated, err := svc.UpdateProfile(created.ID, db.ProfileModel{
+	updated, err := svc.UpdateProfile(created.ID, &db.ProfileModel{
 		ProfileKey: "default",
 		Name:       "Updated",
 		SortOrder:  10,
@@ -145,7 +145,7 @@ func TestPersistService_UpdateProfile(t *testing.T) {
 func TestPersistService_DeleteProfile(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateProfile(db.ProfileModel{
+	created, err := svc.CreateProfile(&db.ProfileModel{
 		ProfileKey: "default",
 		Name:       "Delete Me",
 		SortOrder:  0,
@@ -196,7 +196,7 @@ func TestPersistService_LoadProfiles(t *testing.T) {
 func TestPersistService_CreateGroup(t *testing.T) {
 	svc := newPersistService(t)
 
-	group, err := svc.CreateGroup(db.GroupModel{
+	group, err := svc.CreateGroup(&db.GroupModel{
 		GroupName:  "Group A",
 		SortOrder:  0,
 		ProfileKey: "default",
@@ -210,9 +210,9 @@ func TestPersistService_CreateGroup(t *testing.T) {
 func TestPersistService_ListGroups_ByProfile(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, _ = svc.CreateGroup(db.GroupModel{GroupName: "G1", SortOrder: 0, ProfileKey: "alpha"})
-	_, _ = svc.CreateGroup(db.GroupModel{GroupName: "G2", SortOrder: 1, ProfileKey: "alpha"})
-	_, _ = svc.CreateGroup(db.GroupModel{GroupName: "G3", SortOrder: 0, ProfileKey: "beta"})
+	_, _ = svc.CreateGroup(&db.GroupModel{GroupName: "G1", SortOrder: 0, ProfileKey: "alpha"})
+	_, _ = svc.CreateGroup(&db.GroupModel{GroupName: "G2", SortOrder: 1, ProfileKey: "alpha"})
+	_, _ = svc.CreateGroup(&db.GroupModel{GroupName: "G3", SortOrder: 0, ProfileKey: "beta"})
 
 	groups, err := svc.ListGroupsByProfile("alpha")
 	require.NoError(t, err)
@@ -224,9 +224,9 @@ func TestPersistService_ListGroups_ByProfile(t *testing.T) {
 func TestPersistService_ListGroups_All(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, _ = svc.CreateGroup(db.GroupModel{GroupName: "B1", SortOrder: 0, ProfileKey: "beta"})
-	_, _ = svc.CreateGroup(db.GroupModel{GroupName: "A1", SortOrder: 0, ProfileKey: "alpha"})
-	_, _ = svc.CreateGroup(db.GroupModel{GroupName: "A2", SortOrder: 1, ProfileKey: "alpha"})
+	_, _ = svc.CreateGroup(&db.GroupModel{GroupName: "B1", SortOrder: 0, ProfileKey: "beta"})
+	_, _ = svc.CreateGroup(&db.GroupModel{GroupName: "A1", SortOrder: 0, ProfileKey: "alpha"})
+	_, _ = svc.CreateGroup(&db.GroupModel{GroupName: "A2", SortOrder: 1, ProfileKey: "alpha"})
 
 	groups, err := svc.ListGroups()
 	require.NoError(t, err)
@@ -242,7 +242,7 @@ func TestPersistService_ListGroups_All(t *testing.T) {
 func TestPersistService_GetGroup(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateGroup(db.GroupModel{
+	created, err := svc.CreateGroup(&db.GroupModel{
 		GroupName:  "Find Me",
 		SortOrder:  3,
 		ProfileKey: "default",
@@ -266,14 +266,14 @@ func TestPersistService_GetGroup_NotFound(t *testing.T) {
 func TestPersistService_UpdateGroup(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateGroup(db.GroupModel{
+	created, err := svc.CreateGroup(&db.GroupModel{
 		GroupName:  "Original",
 		SortOrder:  0,
 		ProfileKey: "default",
 	})
 	require.NoError(t, err)
 
-	updated, err := svc.UpdateGroup(created.ID, db.GroupModel{
+	updated, err := svc.UpdateGroup(created.ID, &db.GroupModel{
 		GroupName:  "Updated",
 		SortOrder:  10,
 		ProfileKey: "new-profile",
@@ -288,7 +288,7 @@ func TestPersistService_UpdateGroup(t *testing.T) {
 func TestPersistService_DeleteGroup(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateGroup(db.GroupModel{
+	created, err := svc.CreateGroup(&db.GroupModel{
 		GroupName:  "Delete Me",
 		SortOrder:  0,
 		ProfileKey: "default",
@@ -337,7 +337,7 @@ func TestPersistService_LoadGroups(t *testing.T) {
 func TestPersistService_CreateSnippet(t *testing.T) {
 	svc := newPersistService(t)
 
-	snippet, err := svc.CreateSnippet(db.SnippetModel{
+	snippet, err := svc.CreateSnippet(&db.SnippetModel{
 		Index:   0,
 		Name:    "ls",
 		Command: "ls -la",
@@ -351,9 +351,9 @@ func TestPersistService_CreateSnippet(t *testing.T) {
 func TestPersistService_ListSnippets(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, _ = svc.CreateSnippet(db.SnippetModel{Index: 2, Name: "C", Command: "c"})
-	_, _ = svc.CreateSnippet(db.SnippetModel{Index: 0, Name: "A", Command: "a"})
-	_, _ = svc.CreateSnippet(db.SnippetModel{Index: 1, Name: "B", Command: "b"})
+	_, _ = svc.CreateSnippet(&db.SnippetModel{Index: 2, Name: "C", Command: "c"})
+	_, _ = svc.CreateSnippet(&db.SnippetModel{Index: 0, Name: "A", Command: "a"})
+	_, _ = svc.CreateSnippet(&db.SnippetModel{Index: 1, Name: "B", Command: "b"})
 
 	snippets, err := svc.ListSnippets()
 	require.NoError(t, err)
@@ -366,7 +366,7 @@ func TestPersistService_ListSnippets(t *testing.T) {
 func TestPersistService_GetSnippet(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateSnippet(db.SnippetModel{
+	created, err := svc.CreateSnippet(&db.SnippetModel{
 		Index:   0,
 		Name:    "whoami",
 		Command: "whoami",
@@ -390,14 +390,14 @@ func TestPersistService_GetSnippet_NotFound(t *testing.T) {
 func TestPersistService_UpdateSnippet(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateSnippet(db.SnippetModel{
+	created, err := svc.CreateSnippet(&db.SnippetModel{
 		Index:   0,
 		Name:    "ls",
 		Command: "ls -la",
 	})
 	require.NoError(t, err)
 
-	updated, err := svc.UpdateSnippet(created.ID, db.SnippetModel{
+	updated, err := svc.UpdateSnippet(created.ID, &db.SnippetModel{
 		Index:   1,
 		Name:    "ls -lah",
 		Command: "ls -lah",
@@ -411,7 +411,7 @@ func TestPersistService_UpdateSnippet(t *testing.T) {
 func TestPersistService_DeleteSnippet(t *testing.T) {
 	svc := newPersistService(t)
 
-	created, err := svc.CreateSnippet(db.SnippetModel{
+	created, err := svc.CreateSnippet(&db.SnippetModel{
 		Index:   0,
 		Name:    "rm",
 		Command: "rm -rf",
@@ -454,9 +454,9 @@ func TestPersistService_LoadSnippets(t *testing.T) {
 func TestPersistService_ReindexSnippets(t *testing.T) {
 	svc := newPersistService(t)
 
-	s1, _ := svc.CreateSnippet(db.SnippetModel{Index: 0, Name: "S1", Command: "s1"})
-	_, _ = svc.CreateSnippet(db.SnippetModel{Index: 1, Name: "S2", Command: "s2"})
-	s3, _ := svc.CreateSnippet(db.SnippetModel{Index: 2, Name: "S3", Command: "s3"})
+	s1, _ := svc.CreateSnippet(&db.SnippetModel{Index: 0, Name: "S1", Command: "s1"})
+	_, _ = svc.CreateSnippet(&db.SnippetModel{Index: 1, Name: "S2", Command: "s2"})
+	s3, _ := svc.CreateSnippet(&db.SnippetModel{Index: 2, Name: "S3", Command: "s3"})
 
 	// Delete the middle snippet.
 	err := svc.DeleteSnippet(s3.ID)
@@ -509,7 +509,7 @@ func TestPersistService_LoadSnippets_Empty(t *testing.T) {
 func TestPersistService_UpdateProfile_NotFound(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, err := svc.UpdateProfile(9999, db.ProfileModel{
+	_, err := svc.UpdateProfile(9999, &db.ProfileModel{
 		ProfileKey: "ghost",
 		Name:       "Ghost",
 		SortOrder:  0,
@@ -521,7 +521,7 @@ func TestPersistService_UpdateProfile_NotFound(t *testing.T) {
 func TestPersistService_UpdateGroup_NotFound(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, err := svc.UpdateGroup(9999, db.GroupModel{
+	_, err := svc.UpdateGroup(9999, &db.GroupModel{
 		GroupName:  "Ghost",
 		SortOrder:  0,
 		ProfileKey: "ghost",
@@ -533,7 +533,7 @@ func TestPersistService_UpdateGroup_NotFound(t *testing.T) {
 func TestPersistService_UpdateSnippet_NotFound(t *testing.T) {
 	svc := newPersistService(t)
 
-	_, err := svc.UpdateSnippet(9999, db.SnippetModel{
+	_, err := svc.UpdateSnippet(9999, &db.SnippetModel{
 		Index:   0,
 		Name:    "Ghost",
 		Command: "ghost",

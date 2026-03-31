@@ -22,12 +22,12 @@ func NewPersistService(database *gorm.DB) *PersistService {
 // --- Profile Methods ---
 
 // CreateProfile persists a new profile and returns it with its assigned ID.
-func (s *PersistService) CreateProfile(profile db.ProfileModel) (db.ProfileModel, error) {
-	result := s.db.Create(&profile)
+func (s *PersistService) CreateProfile(profile *db.ProfileModel) (db.ProfileModel, error) {
+	result := s.db.Create(profile)
 	if result.Error != nil {
 		return db.ProfileModel{}, fmt.Errorf("create profile: %w", result.Error)
 	}
-	return profile, nil
+	return *profile, nil
 }
 
 // ListProfiles returns all profiles ordered by SortOrder ascending.
@@ -51,7 +51,7 @@ func (s *PersistService) GetProfile(id uint) (db.ProfileModel, error) {
 }
 
 // UpdateProfile updates an existing profile's fields by ID.
-func (s *PersistService) UpdateProfile(id uint, profile db.ProfileModel) (db.ProfileModel, error) {
+func (s *PersistService) UpdateProfile(id uint, profile *db.ProfileModel) (db.ProfileModel, error) {
 	var existing db.ProfileModel
 	if err := s.db.First(&existing, id).Error; err != nil {
 		return db.ProfileModel{}, fmt.Errorf("update profile: %w", err)
@@ -88,12 +88,12 @@ func (s *PersistService) LoadProfiles() ([]db.ProfileModel, error) {
 // --- Group Methods ---
 
 // CreateGroup persists a new session group and returns it with its assigned ID.
-func (s *PersistService) CreateGroup(group db.GroupModel) (db.GroupModel, error) {
-	result := s.db.Create(&group)
+func (s *PersistService) CreateGroup(group *db.GroupModel) (db.GroupModel, error) {
+	result := s.db.Create(group)
 	if result.Error != nil {
 		return db.GroupModel{}, fmt.Errorf("create group: %w", result.Error)
 	}
-	return group, nil
+	return *group, nil
 }
 
 // ListGroups returns all groups ordered by profile_key ASC, sort_order ASC.
@@ -130,7 +130,7 @@ func (s *PersistService) GetGroup(id uint) (db.GroupModel, error) {
 }
 
 // UpdateGroup updates an existing group's fields by ID.
-func (s *PersistService) UpdateGroup(id uint, group db.GroupModel) (db.GroupModel, error) {
+func (s *PersistService) UpdateGroup(id uint, group *db.GroupModel) (db.GroupModel, error) {
 	var existing db.GroupModel
 	if err := s.db.First(&existing, id).Error; err != nil {
 		return db.GroupModel{}, fmt.Errorf("update group: %w", err)
@@ -167,12 +167,12 @@ func (s *PersistService) LoadGroups() ([]db.GroupModel, error) {
 // --- Snippet Methods ---
 
 // CreateSnippet persists a new snippet and returns it with its assigned ID.
-func (s *PersistService) CreateSnippet(snippet db.SnippetModel) (db.SnippetModel, error) {
-	result := s.db.Create(&snippet)
+func (s *PersistService) CreateSnippet(snippet *db.SnippetModel) (db.SnippetModel, error) {
+	result := s.db.Create(snippet)
 	if result.Error != nil {
 		return db.SnippetModel{}, fmt.Errorf("create snippet: %w", result.Error)
 	}
-	return snippet, nil
+	return *snippet, nil
 }
 
 // ListSnippets returns all snippets ordered by Index ascending.
@@ -196,7 +196,7 @@ func (s *PersistService) GetSnippet(id uint) (db.SnippetModel, error) {
 }
 
 // UpdateSnippet updates an existing snippet's fields by ID.
-func (s *PersistService) UpdateSnippet(id uint, snippet db.SnippetModel) (db.SnippetModel, error) {
+func (s *PersistService) UpdateSnippet(id uint, snippet *db.SnippetModel) (db.SnippetModel, error) {
 	var existing db.SnippetModel
 	if err := s.db.First(&existing, id).Error; err != nil {
 		return db.SnippetModel{}, fmt.Errorf("update snippet: %w", err)
@@ -231,7 +231,7 @@ func (s *PersistService) ReindexSnippets() error {
 		return fmt.Errorf("reindex snippets: %w", err)
 	}
 
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
 		for i, sn := range snippets {
 			if sn.Index != i {
 				result := tx.Model(&db.SnippetModel{}).
@@ -243,7 +243,10 @@ func (s *PersistService) ReindexSnippets() error {
 			}
 		}
 		return nil
-	})
+	}); err != nil {
+		return fmt.Errorf("persist transaction failed: %w", err)
+	}
+	return nil
 }
 
 // LoadSnippets loads all snippets from the database ordered by Index ascending.

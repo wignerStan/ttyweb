@@ -69,15 +69,15 @@ func TestReindexSnippets_NoSnippets(t *testing.T) {
 func TestReindexSnippets_WithGaps(t *testing.T) {
 	svc := NewPersistService(testGormDB(t))
 
-	_, err := svc.CreateSnippet(db.SnippetModel{Index: 0, Name: "first", Command: "echo 1"})
+	_, err := svc.CreateSnippet(&db.SnippetModel{Index: 0, Name: "first", Command: "echo 1"})
 	if err != nil {
 		t.Fatalf("CreateSnippet: %v", err)
 	}
-	_, err = svc.CreateSnippet(db.SnippetModel{Index: 5, Name: "second", Command: "echo 2"})
+	_, err = svc.CreateSnippet(&db.SnippetModel{Index: 5, Name: "second", Command: "echo 2"})
 	if err != nil {
 		t.Fatalf("CreateSnippet: %v", err)
 	}
-	_, err = svc.CreateSnippet(db.SnippetModel{Index: 10, Name: "third", Command: "echo 3"})
+	_, err = svc.CreateSnippet(&db.SnippetModel{Index: 10, Name: "third", Command: "echo 3"})
 	if err != nil {
 		t.Fatalf("CreateSnippet: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestGetSnippet_NotFound(t *testing.T) {
 // TestUpdateProfile_NotFound tests updating a nonexistent profile.
 func TestUpdateProfile_NotFound(t *testing.T) {
 	svc := NewPersistService(testGormDB(t))
-	_, err := svc.UpdateProfile(99999, db.ProfileModel{ProfileKey: "test", Name: "Test"})
+	_, err := svc.UpdateProfile(99999, &db.ProfileModel{ProfileKey: "test", Name: "Test"})
 	if err == nil {
 		t.Error("expected error for nonexistent profile")
 	}
@@ -138,7 +138,7 @@ func TestUpdateProfile_NotFound(t *testing.T) {
 // TestUpdateGroup_NotFound tests updating a nonexistent group.
 func TestUpdateGroup_NotFound(t *testing.T) {
 	svc := NewPersistService(testGormDB(t))
-	_, err := svc.UpdateGroup(99999, db.GroupModel{GroupName: "test"})
+	_, err := svc.UpdateGroup(99999, &db.GroupModel{GroupName: "test"})
 	if err == nil {
 		t.Error("expected error for nonexistent group")
 	}
@@ -147,7 +147,7 @@ func TestUpdateGroup_NotFound(t *testing.T) {
 // TestUpdateSnippet_NotFound tests updating a nonexistent snippet.
 func TestUpdateSnippet_NotFound(t *testing.T) {
 	svc := NewPersistService(testGormDB(t))
-	_, err := svc.UpdateSnippet(99999, db.SnippetModel{Index: 0, Name: "test", Command: "echo"})
+	_, err := svc.UpdateSnippet(99999, &db.SnippetModel{Index: 0, Name: "test", Command: "echo"})
 	if err == nil {
 		t.Error("expected error for nonexistent snippet")
 	}

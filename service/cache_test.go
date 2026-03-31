@@ -104,7 +104,7 @@ func TestSharedCache_ConcurrentAccess(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			for j := 0; j < opsPerGoroutine; j++ {
-				key := string(rune('a' + (id%26))) + "-" + string(rune('0'+(j%10)))
+				key := string(rune('a'+(id%26))) + "-" + string(rune('0'+(j%10)))
 				cache.Set(key, id*opsPerGoroutine+j)
 			}
 		}(i)
@@ -116,7 +116,7 @@ func TestSharedCache_ConcurrentAccess(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			for j := 0; j < opsPerGoroutine; j++ {
-				key := string(rune('a' + (id%26))) + "-" + string(rune('0'+(j%10)))
+				key := string(rune('a'+(id%26))) + "-" + string(rune('0'+(j%10)))
 				cache.Get(key)
 			}
 		}(i)
