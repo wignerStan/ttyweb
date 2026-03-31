@@ -99,6 +99,7 @@ export function MobileToolbar({ onSendText, onPaste, onReconnect }: Props) {
       </button>
       {onReconnect && (
         <button
+          aria-label="Reconnect"
           className="mobile-toolbar-key mobile-toolbar-reconnect"
           onClick={onReconnect}
           onTouchStart={reconnectLongPress.onTouchStart}

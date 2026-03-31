@@ -353,6 +353,8 @@ function QuickGroupMenu({
   )
 }
 
+// TODO: unify with hooks/useLongPress.ts — this version passes (pos: {x, y}) to
+// the callback instead of the raw event, and exposes firedRef instead of isLongPressRef.
 function useLongPress(callback: (pos: { x: number; y: number }) => void, ms = 500) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const movedRef = useRef(false)
