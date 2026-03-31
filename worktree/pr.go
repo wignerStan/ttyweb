@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
@@ -59,7 +60,7 @@ func FetchPRDetails(ctx context.Context, apiURL, token string) (*PRDetails, erro
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := (&http.Client{Timeout: 30 * time.Second}).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch PR details: %w", err)
 	}
@@ -202,7 +203,7 @@ func CheckoutPRBranch(ctx context.Context, repoPath, branchName, sha string) (st
 	}
 
 	err = repo.Fetch(fetchOpts)
-	if err != nil {
+	if err != nil && err != goGit.NoErrAlreadyUpToDate {
 		// go-git returns an error even if the fetch succeeds but the ref
 		// already exists. Check if we can resolve the ref anyway.
 		remoteRef := plumbing.ReferenceName("refs/remotes/pr/" + branchName)

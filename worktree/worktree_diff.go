@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	goGit "github.com/go-git/go-git/v5"
@@ -74,7 +75,15 @@ func GetWorktreeDiff(ctx context.Context, repoPath, worktreePath string) (string
 
 	var buf bytes.Buffer
 
-	for file, fs := range status {
+	// Sort file names for deterministic diff output.
+	files := make([]string, 0, len(status))
+	for file := range status {
+		files = append(files, file)
+	}
+	sort.Strings(files)
+
+	for _, file := range files {
+		fs := status[file]
 		// Determine the "old" content (from HEAD tree or index).
 		var oldContent []byte
 		var newContent []byte
