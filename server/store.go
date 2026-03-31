@@ -404,3 +404,13 @@ func (s *MemoryStore) SetPaneMode(paneKey, mode string) {
 
 // store is the global in-memory data store.
 var store = NewMemoryStore()
+
+// storeMu protects the global store variable during test resets.
+var storeMu sync.Mutex
+
+// resetStore replaces the global store. Used only in tests.
+func resetStore() {
+	storeMu.Lock()
+	defer storeMu.Unlock()
+	store = NewMemoryStore()
+}
