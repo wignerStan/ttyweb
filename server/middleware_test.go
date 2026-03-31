@@ -11,7 +11,7 @@ import (
 // newTestServer creates a minimal Server for testing middleware methods.
 // It resets the global MemoryStore to ensure test isolation.
 func newTestServer() *Server {
-	store = NewMemoryStore()
+	resetStore()
 	return &Server{
 		options: &Options{Path: "/"},
 	}
