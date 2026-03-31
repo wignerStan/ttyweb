@@ -32,6 +32,11 @@ func registerFSRoot(path string) {
 	}
 	fsRootsMu.Lock()
 	defer fsRootsMu.Unlock()
+	for _, existing := range fsRoots {
+		if existing == abs {
+			return
+		}
+	}
 	fsRoots = append(fsRoots, abs)
 }
 

@@ -13,7 +13,7 @@ import (
 func setupBranchRoutes(mux *http.ServeMux, apiPrefix string) {
 	branchPrefix := apiPrefix + "branches"
 	mux.HandleFunc(branchPrefix, handleBranches)
-	mux.HandleFunc(branchPrefix+"/", handleBranchDetail)
+	mux.HandleFunc(branchPrefix+"/", makeBranchDetailHandler(branchPrefix))
 }
 
 // handleBranches dispatches GET (list) and POST (create) on /api/branches?repo=<path>.
@@ -62,26 +62,27 @@ func handleBranches(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleBranchDetail dispatches DELETE (delete) and POST merge on
-// /api/branches/{name}?repo=<path> and /api/branches/merge?repo=<path>.
-func handleBranchDetail(w http.ResponseWriter, r *http.Request) {
-	// Extract the sub-path after /api/branches/.
-	suffix := strings.TrimPrefix(r.URL.Path, "/api/branches/")
-	suffix = strings.TrimPrefix(suffix, "branches/")
-	suffix = strings.TrimSuffix(suffix, "/")
+// makeBranchDetailHandler returns a handler that dispatches DELETE (delete)
+// and POST merge on /api/branches/{name}?repo=<path> and
+// /api/branches/merge?repo=<path>.
+func makeBranchDetailHandler(branchPrefix string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		suffix := strings.TrimPrefix(r.URL.Path, branchPrefix+"/")
+		suffix = strings.TrimSuffix(suffix, "/")
 
-	repoPath := r.URL.Query().Get("repo")
-	if strings.TrimSpace(repoPath) == "" {
-		writeAPIError(w, http.StatusBadRequest, "repo query parameter is required")
-		return
+		repoPath := r.URL.Query().Get("repo")
+		if strings.TrimSpace(repoPath) == "" {
+			writeAPIError(w, http.StatusBadRequest, "repo query parameter is required")
+			return
+		}
+
+		if suffix == "merge" {
+			handleBranchMerge(w, r, repoPath)
+			return
+		}
+
+		handleBranchDelete(w, r, repoPath, suffix)
 	}
-
-	if suffix == "merge" {
-		handleBranchMerge(w, r, repoPath)
-		return
-	}
-
-	handleBranchDelete(w, r, repoPath, suffix)
 }
 
 // handleBranchMerge processes POST /api/branches/merge?repo=<path>.

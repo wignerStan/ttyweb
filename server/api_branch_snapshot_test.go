@@ -126,7 +126,7 @@ func TestGolden_BranchDetail_NotFound(t *testing.T) {
 		context.Background(), http.MethodDelete,
 		"/api/branches/nonexistent?repo="+repoDir, nil,
 	)
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -141,7 +141,7 @@ func TestGolden_BranchMerge_BadJSON(t *testing.T) {
 		"/api/branches/merge?repo="+repoDir, body,
 	)
 	req.Header.Set("Content-Type", "application/json")
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -156,7 +156,7 @@ func TestGolden_BranchMerge_MissingFields(t *testing.T) {
 		"/api/branches/merge?repo="+repoDir, body,
 	)
 	req.Header.Set("Content-Type", "application/json")
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -169,7 +169,7 @@ func TestGolden_BranchDelete_NotFound(t *testing.T) {
 		context.Background(), http.MethodDelete,
 		"/api/branches/nonexistent?repo="+repoDir, nil,
 	)
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -182,7 +182,7 @@ func TestGolden_BranchDelete_InvalidName(t *testing.T) {
 		context.Background(), http.MethodDelete,
 		"/api/branches/!bad?repo="+repoDir, nil,
 	)
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }

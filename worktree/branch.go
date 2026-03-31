@@ -228,6 +228,19 @@ func MergeBranch(ctx context.Context, repoPath, source, target string) error {
 		if err := repo.Storer.SetReference(newRef); err != nil {
 			return &OpError{Kind: KindGitFailed, Path: absRepo, Detail: fmt.Sprintf("fast-forward merge %q into %q", source, target), Cause: err}
 		}
+
+		// After fast-forward, update the worktree if target is currently checked out.
+		wt, wtErr := repo.Worktree()
+		if wtErr == nil && wt != nil {
+			head, headErr := repo.Head()
+			if headErr == nil && head != nil && head.Name().Short() == target {
+				_ = wt.Reset(&goGit.ResetOptions{
+					Mode:   goGit.HardReset,
+					Commit: sourceRef.Hash(),
+				})
+			}
+		}
+
 		return nil
 	}
 
@@ -342,13 +355,27 @@ func runGitCheckout(ctx context.Context, dir, branch string) error {
 	return nil
 }
 
+// envOrDefault returns the value of the environment variable named by key,
+// or the provided default if the variable is unset or empty.
+func envOrDefault(key, defaultVal string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return defaultVal
+}
+
 // runGitMerge runs git merge with no-ff (to create a merge commit) for
 // non-fast-forward merges.
 func runGitMerge(ctx context.Context, dir, source string) error {
 	args := []string{"merge", "--no-ff", source}
 	cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // G204: source name validated by ValidateBranchName
 	cmd.Dir = dir
-	cmd.Env = append(FilterGitEnv(os.Environ()), "GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=test@test.com", "GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=test@test.com")
+	cmd.Env = append(FilterGitEnv(os.Environ()),
+		"GIT_AUTHOR_NAME="+envOrDefault("GIT_AUTHOR_NAME", "ttyweb"),
+		"GIT_AUTHOR_EMAIL="+envOrDefault("GIT_AUTHOR_EMAIL", "ttyweb@localhost"),
+		"GIT_COMMITTER_NAME="+envOrDefault("GIT_COMMITTER_NAME", "ttyweb"),
+		"GIT_COMMITTER_EMAIL="+envOrDefault("GIT_COMMITTER_EMAIL", "ttyweb@localhost"),
+	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		// Abort the merge to leave the repo in a clean state.

@@ -19,7 +19,7 @@ func TestGolden_BranchMerge_MissingSource(t *testing.T) {
 		"/api/branches/merge?repo="+repoDir, body,
 	)
 	req.Header.Set("Content-Type", "application/json")
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -35,7 +35,7 @@ func TestGolden_BranchMerge_MissingTarget(t *testing.T) {
 		"/api/branches/merge?repo="+repoDir, body,
 	)
 	req.Header.Set("Content-Type", "application/json")
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -49,7 +49,7 @@ func TestGolden_BranchMerge_MethodNotAllowed(t *testing.T) {
 		context.Background(), http.MethodGet,
 		"/api/branches/merge?repo="+repoDir, nil,
 	)
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -63,7 +63,7 @@ func TestGolden_BranchDelete_MethodNotAllowed(t *testing.T) {
 		context.Background(), http.MethodGet,
 		"/api/branches/some-branch?repo="+repoDir, nil,
 	)
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -86,7 +86,7 @@ func TestGolden_BranchMerge_MergeFailure(t *testing.T) {
 		"/api/branches/merge?repo="+repoDir, body,
 	)
 	req.Header.Set("Content-Type", "application/json")
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -98,7 +98,7 @@ func TestGolden_BranchDetail_NoRepo(t *testing.T) {
 		context.Background(), http.MethodDelete,
 		"/api/branches/some-branch", nil,
 	)
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -120,7 +120,7 @@ func TestGolden_BranchMerge_Success(t *testing.T) {
 		"/api/branches/merge?repo="+repoDir, body,
 	)
 	req.Header.Set("Content-Type", "application/json")
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
@@ -137,7 +137,7 @@ func TestGolden_BranchDelete_Success(t *testing.T) {
 		context.Background(), http.MethodDelete,
 		"/api/branches/to-delete?repo="+repoDir, nil,
 	)
-	handleBranchDetail(rec, req)
+	makeBranchDetailHandler("/api/branches")(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
 }
