@@ -20,6 +20,8 @@ import (
 // GetWorktreeDiff returns the unified diff of all changes (staged and unstaged)
 // in the worktree at worktreePath, relative to the HEAD commit.
 // Returns an empty string if there are no changes.
+//
+//nolint:gocyclo // single-pass diff generator with sequential error handling
 func GetWorktreeDiff(ctx context.Context, repoPath, worktreePath string) (string, error) {
 	_ = ctx // reserved for future cancellation support
 
@@ -159,7 +161,7 @@ func writeFileDiff(buf *bytes.Buffer, file string, oldContent, newContent []byte
 	oldLines := strings.Split(string(oldContent), "\n")
 	newLines := strings.Split(string(newContent), "\n")
 
-	buf.WriteString(fmt.Sprintf("diff --git a/%s b/%s\n", file, file))
+	fmt.Fprintf(buf, "diff --git a/%s b/%s\n", file, file)
 
 	if len(oldContent) == 0 {
 		buf.WriteString("new file mode 100644\n")
@@ -197,7 +199,7 @@ func writeHunk(buf *bytes.Buffer, oldLines, newLines []string) {
 		return
 	}
 
-	buf.WriteString(fmt.Sprintf("@@ -%d,%d +%d,%d @@\n", commonPrefix+1, oldCount, commonPrefix+1, newCount))
+	fmt.Fprintf(buf, "@@ -%d,%d +%d,%d @@\n", commonPrefix+1, oldCount, commonPrefix+1, newCount)
 
 	for i := commonPrefix; i < oldSuffix; i++ {
 		buf.WriteString("-" + oldLines[i] + "\n")

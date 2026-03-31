@@ -17,6 +17,11 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
+// httpClient is a package-level HTTP client for GitHub API requests.
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
+
 // PRDetails contains the information needed to check out a pull request branch.
 type PRDetails struct {
 	Number     int    `json:"number"`
@@ -28,10 +33,10 @@ type PRDetails struct {
 
 // prResponse is the JSON structure returned by the GitHub PR API.
 type prResponse struct {
-	Number    int    `json:"number"`
-	State     string `json:"state"`
-	Head      prHead `json:"head"`
-	HTMLURL   string `json:"html_url"`
+	Number  int    `json:"number"`
+	State   string `json:"state"`
+	Head    prHead `json:"head"`
+	HTMLURL string `json:"html_url"`
 }
 
 // prHead represents the head branch info in a GitHub PR response.
@@ -60,7 +65,7 @@ func FetchPRDetails(ctx context.Context, apiURL, token string) (*PRDetails, erro
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	resp, err := (&http.Client{Timeout: 30 * time.Second}).Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch PR details: %w", err)
 	}
@@ -165,10 +170,12 @@ func parseRepoSlug(remoteURL string) (string, error) {
 
 // CheckoutPRBranch fetches a specific SHA from origin and creates a worktree
 // at the given branch name. Returns the absolute path of the new worktree.
+//
+//nolint:gocyclo // multi-step git checkout with fallback ref resolution
 func CheckoutPRBranch(ctx context.Context, repoPath, branchName, sha string) (string, error) {
 	branchName = strings.TrimSpace(branchName)
 	if branchName == "" {
-		return "", errors.New("branch name is required") //nolint:staticcheck // intentional sentinel error
+		return "", errors.New("branch name is required")
 	}
 	if err := ValidateBranchName(branchName); err != nil {
 		return "", err
