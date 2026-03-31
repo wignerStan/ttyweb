@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 )
 
@@ -238,8 +237,7 @@ func TestLoadOrDefault_BadConfigFile(t *testing.T) {
 	}
 
 	// Reset global state so LoadOrDefault runs fresh.
-	configOnce = sync.Once{}
-	globalConfig = nil
+	resetGlobalConfig()
 
 	cfg := LoadOrDefault()
 	if cfg == nil {
@@ -253,13 +251,8 @@ func TestLoadOrDefault_BadConfigFile(t *testing.T) {
 
 func TestGetReturnsCopy(t *testing.T) {
 	// Reset global state for this test.
-	globalConfig = nil
-	configOnce = sync.Once{}
-
-	defer func() {
-		globalConfig = nil
-		configOnce = sync.Once{}
-	}()
+	resetGlobalConfig()
+	defer resetGlobalConfig()
 
 	cfg1 := Get()
 	cfg1.LLM.Model = "mutated-model"

@@ -26,7 +26,7 @@ func Reload(path string) error {
 
 // Watch monitors path for changes and publishes new Config values on the returned
 // channel. The caller must call the returned stop function when done to release
-// the underlying file watcher.
+// the underlying file watcher. Stop blocks until the watcher goroutine exits.
 func Watch(path string) (<-chan *Config, func(), error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
@@ -48,8 +48,11 @@ func Watch(path string) (<-chan *Config, func(), error) {
 
 	ch := make(chan *Config, 1)
 	done := make(chan struct{})
+	var wg sync.WaitGroup
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		defer close(ch)
 		defer func() {
 			// Watcher close errors are non-fatal and typically
@@ -61,6 +64,7 @@ func Watch(path string) (<-chan *Config, func(), error) {
 
 	stop := func() {
 		close(done)
+		wg.Wait()
 	}
 
 	return ch, stop, nil
