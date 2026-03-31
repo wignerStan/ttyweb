@@ -308,6 +308,9 @@ export default function MobileApp() {
 
   return (
     <div className="mobile-app">
+      <a href="#mobile-content" className="skip-link">
+        Skip to content
+      </a>
       <header className="mobile-header">
         <button
           className="mobile-menu-btn"
@@ -425,7 +428,7 @@ export default function MobileApp() {
         )}
       </aside>
 
-      <main className="mobile-main">
+      <main className="mobile-main" id="mobile-content">
         {tabs.length > 0 ? (
           <div className="mobile-tabs-content">
             {activeTab && (

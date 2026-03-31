@@ -88,6 +88,9 @@ function DesktopLayout() {
 
   return (
     <div style={styles.container}>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       {imperialStudyOpen && (
         <Suspense fallback={null}>
           <FloatingImperialStudy
@@ -97,9 +100,9 @@ function DesktopLayout() {
         </Suspense>
       )}
       {sidebarOpen && (
-        <div style={styles.sidebar}>
+        <nav style={styles.sidebar} aria-label="Session navigation">
           <Sidebar onSelect={openTab} />
-        </div>
+        </nav>
       )}
       <div style={styles.main}>
         <div style={styles.tabBar}>
@@ -187,7 +190,7 @@ function DesktopLayout() {
           </button>
           <ThemeToggle />
         </div>
-        <div style={styles.contentArea}>
+        <div style={styles.contentArea} id="main-content">
           {activeView === 'terminal' && (
             <div style={styles.terminalArea}>
               {viewMode === 'kanban' ? (
