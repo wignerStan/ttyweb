@@ -11,7 +11,7 @@ slogutil/           Structured JSON logging factory
 
 ## Key Patterns
 
-**Structured Logging**: `slogutil.New(level)` creates a `*slog.Logger` writing JSON to stdout. Used throughout the codebase after the migration from `log.Printf`. Log level is configurable (debug/info/warn/error).
+**Structured Logging**: slogutil.New(w, level) creates a *slog.Logger writing JSON to the provided writer. Used throughout the codebase after the migration from log.Printf. Log level is configurable (debug/info/warn/error).
 
 ## Testing
 
