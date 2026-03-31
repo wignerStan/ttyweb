@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { ToolResultInline } from './ToolResultInline'
 import type { ConversationMessage as ConversationMessageType, ToolResultBlock } from './types'
 
@@ -39,7 +40,7 @@ function formatToolInputSummary(name: string, input: Record<string, unknown>): s
   return `[${name}]`
 }
 
-export function ConversationMessage({ message }: ConversationMessageProps) {
+function ConversationMessageInner({ message }: ConversationMessageProps) {
   return (
     <div className={`conv-msg conv-msg--${message.role}`}>
       <div className="conv-msg-role">{message.role}</div>
@@ -69,3 +70,5 @@ export function ConversationMessage({ message }: ConversationMessageProps) {
     </div>
   )
 }
+
+export const ConversationMessage = memo(ConversationMessageInner)

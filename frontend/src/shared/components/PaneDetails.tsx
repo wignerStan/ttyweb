@@ -1,5 +1,5 @@
 import { Bot, Briefcase, ChevronDown, ChevronRight, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { useAIConversations } from '../../hooks/useAIConversations'
 import type { AiConversation, PaneStatus, Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
@@ -32,7 +32,7 @@ function formatDuration(startedAt: number, completedAt: number | null): string {
   return `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m`
 }
 
-function ConversationCard({ conv }: { conv: AiConversation }) {
+function ConversationCardInner({ conv }: { conv: AiConversation }) {
   const [expanded, setExpanded] = useState(false)
   const hasReply = conv.conv_status === 'completed' && conv.assistant_message
 
@@ -103,6 +103,8 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
     </div>
   )
 }
+
+const ConversationCard = memo(ConversationCardInner)
 
 export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
   const [tasks, setTasks] = useState<Task[]>([])

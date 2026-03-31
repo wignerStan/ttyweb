@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AlertTriangle, Calendar } from 'lucide-react'
-import type { CSSProperties } from 'react'
+import { memo, type CSSProperties } from 'react'
 import { getTagColorClass } from './tagColors'
 import type { KanbanTask } from './types'
 
@@ -36,7 +36,7 @@ function isOverdue(dateStr: string): boolean {
   return due < today
 }
 
-function TaskCard({ task, onSelect }: TaskCardProps) {
+function TaskCardInner({ task, onSelect }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -105,4 +105,4 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
 }
 
 export type { TaskCardProps }
-export { TaskCard }
+export const TaskCard = memo(TaskCardInner)

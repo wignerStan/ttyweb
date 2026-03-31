@@ -9,7 +9,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
 import './TaskHistoryPanel.css'
 
@@ -31,7 +31,7 @@ interface TaskHistoryPanelProps {
   onStatusChange?: () => void
 }
 
-function StatusIcon({ status }: { status: string }) {
+function StatusIconInner({ status }: { status: string }) {
   if (status === 'in_progress')
     return <Loader2 size={14} className="task-history-spin" style={{ color: 'var(--blue-400)' }} />
   if (status === 'completed')
@@ -40,6 +40,8 @@ function StatusIcon({ status }: { status: string }) {
   if (status === 'waiting') return <Clock size={14} style={{ color: 'var(--yellow-500)' }} />
   return <Clock size={14} style={{ color: 'var(--zinc-500)' }} />
 }
+
+const StatusIcon = memo(StatusIconInner)
 
 function formatTime(ts: number): string {
   return new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
