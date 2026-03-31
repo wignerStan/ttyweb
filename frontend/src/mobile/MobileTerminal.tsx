@@ -110,6 +110,7 @@ export function MobileTerminal({
     }
   }, [fontSize])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fontSize handled by separate effect above
   useEffect(() => {
     if (!containerRef.current) return
     isCleanupRef.current = false
@@ -753,7 +754,7 @@ export function MobileTerminal({
       termRef.current = null
       fitRef.current = null
     }
-  }, [session, pane, fontSize])
+  }, [session, pane])
 
   const handleFitWindow = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN && termRef.current && fitRef.current) {

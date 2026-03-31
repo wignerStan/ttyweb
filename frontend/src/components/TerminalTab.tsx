@@ -23,6 +23,10 @@ export function TerminalTab({ session, pane, onMetadata, onTabRename }: Terminal
   const wsRef = useRef<WebSocket | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
   const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
+  const onMetadataRef = useRef(onMetadata)
+  const onTabRenameRef = useRef(onTabRename)
+  onMetadataRef.current = onMetadata
+  onTabRenameRef.current = onTabRename
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -106,9 +110,13 @@ export function TerminalTab({ session, pane, onMetadata, onTabRename }: Terminal
           try {
             const metaJSON = atob(payload)
             const metadata: Metadata = JSON.parse(metaJSON)
-            onMetadata?.(metadata)
-            if (metadata.type === 'tab_rename' && metadata.data?.summary && onTabRename) {
-              onTabRename(String(metadata.data.summary))
+            onMetadataRef.current?.(metadata)
+            if (
+              metadata.type === 'tab_rename' &&
+              metadata.data?.summary &&
+              onTabRenameRef.current
+            ) {
+              onTabRenameRef.current(String(metadata.data.summary))
             }
           } catch {
             // malformed metadata — ignore
@@ -162,7 +170,7 @@ export function TerminalTab({ session, pane, onMetadata, onTabRename }: Terminal
       termRef.current = null
       fitRef.current = null
     }
-  }, [session, pane, onMetadata, onTabRename])
+  }, [session, pane])
 
   const statusColor =
     status === 'connected' ? '#9ece6a' : status === 'connecting' ? '#e0af68' : '#f7768e'
