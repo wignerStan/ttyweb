@@ -9,6 +9,7 @@ export interface UseWebTTYOptions {
   onTabRename?: (summary: string) => void
   onWindowTitle?: (title: string) => void
   onStatusChange?: (status: ConnectionStatus) => void
+  onError?: () => void
   reconnect?: boolean
   maxReconnectAttempts?: number
 }
@@ -23,6 +24,7 @@ export function useWebTTY({
   onTabRename,
   onWindowTitle,
   onStatusChange,
+  onError,
   reconnect = false,
   maxReconnectAttempts = 3,
 }: UseWebTTYOptions) {
@@ -42,6 +44,8 @@ export function useWebTTY({
   onTabRenameRef.current = onTabRename
   onWindowTitleRef.current = onWindowTitle
   onStatusChangeRef.current = onStatusChange
+  const onErrorRef = useRef(onError)
+  onErrorRef.current = onError
 
   const buildWsUrl = useCallback(() => {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -71,6 +75,9 @@ export function useWebTTY({
 
   const connect = useCallback(() => {
     if (isCleanupRef.current) return
+
+    setStatus('connecting')
+    onStatusChangeRef.current?.('connecting')
 
     const ws = new WebSocket(buildWsUrl().toString())
     ws.binaryType = 'arraybuffer'
@@ -147,6 +154,7 @@ export function useWebTTY({
     ws.onerror = () => {
       setStatus('disconnected')
       onStatusChangeRef.current?.('disconnected')
+      onErrorRef.current?.()
     }
 
     wsRef.current = ws
@@ -163,5 +171,5 @@ export function useWebTTY({
     }
   }, [connect])
 
-  return { status, sendText, sendResize, sendRaw, wsRef }
+  return { status, sendText, sendResize, sendRaw, connect, wsRef }
 }
