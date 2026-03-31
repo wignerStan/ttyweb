@@ -9,9 +9,7 @@ import (
 )
 
 func resetGlobalConfig() {
-	reloadMu.Lock()
-	defer reloadMu.Unlock()
-	globalConfig = nil
+	configPtr.Store(nil)
 	configOnce = sync.Once{}
 }
 
@@ -34,7 +32,7 @@ func TestReload(t *testing.T) {
 	}
 
 	// Set initial global config so Get() doesn't trigger LoadOrDefault.
-	globalConfig = cfg
+	configPtr.Store(cfg)
 	configOnce.Do(func() {})
 
 	// Update file.
@@ -102,11 +100,10 @@ func TestReloadBadFile(t *testing.T) {
 	defer resetGlobalConfig()
 
 	// Set globalConfig so Reload has something to work with.
-	globalConfig = DefaultConfig()
+	configPtr.Store(DefaultConfig())
 	configOnce.Do(func() {})
 
 	err := Reload("/nonexistent/path/config.json")
-	// Load returns defaults for missing files, so Reload should succeed.
 	if err != nil {
 		t.Errorf("Reload on missing file should succeed (returns defaults): %v", err)
 	}
@@ -122,7 +119,7 @@ func TestReloadInvalidJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	globalConfig = DefaultConfig()
+	configPtr.Store(DefaultConfig())
 	configOnce.Do(func() {})
 
 	err := Reload(cfgPath)

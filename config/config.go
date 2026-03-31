@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 )
 
 // QuickDir represents a user-defined quick-access directory entry.
@@ -56,8 +57,8 @@ type WorktreeConfig struct {
 }
 
 var (
-	globalConfig *Config
-	configOnce   sync.Once
+	configPtr  atomic.Pointer[Config]
+	configOnce sync.Once
 )
 
 // envOverride maps environment variable names to setter functions.
@@ -111,17 +112,17 @@ func LoadOrDefault() *Config {
 		if err != nil {
 			cfg = applyEnvOverrides(DefaultConfig())
 		}
-		globalConfig = cfg
+		configPtr.Store(cfg)
 	})
-	return copyConfig(globalConfig)
+	return copyConfig(configPtr.Load())
 }
 
 // Get returns the cached global config, loading defaults if not yet initialized.
 func Get() *Config {
-	if globalConfig == nil {
-		return LoadOrDefault()
+	if cfg := configPtr.Load(); cfg != nil {
+		return copyConfig(cfg)
 	}
-	return copyConfig(globalConfig)
+	return LoadOrDefault()
 }
 
 // applyEnvOverrides returns a new Config with values replaced by any

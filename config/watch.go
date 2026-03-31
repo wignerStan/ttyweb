@@ -8,19 +8,14 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-var reloadMu sync.Mutex
-
 // Reload re-reads the config file at path and atomically swaps the global config.
 // After Reload, subsequent calls to Get() will return the updated config.
 func Reload(path string) error {
-	reloadMu.Lock()
-	defer reloadMu.Unlock()
-
 	cfg, err := Load(path)
 	if err != nil {
 		return err
 	}
-	globalConfig = cfg
+	configPtr.Store(cfg)
 	return nil
 }
 
