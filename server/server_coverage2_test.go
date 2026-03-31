@@ -103,7 +103,7 @@ func TestServeBackground_NonTLS(t *testing.T) {
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
 	}
-	resp.Body.Close()
+	resp.Body.Close() //nolint:errcheck // test cleanup
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
