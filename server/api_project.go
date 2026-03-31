@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -14,7 +14,7 @@ import (
 func (*Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 	svc, err := projectService()
 	if err != nil {
-		log.Printf("failed to initialize project service: %v", err)
+		slog.Error("failed to initialize project service", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service")
 		return
 	}
@@ -23,7 +23,7 @@ func (*Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		projects, err := svc.ListProjects()
 		if err != nil {
-			log.Printf("failed to list projects: %v", err)
+			slog.Error("failed to list projects", "error", err)
 			writeAPIError(w, http.StatusInternalServerError, "failed to list projects")
 			return
 		}
@@ -80,7 +80,7 @@ func writeProjectCreateError(w http.ResponseWriter, err error) {
 	case service.ErrProjectAlreadyExists:
 		writeAPIError(w, http.StatusConflict, "a project with this path already exists")
 	default:
-		log.Printf("failed to create project: %v", err)
+		slog.Error("failed to create project", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to create project")
 	}
 }
@@ -90,7 +90,7 @@ func writeProjectCreateError(w http.ResponseWriter, err error) {
 func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request) {
 	svc, err := projectService()
 	if err != nil {
-		log.Printf("failed to initialize project service: %v", err)
+		slog.Error("failed to initialize project service", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service")
 		return
 	}
@@ -143,7 +143,7 @@ func updateProject(w http.ResponseWriter, r *http.Request, svc *service.ProjectS
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
 		}
-		log.Printf("failed to update project: %v", err)
+		slog.Error("failed to update project", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to update project")
 		return
 	}
@@ -158,7 +158,7 @@ func deleteProject(w http.ResponseWriter, svc *service.ProjectService, id string
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
 		}
-		log.Printf("failed to delete project: %v", err)
+		slog.Error("failed to delete project", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to delete project")
 		return
 	}
@@ -174,7 +174,7 @@ func (*Server) handleProjectSync(w http.ResponseWriter, r *http.Request, id stri
 
 	svc, err := projectService()
 	if err != nil {
-		log.Printf("failed to initialize project service: %v", err)
+		slog.Error("failed to initialize project service", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to initialize project service")
 		return
 	}
@@ -185,7 +185,7 @@ func (*Server) handleProjectSync(w http.ResponseWriter, r *http.Request, id stri
 			writeAPIError(w, http.StatusNotFound, "project not found")
 			return
 		}
-		log.Printf("failed to sync project: %v", err)
+		slog.Error("failed to sync project", "error", err)
 		writeAPIError(w, http.StatusInternalServerError, "failed to sync project")
 		return
 	}
