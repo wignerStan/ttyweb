@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { BUTTON_RESET } from '../shared/styles'
 import type { AISession } from './types'
 import { useConversations } from './useConversations'
 import './conversations.css'
@@ -119,16 +120,7 @@ export function ConversationList({ selectedSessionId, onSelectSession }: Convers
                       selectedSessionId === session.id ? ' conv-session-item--selected' : ''
                     }`}
                     onClick={() => onSelectSession(session)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      font: 'inherit',
-                      color: 'inherit',
-                      cursor: 'pointer',
-                      width: '100%',
-                      textAlign: 'inherit',
-                    }}
+                    style={BUTTON_RESET}
                   >
                     <span className="conv-session-title">{session.title || 'Untitled'}</span>
                     <div className="conv-session-meta">

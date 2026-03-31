@@ -6,6 +6,7 @@ import { ImperialStudyPanel } from '../shared/components/imperial-study/componen
 import { LoginModal } from '../shared/components/LoginModal'
 import { TaskHistoryPanel } from '../shared/components/TaskHistoryPanel'
 import type { VoiceInputHandle } from '../shared/components/VoiceInput'
+import { BUTTON_RESET } from '../shared/styles'
 import type { OpenTab, Profile, SessionGroup, TmuxSession } from '../types'
 import { checkAuth, getAuthHeader, logout } from '../utils/auth'
 import { MobileDrawer } from './MobileDrawer'
@@ -318,16 +319,7 @@ export default function MobileApp() {
                 key={tab.id}
                 type="button"
                 className={`mobile-tab ${tab.id === activeTabId ? 'active' : ''}`}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'inherit',
-                }}
+                style={BUTTON_RESET}
                 onClick={() => handleSelectTab(tab.id)}
               >
                 <span className="mobile-tab-title">{tab.title}</span>

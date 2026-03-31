@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useState } from 'react'
 import { useAIConversations } from '../../hooks/useAIConversations'
 import type { AiConversation, PaneStatus, Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
+import { BUTTON_RESET } from '../styles'
 import { LogAccordion } from './LogAccordion'
 import { TaskCard } from './TaskCard'
 import './PaneDetails.css'
@@ -41,16 +42,7 @@ function ConversationCardInner({ conv }: { conv: AiConversation }) {
       <button
         type="button"
         className="conv-card-header"
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
-        }}
+        style={BUTTON_RESET}
         onClick={() => hasReply && setExpanded(!expanded)}
       >
         <div className="conv-card-left">

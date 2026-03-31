@@ -2,6 +2,7 @@ import { CheckCircle2, Clock, Loader2, RefreshCw, TerminalSquare, XCircle } from
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
+import { BUTTON_RESET } from '../styles'
 import './GlobalTaskOverview.css'
 
 interface GlobalTaskOverviewProps {
@@ -105,16 +106,7 @@ export function GlobalTaskOverview({
                 type="button"
                 className={`task-item status-${task.task_status}`}
                 onClick={() => handleTaskClick(task)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'inherit',
-                }}
+                style={BUTTON_RESET}
               >
                 <div className="task-item-title">{task.task_title || 'Untitled Task'}</div>
                 <div className="task-item-meta">

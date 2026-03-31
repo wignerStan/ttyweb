@@ -82,6 +82,295 @@ const PRE_STYLE: React.CSSProperties = {
   overflow: 'auto',
 }
 
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    height: '100%',
+    padding: '8px',
+    gap: '8px',
+    overflow: 'auto',
+  },
+  flexRow: {
+    display: 'flex',
+    gap: '6px',
+  },
+  flexRowCenter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  flexInline: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  positionRelative: {
+    position: 'relative',
+  },
+  roleSelectorBtn: {
+    width: '100%',
+    padding: '6px 10px',
+    borderRadius: '8px',
+    border: '1px solid #2c313a',
+    background: '#1a1c20',
+    color: '#abb2bf',
+    fontSize: '13px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '6px',
+    textAlign: 'left' as const,
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: '4px',
+    background: '#1e2028',
+    border: '1px solid #2c313a',
+    borderRadius: '8px',
+    zIndex: 100,
+    maxHeight: '240px',
+    overflowY: 'auto',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+  },
+  promptViewer: {
+    background: '#1a1c20',
+    border: '1px solid #2c313a',
+    borderRadius: '6px',
+    padding: '8px',
+    fontSize: '11px',
+    color: '#7a818c',
+    maxHeight: '120px',
+    overflow: 'auto',
+    whiteSpace: 'pre-wrap',
+  },
+  promptHeader: {
+    color: '#9da5b4',
+    marginBottom: '4px',
+    fontWeight: 600,
+  },
+  promptSuffix: {
+    marginTop: '8px',
+    color: '#555a66',
+    borderTop: '1px solid #2c313a',
+    paddingTop: '4px',
+  },
+  textarea: {
+    width: '100%',
+    background: '#13151a',
+    border: '1px solid #2c313a',
+    borderRadius: '6px',
+    padding: '8px',
+    paddingRight: '28px',
+    color: '#abb2bf',
+    fontSize: '13px',
+    outline: 'none',
+    resize: 'none',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box',
+  },
+  clearInputBtn: {
+    position: 'absolute',
+    top: '6px',
+    right: '6px',
+    background: 'none',
+    border: 'none',
+    color: '#555a66',
+    cursor: 'pointer',
+    padding: '2px',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  streamingOutput: {
+    background: '#1a1c20',
+    border: '1px solid #4d78cc44',
+    borderRadius: '6px',
+    padding: '8px',
+  },
+  resultCard: {
+    background: '#1a1c20',
+    border: '1px solid #2c313a',
+    borderRadius: '6px',
+    padding: '8px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '6px',
+  },
+  expandBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#7a818c',
+    cursor: 'pointer',
+    padding: '2px',
+  },
+  cursorBlink: {
+    color: '#4d78cc',
+  },
+  mutedSmall: {
+    color: '#555a66',
+    fontSize: '11px',
+  },
+  mutedSmallGap: {
+    color: '#555a66',
+    fontSize: '11px',
+    marginLeft: '6px',
+  },
+  explanationText: {
+    color: '#7a818c',
+    fontSize: '11px',
+  },
+  chevronIcon: {
+    color: '#7a818c',
+    transition: 'transform 0.15s',
+    flexShrink: 0,
+  },
+  fontWeight500: {
+    fontWeight: 500,
+  },
+  copyBtnBase: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    padding: '6px',
+    border: 'none',
+    borderRadius: '4px',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
+  actionBtnBase: {
+    padding: '8px 12px',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    fontSize: '12px',
+    whiteSpace: 'nowrap',
+  },
+  secondaryBtnBase: {
+    padding: '8px 10px',
+    background: '#2c313a',
+    color: '#9da5b4',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+  },
+  promptToggleBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#555a66',
+    fontSize: '11px',
+    cursor: 'pointer',
+    padding: '0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '2px',
+  },
+  manageRolesBtn: {
+    width: '100%',
+    padding: '8px 10px',
+    background: 'none',
+    border: 'none',
+    color: '#7a818c',
+    fontSize: '12px',
+    cursor: 'pointer',
+    textAlign: 'center' as const,
+  },
+} as const satisfies Record<string, React.CSSProperties>
+
+function getRoleItemStyle(isSelected: boolean): React.CSSProperties {
+  return {
+    width: '100%',
+    padding: '8px 10px',
+    background: isSelected ? '#4d78cc22' : 'none',
+    border: 'none',
+    borderBottom: '1px solid #2c313a',
+    color: isSelected ? '#4d78cc' : '#abb2bf',
+    fontSize: '13px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    textAlign: 'left',
+  }
+}
+
+function getCopyBtnStyle(): React.CSSProperties {
+  return {
+    ...styles.copyBtnBase,
+    background: '#2c313a',
+    color: '#abb2bf',
+  }
+}
+
+function getExecuteBtnStyle(disabled?: boolean): React.CSSProperties {
+  return {
+    ...styles.copyBtnBase,
+    background: '#4d78cc',
+    color: '#fff',
+    opacity: disabled ? 0.5 : 1,
+  }
+}
+
+function getStopBtnStyle(): React.CSSProperties {
+  return {
+    ...styles.actionBtnBase,
+    flex: 1,
+    background: '#e06c75',
+    color: '#fff',
+  }
+}
+
+function getGenerateBtnStyle(
+  loading: boolean,
+  canGenerate: boolean,
+  disabled?: boolean,
+): React.CSSProperties {
+  return {
+    ...styles.actionBtnBase,
+    flex: 1,
+    background: loading ? '#2c313a' : '#4d78cc',
+    color: '#fff',
+    cursor: loading ? 'default' : 'pointer',
+    opacity: !canGenerate || disabled ? 0.5 : 1,
+  }
+}
+
+function getClearBtnStyle(canClear: boolean): React.CSSProperties {
+  return {
+    ...styles.secondaryBtnBase,
+    opacity: canClear ? 1 : 0.3,
+  }
+}
+
+function getSendBtnStyle(canSend: boolean): React.CSSProperties {
+  return {
+    ...styles.actionBtnBase,
+    background: '#2c313a',
+    color: '#9da5b4',
+    opacity: canSend ? 1 : 0.3,
+  }
+}
+
+function getChevronStyle(isOpen: boolean): React.CSSProperties {
+  return {
+    ...styles.chevronIcon,
+    transform: isOpen ? 'rotate(90deg)' : 'none',
+  }
+}
+
 function CopyExecuteButtons({
   onCopy,
   onExecute,
@@ -92,45 +381,14 @@ function CopyExecuteButtons({
   disabled?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-      <button
-        onClick={onCopy}
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '4px',
-          padding: '6px',
-          background: '#2c313a',
-          color: '#abb2bf',
-          border: 'none',
-          borderRadius: '4px',
-          fontSize: '12px',
-          cursor: 'pointer',
-        }}
-        type="button"
-      >
+    <div style={{ ...styles.flexRow, marginTop: '6px' }}>
+      <button onClick={onCopy} style={getCopyBtnStyle()} type="button">
         <Copy size={12} /> \u590D\u5236
       </button>
       <button
         onClick={onExecute}
         disabled={disabled}
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '4px',
-          padding: '6px',
-          background: '#4d78cc',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          fontSize: '12px',
-          cursor: 'pointer',
-          opacity: disabled ? 0.5 : 1,
-        }}
+        style={getExecuteBtnStyle(disabled)}
         type="button"
       >
         <Play size={12} /> \u6267\u884C
@@ -340,74 +598,28 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
   const selectedRoleDef = roles.find((r) => r.id === selectedRole)
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        padding: '8px',
-        gap: '8px',
-        overflow: 'auto',
-      }}
-    >
+    <div style={styles.container}>
       {/* Role selector dropdown */}
-      <div style={{ position: 'relative' }} ref={dropdownRef}>
+      <div style={styles.positionRelative} ref={dropdownRef}>
         <button
           onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-          style={{
-            width: '100%',
-            padding: '6px 10px',
-            borderRadius: '8px',
-            border: '1px solid #2c313a',
-            background: '#1a1c20',
-            color: '#abb2bf',
-            fontSize: '13px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '6px',
-            textAlign: 'left',
-          }}
+          style={styles.roleSelectorBtn}
           type="button"
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ ...styles.flexInline, gap: '6px' }}>
             <span>{selectedRoleDef?.emoji ?? '\u26A1'}</span>
-            <span style={{ fontWeight: 500 }}>
+            <span style={styles.fontWeight500}>
               {selectedRoleDef?.label ?? '\u547D\u4EE4\u884C\u5927\u795E'}
             </span>
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ color: '#555a66', fontSize: '11px' }}>{selectedRoleDef?.desc}</span>
-            <ChevronRight
-              size={14}
-              style={{
-                color: '#7a818c',
-                transform: showRoleDropdown ? 'rotate(90deg)' : 'none',
-                transition: 'transform 0.15s',
-                flexShrink: 0,
-              }}
-            />
+          <span style={{ ...styles.flexInline, gap: '4px' }}>
+            <span style={styles.mutedSmall}>{selectedRoleDef?.desc}</span>
+            <ChevronRight size={14} style={getChevronStyle(showRoleDropdown)} />
           </span>
         </button>
 
         {showRoleDropdown && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              marginTop: '4px',
-              background: '#1e2028',
-              border: '1px solid #2c313a',
-              borderRadius: '8px',
-              zIndex: 100,
-              maxHeight: '240px',
-              overflowY: 'auto',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            }}
-          >
+          <div style={styles.dropdownContainer}>
             {roles
               .filter((r) => r.id !== TEMPLATE_ROLE_ID)
               .map((role) => (
@@ -418,28 +630,13 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
                     setShowRoleDropdown(false)
                     setShowPrompt(false)
                   }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    background: role.id === selectedRole ? '#4d78cc22' : 'none',
-                    border: 'none',
-                    borderBottom: '1px solid #2c313a',
-                    color: role.id === selectedRole ? '#4d78cc' : '#abb2bf',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    textAlign: 'left',
-                  }}
+                  style={getRoleItemStyle(role.id === selectedRole)}
                   type="button"
                 >
                   <span>{role.emoji}</span>
                   <span style={{ flex: 1 }}>
-                    <span style={{ fontWeight: 500 }}>{role.label}</span>
-                    <span style={{ color: '#555a66', fontSize: '11px', marginLeft: '6px' }}>
-                      {role.desc}
-                    </span>
+                    <span style={styles.fontWeight500}>{role.label}</span>
+                    <span style={styles.mutedSmallGap}>{role.desc}</span>
                   </span>
                 </button>
               ))}
@@ -448,16 +645,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
                 setShowRoleDropdown(false)
                 setShowRoleModal(true)
               }}
-              style={{
-                width: '100%',
-                padding: '8px 10px',
-                background: 'none',
-                border: 'none',
-                color: '#7a818c',
-                fontSize: '12px',
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
+              style={styles.manageRolesBtn}
               type="button"
             >
               + \u7BA1\u7406\u89D2\u8272
@@ -469,17 +657,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       {/* Prompt viewer toggle */}
       <button
         onClick={() => setShowPrompt(!showPrompt)}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: '#555a66',
-          fontSize: '11px',
-          cursor: 'pointer',
-          padding: '0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '2px',
-        }}
+        style={styles.promptToggleBtn}
         type="button"
       >
         {showPrompt ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -488,40 +666,19 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
       {/* Prompt viewer content */}
       {showPrompt && selectedRoleDef?.prompt && (
-        <div
-          style={{
-            background: '#1a1c20',
-            border: '1px solid #2c313a',
-            borderRadius: '6px',
-            padding: '8px',
-            fontSize: '11px',
-            color: '#7a818c',
-            maxHeight: '120px',
-            overflow: 'auto',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          <div style={{ color: '#9da5b4', marginBottom: '4px', fontWeight: 600 }}>
+        <div style={styles.promptViewer}>
+          <div style={styles.promptHeader}>
             {selectedRoleDef.emoji} {selectedRoleDef.label}
           </div>
           {selectedRoleDef.prompt}
           {selectedRoleDef.suffix && (
-            <div
-              style={{
-                marginTop: '8px',
-                color: '#555a66',
-                borderTop: '1px solid #2c313a',
-                paddingTop: '4px',
-              }}
-            >
-              {selectedRoleDef.suffix}
-            </div>
+            <div style={styles.promptSuffix}>{selectedRoleDef.suffix}</div>
           )}
         </div>
       )}
 
       {/* Input area */}
-      <div style={{ position: 'relative' }}>
+      <div style={styles.positionRelative}>
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -535,38 +692,12 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
           placeholder="\u63CF\u8FF0\u4F60\u60F3\u6267\u884C\u7684\u64CD\u4F5C..."
           rows={2}
           disabled={streaming}
-          style={{
-            width: '100%',
-            background: '#13151a',
-            border: '1px solid #2c313a',
-            borderRadius: '6px',
-            padding: '8px',
-            paddingRight: '28px',
-            color: '#abb2bf',
-            fontSize: '13px',
-            outline: 'none',
-            resize: 'none',
-            fontFamily: 'inherit',
-            boxSizing: 'border-box',
-            opacity: streaming ? 0.6 : 1,
-          }}
+          style={{ ...styles.textarea, opacity: streaming ? 0.6 : 1 }}
         />
         {input && !streaming && (
           <button
             onClick={handleClear}
-            style={{
-              position: 'absolute',
-              top: '6px',
-              right: '6px',
-              background: 'none',
-              border: 'none',
-              color: '#555a66',
-              cursor: 'pointer',
-              padding: '2px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
+            style={styles.clearInputBtn}
             type="button"
             title="\u6E05\u7A7A"
           >
@@ -576,49 +707,16 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
       </div>
 
       {/* Action buttons */}
-      <div style={{ display: 'flex', gap: '6px' }}>
+      <div style={styles.flexRow}>
         {streaming ? (
-          <button
-            onClick={stopStreaming}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              background: '#e06c75',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              fontSize: '12px',
-              whiteSpace: 'nowrap',
-            }}
-            type="button"
-          >
+          <button onClick={stopStreaming} style={getStopBtnStyle()} type="button">
             <Square size={14} /> \u505C\u6B62
           </button>
         ) : (
           <button
             onClick={handleGenerate}
             disabled={!input.trim() || loading || disabled}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              background: loading ? '#2c313a' : '#4d78cc',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: loading ? 'default' : 'pointer',
-              opacity: !input.trim() || disabled ? 0.5 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              fontSize: '12px',
-              whiteSpace: 'nowrap',
-            }}
+            style={getGenerateBtnStyle(loading, !!input.trim(), disabled)}
             type="button"
           >
             {loading ? <Loader2 size={14} className="spin" /> : <Send size={14} />}
@@ -628,19 +726,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
         <button
           onClick={handleClear}
           disabled={!input && !result && !streamText}
-          style={{
-            padding: '8px 10px',
-            background: '#2c313a',
-            color: '#9da5b4',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            opacity: !input && !result && !streamText ? 0.3 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '12px',
-          }}
+          style={getClearBtnStyle(!!input || !!result || !!streamText)}
           type="button"
           title="\u6E05\u7A7A"
         >
@@ -649,21 +735,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
         <button
           onClick={handleDirectSend}
           disabled={!input.trim() || disabled || streaming}
-          style={{
-            padding: '8px 12px',
-            background: '#2c313a',
-            color: '#9da5b4',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            opacity: !input.trim() || disabled || streaming ? 0.3 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px',
-            fontSize: '12px',
-            whiteSpace: 'nowrap',
-          }}
+          style={getSendBtnStyle(!!input.trim() && !disabled && !streaming)}
           type="button"
           title="\u76F4\u63A5\u53D1\u9001\u5230\u7EC8\u7AEF"
         >
@@ -673,18 +745,10 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
       {/* Streaming output */}
       {streaming && streamText && (
-        <div
-          ref={resultRef}
-          style={{
-            background: '#1a1c20',
-            border: '1px solid #4d78cc44',
-            borderRadius: '6px',
-            padding: '8px',
-          }}
-        >
+        <div ref={resultRef} style={styles.streamingOutput}>
           <pre style={{ ...PRE_STYLE, maxHeight: '200px' }}>
             {streamText}
-            <span style={{ color: '#4d78cc' }}>&#9646;</span>
+            <span style={styles.cursorBlink}>&#9646;</span>
           </pre>
           <CopyExecuteButtons onCopy={handleCopy} onExecute={handleExecute} disabled={disabled} />
         </div>
@@ -692,31 +756,11 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
       {/* Result card (non-streaming) */}
       {result && !streaming && (
-        <div
-          style={{
-            background: '#1a1c20',
-            border: '1px solid #2c313a',
-            borderRadius: '6px',
-            padding: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#7a818c', fontSize: '11px' }}>{result.explanation}</span>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                onClick={() => setExpanded(!expanded)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#7a818c',
-                  cursor: 'pointer',
-                  padding: '2px',
-                }}
-                type="button"
-              >
+        <div style={styles.resultCard}>
+          <div style={styles.flexRowCenter}>
+            <span style={styles.explanationText}>{result.explanation}</span>
+            <div style={{ ...styles.flexRow, gap: '4px' }}>
+              <button onClick={() => setExpanded(!expanded)} style={styles.expandBtn} type="button">
                 {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             </div>

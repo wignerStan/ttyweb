@@ -30,6 +30,42 @@ interface NotificationProviderProps {
   autoDismissMs?: number
 }
 
+const CONTAINER_STYLE: React.CSSProperties = {
+  position: 'fixed',
+  top: 16,
+  right: 16,
+  zIndex: 9999,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+}
+
+function getNotificationStyle(type: Notification['type']): React.CSSProperties {
+  return {
+    padding: '12px 16px',
+    borderRadius: 8,
+    border: 'none',
+    background:
+      type === 'ai_completion'
+        ? 'var(--accent-green, #9ece6a)'
+        : type === 'ai_approval'
+          ? 'var(--accent-yellow, #e0af68)'
+          : 'var(--bg-tertiary, #24283b)',
+    color:
+      type === 'ai_completion' || type === 'ai_approval'
+        ? '#1a1b26'
+        : 'var(--text-primary, #c0caf5)',
+    maxWidth: 400,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+  }
+}
+
+const TITLE_STYLE: React.CSSProperties = { fontWeight: 600, fontSize: 14 }
+const MESSAGE_STYLE: React.CSSProperties = { fontSize: 12, opacity: 0.9, marginTop: 4 }
+
 export function NotificationProvider({
   children,
   autoDismissMs = 5000,
@@ -63,46 +99,17 @@ export function NotificationProvider({
   return (
     <NotificationContext.Provider value={{ notifications, notify, dismiss }}>
       {children}
-      <div
-        style={{
-          position: 'fixed',
-          top: 16,
-          right: 16,
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}
-      >
+      <div style={CONTAINER_STYLE}>
         {notifications.map((n) => (
           <button
             key={n.id}
             type="button"
             aria-label={`Dismiss: ${n.title}`}
-            style={{
-              padding: '12px 16px',
-              borderRadius: 8,
-              border: 'none',
-              background:
-                n.type === 'ai_completion'
-                  ? 'var(--accent-green, #9ece6a)'
-                  : n.type === 'ai_approval'
-                    ? 'var(--accent-yellow, #e0af68)'
-                    : 'var(--bg-tertiary, #24283b)',
-              color:
-                n.type === 'ai_completion' || n.type === 'ai_approval'
-                  ? '#1a1b26'
-                  : 'var(--text-primary, #c0caf5)',
-              maxWidth: 400,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              cursor: 'pointer',
-              textAlign: 'left',
-              font: 'inherit',
-            }}
+            style={getNotificationStyle(n.type)}
             onClick={() => dismiss(n.id)}
           >
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{n.title}</div>
-            <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>{n.message}</div>
+            <div style={TITLE_STYLE}>{n.title}</div>
+            <div style={MESSAGE_STYLE}>{n.message}</div>
           </button>
         ))}
       </div>
