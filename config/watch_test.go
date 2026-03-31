@@ -9,6 +9,8 @@ import (
 )
 
 func resetGlobalConfig() {
+	reloadMu.Lock()
+	defer reloadMu.Unlock()
 	globalConfig = nil
 	configOnce = sync.Once{}
 }
