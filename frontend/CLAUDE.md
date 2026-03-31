@@ -45,10 +45,15 @@ src/
 │   ├── useTmuxPrefix.ts    Tmux prefix key configuration
 │   ├── useShakeDetect.ts   Shake-to-record on mobile
 │   ├── useKeyboardAvoider.ts  Mobile keyboard avoidance
-│   └── useVisualViewport.ts  Viewport handling
+│   ├── useVisualViewport.ts  Viewport handling
+│   ├── useTheme.ts              Theme management with localStorage persistence
+│   └── useLongPress.ts          Long-press gesture detection for touch
 ├── conversations/       AI conversation history viewer
 ├── kanban/              Task board with drag-and-drop (@dnd-kit)
 ├── notepad/             Multi-tab notepad
+├── branches/            Branch list, create, delete operations
+├── filebrowser/         Directory listing with breadcrumb navigation
+├── i18n/                English and Chinese translations (i18next)
 ├── mobile/
 │   ├── MobileApp.tsx      Mobile route handler
 │   ├── MobileTerminal.tsx Mobile xterm.js instance
@@ -56,6 +61,9 @@ src/
 │   ├── MobileDrawer.tsx   Slide-out navigation
 │   └── MobileToolbox.tsx  Keyboard toolbox overlay
 ├── shared/components/     Shared UI components
+│   ├── NotificationProvider.tsx  Toast notification system (AI events, errors)
+│   ├── ThemeToggle.tsx           Dark/light theme toggle
+│   └── styles/theme.css          Theme CSS variables
 ├── utils/
 │   ├── auth.ts            Basic auth handling
 │   ├── platform.ts        Platform detection
@@ -79,6 +87,18 @@ src/
 **Mobile Route** (`/m`): Separate optimized layout with tab management, font size slider, voice input, shake detection, and keyboard toolbox.
 
 **Linting**: Biome (not ESLint) for linting and formatting. Config in `biome.json`.
+
+**Branch Management**: `branches/BranchPanel.tsx` provides branch list, create, delete operations with current branch highlighting and ahead/behind status. Data from `GET /api/branches`.
+
+**File Browser**: `filebrowser/FileBrowser.tsx` provides directory listings with breadcrumb navigation, file sizes, and modification times. Data from `GET /api/fs`.
+
+**i18n**: `i18n/` uses i18next with English and Chinese translations. Language preference persisted to localStorage. Import `i18n/index.ts` in `main.tsx`.
+
+**Theme System**: `useTheme.ts` manages dark/light mode via `data-theme` attribute on `<html>`. Persisted to localStorage. Theme CSS variables in `styles/theme.css`.
+
+**Notifications**: `NotificationProvider.tsx` provides toast notifications for AI state changes (completion, approval-needed), errors, and general info. Auto-dismiss with type-based styling.
+
+**Long Press**: `useLongPress.ts` detects long-press gestures on touch devices for context menus.
 
 ## E2E Tests
 

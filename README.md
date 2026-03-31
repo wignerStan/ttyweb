@@ -9,8 +9,24 @@ A web-based terminal emulator — Go HTTP/WebSocket server bridging browser term
 - **REST API** — session management, profiles, groups, snippets, tasks, file upload
 - **AI integration** — OpenAI-compatible LLM client, streaming, session scanning (Claude Code/Codex detection)
 - **Git worktree management** — create/list/delete/commit worktrees via native go-git
+- **Branch management** — list, create, delete, merge branches via go-git
+- **PR checkout** — create worktree from GitHub PR
+- **Worktree hooks** — lifecycle shell scripts (pre/post create/merge/remove)
 - **Kanban task board** — drag-and-drop columns (Todo, In Progress, Done, Archived)
+- **AI-powered summaries** — generate task summaries via LLM
+- **AI commit messages** — conventional commit messages from git diffs
+- **Task statistics** — aggregate counts and daily breakdowns
+- **SSE event streaming** — real-time task event push
 - **Multi-tab notepad** — global and project-scoped notes with auto-save
+- **AI state tracking** — per-pane idle/working/approval state machine with notifications
+- **File browser** — directory listing with breadcrumb navigation
+- **External editor** — open files in VSCode/Cursor/Zed
+- **i18n** — English and Chinese translations
+- **Theme toggle** — dark/light mode with persistence
+- **Config hot-reload** — live configuration updates via fsnotify
+- **OpenAPI docs** — Swagger UI at `/api/docs`
+- **Version endpoint** — build info and update checker
+- **Structured logging** — slog-based JSON logging
 - **Mobile UI** — optimized layout at `/m` with touch toolbox, voice input, shake-to-record
 - **Basic auth** — with constant-time credential comparison
 - **TLS support** — optional HTTPS
@@ -126,7 +142,7 @@ main.go           CLI flags, backend selection, server startup
 
 ## Tech Stack
 
-**Backend**: Go 1.25, gorilla/websocket, go-git, GORM, SQLite (glebarez/sqlite — CGO-free)
+**Backend**: Go 1.25, gorilla/websocket, go-git, GORM, SQLite (glebarez/sqlite — CGO-free), slog
 
 **Frontend**: React 19, TypeScript, Vite, xterm.js, @dnd-kit, Biome
 

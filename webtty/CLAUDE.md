@@ -28,6 +28,21 @@ Single-byte type prefix + base64 payload, negotiated via WebSocket subprotocol `
 
 Defined in `message_types.go`.
 
+## Configuration Options
+
+Options are applied via the functional options pattern when creating a new WebTTY instance.
+
+| Option | Purpose | Default |
+|--------|---------|---------|
+| `WithPermitWrite()` | Allow slave to accept input from clients | false |
+| `WithFixedColumns(int)` | Set fixed terminal width | 0 (dynamic) |
+| `WithFixedRows(int)` | Set fixed terminal height | 0 (dynamic) |
+| `WithTitleFormat([]byte)` | Set default window title | nil |
+| `WithReconnect(int)` | Enable client reconnection (seconds) | 0 (disabled) |
+| `WithMasterPreferences(any)` | Set master preferences (JSON) | nil |
+
+Defined in `option.go`.
+
 ## File Layout
 
 ```

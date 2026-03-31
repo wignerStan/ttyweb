@@ -50,7 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved biome linter config: enabled a11y rules, type safety, removed non-null assertion override (#40)
 - Wired graceful shutdown to signal context (SIGINT/SIGTERM triggers `srv.Shutdown`) (#35)
 - Moved rate limiter cleanup to background goroutine (#41)
-- Fixed pre-existing bug in `RefreshWorktree` path resolution (#57)
 
 ### Deprecated
 - `-credential` CLI flag in favor of `TTYWEB_CREDENTIAL` environment variable (#41)
@@ -82,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped `cloudflare/circl` to v1.6.3 (GO-2026-4550) (#41)
 - Allowed microphone in `Permissions-Policy` (#1)
 - Addressed bot review feedback across multiple PRs (#40, #42)
+- Fixed pre-existing bug in `RefreshWorktree` path resolution (#57)
 
 ### Security
 - Added per-IP rate limiting middleware (10 req/s, burst 20) using `golang.org/x/time/rate` (#41)
