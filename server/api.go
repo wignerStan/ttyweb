@@ -93,11 +93,12 @@ func (server *Server) setupAPIHandlers(mux *http.ServeMux, pathPrefix string) {
 	mux.HandleFunc(apiPrefix+"segments/summaries", server.handleListSummaries)
 	mux.HandleFunc(apiPrefix+"segments", server.handleSegments)
 	mux.HandleFunc(apiPrefix+"segments/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/summarize") {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/summarize"):
 			server.handleSummarizeSegment(w, r)
-		} else if strings.HasSuffix(r.URL.Path, "/summary") {
+		case strings.HasSuffix(r.URL.Path, "/summary"):
 			server.handleGetSummary(w, r)
-		} else {
+		default:
 			server.handleSegmentDetail(w, r)
 		}
 	})

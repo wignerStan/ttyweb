@@ -2,19 +2,14 @@ package tmux
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 	"testing"
-	"time"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // uniqueSessionName generates a unique tmux session name for testing.
 func uniqueSessionName(prefix string) string {
-	return fmt.Sprintf("%s-%d", prefix, rand.Intn(100000))
+	return fmt.Sprintf("%s-%d", prefix, rand.IntN(100000)) //nolint:gosec // test randomization
 }
 
 // TestFactory_GetSessionDetail_NotFound tests that GetSessionDetail returns
@@ -40,7 +35,7 @@ func TestFactory_GetSessionDetail_SessionExists(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: cannot create tmux session: %v", err)
 	}
-	defer KillSession(name)
+	defer KillSession(name) //nolint:errcheck // test cleanup
 
 	// Get the detail.
 	data, err := f.GetSessionDetail(sessionName)
@@ -61,7 +56,7 @@ func TestFactory_CreateSession_AndList(t *testing.T) {
 	if err != nil {
 		t.Skipf("skipping: cannot create tmux session: %v", err)
 	}
-	defer KillSession(created)
+	defer KillSession(created) //nolint:errcheck // test cleanup
 
 	// List should include our session.
 	data, err := f.ListSessions()

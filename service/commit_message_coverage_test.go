@@ -46,10 +46,10 @@ func TestNewCommitMessageService_WithAPIKey(t *testing.T) {
 
 func TestGenerateCommitMessage_Success(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := map[string]interface{}{
-			"choices": []map[string]interface{}{
+		resp := map[string]any{
+			"choices": []map[string]any{
 				{
-					"message": map[string]interface{}{
+					"message": map[string]any{
 						"role":    "assistant",
 						"content": "feat: add new feature",
 					},

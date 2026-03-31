@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +41,7 @@ func TestHandleSummarizeSegment_MethodNotAllowed(t *testing.T) {
 
 	srv := newTestServerWithSummaryService(t, mockSrv.URL)
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/seg-001/summarize", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/seg-001/summarize", nil)
 	srv.handleSummarizeSegment(rec, req)
 
 	if rec.Code != http.StatusMethodNotAllowed {
@@ -54,7 +55,7 @@ func TestHandleSummarizeSegment_MissingID(t *testing.T) {
 
 	srv := newTestServerWithSummaryService(t, mockSrv.URL)
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments//summarize", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments//summarize", nil)
 	srv.handleSummarizeSegment(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
@@ -68,7 +69,7 @@ func TestHandleGetSummary_NotFound(t *testing.T) {
 
 	srv := newTestServerWithSummaryService(t, mockSrv.URL)
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/nonexistent/summary", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/nonexistent/summary", nil)
 	srv.handleGetSummary(rec, req)
 
 	if rec.Code != http.StatusNotFound {
@@ -82,7 +83,7 @@ func TestHandleListSummaries_Empty(t *testing.T) {
 
 	srv := newTestServerWithSummaryService(t, mockSrv.URL)
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/summaries", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/summaries", nil)
 	srv.handleListSummaries(rec, req)
 
 	if rec.Code != http.StatusOK {

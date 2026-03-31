@@ -282,7 +282,7 @@ func TestSSEHandler_MethodNotAllowed(t *testing.T) {
 	defer bus.Close()
 	handler := NewSSEHandler(bus)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/tasks/events/stream", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/tasks/events/stream", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 

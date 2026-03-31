@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,7 +32,7 @@ func TestHandleTaskStats_Success(t *testing.T) {
 	srv.statsService = service.NewStatsService(gormDB)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/tasks/stats", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tasks/stats", nil)
 	srv.handleTaskStats(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -48,7 +49,7 @@ func TestHandleTaskStats_WithDaysParam(t *testing.T) {
 	srv.statsService = service.NewStatsService(gormDB)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/tasks/stats?days=30", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tasks/stats?days=30", nil)
 	srv.handleTaskStats(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -65,7 +66,7 @@ func TestHandleTaskStats_InvalidDaysParam(t *testing.T) {
 	srv.statsService = service.NewStatsService(gormDB)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/tasks/stats?days=notanumber", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tasks/stats?days=notanumber", nil)
 	srv.handleTaskStats(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -82,7 +83,7 @@ func TestHandleTaskStats_NegativeDays(t *testing.T) {
 	srv.statsService = service.NewStatsService(gormDB)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/tasks/stats?days=-5", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tasks/stats?days=-5", nil)
 	srv.handleTaskStats(rec, req)
 
 	// Negative days falls back to default (7), should succeed.
@@ -101,7 +102,7 @@ func TestHandleSummarizeSegment_MissingSegmentID_WithService(t *testing.T) {
 	srv.summaryService = svc
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments//summarize", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments//summarize", nil)
 	srv.handleSummarizeSegment(rec, req)
 
 	if rec.Code != http.StatusBadRequest {

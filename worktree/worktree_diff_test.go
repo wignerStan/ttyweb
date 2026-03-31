@@ -188,7 +188,7 @@ func TestSnapshot_GetWorktreeDiff_DeletedFile(t *testing.T) {
 
 func TestSnapshot_GetWorktreeDiff_MixedChanges(t *testing.T) {
 	repo := initGoGitRepo(t, map[string]string{
-		"staged.txt":  "original\n",
+		"staged.txt":   "original\n",
 		"modified.txt": "original\n",
 		"deleted.txt":  "to be deleted\n",
 	})

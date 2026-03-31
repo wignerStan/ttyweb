@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,7 @@ import (
 func TestGolden_Summarize_ServiceUnavailable(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments/seg-001/summarize", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments/seg-001/summarize", nil)
 	srv.handleSummarizeSegment(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -22,7 +23,7 @@ func TestGolden_Summarize_ServiceUnavailable(t *testing.T) {
 func TestGolden_Summarize_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/seg-001/summarize", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/seg-001/summarize", nil)
 	srv.handleSummarizeSegment(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -37,7 +38,7 @@ func TestGolden_Summarize_MissingSegmentID(t *testing.T) {
 	srv.summaryService = service.NewSummaryService(gormDB, nil)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments//summarize", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments//summarize", nil)
 	srv.handleSummarizeSegment(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -52,7 +53,7 @@ func TestGolden_Summarize_SegmentNotFound(t *testing.T) {
 	srv.summaryService = service.NewSummaryService(gormDB, nil)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments/nonexistent/summarize", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments/nonexistent/summarize", nil)
 	srv.handleSummarizeSegment(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -61,7 +62,7 @@ func TestGolden_Summarize_SegmentNotFound(t *testing.T) {
 func TestGolden_GetSummary_ServiceUnavailable(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/seg-001/summary", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/seg-001/summary", nil)
 	srv.handleGetSummary(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -70,7 +71,7 @@ func TestGolden_GetSummary_ServiceUnavailable(t *testing.T) {
 func TestGolden_GetSummary_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments/seg-001/summary", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments/seg-001/summary", nil)
 	srv.handleGetSummary(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -85,7 +86,7 @@ func TestGolden_GetSummary_NotFound(t *testing.T) {
 	srv.summaryService = service.NewSummaryService(gormDB, nil)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/nonexistent/summary", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/nonexistent/summary", nil)
 	srv.handleGetSummary(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -94,7 +95,7 @@ func TestGolden_GetSummary_NotFound(t *testing.T) {
 func TestGolden_ListSummaries_ServiceUnavailable(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/summaries", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/summaries", nil)
 	srv.handleListSummaries(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -103,7 +104,7 @@ func TestGolden_ListSummaries_ServiceUnavailable(t *testing.T) {
 func TestGolden_ListSummaries_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments/summaries", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments/summaries", nil)
 	srv.handleListSummaries(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -118,7 +119,7 @@ func TestGolden_ListSummaries_Empty(t *testing.T) {
 	srv.summaryService = service.NewSummaryService(gormDB, nil)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/summaries", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/summaries", nil)
 	srv.handleListSummaries(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())
@@ -156,7 +157,7 @@ func TestGolden_ListSummaries_WithData(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments/summaries", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments/summaries", nil)
 	srv.handleListSummaries(rec, req)
 
 	compareGolden(t, rec.Body.Bytes())

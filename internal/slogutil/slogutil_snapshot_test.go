@@ -2,7 +2,6 @@ package slogutil
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"flag"
 	"os"
@@ -100,21 +99,4 @@ func TestSnapshot_New_MultipleKeyTypes(t *testing.T) {
 	)
 
 	compareGoldenSlog(t, stripTimestamps(buf.Bytes()))
-}
-
-// parseLogLines parses the JSON array of log lines produced by captured output.
-func parseLogLines(raw []byte) []map[string]interface{} {
-	lines := bytes.Split(bytes.TrimSpace(raw), []byte{'\n'})
-	result := make([]map[string]interface{}, 0, len(lines))
-	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
-		var m map[string]interface{}
-		if err := json.Unmarshal(line, &m); err != nil {
-			continue
-		}
-		result = append(result, m)
-	}
-	return result
 }

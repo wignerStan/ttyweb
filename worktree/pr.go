@@ -137,7 +137,8 @@ func parseRepoSlug(remoteURL string) (string, error) {
 
 	var slug string
 
-	if strings.HasPrefix(remoteURL, "git@") {
+	switch {
+	case strings.HasPrefix(remoteURL, "git@"):
 		// SSH format: git@github.com:owner/repo
 		// Remove the git@ prefix and extract after the colon.
 		afterPrefix := strings.TrimPrefix(remoteURL, "git@")
@@ -146,7 +147,7 @@ func parseRepoSlug(remoteURL string) (string, error) {
 			return "", fmt.Errorf("invalid SSH remote URL: %s", remoteURL)
 		}
 		slug = afterPrefix[colonIdx+1:]
-	} else if strings.HasPrefix(remoteURL, "https://") || strings.HasPrefix(remoteURL, "http://") {
+	case strings.HasPrefix(remoteURL, "https://") || strings.HasPrefix(remoteURL, "http://"):
 		// HTTPS format: https://github.com/owner/repo
 		// Remove scheme, then take the path after the host.
 		withoutScheme := strings.TrimPrefix(strings.TrimPrefix(remoteURL, "https://"), "http://")
@@ -155,7 +156,7 @@ func parseRepoSlug(remoteURL string) (string, error) {
 			return "", fmt.Errorf("invalid HTTPS remote URL: %s", remoteURL)
 		}
 		slug = withoutScheme[slashIdx+1:]
-	} else {
+	default:
 		return "", fmt.Errorf("unrecognized remote URL format: %s", remoteURL)
 	}
 

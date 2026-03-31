@@ -111,7 +111,7 @@ func TestSummaryService_GenerateSummary(t *testing.T) {
 	cmd := &db.CommandRecord{
 		ID: "cmd-001", Year: 2026, Mon: 3,
 		SegmentID: "seg-001", Command: "go test ./auth/...",
-		ExitCode:  0, CmdTime: ptrTime(time.Now()),
+		ExitCode: 0, CmdTime: ptrTime(time.Now()),
 	}
 	if err := database.Create(cmd).Error; err != nil {
 		t.Fatalf("create command: %v", err)

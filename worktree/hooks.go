@@ -53,7 +53,7 @@ func RunHook(event HookEvent, repoPath string, ctx HookContext) error {
 		return nil
 	}
 
-	cmd := exec.Command(scriptPath)
+	cmd := exec.Command(scriptPath) //nolint:gosec,noctx // hook script execution
 	cmd.Env = append(os.Environ(), ctx.EnvVars()...)
 	cmd.Dir = repoPath
 

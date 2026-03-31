@@ -18,7 +18,7 @@ func TestHandleFSList_NotFound(t *testing.T) {
 	registerFSRoot("/tmp")
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/fs?path=/tmp/nonexistent_dir_xyz", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/fs?path=/tmp/nonexistent_dir_xyz", nil)
 	srv.handleFSList(rec, req)
 
 	if rec.Code != http.StatusNotFound {
@@ -39,7 +39,7 @@ func TestHandleFSList_Forbidden(t *testing.T) {
 	}()
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/fs?path=/tmp", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/fs?path=/tmp", nil)
 	srv.handleFSList(rec, req)
 
 	if rec.Code != http.StatusForbidden {
@@ -51,7 +51,7 @@ func TestHandleFSList_PostMethod(t *testing.T) {
 	srv := &Server{options: &Options{Path: "/"}}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/fs", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/fs", nil)
 	srv.handleFSList(rec, req)
 
 	if rec.Code != http.StatusMethodNotAllowed {
@@ -65,7 +65,7 @@ func TestHandleFSList_Success(t *testing.T) {
 	registerFSRoot(dir)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/fs?path="+dir, nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/fs?path="+dir, nil)
 	srv.handleFSList(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -180,7 +180,7 @@ func TestHandleGetSummary_MethodNotAllowed_Gap(t *testing.T) {
 	srv := newTestServerWithSummaryService(t, mockSrv.URL)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments/seg-1/summary", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments/seg-1/summary", nil)
 	srv.handleGetSummary(rec, req)
 
 	if rec.Code != http.StatusMethodNotAllowed {
@@ -194,7 +194,7 @@ func TestHandleGetSummary_MissingID_Gap(t *testing.T) {
 	srv := newTestServerWithSummaryService(t, mockSrv.URL)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/segments//summary", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/segments//summary", nil)
 	srv.handleGetSummary(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
@@ -208,7 +208,7 @@ func TestHandleListSummaries_MethodNotAllowed_Gap(t *testing.T) {
 	srv := newTestServerWithSummaryService(t, mockSrv.URL)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/segments/summaries", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/segments/summaries", nil)
 	srv.handleListSummaries(rec, req)
 
 	if rec.Code != http.StatusMethodNotAllowed {
@@ -234,7 +234,7 @@ func TestRemoveChannel_NotFound(t *testing.T) {
 func TestHandleIndex_Gap(t *testing.T) {
 	srv := &Server{}
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	srv.handleIndex(rec, req)
 
 	ct := rec.Header().Get("Content-Type")
@@ -248,7 +248,7 @@ func TestHandleIndex_Gap(t *testing.T) {
 func TestHandleVersion_Handler_Gap(t *testing.T) {
 	srv := &Server{options: &Options{Path: "/"}}
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/version", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/version", nil)
 	srv.handleVersion(rec, req)
 
 	if rec.Code != http.StatusOK {

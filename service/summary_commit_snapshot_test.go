@@ -28,7 +28,7 @@ func compareSummaryCommitGolden(t *testing.T, got []byte) {
 			t.Fatalf("write golden file: %v", err)
 		}
 	}
-	want, err := os.ReadFile(golden)
+	want, err := os.ReadFile(golden) //nolint:gosec // test file from t.TempDir()
 	if err != nil {
 		t.Fatalf("read golden file: %v", err)
 	}

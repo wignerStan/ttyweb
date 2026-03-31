@@ -38,7 +38,7 @@ func TestHandleAIStream_NoReachableAPI(t *testing.T) {
 	defer httpSrv.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(httpSrv.URL, "http")
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil) //nolint:bodycheck // websocket dialer consumes response body
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestHandleAIStream_BadJSON(t *testing.T) {
 	defer httpSrv.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(httpSrv.URL, "http")
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil) //nolint:bodycheck // websocket dialer consumes response body
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil) //nolint:bodyclose // websocket dialer consumes response body
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestHandleAIStream_EmptyPrompt(t *testing.T) {
 	defer httpSrv.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(httpSrv.URL, "http")
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil) //nolint:bodycheck // websocket dialer consumes response body
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil) //nolint:bodyclose // websocket dialer consumes response body
 	if err != nil {
 		t.Fatalf("dial websocket: %v", err)
 	}

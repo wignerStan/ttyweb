@@ -42,7 +42,7 @@ func TestSnapshot_IsAncestorOf_SameCommit(t *testing.T) {
 		t.Error("a commit should be its own ancestor")
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"hash":        head.Hash().String(),
 		"is_ancestor": ok,
 	}
@@ -76,7 +76,7 @@ func TestSnapshot_IsAncestorOf_DifferentCommits(t *testing.T) {
 		t.Fatalf("isAncestorOf: %v", err)
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"ancestor_hash":   mainRef.Hash().String(),
 		"descendant_hash": featureRef.Hash().String(),
 		"is_ancestor":     ok,

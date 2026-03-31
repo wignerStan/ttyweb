@@ -24,7 +24,7 @@ func TestSnapshot_CheckoutPRBranch_NotARepo(t *testing.T) {
 		t.Fatal("expected error for non-repo path")
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"error": sanitizeTempPath(err.Error()),
 	}
 	data, _ := json.MarshalIndent(result, "", "  ")
@@ -41,7 +41,7 @@ func TestSnapshot_CheckoutPRBranch_InvalidBranchName(t *testing.T) {
 		t.Fatal("expected error for invalid branch name")
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"error": err.Error(),
 	}
 	data, _ := json.MarshalIndent(result, "", "  ")
@@ -72,7 +72,7 @@ func TestSnapshot_CheckoutPRBranch_EmptyFields(t *testing.T) {
 				t.Fatal("expected error")
 			}
 
-			result := map[string]interface{}{
+			result := map[string]any{
 				"error": err.Error(),
 			}
 			data, _ := json.MarshalIndent(result, "", "  ")
@@ -91,7 +91,7 @@ func TestSnapshot_CheckoutPRBranch_FetchFailure(t *testing.T) {
 		t.Fatal("expected error when repo has no remote origin")
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"error": sanitizeTempPath(err.Error()),
 	}
 	data, _ := json.MarshalIndent(result, "", "  ")

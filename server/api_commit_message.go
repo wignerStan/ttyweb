@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"ttyweb/config"
 	"ttyweb/service"
 	"ttyweb/worktree"
@@ -64,7 +66,7 @@ func handleAICommitMessage(w http.ResponseWriter, r *http.Request, projectID, wo
 func findWorktreeRecord(ctx context.Context, projectID, worktreeID string) (*service.WorktreeRecord, error) {
 	worktrees, err := wtService.ListWorktrees(ctx, projectID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "list worktrees")
 	}
 	for i := range worktrees {
 		if worktrees[i].ID == worktreeID {

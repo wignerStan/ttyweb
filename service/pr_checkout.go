@@ -22,6 +22,7 @@ func NewPRCheckoutService() *PRCheckoutService {
 // and creates a local worktree for the PR branch.
 // Returns the absolute path of the created worktree.
 func (s *PRCheckoutService) CheckoutPR(ctx context.Context, repoPath, repoSlug string, prNumber int, githubToken string) (string, error) {
+	_ = s
 	if err := validateCheckoutInputs(repoPath, prNumber, githubToken); err != nil {
 		return "", err
 	}

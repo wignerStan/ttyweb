@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pkg/errors"
 	"ttyweb/ai"
 	"ttyweb/webtty"
+
+	"github.com/pkg/errors"
 )
 
 // mockTitleInterceptor is a test OutputInterceptor that returns predefined metadata.

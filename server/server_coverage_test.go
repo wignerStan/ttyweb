@@ -95,11 +95,11 @@ func TestLogListenURLs_Combos(t *testing.T) {
 			srv := &Server{options: &tc.opts}
 
 			// Create a listener on a random port.
-			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			listener, err := net.Listen("tcp", "127.0.0.1:0") //nolint:noctx // test listener
 			if err != nil {
 				t.Fatalf("listen: %v", err)
 			}
-			defer listener.Close()
+			defer listener.Close() //nolint:errcheck // test cleanup
 
 			srv.logListenURLs(listener, "/") // Just verify no panic.
 		})

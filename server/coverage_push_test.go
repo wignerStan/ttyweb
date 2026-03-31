@@ -188,7 +188,7 @@ func TestHandleGetSummary_MethodNotAllowed_WithService(t *testing.T) {
 	gormDB, _ := db.GetDB()
 	svc := service.NewSummaryService(gormDB, nil)
 	srv := &Server{
-		options:         &Options{Path: "/"},
+		options:        &Options{Path: "/"},
 		summaryService: svc,
 	}
 	rec := httptest.NewRecorder()
@@ -204,7 +204,7 @@ func TestHandleGetSummary_MissingSegmentID(t *testing.T) {
 	gormDB, _ := db.GetDB()
 	svc := service.NewSummaryService(gormDB, nil)
 	srv := &Server{
-		options:         &Options{Path: "/"},
+		options:        &Options{Path: "/"},
 		summaryService: svc,
 	}
 	rec := httptest.NewRecorder()
@@ -231,7 +231,7 @@ func TestHandleListSummaries_MethodNotAllowed_WithService(t *testing.T) {
 	gormDB, _ := db.GetDB()
 	svc := service.NewSummaryService(gormDB, nil)
 	srv := &Server{
-		options:         &Options{Path: "/"},
+		options:        &Options{Path: "/"},
 		summaryService: svc,
 	}
 	rec := httptest.NewRecorder()

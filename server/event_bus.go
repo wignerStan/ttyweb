@@ -25,8 +25,8 @@ type BusEvent struct {
 // Publishing is non-blocking: if a subscriber's buffer is full, the event is dropped.
 type TaskEventBus struct {
 	mu         sync.RWMutex
-	paneSubs   map[string][]chan BusEvent  // paneKey -> subscriber channels
-	globalSubs []chan BusEvent              // global subscriber channels
+	paneSubs   map[string][]chan BusEvent // paneKey -> subscriber channels
+	globalSubs []chan BusEvent            // global subscriber channels
 	closed     bool
 }
 

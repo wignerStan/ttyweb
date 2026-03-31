@@ -1,10 +1,12 @@
 package server
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // TestDefaultOriginChecker tests all branches of defaultOriginChecker.
@@ -28,7 +30,7 @@ func TestDefaultOriginChecker(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			req := httptest.NewRequest("GET", "/ws", nil)
+			req := httptest.NewRequestWithContext(context.Background(), "GET", "/ws", nil)
 			req.Host = tc.host
 			if tc.origin != "" {
 				req.Header.Set("Origin", tc.origin)
@@ -45,7 +47,7 @@ func TestDefaultOriginChecker(t *testing.T) {
 func TestHandleIndexHandler(t *testing.T) {
 	t.Parallel()
 	srv := &Server{}
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	srv.handleIndex(w, req)
 
@@ -89,17 +91,17 @@ func TestServeBackground_NonTLS(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := net.Listen("tcp", "127.0.0.1:0") //nolint:noctx // test listener
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = ln.Close() })
 
-	go srv.serveBackground(&http.Server{Handler: handler}, ln)
+	go srv.serveBackground(&http.Server{Handler: handler, ReadHeaderTimeout: 1 * time.Second}, ln)
 
 	// Make a request to ensure it's running.
 	client := &http.Client{}
-	resp, err := client.Get("http://" + ln.Addr().String() + "/")
+	resp, err := client.Get("http://" + ln.Addr().String() + "/") //nolint:noctx // test request
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
 	}
@@ -122,13 +124,13 @@ func TestServeBackground_TLSError(t *testing.T) {
 		srvErrCh: make(chan error, 1),
 	}
 
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := net.Listen("tcp", "127.0.0.1:0") //nolint:noctx // test listener
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = ln.Close() })
 
-	go srv.serveBackground(&http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})}, ln)
+	go srv.serveBackground(&http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), ReadHeaderTimeout: 1 * time.Second}, ln)
 
 	// Wait for the error from the background goroutine.
 	select {

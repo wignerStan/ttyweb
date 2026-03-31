@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,13 +11,13 @@ import (
 )
 
 func TestSwaggerDocsHandler_IndexHTML(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/docs/index.html", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/docs/index.html", nil)
 	rec := httptest.NewRecorder()
 
 	handleSwaggerDocs(rec, req)
 
 	resp := rec.Result()
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // test cleanup
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status 200, got %d", resp.StatusCode)

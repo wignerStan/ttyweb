@@ -19,7 +19,7 @@ import (
 func TestHandleVersion_Success(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/version", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/version", nil)
 	srv.handleVersion(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -85,11 +85,11 @@ func TestSanitizeStreamError(t *testing.T) {
 func TestWebttyOptions_AllEnabled(t *testing.T) {
 	srv := &Server{
 		options: &Options{
-			PermitWrite:    true,
+			PermitWrite:     true,
 			EnableReconnect: true,
-			ReconnectTime:  5,
-			Width:          120,
-			Height:         40,
+			ReconnectTime:   5,
+			Width:           120,
+			Height:          40,
 		},
 	}
 	opts := srv.webttyOptions([]byte("title"))
@@ -175,7 +175,7 @@ func TestDeleteProject_Success_Final(t *testing.T) {
 func TestHandleAICleanupSessions_MethodNotAllowed_Final(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/ai/sessions/cleanup", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions/cleanup", nil)
 	srv.handleAICleanupSessions(rec, req)
 
 	if rec.Code != http.StatusMethodNotAllowed {
@@ -186,7 +186,7 @@ func TestHandleAICleanupSessions_MethodNotAllowed_Final(t *testing.T) {
 func TestHandleAISessionSubroute_InvalidID(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/ai/sessions/not-a-number", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions/not-a-number", nil)
 	srv.handleAISessionSubroute(rec, req, "not-a-number")
 
 	if rec.Code != http.StatusBadRequest {
@@ -197,7 +197,7 @@ func TestHandleAISessionSubroute_InvalidID(t *testing.T) {
 func TestHandleAISessionSubroute_UnknownRoute(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/ai/sessions/1/unknown", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions/1/unknown", nil)
 	srv.handleAISessionSubroute(rec, req, "1/unknown")
 
 	if rec.Code != http.StatusNotFound {
@@ -208,7 +208,7 @@ func TestHandleAISessionSubroute_UnknownRoute(t *testing.T) {
 func TestAISessionDetail_MethodNotAllowed_Final(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/sessions/1", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/sessions/1", nil)
 	srv.aiSessionDetail(rec, req, 1)
 
 	if rec.Code != http.StatusMethodNotAllowed {
@@ -219,7 +219,7 @@ func TestAISessionDetail_MethodNotAllowed_Final(t *testing.T) {
 func TestAISessionDetail_NotFound_Final(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/ai/sessions/99999", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions/99999", nil)
 	srv.aiSessionDetail(rec, req, 99999)
 
 	if rec.Code != http.StatusNotFound {
@@ -230,7 +230,7 @@ func TestAISessionDetail_NotFound_Final(t *testing.T) {
 func TestAISessionConversationOrRefresh_MethodNotAllowed_Final(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/ai/sessions/1/conversation", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/ai/sessions/1/conversation", nil)
 	srv.aiSessionConversationOrRefresh(rec, req, 1, false)
 
 	if rec.Code != http.StatusMethodNotAllowed {
@@ -241,7 +241,7 @@ func TestAISessionConversationOrRefresh_MethodNotAllowed_Final(t *testing.T) {
 func TestAISessionConversationOrRefresh_NotFound_Final(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/ai/sessions/99999/conversation", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/ai/sessions/99999/conversation", nil)
 	srv.aiSessionConversationOrRefresh(rec, req, 99999, false)
 
 	if rec.Code != http.StatusNotFound {
@@ -254,7 +254,7 @@ func TestAISessionConversationOrRefresh_NotFound_Final(t *testing.T) {
 func TestHandleTaskStats_NoService_Final(t *testing.T) {
 	srv := newTestServer()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/tasks/stats", nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/tasks/stats", nil)
 	srv.handleTaskStats(rec, req)
 
 	if rec.Code != http.StatusServiceUnavailable {
@@ -312,7 +312,7 @@ func TestCheckForUpdatesURL_ServerError(t *testing.T) {
 func TestCheckForUpdatesURL_HasUpdate(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"tag_name": "v2.0.0",
 			"html_url": "https://github.com/owner/repo/releases/tag/v2.0.0",
 		})
@@ -334,7 +334,7 @@ func TestCheckForUpdatesURL_HasUpdate(t *testing.T) {
 func TestCheckForUpdatesURL_NoUpdate(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"tag_name": "v1.0.0",
 			"html_url": "https://github.com/owner/repo/releases/tag/v1.0.0",
 		})
@@ -358,7 +358,7 @@ func TestCheckForUpdatesURL_NoUpdate(t *testing.T) {
 
 func TestHandleWorktreeProjects_Post_EmptyPath(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/worktree/projects",
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/worktree/projects",
 		strings.NewReader(`{"path":""}`))
 	handleWorktreeProjects(rec, req)
 
@@ -369,7 +369,7 @@ func TestHandleWorktreeProjects_Post_EmptyPath(t *testing.T) {
 
 func TestHandleWorktreeProjects_Post_InvalidBody(t *testing.T) {
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/worktree/projects",
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/api/worktree/projects",
 		strings.NewReader("not json"))
 	handleWorktreeProjects(rec, req)
 
@@ -382,7 +382,7 @@ func TestHandleWorktreeProjects_Post_InvalidBody(t *testing.T) {
 
 func mustGitInit(t *testing.T, dir string) {
 	t.Helper()
-	cmd := exec.Command("git", "init", dir)
+	cmd := exec.Command("git", "init", dir) //nolint:gosec,noctx // test subprocess
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("git init: %v", err)
 	}

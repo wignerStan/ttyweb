@@ -24,7 +24,7 @@ func compareCacheGolden(t *testing.T, got []byte) {
 			t.Fatalf("write golden file: %v", err)
 		}
 	}
-	want, err := os.ReadFile(golden)
+	want, err := os.ReadFile(golden) //nolint:gosec // test file from t.TempDir()
 	if err != nil {
 		t.Fatalf("read golden file: %v", err)
 	}
@@ -79,7 +79,7 @@ func TestSnapshot_ScanAndCache_WithOldFiles(t *testing.T) {
 	oldTime := time.Now().Add(-48 * time.Hour)
 	for _, name := range []string{"session-a.jsonl", "session-b.jsonl", "readme.txt"} {
 		path := filepath.Join(dir, name)
-		content := fmt.Sprintf(`{"session":"%s"}`, name)
+		content := fmt.Sprintf(`{"session":%q}`, name)
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			t.Fatalf("write %s: %v", name, err)
 		}
