@@ -127,8 +127,7 @@ func (server *Server) handleAIStream(w http.ResponseWriter, r *http.Request) {
 
 // sanitizeStreamError returns a generic user-safe error message.
 // The full error is already logged server-side.
-func sanitizeStreamError(err error) string {
-	_ = err // logged at call site
+func sanitizeStreamError(_ error) string {
 	return "AI stream error"
 }
 

@@ -64,8 +64,6 @@ func isPathAllowed(path string) bool {
 // handleFSList handles GET /api/fs?path=<dir>.
 // It returns a JSON array of FSEntry objects for the requested directory.
 func (*Server) handleFSList(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

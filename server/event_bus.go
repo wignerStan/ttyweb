@@ -165,7 +165,7 @@ func NewSSEHandler(bus *TaskEventBus) *SSEHandler {
 // GET /api/tasks/events/stream for all events (global).
 func (h *SSEHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeAPIError(w, http.StatusMethodNotAllowed, "method not allowed")
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 

@@ -11,8 +11,6 @@ import (
 // handleSummarizeSegment handles POST /api/segments/{id}/summarize.
 // It generates an AI-powered summary for the given task segment.
 func (server *Server) handleSummarizeSegment(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -47,8 +45,6 @@ func (server *Server) handleSummarizeSegment(w http.ResponseWriter, r *http.Requ
 // handleGetSummary handles GET /api/segments/{id}/summary.
 // It returns the existing summary for a segment, or 404 if none exists.
 func (server *Server) handleGetSummary(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if server.summaryService == nil {
 		writeAPIError(w, http.StatusServiceUnavailable, "summary service not available")
 		return
@@ -82,8 +78,6 @@ func (server *Server) handleGetSummary(w http.ResponseWriter, r *http.Request) {
 // handleListSummaries handles GET /api/segments/summaries.
 // It returns all summaries ordered by most recent, limited to 100.
 func (server *Server) handleListSummaries(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if server.summaryService == nil {
 		writeAPIError(w, http.StatusServiceUnavailable, "summary service not available")
 		return

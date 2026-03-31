@@ -1,17 +1,21 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 )
+
+// taskStatsResponse is the response structure for GET /api/tasks/stats.
+type taskStatsResponse struct {
+	Stats            any `json:"stats"`
+	DailyCompletions any `json:"daily_completions"`
+	StatusBreakdown  any `json:"status_breakdown"`
+}
 
 // handleTaskStats handles GET /api/tasks/stats.
 // It returns aggregate task statistics including total counts, daily completions,
 // and a status breakdown.
 func (server *Server) handleTaskStats(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -48,21 +52,9 @@ func (server *Server) handleTaskStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type response struct {
-		Stats            any `json:"stats"`
-		DailyCompletions any `json:"daily_completions"`
-		StatusBreakdown  any `json:"status_breakdown"`
-	}
-
-	data, err := json.Marshal(response{
+	writeAPISuccess(w, taskStatsResponse{
 		Stats:            stats,
 		DailyCompletions: daily,
 		StatusBreakdown:  breakdown,
 	})
-	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "failed to marshal response")
-		return
-	}
-
-	writeAPISuccessRaw(w, data)
 }

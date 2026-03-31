@@ -20,19 +20,16 @@ func getAppVersion() VersionInfo {
 	goVer := "unknown"
 	if info != nil {
 		goVer = info.GoVersion
-	}
-	var commit string
-	if info != nil {
 		for _, s := range info.Settings {
 			if s.Key == "vcs.revision" {
 				if len(s.Value) >= 8 {
-					commit = s.Value[:8]
+					return VersionInfo{Version: appVersion, GoVersion: goVer, Commit: s.Value[:8]}
 				}
 				break
 			}
 		}
 	}
-	return VersionInfo{Version: appVersion, GoVersion: goVer, Commit: commit}
+	return VersionInfo{Version: appVersion, GoVersion: goVer}
 }
 
 // handleVersion returns server version metadata.

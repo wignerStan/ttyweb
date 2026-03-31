@@ -18,8 +18,6 @@ func setupBranchRoutes(mux *http.ServeMux, apiPrefix string) {
 
 // handleBranches dispatches GET (list) and POST (create) on /api/branches?repo=<path>.
 func handleBranches(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	repoPath := r.URL.Query().Get("repo")
 	if strings.TrimSpace(repoPath) == "" {
 		writeAPIError(w, http.StatusBadRequest, "repo query parameter is required")
@@ -67,8 +65,6 @@ func handleBranches(w http.ResponseWriter, r *http.Request) {
 // handleBranchDetail dispatches DELETE (delete) and POST merge on
 // /api/branches/{name}?repo=<path> and /api/branches/merge?repo=<path>.
 func handleBranchDetail(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	// Extract the sub-path after /api/branches/.
 	suffix := strings.TrimPrefix(r.URL.Path, "/api/branches/")
 	suffix = strings.TrimPrefix(suffix, "branches/")

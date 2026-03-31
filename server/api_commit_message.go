@@ -17,8 +17,6 @@ var commitMsgService = service.NewCommitMessageService(config.Get())
 // handleAICommitMessage generates an AI-powered commit message for a worktree.
 // POST /api/worktree/projects/{projectID}/worktrees/{worktreeID}/ai-commit-message
 func handleAICommitMessage(w http.ResponseWriter, r *http.Request, projectID, worktreeID string) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

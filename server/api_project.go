@@ -12,8 +12,6 @@ import (
 
 // handleProjects handles GET (list) and POST (create) for projects.
 func (*Server) handleProjects(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	svc, err := projectService()
 	if err != nil {
 		log.Printf("failed to initialize project service: %v", err)
@@ -90,8 +88,6 @@ func writeProjectCreateError(w http.ResponseWriter, err error) {
 // handleProjectDetail handles GET, PUT, DELETE for a specific project,
 // as well as POST /api/projects/:id/sync.
 func (server *Server) handleProjectDetail(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	svc, err := projectService()
 	if err != nil {
 		log.Printf("failed to initialize project service: %v", err)

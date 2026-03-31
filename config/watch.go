@@ -52,11 +52,9 @@ func Watch(path string) (<-chan *Config, func(), error) {
 	go func() {
 		defer close(ch)
 		defer func() {
-			if closeErr := watcher.Close(); closeErr != nil {
-				// Watcher close errors are non-fatal and typically
-				// indicate the watcher was already closed.
-				_ = closeErr
-			}
+			// Watcher close errors are non-fatal and typically
+			// indicate the watcher was already closed.
+			_ = watcher.Close()
 		}()
 		runWatcherLoop(watcher, absPath, ch, done)
 	}()
