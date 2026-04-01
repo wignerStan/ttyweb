@@ -1,0 +1,49 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FileUpload snapshot > renders upload zone 1`] = `
+<div>
+  <div
+    class="file-upload"
+  >
+    <div
+      class="file-upload-zone"
+    >
+      <input
+        multiple=""
+        style="display: none;"
+        type="file"
+      />
+      <div
+        class="file-upload-status"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          height="20"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 3v12"
+          />
+          <path
+            d="m17 8-5-5-5 5"
+          />
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+        </svg>
+        <span>
+          Drop files or click to browse
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+`;

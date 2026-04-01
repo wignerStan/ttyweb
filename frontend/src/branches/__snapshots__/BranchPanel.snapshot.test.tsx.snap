@@ -1,0 +1,248 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BranchPanel snapshot > renders branch list with current, ahead/behind badges 1`] = `
+<div>
+  <div
+    class="branch-panel"
+  >
+    <div
+      class="branch-header"
+    >
+      <span
+        class="branch-title"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-git-branch"
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="14"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M15 6a9 9 0 0 0-9 9V3"
+          />
+          <circle
+            cx="18"
+            cy="6"
+            r="3"
+          />
+          <circle
+            cx="6"
+            cy="18"
+            r="3"
+          />
+        </svg>
+        Branches
+      </span>
+      <div
+        class="branch-header-actions"
+      >
+        <button
+          class="btn-icon"
+          title="Refresh"
+          type="button"
+        />
+        <button
+          class="branch-add-btn"
+          title="Create branch"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-plus"
+            fill="none"
+            height="14"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="14"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 12h14"
+            />
+            <path
+              d="M12 5v14"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div
+      class="branch-list"
+    >
+      <div
+        class="branch-item branch-item--current"
+      >
+        <div
+          class="branch-row"
+        >
+          <span
+            class="branch-name branch-name--current"
+            title="abc1234"
+          >
+            main
+          </span>
+          <span
+            class="branch-current-badge"
+          >
+            current
+          </span>
+          <div
+            class="branch-actions"
+          >
+            <span
+              class="branch-default-badge"
+              title="Default branch"
+            >
+              default
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="branch-item"
+      >
+        <div
+          class="branch-row"
+        >
+          <span
+            class="branch-name"
+            title="def5678"
+          >
+            feature/login
+          </span>
+          <span
+            class="branch-status"
+            title="3 ahead, 1 behind"
+          >
+            <span
+              class="branch-status-ahead"
+            >
+              ↑
+              3
+            </span>
+            <span
+              class="branch-status-behind"
+            >
+              ↓
+              1
+            </span>
+          </span>
+          <div
+            class="branch-actions"
+          >
+            <button
+              class="btn-icon btn-danger"
+              title="Delete feature/login"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-trash2 lucide-trash-2"
+                fill="none"
+                height="12"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="12"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10 11v6"
+                />
+                <path
+                  d="M14 11v6"
+                />
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+                />
+                <path
+                  d="M3 6h18"
+                />
+                <path
+                  d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div
+        class="branch-item"
+      >
+        <div
+          class="branch-row"
+        >
+          <span
+            class="branch-name"
+            title="ghi9012"
+          >
+            fix/header-bug
+          </span>
+          <span
+            class="branch-status"
+            title="0 ahead, 5 behind"
+          >
+            <span
+              class="branch-status-behind"
+            >
+              ↓
+              5
+            </span>
+          </span>
+          <div
+            class="branch-actions"
+          >
+            <button
+              class="btn-icon btn-danger"
+              title="Delete fix/header-bug"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-trash2 lucide-trash-2"
+                fill="none"
+                height="12"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="12"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10 11v6"
+                />
+                <path
+                  d="M14 11v6"
+                />
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+                />
+                <path
+                  d="M3 6h18"
+                />
+                <path
+                  d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

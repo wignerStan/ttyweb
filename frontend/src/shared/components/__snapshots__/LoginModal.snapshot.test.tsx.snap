@@ -1,0 +1,88 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LoginModal snapshot > renders login form 1`] = `
+<div>
+  <div
+    class="fixed inset-0 bg-base-100 flex items-center justify-center"
+  >
+    <form
+      class="w-full max-w-[360px] px-10 py-12 bg-base-200 border border-base-300 rounded-2xl shadow-lg"
+    >
+      <div
+        class="text-center mb-9"
+      >
+        <div
+          class="mb-3 flex items-center justify-center text-primary"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-terminal"
+            fill="none"
+            height="32"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="32"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 19h8"
+            />
+            <path
+              d="m4 17 6-6-6-6"
+            />
+          </svg>
+        </div>
+        <h1
+          class="text-2xl font-semibold text-base-content tracking-tight"
+        >
+          TmuxWeb
+        </h1>
+      </div>
+      <div
+        class="mb-6"
+      >
+        <label
+          class="block text-xs font-medium text-base-content/50 uppercase tracking-widest mb-2"
+          for="username"
+        >
+          Username
+        </label>
+        <input
+          class="input input-bordered w-full"
+          id="username"
+          placeholder="Username"
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        class="mb-6"
+      >
+        <label
+          class="block text-xs font-medium text-base-content/50 uppercase tracking-widest mb-2"
+          for="password"
+        >
+          Password
+        </label>
+        <input
+          class="input input-bordered w-full"
+          id="password"
+          placeholder="Password"
+          type="password"
+          value=""
+        />
+      </div>
+      <button
+        class="btn btn-primary w-full"
+        disabled=""
+        type="submit"
+      >
+        Sign In
+      </button>
+    </form>
+  </div>
+</div>
+`;

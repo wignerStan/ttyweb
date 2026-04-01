@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ProfileSelector snapshot > renders profile selector with current profile 1`] = `
+<div>
+  <div
+    class="relative flex-1"
+  >
+    <button
+      class="btn btn-ghost btn-sm flex items-center gap-2 flex-1 justify-between"
+      data-testid="profile-current"
+      type="button"
+    >
+      <span
+        class="flex-1 font-medium text-sm text-left"
+      >
+        Default
+      </span>
+      <span
+        class="text-base-content/50 flex items-center"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="14"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </span>
+    </button>
+  </div>
+</div>
+`;
