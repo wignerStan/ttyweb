@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AiRole } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import { RoleManagerModal } from './RoleManagerModal'
 
 const TEMPLATE_ROLE_ID = 'research-publish'
@@ -443,9 +443,7 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
 
   const fetchRoles = useCallback(async () => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/roles', { headers })
       if (res.ok) {
         const data = await res.json()
@@ -495,9 +493,10 @@ export function AiCommandTab({ onSend, disabled, initialText, onTextConsumed }: 
     async (prompt: string) => {
       setLoading(true)
       try {
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-        if (auth) headers.Authorization = auth
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        }
         const res = await fetch('/api/ai/command', {
           method: 'POST',
           headers,

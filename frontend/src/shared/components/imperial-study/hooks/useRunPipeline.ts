@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE } from '../constants'
 import type {
   ActivityEvent,
@@ -87,9 +87,8 @@ export function useRunPipeline() {
     let cancelled = false
     ;(async () => {
       try {
-        const authHeader = getAuthHeader()
         const res = await fetch(`${BUTLER_API_BASE}/dashboard/runs?limit=${MAX_RUNS}`, {
-          headers: authHeader ? { Authorization: authHeader } : undefined,
+          headers: getAuthHeaders(),
         })
         if (!res.ok || cancelled) return
         const json = await res.json()
@@ -126,9 +125,8 @@ export function useRunPipeline() {
       timerRef.current = setTimeout(async () => {
         try {
           const params = new URLSearchParams({ limit: '50' })
-          const authHeader = getAuthHeader()
           const res = await fetch(`${BUTLER_API_BASE}/activity_events?${params}`, {
-            headers: authHeader ? { Authorization: authHeader } : undefined,
+            headers: getAuthHeaders(),
           })
           if (!res.ok) return
           const json = await res.json()

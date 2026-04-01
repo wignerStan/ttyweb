@@ -2,7 +2,7 @@
 
 import { Copy, Pause, Power, Terminal } from 'lucide-react'
 import { useEffect, useRef } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE } from '../constants'
 
 interface WorkerContextMenuProps {
@@ -13,11 +13,9 @@ interface WorkerContextMenuProps {
   onClose: () => void
 }
 
-function authHeaders(contentType?: string): Record<string, string> {
-  const authHeader = getAuthHeader()
-  const headers: Record<string, string> = {}
+function buildHeaders(contentType?: string): Record<string, string> {
+  const headers: Record<string, string> = { ...getAuthHeaders() }
   if (contentType) headers['Content-Type'] = contentType
-  if (authHeader) headers.Authorization = authHeader
   return headers
 }
 
@@ -58,7 +56,7 @@ export function WorkerContextMenu({ x, y, workerId, paneTarget, onClose }: Worke
       case 'pause':
         fetch(`${BUTLER_API_BASE}/worker_sessions/${workerId}`, {
           method: 'PUT',
-          headers: authHeaders('application/json'),
+          headers: buildHeaders('application/json'),
           body: JSON.stringify({ state: 'paused' }),
         }).catch((_err) => {})
         break
@@ -66,7 +64,7 @@ export function WorkerContextMenu({ x, y, workerId, paneTarget, onClose }: Worke
         if (!confirm('Kill this worker?')) return
         fetch(`${BUTLER_API_BASE}/worker_sessions/${workerId}`, {
           method: 'DELETE',
-          headers: authHeaders(),
+          headers: buildHeaders(),
         }).catch((_err) => {})
         break
     }

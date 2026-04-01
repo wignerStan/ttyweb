@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE } from '../constants'
 import type { TaskEventDetail, TaskRunDetail } from '../types'
 
@@ -15,9 +15,7 @@ export function useRunDetail(runId: string | null) {
 
   const fetchDetail = useCallback(async (id: string, signal: AbortSignal) => {
     try {
-      const authHeader = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (authHeader) headers.Authorization = authHeader
+      const headers = getAuthHeaders()
       const [runRes, eventsRes] = await Promise.all([
         fetch(`${BUTLER_API_BASE}/runs/${id}`, { signal, headers }),
         fetch(`${BUTLER_API_BASE}/runs/${id}/events`, { signal, headers }),

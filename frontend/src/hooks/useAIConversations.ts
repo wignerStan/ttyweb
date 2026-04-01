@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AiConversation } from '../types'
-import { getAuthHeader } from '../utils/auth'
+import { getAuthHeader, getAuthHeaders } from '../utils/auth'
 
 export function useAIConversations(paneKey: string | null) {
   const [conversations, setConversations] = useState<AiConversation[]>([])
@@ -11,9 +11,8 @@ export function useAIConversations(paneKey: string | null) {
     if (!paneKey) return
     setLoading(true)
     try {
-      const authHeader = getAuthHeader()
       const res = await fetch(`/api/tasks/events/${encodeURIComponent(paneKey)}`, {
-        headers: authHeader ? { Authorization: authHeader } : undefined,
+        headers: getAuthHeaders(),
       })
       const data = await res.json()
       setConversations(data.conversations || [])

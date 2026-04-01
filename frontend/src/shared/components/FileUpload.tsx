@@ -1,6 +1,6 @@
 import { Check, Copy, File, FileText, TerminalSquare, Upload, X } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import { formatSize } from '../../utils/format'
 
 interface UploadResult {
@@ -46,9 +46,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
           const file = fileArray[0]
           if (!file) return
           formData.append('file', file)
-          const auth = getAuthHeader()
-          const headers: Record<string, string> = {}
-          if (auth) headers.Authorization = auth
+          const headers = getAuthHeaders()
           const res = await fetch('/api/upload', {
             method: 'POST',
             headers,
@@ -63,9 +61,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
           onUploaded?.(data)
         } else {
           for (const f of fileArray) formData.append('files', f)
-          const auth = getAuthHeader()
-          const headers: Record<string, string> = {}
-          if (auth) headers.Authorization = auth
+          const headers = getAuthHeaders()
           const res = await fetch('/api/upload/multi', {
             method: 'POST',
             headers,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE } from '../constants'
 import type { ImperialStudy } from '../types'
 
@@ -15,9 +15,8 @@ export function useImperialStudies() {
   const refetch = useCallback(async () => {
     setLoading(true)
     try {
-      const authHeader = getAuthHeader()
       const res = await fetch(`${BUTLER_API_BASE}/imperial_studies?status=active`, {
-        headers: authHeader ? { Authorization: authHeader } : undefined,
+        headers: getAuthHeaders(),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json()

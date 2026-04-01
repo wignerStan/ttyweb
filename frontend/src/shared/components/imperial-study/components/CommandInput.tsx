@@ -2,7 +2,7 @@
 
 import { Loader2, Send } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { VoiceInput } from '../../VoiceInput'
 import { BUTLER_API_BASE } from '../constants'
 import type { RoutingInfo } from '../types'
@@ -77,12 +77,11 @@ export function CommandInput({
       if (paneTarget) {
         payload.params = { pane_target: paneTarget }
       }
-      const authHeader = getAuthHeader()
       const res = await fetch(`${BUTLER_API_BASE}/orchestrate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(authHeader ? { Authorization: authHeader } : {}),
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(payload),
       })

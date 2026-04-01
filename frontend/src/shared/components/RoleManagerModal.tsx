@@ -1,7 +1,7 @@
 import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import type { AiRole } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import './RoleManagerModal.css'
 
 interface RoleFormData {
@@ -43,9 +43,10 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
       try {
         const method = isCreating ? 'POST' : 'PUT'
         const url = isCreating ? '/api/roles' : `/api/roles/${form.id}`
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-        if (auth) headers.Authorization = auth
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        }
 
         const body: Record<string, string> = {
           name: form.label,
@@ -77,9 +78,7 @@ export function RoleManagerModal({ open, onClose, roles, onRolesChanged }: RoleM
   const handleDeleteRole = useCallback(
     async (id: string) => {
       try {
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = {}
-        if (auth) headers.Authorization = auth
+        const headers = getAuthHeaders()
         const res = await fetch(`/api/roles/${id}`, {
           method: 'DELETE',
           headers,

@@ -1,7 +1,7 @@
 import { CheckCircle2, Clock, Loader2, RefreshCw, TerminalSquare, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Task } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import { BUTTON_RESET } from '../styles'
 import './GlobalTaskOverview.css'
 
@@ -31,9 +31,7 @@ export function GlobalTaskOverview({
     setLoading(true)
     setError(null)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/tasks?limit=100', { headers })
       if (!res.ok) throw new Error('Failed to fetch tasks')
       const data = await res.json()

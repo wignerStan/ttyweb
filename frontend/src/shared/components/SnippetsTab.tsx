@@ -1,6 +1,6 @@
 import { Play, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 
 interface Snippet {
   name: string
@@ -20,9 +20,7 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
 
   const fetchSnippets = useCallback(async () => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/snippets', { headers })
       if (res.ok) {
         const data = await res.json()
@@ -40,9 +38,10 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
   const handleAdd = useCallback(async () => {
     if (!newName.trim() || !newCommand.trim()) return
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       const res = await fetch('/api/snippets', {
         method: 'POST',
         headers,
@@ -62,9 +61,7 @@ export function SnippetsTab({ onSend, disabled }: SnippetsTabProps) {
   const handleDelete = useCallback(
     async (index: number) => {
       try {
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = {}
-        if (auth) headers.Authorization = auth
+        const headers = getAuthHeaders()
         const res = await fetch(`/api/snippets?index=${index}`, {
           method: 'DELETE',
           headers,

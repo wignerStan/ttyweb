@@ -10,7 +10,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { memo, useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import { formatDuration } from '../../utils/format'
 import './TaskHistoryPanel.css'
 
@@ -62,9 +62,7 @@ export function TaskHistoryPanel({
     setLoading(true)
     try {
       const urlKey = paneKey.replace(/:/g, '/')
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/tasks/events/${encodeURIComponent(urlKey)}?limit=30`, {
         headers,
       })
@@ -92,9 +90,7 @@ export function TaskHistoryPanel({
         ),
       )
       try {
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = {}
-        if (auth) headers.Authorization = auth
+        const headers = getAuthHeaders()
         await fetch(`/api/tasks/conv/${id}/complete`, {
           method: 'PATCH',
           headers,

@@ -1,7 +1,7 @@
 import { ArrowRight, Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SessionGroup, TmuxSession } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import './GroupManager.css'
 
 interface Props {
@@ -22,9 +22,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
 
   const fetchGroups = useCallback(async () => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, {
         headers,
       })
@@ -47,9 +45,10 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     if (!newGroupName.trim() || loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       const res = await fetch('/api/groups', {
         method: 'POST',
         headers,
@@ -81,9 +80,10 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     if (!editName.trim() || loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       await fetch(`/api/groups/${id}`, {
         method: 'PUT',
         headers,
@@ -104,9 +104,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     if (!confirm(`Delete group "${group.group_name}"?`)) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       await fetch(`/api/groups/${id}`, {
         method: 'DELETE',
         headers,
@@ -122,9 +120,10 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
   const assignSessionToGroup = async (sessionName: string, groupId: number | null) => {
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       await fetch(`/api/sessions/${encodeURIComponent(sessionName)}/group`, {
         method: 'PUT',
         headers,

@@ -2,7 +2,7 @@ import { Bot, Briefcase, ChevronDown, ChevronRight, X } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAIConversations } from '../../hooks/useAIConversations'
 import type { AiConversation, PaneStatus, Task } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import { formatDuration, formatRelativeTime } from '../../utils/format'
 import { BUTTON_RESET } from '../styles'
 import { LogAccordion } from './LogAccordion'
@@ -102,9 +102,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     if (!paneKey) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/panes/${encodeURIComponent(paneKey)}/tasks`, {
         headers,
       })
@@ -119,9 +117,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
   const fetchStatus = useCallback(async () => {
     if (!paneKey || !profileKey) return
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(
         `/api/panes/status?profile_key=${encodeURIComponent(profileKey)}&paneKey=${encodeURIComponent(paneKey)}`,
         { headers },
@@ -143,9 +139,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
 
   const completeTask = async (taskId: number) => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       await fetch(`/api/tasks/${taskId}/complete`, {
         method: 'POST',
         headers,

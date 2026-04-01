@@ -38,7 +38,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PaneStatus, PaneStatusInfo, SessionGroup, TmuxSession } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import { NewTmuxButton } from './NewTmuxButton'
 import { StatusBadge } from './StatusBadge'
 import './TmuxTree.css'
@@ -63,9 +63,10 @@ async function renameWindow(
   newName: string,
 ): Promise<boolean> {
   try {
-    const auth = getAuthHeader()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (auth) headers.Authorization = auth
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    }
     const res = await fetch(
       `/api/tmux/windows/${encodeURIComponent(sessionName)}/${windowIndex}/rename`,
       {
@@ -101,9 +102,10 @@ interface TreeItem {
 }
 
 async function saveOrder(profileId: number, orderData: OrderData) {
-  const auth = getAuthHeader()
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (auth) headers.Authorization = auth
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...getAuthHeaders(),
+  }
   await fetch(`/api/profiles/${profileId}/order`, {
     method: 'PUT',
     headers,
@@ -117,9 +119,7 @@ async function fetchPaneStatuses(
 ): Promise<PaneStatusInfo[]> {
   if (!paneKeys.length) return []
   const encodedKeys = paneKeys.map((k) => encodeURIComponent(k)).join(',')
-  const auth = getAuthHeader()
-  const headers: Record<string, string> = {}
-  if (auth) headers.Authorization = auth
+  const headers = getAuthHeaders()
   const res = await fetch(
     `/api/panes/status?profile_key=${encodeURIComponent(profileKey)}&paneKeys=${encodedKeys}`,
     { headers },
@@ -132,9 +132,7 @@ async function fetchPaneStatuses(
 // Fetch per-pane AI task statuses from ai_conversation table
 async function fetchTaskPaneStatuses(): Promise<Record<string, PaneStatus>> {
   try {
-    const auth = getAuthHeader()
-    const headers: Record<string, string> = {}
-    if (auth) headers.Authorization = auth
+    const headers = getAuthHeaders()
     const res = await fetch('/api/tasks?limit=500', { headers })
     if (!res.ok) return {}
     const data = await res.json()
@@ -222,9 +220,10 @@ function QuickGroupMenu({
     if (loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       await fetch(`/api/sessions/${encodeURIComponent(sessionName)}/group`, {
         method: 'PUT',
         headers,
@@ -242,9 +241,10 @@ function QuickGroupMenu({
     if (!newName.trim() || loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       const res = await fetch('/api/groups', {
         method: 'POST',
         headers,
@@ -459,9 +459,10 @@ function SortableSession({
         return
       setRebuilding(true)
       try {
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-        if (auth) headers.Authorization = auth
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        }
         const res = await fetch(
           `/api/tmux/sessions/${encodeURIComponent(session.sessionName)}/rebuild`,
           {
@@ -825,9 +826,7 @@ export function TmuxTree({
       return
     }
 
-    const auth = getAuthHeader()
-    const headers: Record<string, string> = {}
-    if (auth) headers.Authorization = auth
+    const headers = getAuthHeaders()
     fetch(`/api/profiles/${profileId}/order`, { headers })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {

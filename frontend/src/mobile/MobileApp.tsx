@@ -8,7 +8,7 @@ import { TaskHistoryPanel } from '../shared/components/TaskHistoryPanel'
 import type { VoiceInputHandle } from '../shared/components/VoiceInput'
 import { BUTTON_RESET } from '../shared/styles'
 import type { OpenTab, Profile, SessionGroup, TmuxSession } from '../types'
-import { checkAuth, getAuthHeader, logout } from '../utils/auth'
+import { checkAuth, getAuthHeaders, logout } from '../utils/auth'
 import { MobileDrawer } from './MobileDrawer'
 import { MobileTerminal } from './MobileTerminal'
 import './mobile.css'
@@ -141,9 +141,7 @@ export default function MobileApp() {
     const seq = ++fetchSeqRef.current
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/tmux/tree', { headers })
       if (!res.ok) throw new Error('Failed to fetch tree')
       const data = await res.json()
@@ -176,9 +174,7 @@ export default function MobileApp() {
 
   const fetchGroups = useCallback(async (profileKey: string) => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, {
         headers,
       })

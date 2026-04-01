@@ -1,7 +1,7 @@
 import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Profile } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 import './ProfileSelector.css'
 
 interface Props {
@@ -22,9 +22,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
 
   const fetchProfiles = useCallback(async () => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/profiles', { headers })
       const data = await res.json()
       setProfiles(data.profiles || [])
@@ -65,9 +63,10 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-|-$/g, '') || `profile-${Date.now()}`
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       const res = await fetch('/api/profiles', {
         method: 'POST',
         headers,
@@ -96,9 +95,10 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     if (!currentProfile || !editName.trim() || loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       await fetch(`/api/profiles/${currentProfile.id}`, {
         method: 'PUT',
         headers,
@@ -121,9 +121,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     if (!confirm(`Delete profile "${currentProfile.name}"?`)) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       await fetch(`/api/profiles/${currentProfile.id}`, {
         method: 'DELETE',
         headers,
