@@ -13,7 +13,7 @@ describe('useTheme', () => {
     const { result } = renderHook(() => useTheme())
 
     expect(result.current.theme).toBe('dark')
-    expect(document.documentElement.getAttribute('data-theme')).toBeNull()
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
   })
 
   it('restores theme from localStorage', () => {
@@ -46,7 +46,7 @@ describe('useTheme', () => {
     })
 
     expect(result.current.theme).toBe('dark')
-    expect(document.documentElement.getAttribute('data-theme')).toBeNull()
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
     expect(localStorage.getItem('ttyweb-theme')).toBe('dark')
   })
 

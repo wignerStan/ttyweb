@@ -17,11 +17,7 @@ function readStoredTheme(): Theme {
 }
 
 function applyTheme(theme: Theme): void {
-  if (theme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light')
-  } else {
-    document.documentElement.removeAttribute('data-theme')
-  }
+  document.documentElement.setAttribute('data-theme', theme)
 }
 
 export function useTheme(): { theme: Theme; toggleTheme: () => void } {
