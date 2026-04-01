@@ -82,7 +82,7 @@ src/
 
 **WebSocket Protocol**: Base64-encoded messages matching the WebTTY protocol (see `webtty/CLAUDE.md`). Auto-reconnect handled at the connection level.
 
-**Styling**: Tokyo Night color scheme hardcoded in inline styles (no CSS framework). Monospace font stack: JetBrains Mono → Fira Code → Cascadia Code → monospace.
+**Styling**: Tailwind CSS v4 + DaisyUI v5. Tokyo Night color scheme via DaisyUI custom themes ("dark" default, "light"). Semantic design tokens in `app.css` @theme block. DaisyUI component classes (btn, input, select, modal, badge, etc.) used across UI. Monospace font stack: JetBrains Mono → Fira Code → Cascadia Code → monospace. Focus ring system, reduced-motion support, and 44px touch targets on mobile.
 
 **Mobile Route** (`/m`): Separate optimized layout with tab management, font size slider, voice input, shake detection, and keyboard toolbox.
 
