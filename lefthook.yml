@@ -4,13 +4,13 @@ pre-commit:
   commands:
     go-vet:
       tags: [go]
-      run: go vet ./...
+      run: . scripts/strip-git-env.sh && go vet ./...
     golangci-lint:
       tags: [go]
-      run: golangci-lint run ./...
+      run: . scripts/strip-git-env.sh && golangci-lint run ./...
     go-test-unit:
       tags: [go, test]
-      run: go test ./... -count=1 -short
+      run: . scripts/strip-git-env.sh && go test ./... -count=1 -short
     biome-check:
       tags: [frontend]
       run: cd frontend && bun run lint
@@ -24,10 +24,11 @@ pre-push:
   commands:
     go-test-race:
       tags: [go, test]
-      run: go test ./... -race -count=1
+      run: . scripts/strip-git-env.sh && go test ./... -race -count=1
     go-coverage-gate:
       tags: [go, coverage]
       run: |
+        . scripts/strip-git-env.sh
         go test ./... -coverprofile=cover.out -count=1
         # Exclude CLI entry point (needs full server) and Xunfei speech (needs external API)
         grep -v "main.go:" cover.out | grep -v "ws_speech.go:" > cover_filtered.out
