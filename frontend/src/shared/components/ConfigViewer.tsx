@@ -1,7 +1,6 @@
 import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
-import './ConfigViewer.css'
 
 interface ConfigFile {
   content: Record<string, unknown> | null
@@ -68,9 +67,9 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
 
   if (loading) {
     return (
-      <div className="config-viewer">
-        <div className="config-viewer-loading">
-          <Loader2 size={14} className="spinning" />
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex items-center justify-center gap-2 h-full text-[var(--zinc-500)] text-xs">
+          <Loader2 size={14} className="animate-spin" />
           <span>加载配置...</span>
         </div>
       </div>
@@ -79,8 +78,8 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
 
   if (error) {
     return (
-      <div className="config-viewer">
-        <div className="config-viewer-error">加载失败: {error}</div>
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="p-3 text-[var(--red-400)] text-xs">加载失败: {error}</div>
       </div>
     )
   }
@@ -89,13 +88,17 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
   const current = data?.[activeTab]
 
   return (
-    <div className="config-viewer">
-      <div className="config-viewer-tabs">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex gap-0.5 px-1 shrink-0 bg-[var(--zinc-900)] border-b border-[var(--zinc-800)]">
         {tabs.map((tab) => (
           <button
             type="button"
             key={tab}
-            className={`config-viewer-tab ${activeTab === tab ? 'active' : ''}`}
+            className={`flex-1 px-2 py-1.5 bg-transparent border-none border-b-2 border-transparent text-[11px] cursor-pointer transition-all duration-150 whitespace-nowrap overflow-hidden truncate ${
+              activeTab === tab
+                ? 'text-[var(--blue-500)] border-b-[var(--blue-500)]'
+                : 'text-[var(--zinc-500)] hover:text-[var(--zinc-300)]'
+            }`}
             onClick={() => setActiveTab(tab)}
           >
             {TAB_LABELS[tab]}
@@ -104,20 +107,29 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
       </div>
 
       {current?.path && (
-        <div className="config-viewer-source" title={current.path}>
+        <div
+          className="px-2 py-1 text-[10px] text-[var(--zinc-600)] bg-[var(--zinc-900)] border-b border-[var(--zinc-800)] shrink-0 whitespace-nowrap overflow-hidden truncate"
+          title={current.path}
+        >
           📂 {current.path}
         </div>
       )}
 
-      <div className="config-viewer-body">
+      <div className="flex-1 min-h-0 overflow-auto p-2 scrollbar-thin">
         {current?.missing ? (
-          <div className="config-viewer-empty">文件不存在</div>
+          <div className="flex items-center justify-center h-full text-[var(--zinc-600)] text-xs">
+            文件不存在
+          </div>
         ) : current?.error ? (
-          <div className="config-viewer-error">{current.error}</div>
+          <div className="p-3 text-[var(--red-400)] text-xs">{current.error}</div>
         ) : current?.content ? (
-          <pre>{JSON.stringify(current.content, null, 2)}</pre>
+          <pre className="m-0 font-mono text-[11px] leading-normal text-[var(--zinc-300)] whitespace-pre-wrap break-all">
+            {JSON.stringify(current.content, null, 2)}
+          </pre>
         ) : (
-          <div className="config-viewer-empty">无数据</div>
+          <div className="flex items-center justify-center h-full text-[var(--zinc-600)] text-xs">
+            无数据
+          </div>
         )}
       </div>
     </div>

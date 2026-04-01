@@ -41,7 +41,6 @@ import type { PaneStatus, PaneStatusInfo, SessionGroup, TmuxSession } from '../.
 import { getAuthHeader } from '../../utils/auth'
 import { NewTmuxButton } from './NewTmuxButton'
 import { StatusBadge } from './StatusBadge'
-import './TmuxTree.css'
 
 interface Props {
   sessions: TmuxSession[]

@@ -1,7 +1,6 @@
 import { Loader2, Mic, MicOff } from 'lucide-react'
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
-import './VoiceInput.css'
 
 interface Props {
   onText: (text: string) => void
@@ -17,6 +16,13 @@ export interface VoiceInputHandle {
 type Status = 'idle' | 'connecting' | 'recording' | 'processing'
 
 const CONNECT_TIMEOUT_MS = 10000
+
+const buttonStatusClasses: Record<Status, string> = {
+  idle: 'bg-[var(--zinc-800)] text-[var(--zinc-400)] hover:bg-[var(--zinc-700)] hover:text-[var(--zinc-200)]',
+  recording: 'bg-[var(--red-500)] text-white animate-pulse-ring',
+  connecting: 'bg-[var(--blue-600)] text-white',
+  processing: 'bg-[var(--blue-600)] text-white',
+}
 
 export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function VoiceInput(
   { onText, onPartial, disabled },
@@ -261,10 +267,10 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
   const isWorking = status === 'connecting' || status === 'processing'
 
   return (
-    <div className="voice-input">
+    <div className="relative flex items-center gap-2">
       <button
         type="button"
-        className={`voice-btn ${status}`}
+        className={`w-12 h-12 min-w-12 min-h-12 rounded-full border-none cursor-pointer flex items-center justify-center transition-all duration-150 shrink-0 select-none touch-manipulation disabled:cursor-not-allowed disabled:opacity-60 ${buttonStatusClasses[status]}`}
         onMouseDown={(e) => e.preventDefault()}
         onTouchStart={(e) => e.preventDefault()}
         onTouchEnd={(e) => {
@@ -277,24 +283,21 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
         }}
         disabled={disabled || isWorking}
         title={status === 'idle' ? '语音输入' : status === 'recording' ? '停止录音' : '处理中...'}
-        style={
-          {
-            touchAction: 'manipulation',
-            WebkitUserSelect: 'none',
-            userSelect: 'none',
-          } as React.CSSProperties
-        }
         tabIndex={-1}
       >
         {isWorking ? (
-          <Loader2 size={24} className="spin" />
+          <Loader2 size={24} className="animate-spin" />
         ) : status === 'recording' ? (
           <MicOff size={24} />
         ) : (
           <Mic size={24} />
         )}
       </button>
-      {partialText && <div className="voice-preview">{partialText}</div>}
+      {partialText && (
+        <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-2 bg-[var(--zinc-900)] border border-[var(--zinc-700)] rounded-lg text-[var(--zinc-300)] text-[13px] max-h-24 overflow-y-auto whitespace-pre-wrap break-words shadow-lg z-[100]">
+          {partialText}
+        </div>
+      )}
     </div>
   )
 })

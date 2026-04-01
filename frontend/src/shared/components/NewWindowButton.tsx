@@ -1,7 +1,6 @@
 import { FolderOpen, Plus, Terminal } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { useNewWindow } from '../../hooks/useNewWindow'
-import './NewWindowButton.css'
 
 interface NewWindowButtonProps {
   session: string

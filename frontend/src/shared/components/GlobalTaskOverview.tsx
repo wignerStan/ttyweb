@@ -2,7 +2,6 @@ import { CheckCircle2, Clock, Loader2, RefreshCw, TerminalSquare, XCircle } from
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
-import './GlobalTaskOverview.css'
 
 interface GlobalTaskOverviewProps {
   onSelectPane: (paneId: string, paneName: string) => void

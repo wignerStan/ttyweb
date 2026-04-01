@@ -7,18 +7,35 @@ const STATUSES: PaneStatus[] = ['idle', 'in_progress', 'done', 'failed', 'waitin
 
 describe('StatusBadge', () => {
   it('renders correct CSS class for each status', () => {
+    const statusColorMap: Record<PaneStatus, string> = {
+      idle: 'text-[var(--zinc-500)]',
+      in_progress: 'text-[var(--blue-500)]',
+      done: 'text-[var(--green-500)]',
+      failed: 'text-[var(--red-500)]',
+      waiting: 'text-[var(--yellow-500)]',
+    }
     for (const status of STATUSES) {
       const { container } = renderWithProviders(<StatusBadge status={status} />)
-      expect(container.firstChild).toHaveClass(`status-badge--${status}`)
+      expect(container.firstChild).toHaveClass(statusColorMap[status])
     }
   })
 
   it('renders correct icon class for each status', () => {
+    const iconColorMap: Record<PaneStatus, string> = {
+      idle: 'text-[var(--zinc-600)]',
+      in_progress: 'text-[var(--blue-500)]',
+      done: 'text-[var(--green-500)]',
+      failed: 'text-[var(--red-500)]',
+      waiting: 'text-[var(--yellow-500)]',
+    }
     for (const status of STATUSES) {
       const { container } = renderWithProviders(<StatusBadge status={status} />)
-      const icon = container.querySelector('.status-icon')
+      const icon = container.querySelector('.shrink-0')
       expect(icon).toBeInTheDocument()
-      expect(icon).toHaveClass(`status-icon--${status === 'in_progress' ? 'spinning' : status}`)
+      expect(icon).toHaveClass(iconColorMap[status])
+      if (status === 'in_progress') {
+        expect(icon).toHaveClass('animate-spin-slow')
+      }
     }
   })
 

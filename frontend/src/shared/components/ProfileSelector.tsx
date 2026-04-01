@@ -2,7 +2,6 @@ import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-r
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Profile } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
-import './ProfileSelector.css'
 
 interface Props {
   currentProfile: Profile | null
@@ -148,60 +147,45 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
   }
 
   return (
-    <div className="profile-selector" ref={dropdownRef}>
+    <div className="relative flex-1" ref={dropdownRef}>
       <button
         type="button"
-        className="profile-current"
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
-        }}
+        data-testid="profile-current"
+        className="btn btn-ghost btn-sm flex items-center gap-2 flex-1 justify-between"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="profile-name">{currentProfile?.name || 'Select Profile'}</span>
-        <span className="profile-chevron">
+        <span className="flex-1 font-medium text-sm text-left">
+          {currentProfile?.name || 'Select Profile'}
+        </span>
+        <span className="text-base-content/50 flex items-center">
           {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </span>
       </button>
 
       {isOpen && (
-        <div className="profile-dropdown">
-          <div className="profile-list">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-base-200 border border-base-300 rounded-box shadow-md z-[100] overflow-hidden">
+          <div className="max-h-[200px] overflow-y-auto">
             {profiles.map((profile) => (
               <button
                 key={profile.id}
                 type="button"
-                className={`profile-item ${profile.id === currentProfile?.id ? 'active' : ''}`}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'inherit',
-                }}
+                className={`profile-item flex items-center justify-between px-3.5 py-2.5 cursor-pointer text-sm transition-colors duration-100 ${profile.id === currentProfile?.id ? 'bg-primary/10 text-primary active' : 'text-base-content hover:bg-base-300'}`}
                 onClick={() => {
                   onProfileChange(profile)
                   setIsOpen(false)
                 }}
               >
                 <span>{profile.name}</span>
-                {profile.id === currentProfile?.id && <Check size={14} className="check" />}
+                {profile.id === currentProfile?.id && (
+                  <Check size={14} className="text-primary text-xs" />
+                )}
               </button>
             ))}
           </div>
 
-          <div className="profile-actions">
+          <div className="border-t border-base-300 p-2" data-testid="profile-actions">
             {isCreating ? (
-              <div className="profile-input-row">
+              <div className="flex gap-1.5">
                 <input
                   ref={inputRef}
                   type="text"
@@ -209,73 +193,89 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, createProfile)}
                   placeholder="Profile name..."
-                  className="profile-input"
+                  className="input input-bordered input-sm flex-1 text-sm"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={createProfile}
                   disabled={loading || !newName.trim()}
-                  className="btn-confirm"
+                  className="btn btn-primary btn-sm btn-square"
+                  data-testid="btn-confirm"
                 >
                   <Check size={14} />
                 </button>
-                <button type="button" onClick={() => setIsCreating(false)} className="btn-cancel">
+                <button
+                  type="button"
+                  onClick={() => setIsCreating(false)}
+                  className="btn btn-ghost btn-sm btn-square"
+                  data-testid="btn-cancel"
+                >
                   <X size={14} />
                 </button>
               </div>
             ) : (
-              <button type="button" className="profile-add-btn" onClick={() => setIsCreating(true)}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm w-full border border-dashed border-base-300"
+                onClick={() => setIsCreating(true)}
+              >
                 <Plus size={14} /> New Profile
               </button>
             )}
           </div>
 
           {currentProfile && (
-            <div className="profile-edit-section">
+            <div className="border-t border-base-300 p-2" data-testid="profile-edit-section">
               {isEditing ? (
-                <div className="profile-input-row">
+                <div className="flex gap-1.5">
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, updateProfile)}
                     placeholder="Rename profile..."
-                    className="profile-input"
+                    className="input input-bordered input-sm flex-1 text-sm"
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={updateProfile}
                     disabled={loading || !editName.trim()}
-                    className="btn-confirm"
+                    className="btn btn-primary btn-sm btn-square"
+                    data-testid="edit-confirm"
                   >
                     <Check size={14} />
                   </button>
-                  <button type="button" onClick={() => setIsEditing(false)} className="btn-cancel">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="btn btn-ghost btn-sm btn-square"
+                    data-testid="edit-cancel"
+                  >
                     <X size={14} />
                   </button>
                 </div>
               ) : (
-                <div className="profile-edit-actions">
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    className="btn-edit"
+                    className="btn btn-ghost btn-xs flex-1"
                     onClick={() => {
                       setEditName(currentProfile.name)
                       setIsEditing(true)
                     }}
                   >
-                    <Pencil size={12} style={{ marginRight: 4 }} /> Edit
+                    <Pencil size={12} className="mr-1" /> Edit
                   </button>
                   <button
                     type="button"
-                    className="btn-delete"
+                    className="btn btn-ghost btn-xs flex-1 text-error hover:bg-error/10"
                     onClick={deleteProfile}
                     disabled={profiles.length <= 1}
                     title={profiles.length <= 1 ? 'Cannot delete last profile' : ''}
                   >
-                    <Trash2 size={12} style={{ marginRight: 4 }} /> Delete
+                    <Trash2 size={12} className="mr-1" /> Delete
                   </button>
                 </div>
               )}

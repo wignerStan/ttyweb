@@ -50,16 +50,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggleTheme}
       title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-      style={{
-        background: 'none',
-        border: 'none',
-        color: 'var(--text-secondary)',
-        cursor: 'pointer',
-        padding: '4px 8px',
-        display: 'flex',
-        alignItems: 'center',
-        borderRadius: '2px',
-      }}
+      className="btn btn-ghost btn-xs btn-square text-base-content/75 hover:text-base-content"
     >
       {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
     </button>

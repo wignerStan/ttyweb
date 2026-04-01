@@ -43,7 +43,7 @@ describe('ProfileSelector', () => {
   it('opens and closes dropdown', async () => {
     renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     expect(screen.getByText('Dev')).toBeInTheDocument()
     await userEvent.click(screen.getByText('Dev'))
@@ -63,7 +63,7 @@ describe('ProfileSelector', () => {
       <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
     )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('Dev'))
     expect(onChange).toHaveBeenCalledWith(devProfile)
@@ -82,13 +82,13 @@ describe('ProfileSelector', () => {
       <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
     )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await waitFor(() => expect(screen.getByText('New Profile')).toBeInTheDocument())
     await userEvent.click(screen.getByText('New Profile'))
     const input = screen.getByPlaceholderText('Profile name...')
     await userEvent.type(input, 'New')
-    await userEvent.click(document.querySelector('.btn-confirm')!)
+    await userEvent.click(document.querySelector('[data-testid="btn-confirm"]')!)
     await waitFor(() => expect(onChange).toHaveBeenCalled())
   })
 
@@ -100,7 +100,7 @@ describe('ProfileSelector', () => {
       </div>,
     )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     expect(screen.getByText('Dev')).toBeInTheDocument()
     await userEvent.click(screen.getByTestId('outside'))
@@ -110,7 +110,7 @@ describe('ProfileSelector', () => {
   it('shows active check mark on current profile', async () => {
     renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     // Default appears in header and dropdown - use getAllByText and find the dropdown item
     const defaultItems = screen.getAllByText('Default')
@@ -127,7 +127,7 @@ describe('ProfileSelector', () => {
       <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
     )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await waitFor(() => expect(screen.getByText('Edit')).toBeInTheDocument())
     await userEvent.click(screen.getByText('Edit'))
@@ -135,8 +135,8 @@ describe('ProfileSelector', () => {
     await userEvent.clear(editInput)
     await userEvent.type(editInput, 'Renamed')
     // Click the confirm button in the edit section
-    const editSection = document.querySelector('.profile-edit-section')!
-    const confirmBtn = editSection.querySelector('.btn-confirm')!
+    const editSection = document.querySelector('[data-testid="profile-edit-section"]')!
+    const confirmBtn = editSection.querySelector('[data-testid="edit-confirm"]')!
     await userEvent.click(confirmBtn)
     await waitFor(() => expect(onChange).toHaveBeenCalled())
     const updated = onChange.mock.calls[0]![0] as Profile
@@ -151,7 +151,7 @@ describe('ProfileSelector', () => {
     const onChange = vi.fn()
     renderWithProviders(<ProfileSelector currentProfile={devProfile} onProfileChange={onChange} />)
     await waitFor(() => expect(screen.getByText('Dev')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await waitFor(() => expect(screen.getByText('Delete')).toBeInTheDocument())
     await userEvent.click(screen.getByText('Delete'))
@@ -164,7 +164,7 @@ describe('ProfileSelector', () => {
     vi.stubGlobal('fetch', mockFetchJSON({ profiles: singleProfile }))
     renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await waitFor(() => expect(screen.getByText('Delete')).toBeInTheDocument())
     const deleteBtn = screen.getByText('Delete').closest('button')!
@@ -176,7 +176,7 @@ describe('ProfileSelector', () => {
     const onChange = vi.fn()
     renderWithProviders(<ProfileSelector currentProfile={devProfile} onProfileChange={onChange} />)
     await waitFor(() => expect(screen.getByText('Dev')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('Delete'))
     expect(onChange).not.toHaveBeenCalled()
@@ -185,20 +185,22 @@ describe('ProfileSelector', () => {
   it('cancel creation closes the input', async () => {
     renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('New Profile'))
-    await userEvent.click(document.querySelector('.btn-cancel')!)
+    await userEvent.click(document.querySelector('[data-testid="btn-cancel"]')!)
     expect(screen.queryByPlaceholderText('Profile name...')).not.toBeInTheDocument()
   })
 
   it('create profile button is disabled when name is empty', async () => {
     renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('New Profile'))
-    const confirmBtn = document.querySelector('.profile-actions .btn-confirm') as HTMLButtonElement
+    const confirmBtn = document.querySelector(
+      '[data-testid="profile-actions"] [data-testid="btn-confirm"]',
+    ) as HTMLButtonElement
     expect(confirmBtn).toBeDisabled()
   })
 
@@ -208,10 +210,12 @@ describe('ProfileSelector', () => {
       <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
     )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('New Profile'))
-    const confirmBtn = document.querySelector('.profile-actions .btn-confirm') as HTMLButtonElement
+    const confirmBtn = document.querySelector(
+      '[data-testid="profile-actions"] [data-testid="btn-confirm"]',
+    ) as HTMLButtonElement
     await userEvent.click(confirmBtn)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -219,7 +223,7 @@ describe('ProfileSelector', () => {
   it('Escape key closes creation input', async () => {
     renderWithProviders(<ProfileSelector currentProfile={defaultProfile} onProfileChange={noop} />)
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('New Profile'))
     const input = screen.getByPlaceholderText('Profile name...')
@@ -240,7 +244,7 @@ describe('ProfileSelector', () => {
       <ProfileSelector currentProfile={defaultProfile} onProfileChange={onChange} />,
     )
     await waitFor(() => expect(screen.getByText('Default')).toBeInTheDocument())
-    const header = document.querySelector('.profile-current')!
+    const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('New Profile'))
     const input = screen.getByPlaceholderText('Profile name...')

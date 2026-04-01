@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
-import './TaskHistoryPanel.css'
 
 interface Conversation {
   id: number

@@ -1,7 +1,6 @@
 import { Terminal } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { login } from '../../utils/auth'
-import './LoginModal.css'
 
 interface Props {
   onLogin: () => void
@@ -27,17 +26,25 @@ export function LoginModal({ onLogin }: Props) {
   }
 
   return (
-    <div className="login-overlay">
-      <form className="login-modal" onSubmit={handleSubmit}>
-        <div className="login-header">
-          <div className="login-icon">
+    <div className="fixed inset-0 bg-base-100 flex items-center justify-center">
+      <form
+        className="w-full max-w-[360px] px-10 py-12 bg-base-200 border border-base-300 rounded-2xl shadow-lg"
+        onSubmit={handleSubmit}
+      >
+        <div className="text-center mb-9">
+          <div className="mb-3 flex items-center justify-center text-primary">
             <Terminal size={32} />
           </div>
-          <h1>TmuxWeb</h1>
+          <h1 className="text-2xl font-semibold text-base-content tracking-tight">TmuxWeb</h1>
         </div>
 
-        <div className="login-field">
-          <label htmlFor="username">Username</label>
+        <div className="mb-6">
+          <label
+            htmlFor="username"
+            className="block text-xs font-medium text-base-content/50 uppercase tracking-widest mb-2"
+          >
+            Username
+          </label>
           <input
             id="username"
             type="text"
@@ -45,11 +52,17 @@ export function LoginModal({ onLogin }: Props) {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
             disabled={loading}
+            className="input input-bordered w-full"
           />
         </div>
 
-        <div className="login-field">
-          <label htmlFor="password">Password</label>
+        <div className="mb-6">
+          <label
+            htmlFor="password"
+            className="block text-xs font-medium text-base-content/50 uppercase tracking-widest mb-2"
+          >
+            Password
+          </label>
           <input
             id="password"
             type="password"
@@ -57,12 +70,21 @@ export function LoginModal({ onLogin }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             disabled={loading}
+            className="input input-bordered w-full"
           />
         </div>
 
-        {error && <div className="login-error">{error}</div>}
+        {error && (
+          <div className="px-3.5 py-3 mb-5 text-sm text-error bg-error/10 border border-error/20 rounded-lg">
+            {error}
+          </div>
+        )}
 
-        <button type="submit" className="login-submit" disabled={loading || !username || !password}>
+        <button
+          type="submit"
+          disabled={loading || !username || !password}
+          className="btn btn-primary w-full"
+        >
           {loading ? 'Authenticating...' : 'Sign In'}
         </button>
       </form>

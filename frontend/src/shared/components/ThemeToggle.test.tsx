@@ -20,7 +20,7 @@ describe('ThemeToggle', () => {
     const user = userEvent.setup()
     render(<ThemeToggle />)
 
-    expect(document.documentElement.getAttribute('data-theme')).toBeNull()
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
 
     await user.click(screen.getByRole('button'))
 
