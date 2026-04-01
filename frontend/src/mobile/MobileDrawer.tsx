@@ -48,31 +48,48 @@ export function MobileDrawer({
   }
 
   return (
-    <aside className={`mobile-drawer ${open ? 'open' : ''}`}>
-      <div className="mobile-drawer-header">
-        <div className="mobile-drawer-actions" style={{ marginLeft: 0, flex: 1 }}>
+    <aside
+      className={`mobile-drawer fixed left-0 top-0 bottom-0 z-[var(--z-drawer)] flex w-[280px] flex-col overflow-hidden bg-base-200 transition-transform duration-[250ms] ease-out ${open ? 'open translate-x-0' : '-translate-x-full'}`}
+    >
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-base-200 px-3">
+        <div className="mobile-drawer-actions ml-0 flex flex-1 gap-1">
           <button
-            className="mobile-drawer-btn"
+            className="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
             onClick={() => setShowGroupManager(!showGroupManager)}
             type="button"
             title="Manage groups"
           >
             <Settings size={18} />
           </button>
-          <button className="mobile-drawer-btn" onClick={onRefresh} type="button" title="Refresh">
+          <button
+            className="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
+            onClick={onRefresh}
+            type="button"
+            title="Refresh"
+          >
             <RefreshCw size={18} />
           </button>
-          <button className="mobile-drawer-btn" onClick={onLogout} type="button" title="Sign out">
+          <button
+            className="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
+            onClick={onLogout}
+            type="button"
+            title="Sign out"
+          >
             <LogOut size={16} />
           </button>
-          <button className="mobile-drawer-btn" onClick={onClose} type="button" title="Close">
+          <button
+            className="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
+            onClick={onClose}
+            type="button"
+            title="Close"
+          >
             <X size={18} />
           </button>
         </div>
       </div>
 
-      <div className="mobile-drawer-content">
-        <div className="mobile-drawer-profile">
+      <div className="mobile-drawer-content flex-1 overflow-y-auto touch-scroll">
+        <div className="mobile-drawer-profile flex items-center gap-2 border-b border-base-200 px-3 py-2">
           <ProfileSelector currentProfile={currentProfile} onProfileChange={onProfileChange} />
         </div>
 
@@ -87,7 +104,7 @@ export function MobileDrawer({
           />
         )}
 
-        <div className="mobile-drawer-scrollable">
+        <div className="mobile-drawer-scrollable flex flex-1 flex-col overflow-y-auto">
           <TmuxTree
             sessions={sessions}
             groups={groups}

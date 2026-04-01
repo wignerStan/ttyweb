@@ -6,8 +6,6 @@ import { ConfigViewer } from '../shared/components/ConfigViewer'
 import { FileUpload } from '../shared/components/FileUpload'
 import { SnippetsTab } from '../shared/components/SnippetsTab'
 import { VoiceInput, type VoiceInputHandle } from '../shared/components/VoiceInput'
-import '../shared/components/file-upload.css'
-import './MobileToolbox.css'
 
 const preventFocus = (e: React.MouseEvent | React.TouchEvent) => {
   e.preventDefault()
@@ -120,13 +118,13 @@ export function MobileToolbox({
 
   if (keyboardMode) {
     return (
-      <div className="mobile-toolbox keyboard-mode">
-        <div className="toolbox-keys">
-          <div className="toolbox-key-row">
+      <div className="mobile-toolbox keyboard-mode flex flex-col overflow-hidden border-t border-base-200 bg-base-100 safe-area-b">
+        <div className="toolbox-keys shrink-0 border-b border-base-200">
+          <div className="toolbox-key-row flex min-h-[44px]">
             {keyRow1.map((k) => (
               <button
                 key={k.label}
-                className="toolbox-key"
+                className="toolbox-key btn btn-ghost min-h-[44px] min-w-[44px] flex-1 border-b border-r border-base-200 bg-base-300 px-0 py-0 font-mono text-xs text-base-content/75 cursor-pointer tap-none select-none"
                 onMouseDown={preventFocus}
                 onTouchStart={preventFocus}
                 onTouchEnd={(e) => {
@@ -134,19 +132,16 @@ export function MobileToolbox({
                   handleKey(k)
                 }}
                 type="button"
-                style={
-                  { touchAction: 'manipulation', WebkitUserSelect: 'none' } as React.CSSProperties
-                }
               >
                 {k.label}
               </button>
             ))}
           </div>
-          <div className="toolbox-key-row">
+          <div className="toolbox-key-row flex min-h-[44px]">
             {keyRow2.map((k) => (
               <button
                 key={k.label}
-                className={`toolbox-key ${k.modifier === 'ctrl' && ctrlActive ? 'active' : ''} ${k.modifier === 'alt' && altActive ? 'active' : ''}`}
+                className={`toolbox-key btn btn-ghost min-h-[44px] min-w-[44px] flex-1 border-b border-r border-base-200 bg-base-300 px-0 py-0 font-mono text-xs text-base-content/75 cursor-pointer tap-none select-none ${k.modifier === 'ctrl' && ctrlActive ? 'active bg-primary text-primary-content' : ''} ${k.modifier === 'alt' && altActive ? 'active bg-primary text-primary-content' : ''}`}
                 onMouseDown={preventFocus}
                 onTouchStart={preventFocus}
                 onTouchEnd={(e) => {
@@ -154,18 +149,15 @@ export function MobileToolbox({
                   handleKey(k)
                 }}
                 type="button"
-                style={
-                  { touchAction: 'manipulation', WebkitUserSelect: 'none' } as React.CSSProperties
-                }
               >
                 {k.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="keyboard-mode-bar">
+        <div className="keyboard-mode-bar flex h-11 items-center gap-2 border-t border-base-200 bg-base-300 safe-area-b">
           <button
-            className="toolbox-grid-btn"
+            className="toolbox-grid-btn btn btn-ghost btn-circle min-h-[44px] min-w-[44px] border-r border-base-200 text-base-content/45 cursor-pointer tap-none"
             onMouseDown={preventFocus}
             onTouchStart={preventFocus}
             onTouchEnd={(e) => {
@@ -177,21 +169,21 @@ export function MobileToolbox({
           >
             <Grid3X3 size={18} />
           </button>
-          <span className="keyboard-mode-label">收起键盘</span>
+          <span className="keyboard-mode-label text-sm text-base-content/45">收起键盘</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="mobile-toolbox">
+    <div className="mobile-toolbox flex h-[calc((var(--app-height,100vh)-48px)/2)] flex-none flex-col overflow-hidden border-t border-base-200 bg-base-100 safe-area-b">
       {/* Quick keys */}
-      <div className="toolbox-keys">
-        <div className="toolbox-key-row">
+      <div className="toolbox-keys shrink-0 border-b border-base-200">
+        <div className="toolbox-key-row flex min-h-[44px]">
           {keyRow1.map((k) => (
             <button
               key={k.label}
-              className="toolbox-key"
+              className="toolbox-key btn btn-ghost min-h-[44px] min-w-[44px] flex-1 border-b border-r border-base-200 bg-base-300 px-0 py-0 font-mono text-xs text-base-content/75 cursor-pointer tap-none select-none"
               onMouseDown={preventFocus}
               onTouchStart={preventFocus}
               onTouchEnd={(e) => {
@@ -199,17 +191,16 @@ export function MobileToolbox({
                 handleKey(k)
               }}
               type="button"
-              style={
-                { touchAction: 'manipulation', WebkitUserSelect: 'none' } as React.CSSProperties
-              }
             >
               {k.label}
             </button>
           ))}
         </div>
-        <div className="toolbox-key-row toolbox-font-row">
-          <div className="toolbox-font-slider">
-            <span className="font-slider-label">A</span>
+        <div className="toolbox-key-row toolbox-font-row flex h-8 border-b border-base-200 bg-base-300">
+          <div className="toolbox-font-slider flex w-full items-center gap-1.5 px-2.5">
+            <span className="font-slider-label shrink-0 font-mono text-[11px] text-base-content/45">
+              A
+            </span>
             <input
               type="range"
               min="6"
@@ -218,16 +209,18 @@ export function MobileToolbox({
               value={fontSize}
               onChange={(e) => onFontSizeChange(parseFloat(e.target.value))}
               onMouseDown={preventFocus}
-              className="font-slider-input"
+              className="font-slider-input h-1 flex-1 appearance-none rounded bg-base-200 outline-none"
             />
-            <span className="font-slider-value">{fontSize}</span>
+            <span className="font-slider-value shrink-0 min-w-6 text-right font-mono text-[11px] text-base-content/75">
+              {fontSize}
+            </span>
           </div>
         </div>
-        <div className="toolbox-key-row">
+        <div className="toolbox-key-row flex min-h-[44px]">
           {keyRow2.map((k) => (
             <button
               key={k.label}
-              className={`toolbox-key ${k.modifier === 'ctrl' && ctrlActive ? 'active' : ''} ${k.modifier === 'alt' && altActive ? 'active' : ''}`}
+              className={`toolbox-key btn btn-ghost min-h-[44px] min-w-[44px] flex-1 border-b border-r border-base-200 bg-base-300 px-0 py-0 font-mono text-xs text-base-content/75 cursor-pointer tap-none select-none ${k.modifier === 'ctrl' && ctrlActive ? 'active bg-primary text-primary-content' : ''} ${k.modifier === 'alt' && altActive ? 'active bg-primary text-primary-content' : ''}`}
               onMouseDown={preventFocus}
               onTouchStart={preventFocus}
               onTouchEnd={(e) => {
@@ -235,9 +228,6 @@ export function MobileToolbox({
                 handleKey(k)
               }}
               type="button"
-              style={
-                { touchAction: 'manipulation', WebkitUserSelect: 'none' } as React.CSSProperties
-              }
             >
               {k.label}
             </button>
@@ -246,7 +236,7 @@ export function MobileToolbox({
       </div>
 
       {/* Tab content */}
-      <div className="toolbox-content">
+      <div className="toolbox-content flex-1 min-h-0 overflow-hidden">
         {activeTab === 'snippets' && <SnippetsTab onSend={onSend} disabled={disabled} />}
         {activeTab === 'ai' && (
           <AiCommandTab
@@ -261,9 +251,9 @@ export function MobileToolbox({
       </div>
 
       {/* Tab bar */}
-      <div className="toolbox-tabbar">
+      <div className="toolbox-tabbar flex h-11 shrink-0 items-center border-t border-base-200 bg-base-300 safe-area-b">
         <button
-          className="toolbox-grid-btn"
+          className="toolbox-grid-btn btn btn-ghost btn-circle min-h-[44px] min-w-[44px] border-r border-base-200 text-base-content/45 cursor-pointer tap-none"
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {
@@ -276,7 +266,7 @@ export function MobileToolbox({
           <Grid3X3 size={18} />
         </button>
         <button
-          className={`toolbox-tab ${activeTab === 'snippets' ? 'active' : ''}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'snippets' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {
@@ -289,11 +279,15 @@ export function MobileToolbox({
           <span>命令</span>
         </button>
         {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper for VoiceInput component */}
-        <div className="toolbox-tab-voice" onMouseDown={preventFocus} onTouchStart={preventFocus}>
+        <div
+          className="toolbox-tab-voice flex h-11 min-h-[44px] w-[52px] shrink-0 items-center justify-center"
+          onMouseDown={preventFocus}
+          onTouchStart={preventFocus}
+        >
           <VoiceInput ref={effectiveVoiceRef} onText={handleVoiceText} disabled={disabled} />
         </div>
         <button
-          className={`toolbox-tab ${activeTab === 'config' ? 'active' : ''}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'config' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {
@@ -306,7 +300,7 @@ export function MobileToolbox({
           <span>配置</span>
         </button>
         <button
-          className={`toolbox-tab ${activeTab === 'upload' ? 'active' : ''}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'upload' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {
@@ -319,7 +313,7 @@ export function MobileToolbox({
           <span>上传</span>
         </button>
         <button
-          className={`toolbox-tab ${activeTab === 'ai' ? 'active' : ''}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'ai' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {

@@ -10,7 +10,6 @@ import type { OpenTab, Profile, SessionGroup, TmuxSession } from '../types'
 import { checkAuth, getAuthHeader, logout } from '../utils/auth'
 import { MobileDrawer } from './MobileDrawer'
 import { MobileTerminal } from './MobileTerminal'
-import './mobile.css'
 
 interface MobileTab extends OpenTab {
   session: string
@@ -288,7 +287,11 @@ export default function MobileApp() {
   }, [taskHistoryPaneKey, activePaneKey])
 
   if (isAuthenticated === null) {
-    return <div className="mobile-loading">Loading...</div>
+    return (
+      <div className="flex h-full items-center justify-center bg-base-300 font-sans text-base-content/75">
+        Loading...
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
@@ -296,43 +299,47 @@ export default function MobileApp() {
   }
 
   if (loading && sessions.length === 0) {
-    return <div className="mobile-loading">Loading sessions...</div>
+    return (
+      <div className="flex h-full items-center justify-center bg-base-300 font-sans text-base-content/75">
+        Loading sessions...
+      </div>
+    )
   }
 
   if (error) {
-    return <div className="mobile-error">{error}</div>
+    return (
+      <div className="flex h-full items-center justify-center bg-base-300 font-sans text-error">
+        {error}
+      </div>
+    )
   }
 
   const historyPaneKey = taskHistoryPaneKey ?? activePaneKey
 
   return (
-    <div className="mobile-app">
-      <header className="mobile-header">
-        <button className="mobile-menu-btn" onClick={toggleDrawer} type="button">
+    <div className="flex h-full w-screen flex-col overflow-hidden bg-base-300 text-base-content/75 text-[clamp(0.875rem,2.5vw,1rem)]">
+      <header className="mobile-header flex h-12 shrink-0 items-center border-b border-base-200 bg-base-200 pl-3">
+        <button
+          className="btn btn-ghost btn-sm btn-circle mobile-menu-btn min-h-[44px] min-w-[44px] shrink-0 text-base-content/75"
+          onClick={toggleDrawer}
+          type="button"
+        >
           <Menu size={24} />
         </button>
         {tabs.length > 0 ? (
-          <div className="mobile-tabs-bar">
+          <div className="mobile-tabs-bar flex h-full flex-1 min-w-0 items-stretch overflow-x-auto touch-scroll scrollbar-hidden bg-transparent">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
-                className={`mobile-tab ${tab.id === activeTabId ? 'active' : ''}`}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'inherit',
-                }}
+                className={`mobile-tab btn-reset flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-base-200 bg-transparent px-2.5 tap-none font-sans ${tab.id === activeTabId ? 'active bg-primary/10 border-b-2 border-b-primary' : ''}`}
                 onClick={() => handleSelectTab(tab.id)}
               >
-                <span className="mobile-tab-title">{tab.title}</span>
+                <span className="mobile-tab-title max-w-[120px] truncate text-xs text-base-content/45">
+                  {tab.title}
+                </span>
                 <button
-                  className="mobile-tab-close"
+                  className="btn btn-ghost btn-xs mobile-tab-close min-h-[44px] min-w-[44px] shrink-0 p-0 text-base-content/45"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleCloseTab(tab.id)
@@ -345,12 +352,14 @@ export default function MobileApp() {
             ))}
           </div>
         ) : (
-          <span className="mobile-title">Select a pane</span>
+          <span className="mobile-title flex-1 truncate pl-3 text-sm font-medium font-sans">
+            Select a pane
+          </span>
         )}
         {activeTab && (
           <>
             <button
-              className="mobile-menu-btn"
+              className="btn btn-ghost btn-sm btn-circle mobile-menu-btn min-h-[44px] min-w-[44px] shrink-0 text-base-content/75"
               onClick={() => setImperialOpen(true)}
               type="button"
               title="Imperial Study"
@@ -358,7 +367,7 @@ export default function MobileApp() {
               <ScrollText size={22} />
             </button>
             <button
-              className="mobile-menu-btn"
+              className="btn btn-ghost btn-sm btn-circle mobile-menu-btn min-h-[44px] min-w-[44px] shrink-0 text-base-content/75"
               onClick={toggleRightPanel}
               type="button"
               title="Task history"
@@ -373,7 +382,7 @@ export default function MobileApp() {
         <>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
           <div
-            className="mobile-overlay"
+            className="mobile-overlay fixed inset-0 z-[var(--z-overlay)] bg-black/50 tap-none"
             role="presentation"
             onClick={() => {
               setDrawerOpen(false)
@@ -385,11 +394,11 @@ export default function MobileApp() {
       )}
 
       {imperialOpen && (
-        <div className="mobile-imperial-panel">
-          <header className="mobile-imperial-header">
+        <div className="mobile-imperial-panel fixed inset-0 z-[200] flex flex-col overflow-hidden bg-base-100">
+          <header className="mobile-imperial-header flex shrink-0 items-center justify-between border-b border-base-200 px-4 py-3 text-base font-semibold text-base-content">
             <span>Imperial Study</span>
             <button
-              className="mobile-menu-btn"
+              className="btn btn-ghost btn-sm btn-circle mobile-menu-btn min-h-[44px] min-w-[44px] shrink-0 text-base-content/75"
               onClick={() => setImperialOpen(false)}
               type="button"
             >
@@ -415,7 +424,9 @@ export default function MobileApp() {
         onLogout={handleLogout}
       />
 
-      <aside className={`mobile-right-panel ${rightPanelOpen ? 'open' : ''}`}>
+      <aside
+        className={`mobile-right-panel fixed right-0 top-0 bottom-0 z-[var(--z-drawer)] flex w-[85vw] max-w-[360px] flex-col overflow-hidden bg-base-200 transition-transform duration-[250ms] ease-out ${rightPanelOpen ? 'open translate-x-0' : 'translate-x-full'}`}
+      >
         {rightPanelOpen && (
           <TaskHistoryPanel
             paneKey={historyPaneKey}
@@ -425,13 +436,13 @@ export default function MobileApp() {
         )}
       </aside>
 
-      <main className="mobile-main">
+      <main className="mobile-main flex min-h-0 flex-1 flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
         {tabs.length > 0 ? (
-          <div className="mobile-tabs-content">
+          <div className="mobile-tabs-content relative flex-1 min-h-0 overflow-hidden">
             {tabs.map((tab) => (
               <div
                 key={tab.id}
-                className={`mobile-tab-panel ${tab.id === activeTabId ? 'visible' : 'hidden'}`}
+                className={`mobile-tab-panel absolute inset-0 ${tab.id === activeTabId ? 'visible' : 'hidden'}`}
               >
                 <MobileTerminal
                   session={tab.session}
@@ -450,8 +461,8 @@ export default function MobileApp() {
             ))}
           </div>
         ) : (
-          <div className="mobile-placeholder">
-            <p>
+          <div className="mobile-placeholder flex flex-1 items-center justify-center text-sm font-sans text-base-content/45">
+            <p className="flex items-center gap-2">
               Tap <Menu size={20} /> to select a terminal
             </p>
           </div>

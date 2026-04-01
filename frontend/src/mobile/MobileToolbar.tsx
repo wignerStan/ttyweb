@@ -50,57 +50,69 @@ export function MobileToolbar({ onSendText, onPaste, onReconnect }: Props) {
   }, [])
 
   return (
-    <div className="mobile-toolbar">
-      <button className="mobile-toolbar-key" onClick={() => handleKey(KEYS.ESC)} type="button">
+    <div className="mobile-toolbar flex h-12 shrink-0 items-center gap-1.5 border-t border-base-200 bg-base-200 px-2">
+      <button
+        className="mobile-toolbar-key btn btn-ghost btn-sm min-h-[44px] min-w-[44px] px-3 font-sans text-sm font-medium text-base-content/75"
+        onClick={() => handleKey(KEYS.ESC)}
+        type="button"
+      >
         Esc
       </button>
-      <button className="mobile-toolbar-key" onClick={() => handleKey(KEYS.TAB)} type="button">
+      <button
+        className="mobile-toolbar-key btn btn-ghost btn-sm min-h-[44px] min-w-[44px] px-3 font-sans text-sm font-medium text-base-content/75"
+        onClick={() => handleKey(KEYS.TAB)}
+        type="button"
+      >
         Tab
       </button>
       <button
-        className={`mobile-toolbar-key mobile-toolbar-ctrl ${ctrlActive ? 'active' : ''}`}
+        className={`mobile-toolbar-key mobile-toolbar-ctrl btn btn-ghost btn-sm min-h-[44px] min-w-[44px] px-3 font-sans text-sm font-medium text-base-content/75 ${ctrlActive ? 'active bg-primary text-primary-content' : ''}`}
         onClick={toggleCtrl}
         type="button"
       >
         Ctrl
       </button>
-      <div className="mobile-toolbar-arrows">
+      <div className="mobile-toolbar-arrows ml-auto flex gap-1">
         <button
-          className="mobile-toolbar-arrow"
+          className="mobile-toolbar-arrow btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base text-base-content/75"
           onClick={() => handleKey(KEYS.ARROW_LEFT)}
           type="button"
         >
           ←
         </button>
         <button
-          className="mobile-toolbar-arrow"
+          className="mobile-toolbar-arrow btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base text-base-content/75"
           onClick={() => handleKey(KEYS.ARROW_UP)}
           type="button"
         >
           ↑
         </button>
         <button
-          className="mobile-toolbar-arrow"
+          className="mobile-toolbar-arrow btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base text-base-content/75"
           onClick={() => handleKey(KEYS.ARROW_DOWN)}
           type="button"
         >
           ↓
         </button>
         <button
-          className="mobile-toolbar-arrow"
+          className="mobile-toolbar-arrow btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base text-base-content/75"
           onClick={() => handleKey(KEYS.ARROW_RIGHT)}
           type="button"
         >
           →
         </button>
       </div>
-      <button className="mobile-toolbar-key mobile-toolbar-paste" onClick={onPaste} type="button">
+      <button
+        className="mobile-toolbar-key mobile-toolbar-paste btn btn-ghost btn-sm ml-1.5 min-h-[44px] min-w-[44px] px-3 font-sans text-sm font-medium text-base-content/75"
+        onClick={onPaste}
+        type="button"
+      >
         Paste
       </button>
       {onReconnect && (
         <button
           aria-label="Reconnect"
-          className="mobile-toolbar-key mobile-toolbar-reconnect"
+          className="mobile-toolbar-key mobile-toolbar-reconnect btn btn-ghost btn-sm min-h-[44px] min-w-[44px] px-2.5 font-sans text-sm font-medium text-info"
           onClick={onReconnect}
           onTouchStart={reconnectLongPress.onTouchStart}
           onTouchEnd={reconnectLongPress.onTouchEnd}
