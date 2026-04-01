@@ -222,4 +222,47 @@ describe('App', () => {
     await user.click(expandBtn)
     expect(screen.getByTestId('sidebar')).toBeInTheDocument()
   })
+
+  describe('accessibility', () => {
+    it('has skip-to-content link pointing to main-content', () => {
+      renderApp()
+      const skipLink = screen.getByText('Skip to content')
+      expect(skipLink).toBeInTheDocument()
+      expect(skipLink).toHaveAttribute('href', '#main-content')
+    })
+
+    it('sidebar is a nav landmark with aria-label', () => {
+      renderApp()
+      const nav = screen.getByRole('navigation', { name: /session navigation/i })
+      expect(nav).toBeInTheDocument()
+    })
+
+    it('main content area has id for skip-to-content target', () => {
+      renderApp()
+      const mainContent = document.getElementById('main-content')
+      expect(mainContent).toBeInTheDocument()
+    })
+
+    it('close tab button has accessible label', () => {
+      renderApp()
+      const closeBtn = screen.getByRole('button', { name: /close tab/i })
+      expect(closeBtn).toBeInTheDocument()
+    })
+
+    it('notepad button has accessible label', () => {
+      renderApp()
+      const notepadBtn = screen.getByRole('button', { name: /open notepad/i })
+      expect(notepadBtn).toBeInTheDocument()
+    })
+
+    it('sidebar nav landmark is removed when sidebar is closed', async () => {
+      const user = userEvent.setup()
+      renderApp()
+      const toggleBtn = screen.getByRole('button', { name: /Toggle sidebar/ })
+      await user.click(toggleBtn)
+      expect(
+        screen.queryByRole('navigation', { name: /session navigation/i }),
+      ).not.toBeInTheDocument()
+    })
+  })
 })

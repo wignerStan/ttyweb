@@ -635,6 +635,18 @@ describe('MobileApp', () => {
     expect(screen.getByText(/to select a terminal/)).toBeInTheDocument()
   })
 
+  it('matches snapshot with no tabs (placeholder state)', async () => {
+    globalThis.fetch = createFetchMock()
+
+    const MobileApp = (await import('./MobileApp')).default
+    const { container } = render(<MobileApp />)
+
+    await login()
+    await waitForApp()
+
+    expect(container).toMatchSnapshot()
+  })
+
   it('renders tab with active class for the active tab', async () => {
     localStorage.setItem(
       'mobile-openTabs',
