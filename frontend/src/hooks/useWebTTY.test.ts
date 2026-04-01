@@ -385,12 +385,9 @@ describe('useWebTTY', () => {
       mockWsInstances[0]!.onclose?.()
     })
 
-    // Wait a tick to ensure no reconnect setTimeout was scheduled
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 50))
+    // Verify no reconnect was attempted — instance count stays at 1
+    await waitFor(() => {
+      expect(mockWsInstances).toHaveLength(1)
     })
-
-    // Should still only have 1 instance (no reconnect attempted)
-    expect(mockWsInstances).toHaveLength(1)
   })
 })

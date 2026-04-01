@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Metadata } from '../types'
 
+/**
+ * Manages a WebSocket connection using the webtty binary protocol.
+ *
+ * @example
+ * ```tsx
+ * const { status, sendText, sendResize, wsRef } = useWebTTY({
+ *   session: 'mysession',
+ *   pane: '0',
+ *   onOutput: (text) => terminal.write(text),
+ *   reconnect: true,
+ * })
+ * ```
+ */
 export interface UseWebTTYOptions {
   session: string
   pane: string
@@ -16,6 +29,10 @@ export interface UseWebTTYOptions {
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 
+/**
+ * React hook for WebSocket communication via the webtty binary protocol.
+ * Handles connection lifecycle, base64 encoding/decoding, and optional auto-reconnect.
+ */
 export function useWebTTY({
   session,
   pane,
@@ -132,6 +149,9 @@ export function useWebTTY({
           }
           break
         }
+        default:
+          // Unknown message type — ignore (protocol may add new types)
+          break
       }
     }
 
