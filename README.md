@@ -151,8 +151,3 @@ main.go           CLI flags, backend selection, server startup
 **Linting**: golangci-lint v2 (25+ linters), Biome, TypeScript strict mode
 
 **CI**: GitHub Actions — go vet, golangci-lint, govulncheck, race detector, 90% coverage gate, E2E burn-in (3x)
-// env fix test
-// bare repro
-test
-// inotify test
-// inotify2
