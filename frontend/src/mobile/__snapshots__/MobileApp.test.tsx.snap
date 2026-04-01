@@ -1,0 +1,121 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MobileApp > matches snapshot with no tabs (placeholder state) 1`] = `
+<div>
+  <div
+    class="mobile-app"
+  >
+    <a
+      class="skip-link"
+      href="#mobile-content"
+    >
+      Skip to content
+    </a>
+    <header
+      class="mobile-header"
+    >
+      <button
+        aria-label="Open menu"
+        class="mobile-menu-btn"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-menu"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 5h16"
+          />
+          <path
+            d="M4 12h16"
+          />
+          <path
+            d="M4 19h16"
+          />
+        </svg>
+      </button>
+      <span
+        class="mobile-title"
+      >
+        Select a pane
+      </span>
+    </header>
+    <div
+      data-testid="mobile-drawer"
+    >
+      <button
+        data-testid="drawer-close"
+        type="button"
+      >
+        Close
+      </button>
+      <button
+        data-testid="select-pane"
+        type="button"
+      >
+        Select Pane
+      </button>
+      <button
+        data-testid="drawer-refresh"
+        type="button"
+      >
+        Refresh
+      </button>
+      <button
+        data-testid="drawer-logout"
+        type="button"
+      >
+        Logout
+      </button>
+    </div>
+    <aside
+      class="mobile-right-panel "
+    />
+    <main
+      class="mobile-main"
+      id="mobile-content"
+    >
+      <div
+        class="mobile-placeholder"
+      >
+        <p>
+          Tap 
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-menu"
+            fill="none"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5h16"
+            />
+            <path
+              d="M4 12h16"
+            />
+            <path
+              d="M4 19h16"
+            />
+          </svg>
+           to select a terminal
+        </p>
+      </div>
+    </main>
+  </div>
+</div>
+`;
