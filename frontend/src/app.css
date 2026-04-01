@@ -1109,8 +1109,8 @@
 
   /* Mobile: fit window button active */
   .mobile-fit-window-btn:active {
-    background: rgba(77, 120, 204, 0.4);
-    color: #fff;
+    background: color-mix(in srgb, var(--color-primary) 40%, transparent);
+    color: var(--color-primary-content);
   }
 
   /* Mobile: toolbar key active */
