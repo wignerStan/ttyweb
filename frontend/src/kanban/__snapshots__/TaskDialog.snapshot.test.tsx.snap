@@ -1,0 +1,222 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TaskDialog snapshot > renders new task dialog 1`] = `
+<div>
+  <div
+    class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-5 max-md:m-2.5"
+    data-testid="task-dialog-overlay"
+  >
+    <div
+      class="flex max-h-[90vh] w-full max-w-[540px] flex-col overflow-hidden rounded-box border border-base-300 bg-base-100 text-base-content shadow-lg max-md:max-w-full"
+      data-testid="task-dialog"
+    >
+      <div
+        class="flex flex-shrink-0 items-center justify-between border-b border-base-200 px-5 py-4"
+      >
+        <h2
+          class="m-0 text-[15px] font-semibold text-base-content"
+        >
+          New Task
+        </h2>
+        <button
+          class="flex h-7 w-7 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-x"
+            fill="none"
+            height="16"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="16"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <form
+        class="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5"
+        id="task-dialog-form"
+      >
+        <div
+          class="flex flex-col gap-1.5"
+        >
+          <label
+            class="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+            for="task-title"
+          >
+            Title *
+          </label>
+          <input
+            class="input input-bordered input-sm w-full font-mono text-xs"
+            id="task-title"
+            placeholder="Task title"
+            type="text"
+            value=""
+          />
+        </div>
+        <div
+          class="flex flex-col gap-1.5"
+        >
+          <label
+            class="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+            for="task-desc"
+          >
+            Description
+          </label>
+          <textarea
+            class="textarea textarea-bordered textarea-sm w-full font-mono text-xs min-h-[80px]"
+            id="task-desc"
+            placeholder="Describe the task..."
+            rows="4"
+          />
+        </div>
+        <div
+          class="grid grid-cols-2 gap-3 max-md:grid-cols-1"
+        >
+          <div
+            class="flex flex-col gap-1.5"
+          >
+            <label
+              class="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+              for="task-status"
+            >
+              Status
+            </label>
+            <select
+              class="select select-bordered select-sm w-full cursor-pointer font-mono text-xs"
+              id="task-status"
+            >
+              <option
+                value="todo"
+              >
+                Todo
+              </option>
+              <option
+                value="in_progress"
+              >
+                In Progress
+              </option>
+              <option
+                value="done"
+              >
+                Done
+              </option>
+              <option
+                value="archived"
+              >
+                Archived
+              </option>
+            </select>
+          </div>
+          <div
+            class="flex flex-col gap-1.5"
+          >
+            <label
+              class="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+              for="task-priority"
+            >
+              Priority
+            </label>
+            <select
+              class="select select-bordered select-sm w-full cursor-pointer font-mono text-xs"
+              id="task-priority"
+            >
+              <option
+                value="1"
+              >
+                1 - Low
+              </option>
+              <option
+                value="2"
+              >
+                2 - Medium
+              </option>
+              <option
+                value="3"
+              >
+                3 - High
+              </option>
+              <option
+                value="4"
+              >
+                4 - Critical
+              </option>
+              <option
+                value="5"
+              >
+                5 - Urgent
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-2 gap-3 max-md:grid-cols-1"
+        >
+          <div
+            class="flex flex-col gap-1.5"
+          >
+            <label
+              class="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+              for="task-tags"
+            >
+              Tags
+            </label>
+            <input
+              class="input input-bordered input-sm w-full font-mono text-xs"
+              id="task-tags"
+              placeholder="bug, feature, urgent"
+              type="text"
+              value=""
+            />
+          </div>
+          <div
+            class="flex flex-col gap-1.5"
+          >
+            <label
+              class="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+              for="task-due"
+            >
+              Due Date
+            </label>
+            <input
+              class="input input-bordered input-sm w-full font-mono text-xs"
+              id="task-due"
+              type="date"
+              value=""
+            />
+          </div>
+        </div>
+      </form>
+      <div
+        class="flex flex-shrink-0 items-center justify-end gap-2 border-t border-base-200 px-5 py-3"
+      >
+        <button
+          class="btn btn-ghost btn-sm gap-1.5"
+          type="button"
+        >
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary btn-sm gap-1.5 disabled:opacity-40"
+          disabled=""
+          form="task-dialog-form"
+          type="submit"
+        >
+          Create Task
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;

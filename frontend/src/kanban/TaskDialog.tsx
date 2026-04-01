@@ -155,42 +155,60 @@ function TaskDialog({
       {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay click-outside-to-close pattern */}
       <div
-        className="task-dialog-overlay"
+        data-testid="task-dialog-overlay"
+        className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-5 max-md:m-2.5"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose()
         }}
       >
-        <div className="task-dialog">
-          <div className="task-dialog__header">
-            <h2 className="task-dialog__title">{title}</h2>
-            <button className="task-dialog__close" onClick={onClose} type="button">
+        <div
+          data-testid="task-dialog"
+          className="flex max-h-[90vh] w-full max-w-[540px] flex-col overflow-hidden rounded-box border border-base-300 bg-base-100 text-base-content shadow-lg max-md:max-w-full"
+        >
+          <div className="flex flex-shrink-0 items-center justify-between border-b border-base-200 px-5 py-4">
+            <h2 className="m-0 text-[15px] font-semibold text-base-content">{title}</h2>
+            <button
+              className="flex h-7 w-7 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
+              onClick={onClose}
+              type="button"
+            >
               <X size={16} />
             </button>
           </div>
 
-          <form id="task-dialog-form" className="task-dialog__body" onSubmit={handleSubmit}>
-            <div className="task-dialog__field">
-              <label className="task-dialog__label" htmlFor="task-title">
+          <form
+            id="task-dialog-form"
+            className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5"
+            onSubmit={handleSubmit}
+          >
+            <div className="flex flex-col gap-1.5">
+              <label
+                className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                htmlFor="task-title"
+              >
                 Title *
               </label>
               <input
                 id="task-title"
-                className="task-dialog__input"
+                className="input input-bordered input-sm w-full font-mono text-xs"
                 type="text"
                 value={form.title}
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder="Task title"
               />
-              {errors.title && <span className="task-dialog__error">{errors.title}</span>}
+              {errors.title && <span className="text-[11px] text-error">{errors.title}</span>}
             </div>
 
-            <div className="task-dialog__field">
-              <label className="task-dialog__label" htmlFor="task-desc">
+            <div className="flex flex-col gap-1.5">
+              <label
+                className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                htmlFor="task-desc"
+              >
                 Description
               </label>
               <textarea
                 id="task-desc"
-                className="task-dialog__textarea"
+                className="textarea textarea-bordered textarea-sm w-full font-mono text-xs min-h-[80px]"
                 value={form.description}
                 onChange={(e) => updateField('description', e.target.value)}
                 placeholder="Describe the task..."
@@ -198,14 +216,17 @@ function TaskDialog({
               />
             </div>
 
-            <div className="task-dialog__row">
-              <div className="task-dialog__field">
-                <label className="task-dialog__label" htmlFor="task-status">
+            <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <label
+                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  htmlFor="task-status"
+                >
                   Status
                 </label>
                 <select
                   id="task-status"
-                  className="task-dialog__select"
+                  className="select select-bordered select-sm w-full cursor-pointer font-mono text-xs"
                   value={form.status}
                   onChange={(e) => updateField('status', e.target.value as KanbanStatus)}
                 >
@@ -217,13 +238,16 @@ function TaskDialog({
                 </select>
               </div>
 
-              <div className="task-dialog__field">
-                <label className="task-dialog__label" htmlFor="task-priority">
+              <div className="flex flex-col gap-1.5">
+                <label
+                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  htmlFor="task-priority"
+                >
                   Priority
                 </label>
                 <select
                   id="task-priority"
-                  className="task-dialog__select"
+                  className="select select-bordered select-sm w-full cursor-pointer font-mono text-xs"
                   value={form.priority}
                   onChange={(e) => updateField('priority', Number(e.target.value))}
                 >
@@ -236,14 +260,17 @@ function TaskDialog({
               </div>
             </div>
 
-            <div className="task-dialog__row">
-              <div className="task-dialog__field">
-                <label className="task-dialog__label" htmlFor="task-tags">
+            <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
+              <div className="flex flex-col gap-1.5">
+                <label
+                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  htmlFor="task-tags"
+                >
                   Tags
                 </label>
                 <input
                   id="task-tags"
-                  className="task-dialog__input"
+                  className="input input-bordered input-sm w-full font-mono text-xs"
                   type="text"
                   value={tagsString}
                   onChange={(e) => handleTagsInput(e.target.value)}
@@ -251,13 +278,16 @@ function TaskDialog({
                 />
               </div>
 
-              <div className="task-dialog__field">
-                <label className="task-dialog__label" htmlFor="task-due">
+              <div className="flex flex-col gap-1.5">
+                <label
+                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  htmlFor="task-due"
+                >
                   Due Date
                 </label>
                 <input
                   id="task-due"
-                  className="task-dialog__input"
+                  className="input input-bordered input-sm w-full font-mono text-xs"
                   type="date"
                   value={form.due_date ?? ''}
                   onChange={(e) => updateField('due_date', e.target.value || null)}
@@ -267,7 +297,7 @@ function TaskDialog({
 
             {isEdit && (
               <>
-                <div className="task-dialog__divider" />
+                <div className="my-1 h-px bg-base-200" />
                 <CommentThread
                   taskId={task.id}
                   fetchComments={fetchComments}
@@ -277,28 +307,23 @@ function TaskDialog({
             )}
           </form>
 
-          <div className="task-dialog__footer">
+          <div className="flex flex-shrink-0 items-center justify-end gap-2 border-t border-base-200 px-5 py-3">
             {isEdit && (
               <button
-                className="task-dialog__btn task-dialog__btn--danger"
+                className="btn btn-error btn-sm mr-auto gap-1.5 disabled:opacity-40"
                 onClick={handleDelete}
                 disabled={deleting}
                 type="button"
-                style={{ marginRight: 'auto' }}
               >
                 <Trash2 size={13} />
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             )}
-            <button
-              className="task-dialog__btn task-dialog__btn--cancel"
-              onClick={onClose}
-              type="button"
-            >
+            <button className="btn btn-ghost btn-sm gap-1.5" onClick={onClose} type="button">
               Cancel
             </button>
             <button
-              className="task-dialog__btn task-dialog__btn--primary"
+              className="btn btn-primary btn-sm gap-1.5 disabled:opacity-40"
               type="submit"
               form="task-dialog-form"
               disabled={saving || !form.title.trim()}

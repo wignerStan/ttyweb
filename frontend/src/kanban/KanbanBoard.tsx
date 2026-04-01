@@ -17,7 +17,6 @@ import type { TaskFormData } from './TaskDialog'
 import { TaskDialog } from './TaskDialog'
 import type { KanbanStatus, KanbanTask } from './types'
 import { useKanbanTasks } from './useKanbanTasks'
-import './kanban.css'
 
 interface ColumnConfig {
   key: KanbanStatus
