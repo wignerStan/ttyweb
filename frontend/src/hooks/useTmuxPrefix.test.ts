@@ -4,12 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // Mock auth utility at module level
 vi.mock('../utils/auth', () => ({
   getAuthHeader: vi.fn(() => null),
+  getAuthHeaders: vi.fn(() => ({})),
 }))
 
-import { getAuthHeader } from '../utils/auth'
+import { getAuthHeaders } from '../utils/auth'
 import { useTmuxPrefix } from './useTmuxPrefix'
 
-const mockGetAuthHeader = vi.mocked(getAuthHeader)
+const mockGetAuthHeaders = vi.mocked(getAuthHeaders)
 
 describe('useTmuxPrefix', () => {
   beforeEach(() => {
@@ -38,12 +39,12 @@ describe('useTmuxPrefix', () => {
     })
 
     expect(mockFetch).toHaveBeenCalledWith('/api/tmux/config', {
-      headers: undefined,
+      headers: {},
     })
   })
 
   it('sends auth header when available', async () => {
-    mockGetAuthHeader.mockReturnValue('Basic dGVzdDp0ZXN0')
+    mockGetAuthHeaders.mockReturnValue({ Authorization: 'Basic dGVzdDp0ZXN0' })
 
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,

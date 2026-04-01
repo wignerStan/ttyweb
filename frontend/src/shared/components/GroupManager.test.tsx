@@ -5,7 +5,10 @@ import { renderWithProviders } from '../../test-utils'
 import type { SessionGroup, TmuxSession } from '../../types'
 import { GroupManager } from './GroupManager'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const groups: SessionGroup[] = [
   { id: 1, group_name: 'Work', sort_order: 0, session_count: 2 },

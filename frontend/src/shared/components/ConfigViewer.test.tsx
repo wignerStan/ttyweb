@@ -5,7 +5,10 @@ import { mockFetchHttpError } from '../../test-helpers'
 import { renderWithProviders } from '../../test-utils'
 import { ConfigViewer } from './ConfigViewer'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const configData = {
   opencode: { content: { key: 'val' }, path: '/home/.config/opencode.json' },

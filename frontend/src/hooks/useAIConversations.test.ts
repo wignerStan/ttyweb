@@ -5,12 +5,14 @@ import type { AiConversation } from '../types'
 // Mock auth utility at module level
 vi.mock('../utils/auth', () => ({
   getAuthHeader: vi.fn(() => null),
+  getAuthHeaders: vi.fn(() => ({})),
 }))
 
-import { getAuthHeader } from '../utils/auth'
+import { getAuthHeader, getAuthHeaders } from '../utils/auth'
 import { useAIConversations } from './useAIConversations'
 
 const mockGetAuthHeader = vi.mocked(getAuthHeader)
+const mockGetAuthHeaders = vi.mocked(getAuthHeaders)
 
 // Track EventSource instances
 let mockEventSourceInstances: Array<{
@@ -73,7 +75,7 @@ describe('useAIConversations', () => {
     })
 
     expect(result.current.conversations).toEqual(mockConversations)
-    expect(mockFetch).toHaveBeenCalledWith('/api/tasks/events/pane1', { headers: undefined })
+    expect(mockFetch).toHaveBeenCalledWith('/api/tasks/events/pane1', { headers: {} })
   })
 
   it('creates EventSource with correct URL when paneKey is provided', async () => {
@@ -305,7 +307,7 @@ describe('useAIConversations', () => {
   })
 
   it('sends auth header when fetching conversations', async () => {
-    mockGetAuthHeader.mockReturnValue('Basic mytoken')
+    mockGetAuthHeaders.mockReturnValue({ Authorization: 'Basic mytoken' })
 
     const mockFetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ conversations: [] }),
@@ -372,8 +374,6 @@ describe('useAIConversations', () => {
   })
 
   it('encodes paneKey in URL', async () => {
-    mockGetAuthHeader.mockReturnValue(null)
-
     const mockFetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ conversations: [] }),
     })
@@ -382,9 +382,8 @@ describe('useAIConversations', () => {
     renderHook(() => useAIConversations('pane with spaces'))
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/tasks/events/pane%20with%20spaces', {
-        headers: undefined,
-      })
+      const callUrl = mockFetch.mock.calls[0]?.[0]
+      expect(callUrl).toBe('/api/tasks/events/pane%20with%20spaces')
     })
   })
 })

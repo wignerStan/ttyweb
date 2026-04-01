@@ -5,7 +5,10 @@ import { renderWithProviders } from '../../test-utils'
 import type { Profile } from '../../types'
 import { ProfileSelector } from './ProfileSelector'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const profiles: Profile[] = [
   { id: 1, profile_key: 'default', name: 'Default', sort_order: 0 },

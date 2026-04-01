@@ -4,12 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // Mock auth utility at module level
 vi.mock('../utils/auth', () => ({
   getAuthHeader: vi.fn(() => null),
+  getAuthHeaders: vi.fn(() => ({})),
 }))
 
-import { getAuthHeader } from '../utils/auth'
+import { getAuthHeaders } from '../utils/auth'
 import { useNewWindow } from './useNewWindow'
 
-const mockGetAuthHeader = vi.mocked(getAuthHeader)
+const mockGetAuthHeaders = vi.mocked(getAuthHeaders)
 
 describe('useNewWindow', () => {
   beforeEach(() => {
@@ -58,7 +59,7 @@ describe('useNewWindow', () => {
   })
 
   it('sends auth header when fetching quick dirs', async () => {
-    mockGetAuthHeader.mockReturnValue('Basic dGVzdDp0ZXN0')
+    mockGetAuthHeaders.mockReturnValue({ Authorization: 'Basic dGVzdDp0ZXN0' })
 
     const mockFetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ dirs: [] }),
@@ -75,7 +76,7 @@ describe('useNewWindow', () => {
   })
 
   it('creates a new window successfully', async () => {
-    mockGetAuthHeader.mockReturnValue(null)
+    mockGetAuthHeaders.mockReturnValue({})
     const onSuccess = vi.fn()
     const mockFetch = vi
       .fn()
@@ -107,7 +108,7 @@ describe('useNewWindow', () => {
   })
 
   it('creates a new window without optional params', async () => {
-    mockGetAuthHeader.mockReturnValue(null)
+    mockGetAuthHeaders.mockReturnValue({})
     const onSuccess = vi.fn()
     const mockFetch = vi
       .fn()
@@ -138,7 +139,7 @@ describe('useNewWindow', () => {
   })
 
   it('handles error when creating window fails', async () => {
-    mockGetAuthHeader.mockReturnValue(null)
+    mockGetAuthHeaders.mockReturnValue({})
     const mockFetch = vi
       .fn()
       .mockResolvedValueOnce({
@@ -267,7 +268,7 @@ describe('useNewWindow', () => {
   })
 
   it('sends auth header when creating window', async () => {
-    mockGetAuthHeader.mockReturnValue('Basic dGVzdDp0ZXN0')
+    mockGetAuthHeaders.mockReturnValue({ Authorization: 'Basic dGVzdDp0ZXN0' })
 
     const mockFetch = vi
       .fn()

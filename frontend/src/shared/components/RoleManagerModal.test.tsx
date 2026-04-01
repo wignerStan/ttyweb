@@ -6,7 +6,10 @@ import { renderWithProviders } from '../../test-utils'
 import type { AiRole } from '../../types'
 import { RoleManagerModal } from './RoleManagerModal'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const customRoles: AiRole[] = [
   { id: 'custom-1', emoji: '🔬', label: 'Researcher', desc: 'Deep research', isCustom: true },

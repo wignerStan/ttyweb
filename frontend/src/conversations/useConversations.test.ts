@@ -28,6 +28,7 @@ function makeMessage(overrides: Partial<ConversationMessage> = {}): Conversation
 // Auth header mock
 vi.mock('../utils/auth', () => ({
   getAuthHeader: vi.fn(() => 'Basic dGVzdDp0ZXN0'),
+  getAuthHeaders: vi.fn(() => ({ Authorization: 'Basic dGVzdDp0ZXN0' })),
 }))
 
 // --- Tests ---
