@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock auth utility at module level
@@ -10,6 +10,10 @@ import { getAuthHeader } from '../utils/auth'
 import { useAuthFetch } from './useAuthFetch'
 
 const mockGetAuthHeader = vi.mocked(getAuthHeader)
+
+function getHeadersArg(mockFetch: ReturnType<typeof vi.fn>): Headers {
+  return mockFetch.mock.calls[0]?.[1]?.headers as Headers
+}
 
 describe('useAuthFetch', () => {
   beforeEach(() => {
@@ -31,9 +35,8 @@ describe('useAuthFetch', () => {
       await result.current.authFetch('/api/test')
     })
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0' },
-    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(getHeadersArg(mockFetch).get('Authorization')).toBe('Basic dGVzdDp0ZXN0')
   })
 
   it('omits auth header when credentials do not exist', async () => {
@@ -51,9 +54,8 @@ describe('useAuthFetch', () => {
       await result.current.authFetch('/api/test')
     })
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
-      headers: {},
-    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(getHeadersArg(mockFetch).get('Authorization')).toBeNull()
   })
 
   it('passes through options including method and body', async () => {
@@ -70,19 +72,40 @@ describe('useAuthFetch', () => {
     await act(async () => {
       await result.current.authFetch('/api/data', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' } as Record<string, string>,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'value' }),
       })
     })
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Basic token',
-      },
-      body: JSON.stringify({ key: 'value' }),
+    const callArgs = mockFetch.mock.calls[0]![1]!
+    expect(callArgs.method).toBe('POST')
+    expect(callArgs.body).toBe(JSON.stringify({ key: 'value' }))
+    const headers = callArgs.headers as Headers
+    expect(headers.get('Content-Type')).toBe('application/json')
+    expect(headers.get('Authorization')).toBe('Basic token')
+  })
+
+  it('merges auth header with existing Content-Type header', async () => {
+    mockGetAuthHeader.mockReturnValue('Bearer abc123')
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({}),
     })
+    vi.stubGlobal('fetch', mockFetch)
+
+    const { result } = renderHook(() => useAuthFetch())
+
+    await act(async () => {
+      await result.current.authFetch('/api/items', {
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      })
+    })
+
+    const headers = getHeadersArg(mockFetch)
+    expect(headers.get('Authorization')).toBe('Bearer abc123')
+    expect(headers.get('Content-Type')).toBe('application/json')
+    expect(headers.get('Accept')).toBe('application/json')
   })
 
   it('returns fetch response', async () => {
@@ -107,6 +130,3 @@ describe('useAuthFetch', () => {
     expect(data).toEqual(responseData)
   })
 })
-
-// Need act for async operations in tests
-import { act } from '@testing-library/react'
