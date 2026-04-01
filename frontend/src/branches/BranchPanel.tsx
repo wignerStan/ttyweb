@@ -1,7 +1,6 @@
 import { Check, GitBranch, Loader2, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { useBranches } from './useBranches'
-import './BranchPanel.css'
 
 interface BranchPanelProps {
   repoPath: string | null
