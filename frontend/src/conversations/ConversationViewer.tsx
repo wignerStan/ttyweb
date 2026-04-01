@@ -1,7 +1,6 @@
 import { ConversationMessage } from './ConversationMessage'
 import type { AISession } from './types'
 import { useConversation } from './useConversations'
-import './conversations.css'
 
 interface ConversationViewerProps {
   sessionId: string | null

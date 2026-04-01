@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { AISession } from './types'
 import { useConversations } from './useConversations'
-import './conversations.css'
 
 interface ConversationListProps {
   selectedSessionId: string | null

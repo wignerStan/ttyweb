@@ -40,39 +40,43 @@ exports[`ConversationViewer snapshot > renders conversation with messages 1`] = 
       class="conv-viewer-body"
     >
       <div
-        class="conv-msg conv-msg--user"
+        class="conv-msg max-w-[85%] rounded-md px-3.5 py-2.5 text-[13px] leading-relaxed font-mono break-words whitespace-pre-wrap self-end border border-edge bg-surface-2 text-on-surface rounded-br-sm"
+        data-testid="conv-msg-user"
       >
         <div
-          class="conv-msg-role"
+          class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-primary"
         >
           user
         </div>
         <div
-          class="conv-msg-content"
+          class="whitespace-pre-wrap font-mono text-xs [&_code]:bg-surface-2 [&_code]:rounded-sm [&_code]:px-1 [&_code]:text-xs"
         >
           How do I run tests?
         </div>
         <div
-          class="conv-msg-timestamp"
+          class="mt-1 text-right font-mono text-[10px] text-on-surface-muted"
+          data-testid="conv-msg-timestamp"
         >
           10:00 AM
         </div>
       </div>
       <div
-        class="conv-msg conv-msg--assistant"
+        class="conv-msg max-w-[85%] rounded-md px-3.5 py-2.5 text-[13px] leading-relaxed font-mono break-words whitespace-pre-wrap self-start border border-surface-2 bg-surface-3 text-on-surface-2 rounded-bl-sm"
+        data-testid="conv-msg-assistant"
       >
         <div
-          class="conv-msg-role"
+          class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-success"
         >
           assistant
         </div>
         <div
-          class="conv-msg-content"
+          class="whitespace-pre-wrap font-mono text-xs [&_code]:bg-surface [&_code]:rounded-sm [&_code]:px-1 [&_code]:text-xs"
         >
           Run \`just test\` from the project root.
         </div>
         <div
-          class="conv-msg-timestamp"
+          class="mt-1 text-right font-mono text-[10px] text-on-surface-muted"
+          data-testid="conv-msg-timestamp"
         >
           10:00 AM
         </div>

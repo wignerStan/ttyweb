@@ -12,8 +12,7 @@ describe('ConversationMessage', () => {
       timestamp: '2026-03-29T12:00:00Z',
     }
     renderWithProviders(<ConversationMessage message={msg} />)
-    const el = document.querySelector('.conv-msg--user')
-    expect(el).toBeInTheDocument()
+    expect(screen.getByTestId('conv-msg-user')).toBeInTheDocument()
     expect(screen.getByText('Hello assistant')).toBeInTheDocument()
   })
 
@@ -24,8 +23,7 @@ describe('ConversationMessage', () => {
       timestamp: '2026-03-29T12:01:00Z',
     }
     renderWithProviders(<ConversationMessage message={msg} />)
-    const el = document.querySelector('.conv-msg--assistant')
-    expect(el).toBeInTheDocument()
+    expect(screen.getByTestId('conv-msg-assistant')).toBeInTheDocument()
     expect(screen.getByText('I can help with that')).toBeInTheDocument()
   })
 
@@ -36,7 +34,7 @@ describe('ConversationMessage', () => {
       timestamp: '2026-03-29T12:00:00Z',
     }
     renderWithProviders(<ConversationMessage message={msg} />)
-    const ts = document.querySelector('.conv-msg-timestamp')
+    const ts = screen.getByTestId('conv-msg-timestamp')
     expect(ts).toBeInTheDocument()
   })
 
