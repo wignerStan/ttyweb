@@ -1,3 +1,13 @@
+/**
+ * MobileTerminal — Touch-optimized terminal component for mobile devices.
+ *
+ * Split plan (post-Tailwind migration):
+ * - Touch gesture handlers → src/mobile/useTouchGestures.ts
+ * - Burst suppression → src/utils/burstSuppressor.ts (DONE)
+ * - Selection overlay → src/mobile/SelectionOverlay.tsx
+ *
+ * Current size: ~678 lines (target: <800)
+ */
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -5,6 +15,7 @@ import '@xterm/xterm/css/xterm.css'
 import { Maximize2 } from 'lucide-react'
 import { useWebTTY } from '../hooks/useWebTTY'
 import type { VoiceInputHandle } from '../shared/components/VoiceInput'
+import { createBurstDetector } from '../utils/burstSuppressor'
 import { isAndroid, isIOS } from '../utils/platform'
 import { log as telemetryLog } from '../utils/telemetry'
 import { createTelemetryEmitter, type TelemetryEmitter } from '../utils/telemetryEmitter'
@@ -459,57 +470,37 @@ export function MobileTerminal({
     })
 
     // --- Burst suppression (iOS/Android) ---
-    const spaceTimestamps: number[] = []
-    const enterTimestamps: number[] = []
+    const detectSpaceBurst = createBurstDetector({
+      count: SPACE_BURST_COUNT,
+      windowMs: SPACE_BURST_WINDOW_MS,
+    })
+    const detectEnterBurst = createBurstDetector({
+      count: ENTER_BURST_COUNT,
+      windowMs: ENTER_BURST_WINDOW_MS,
+    })
 
-    const shouldSuppressBurstIOS = (data: string, now: number): boolean => {
-      if (data === ' ') {
-        spaceTimestamps.push(now)
-        while (
-          spaceTimestamps.length > 0 &&
-          now - (spaceTimestamps[0] ?? 0) > SPACE_BURST_WINDOW_MS
-        ) {
-          spaceTimestamps.shift()
+    const logBurst = (reason: string, data: string, count: number) => {
+      telemetryLog('suppressed', { data: JSON.stringify(data), reason, count })
+      emitter.emit('mobile-suppress', { reason, data: JSON.stringify(data), count })
+    }
+
+    const shouldSuppressBurst = (data: string): boolean => {
+      const now = Date.now()
+
+      // Shared space/enter burst detection for iOS and Android
+      if (isIOS() || isAndroid()) {
+        if (data === ' ' && detectSpaceBurst()) {
+          logBurst('space-burst', data, SPACE_BURST_COUNT)
+          return true
         }
-        if (spaceTimestamps.length >= SPACE_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'space-burst',
-            count: spaceTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'space-burst',
-            data: JSON.stringify(data),
-            count: spaceTimestamps.length,
-          })
-          spaceTimestamps.length = 0
+        if ((data === '\r' || data === '\n') && detectEnterBurst()) {
+          logBurst('enter-burst', data, ENTER_BURST_COUNT)
           return true
         }
       }
-      if (data === '\r' || data === '\n') {
-        enterTimestamps.push(now)
-        while (
-          enterTimestamps.length > 0 &&
-          now - (enterTimestamps[0] ?? 0) > ENTER_BURST_WINDOW_MS
-        ) {
-          enterTimestamps.shift()
-        }
-        if (enterTimestamps.length >= ENTER_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'enter-burst',
-            count: enterTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'enter-burst',
-            data: JSON.stringify(data),
-            count: enterTimestamps.length,
-          })
-          enterTimestamps.length = 0
-          return true
-        }
-      }
+
       // iOS: post-transition suppression
+      if (!isIOS()) return false
       if (!SUPPRESSED_INPUTS.has(data)) return false
       const transition = lastTransitionRef.current
       if (!transition) return false
@@ -528,63 +519,6 @@ export function MobileTerminal({
         })
         return true
       }
-      return false
-    }
-
-    const shouldSuppressBurstAndroid = (data: string, now: number): boolean => {
-      if (data === ' ') {
-        spaceTimestamps.push(now)
-        while (
-          spaceTimestamps.length > 0 &&
-          now - (spaceTimestamps[0] ?? 0) > SPACE_BURST_WINDOW_MS
-        ) {
-          spaceTimestamps.shift()
-        }
-        if (spaceTimestamps.length >= SPACE_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'space-burst',
-            count: spaceTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'space-burst',
-            data: JSON.stringify(data),
-            count: spaceTimestamps.length,
-          })
-          spaceTimestamps.length = 0
-          return true
-        }
-      }
-      if (data === '\r' || data === '\n') {
-        enterTimestamps.push(now)
-        while (
-          enterTimestamps.length > 0 &&
-          now - (enterTimestamps[0] ?? 0) > ENTER_BURST_WINDOW_MS
-        ) {
-          enterTimestamps.shift()
-        }
-        if (enterTimestamps.length >= ENTER_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'enter-burst',
-            count: enterTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'enter-burst',
-            data: JSON.stringify(data),
-            count: enterTimestamps.length,
-          })
-          enterTimestamps.length = 0
-          return true
-        }
-      }
-      return false
-    }
-
-    const shouldSuppressBurst = (data: string): boolean => {
-      const now = Date.now()
-      if (isIOS()) return shouldSuppressBurstIOS(data, now)
-      if (isAndroid()) return shouldSuppressBurstAndroid(data, now)
       return false
     }
 
@@ -712,7 +646,7 @@ export function MobileTerminal({
       termRef.current = null
       fitRef.current = null
     }
-  }, [session, pane, sendText, sendResize, sendRaw, connect, wsRef])
+  }, [session, pane, sendText, sendResize, sendRaw, connect])
 
   const handleFitWindow = useCallback(() => {
     if (termRef.current && fitRef.current) {
