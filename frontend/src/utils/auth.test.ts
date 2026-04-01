@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { checkAuth, getAuthHeader, getToken, login, logout } from './auth'
+import { checkAuth, getAuthHeader, getAuthHeaders, getToken, login, logout } from './auth'
 
 const AUTH_KEY = 'ttyweb_auth'
 
@@ -190,6 +190,18 @@ describe('auth', () => {
 
     it('should return null when no credentials', () => {
       expect(getAuthHeader()).toBeNull()
+    })
+  })
+
+  describe('getAuthHeaders', () => {
+    it('should return object with Authorization when credentials exist', () => {
+      localStorage.setItem(AUTH_KEY, 'some-creds')
+
+      expect(getAuthHeaders()).toEqual({ Authorization: 'Basic some-creds' })
+    })
+
+    it('should return empty object when no credentials', () => {
+      expect(getAuthHeaders()).toEqual({})
     })
   })
 

@@ -113,3 +113,10 @@ export interface AiConversation {
   started_at: number
   completed_at: number | null
 }
+
+/** Standard API response envelope matching the Go backend apiResponse struct. */
+export interface ApiResponse<T> {
+  success: boolean
+  data: T
+  error?: string
+}

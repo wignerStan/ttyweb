@@ -1,4 +1,15 @@
 import '@testing-library/jest-dom'
+import { vi } from 'vitest'
+
+// Polyfill HTMLDialogElement for jsdom (which lacks showModal/close)
+if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  })
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute('open')
+  })
+}
 
 // Polyfill browser APIs missing in jsdom
 globalThis.ResizeObserver = class ResizeObserver {

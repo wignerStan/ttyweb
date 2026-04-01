@@ -46,6 +46,11 @@ export function getAuthHeader(): string | null {
   return credentials ? `Basic ${credentials}` : null
 }
 
+export function getAuthHeaders(): Record<string, string> {
+  const auth = getAuthHeader()
+  return auth ? { Authorization: auth } : {}
+}
+
 export function getToken(): string {
   return localStorage.getItem(AUTH_KEY) || ''
 }
