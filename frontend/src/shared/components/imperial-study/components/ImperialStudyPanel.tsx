@@ -16,7 +16,6 @@ import { InboxSection } from './InboxSection'
 import { RunPipeline } from './RunPipeline'
 import { TaskDetailModal } from './TaskDetailModal'
 import { WorkerSection } from './WorkerSection'
-import '../imperial-study.css'
 
 interface ImperialStudyPanelProps {
   activePaneKey?: string | null

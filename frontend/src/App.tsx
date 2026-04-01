@@ -12,7 +12,6 @@ import { NotepadPanel } from './notepad/NotepadPanel'
 import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy'
 import { NotificationProvider } from './shared/components/NotificationProvider'
 import { ThemeToggle } from './shared/components/ThemeToggle'
-import { BUTTON_RESET } from './shared/styles'
 
 type AppView = 'terminal' | 'conversations'
 
@@ -97,8 +96,8 @@ function DesktopLayout() {
           </button>
           <button
             type="button"
+            className="btn-reset"
             style={{
-              ...BUTTON_RESET,
               ...styles.viewTab,
               ...(activeView === 'terminal' ? styles.viewTabActive : {}),
             }}
@@ -108,8 +107,8 @@ function DesktopLayout() {
           </button>
           <button
             type="button"
+            className="btn-reset"
             style={{
-              ...BUTTON_RESET,
               ...styles.viewTab,
               ...(activeView === 'conversations' ? styles.viewTabActive : {}),
             }}
@@ -122,8 +121,8 @@ function DesktopLayout() {
               <button
                 key={tab.id}
                 type="button"
+                className="btn-reset"
                 style={{
-                  ...BUTTON_RESET,
                   ...styles.tab,
                   ...(tab.id === activeTabId ? styles.tabActive : {}),
                 }}
@@ -150,8 +149,8 @@ function DesktopLayout() {
             ))}
           <button
             type="button"
+            className="btn-reset"
             style={{
-              ...BUTTON_RESET,
               ...styles.tab,
               ...(viewMode === 'kanban' ? styles.tabActive : {}),
             }}

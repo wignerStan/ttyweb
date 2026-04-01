@@ -6,11 +6,11 @@ import type { ActivityEvent } from '../types'
 
 // Simple mapping to reuse worker dots for specific events
 function getEventColor(type: string) {
-  if (type.includes('fail') || type.includes('error')) return 'var(--red-400)'
-  if (type.includes('complete') || type.includes('✓')) return 'var(--green-500)'
-  if (type.includes('launch') || type.includes('start')) return 'var(--yellow-500)'
-  if (type.includes('reply') || type.includes('inbox')) return 'var(--blue-500)'
-  return 'var(--zinc-500)'
+  if (type.includes('fail') || type.includes('error')) return 'var(--color-error)'
+  if (type.includes('complete') || type.includes('✓')) return 'var(--color-success)'
+  if (type.includes('launch') || type.includes('start')) return 'var(--color-warning)'
+  if (type.includes('reply') || type.includes('inbox')) return 'var(--color-primary)'
+  return 'var(--color-on-surface-muted)'
 }
 
 interface ActivitySectionProps {

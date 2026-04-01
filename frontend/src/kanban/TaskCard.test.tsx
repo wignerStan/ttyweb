@@ -77,8 +77,9 @@ describe('TaskCard', () => {
 
   it('shows overdue warning when past due', () => {
     renderCard({ due_date: '2026-01-01' })
-    const dueEl = document.querySelector('.task-card__due--overdue')
+    const dueEl = screen.getByTestId('task-card-due')
     expect(dueEl).toBeInTheDocument()
+    expect(dueEl).toHaveClass('text-error')
   })
 
   it('clicking calls onSelect', () => {

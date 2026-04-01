@@ -2,7 +2,6 @@ import { Plus, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { NotepadTab } from './NotepadTab'
 import { type Note, useNotepad } from './useNotepad'
-import './notepad.css'
 
 interface NotepadPanelProps {
   projectId?: string | null

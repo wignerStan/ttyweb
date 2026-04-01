@@ -2,7 +2,6 @@ import { CheckCircle2, Clock, Loader2, RefreshCw, TerminalSquare, XCircle } from
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
-import './GlobalTaskOverview.css'
 
 interface GlobalTaskOverviewProps {
   onSelectPane: (paneId: string, paneName: string) => void
@@ -170,23 +169,23 @@ export function GlobalTaskOverview({
           <>
             {renderTaskGroup(
               'In Progress',
-              <Loader2 size={12} className="spinning" style={{ color: 'var(--blue-400)' }} />,
+              <Loader2 size={12} className="spinning" style={{ color: 'var(--color-primary)' }} />,
               groupedTasks.in_progress ?? [],
               'No active tasks',
             )}
             {renderTaskGroup(
               'Waiting',
-              <Clock size={12} style={{ color: 'var(--yellow-400)' }} />,
+              <Clock size={12} style={{ color: 'var(--color-warning)' }} />,
               groupedTasks.waiting ?? [],
             )}
             {renderTaskGroup(
               'Failed',
-              <XCircle size={12} style={{ color: 'var(--red-400)' }} />,
+              <XCircle size={12} style={{ color: 'var(--color-error)' }} />,
               groupedTasks.failed ?? [],
             )}
             {renderTaskGroup(
               'Completed',
-              <CheckCircle2 size={12} style={{ color: 'var(--green-400)' }} />,
+              <CheckCircle2 size={12} style={{ color: 'var(--color-success)' }} />,
               (groupedTasks.completed ?? []).slice(0, 15), // Show only recent 15 completed tasks
             )}
 

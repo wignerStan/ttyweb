@@ -42,9 +42,9 @@ describe('TaskStatBadges', () => {
     await act(async () => {
       renderWithProviders(<TaskStatBadges />)
     })
-    const failedBadge = document.querySelector('.task-stat-badge--failed')
+    const failedBadge = document.querySelector('.border-error\\/20')
     expect(failedBadge).toBeInTheDocument()
-    expect(failedBadge?.querySelector('.task-stat-count')?.textContent).toBe('1')
+    expect(failedBadge?.querySelector('.font-mono')?.textContent).toBe('1')
   })
 
   it('hides "failed" badge when failed is 0', async () => {
@@ -63,9 +63,9 @@ describe('TaskStatBadges', () => {
     await act(async () => {
       renderWithProviders(<TaskStatBadges />)
     })
-    const waitingBadge = document.querySelector('.task-stat-badge--waiting')
+    const waitingBadge = document.querySelector('.border-warning\\/20')
     expect(waitingBadge).toBeInTheDocument()
-    expect(waitingBadge?.querySelector('.task-stat-count')?.textContent).toBe('1')
+    expect(waitingBadge?.querySelector('.font-mono')?.textContent).toBe('1')
   })
 
   it('hides "waiting" badge when waiting is 0', async () => {

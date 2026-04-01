@@ -5,7 +5,6 @@ import type { AiConversation, PaneStatus, Task } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
 import { LogAccordion } from './LogAccordion'
 import { TaskCard } from './TaskCard'
-import './PaneDetails.css'
 
 interface Props {
   paneKey: string | null

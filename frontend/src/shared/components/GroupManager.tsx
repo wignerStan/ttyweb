@@ -2,7 +2,6 @@ import { ArrowRight, Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SessionGroup, TmuxSession } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
-import './GroupManager.css'
 
 interface Props {
   profileKey: string

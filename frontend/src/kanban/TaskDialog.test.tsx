@@ -146,7 +146,7 @@ describe('TaskDialog', () => {
   it('overlay click calls onClose', async () => {
     const onClose = vi.fn()
     renderWithProviders(<TaskDialog {...defaultProps} onClose={onClose} />)
-    const overlay = document.querySelector('.task-dialog-overlay')!
+    const overlay = document.querySelector('[data-testid="task-dialog-overlay"]')!
     await userEvent.click(overlay)
     expect(onClose).toHaveBeenCalled()
   })
@@ -154,7 +154,7 @@ describe('TaskDialog', () => {
   it('does not close on inner modal click', async () => {
     const onClose = vi.fn()
     renderWithProviders(<TaskDialog {...defaultProps} onClose={onClose} />)
-    const modal = document.querySelector('.task-dialog')!
+    const modal = document.querySelector('[data-testid="task-dialog"]')!
     await userEvent.click(modal)
     expect(onClose).not.toHaveBeenCalled()
   })

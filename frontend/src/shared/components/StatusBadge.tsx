@@ -1,6 +1,5 @@
 import { Check, Circle, Clock, Loader2, XCircle } from 'lucide-react'
 import type { PaneStatus } from '../../types'
-import './StatusBadge.css'
 
 interface Props {
   status: PaneStatus
@@ -18,21 +17,35 @@ const statusLabels: Record<PaneStatus, string> = {
 
 const statusOptions: PaneStatus[] = ['idle', 'in_progress', 'done', 'failed', 'waiting']
 
+const statusColorClasses: Record<PaneStatus, string> = {
+  idle: 'text-on-surface-muted',
+  in_progress: 'text-primary',
+  done: 'text-success',
+  failed: 'text-error',
+  waiting: 'text-warning',
+}
+
+const sizeClasses = {
+  small: 'text-[0.7rem]',
+  medium: 'text-[0.85rem]',
+} as const
+
 function StatusIcon({ status, size }: { status: PaneStatus; size: 'small' | 'medium' }) {
   const iconSize = size === 'small' ? 10 : 12
+
   if (status === 'in_progress') {
-    return <Loader2 size={iconSize} className="status-icon status-icon--spinning" />
+    return <Loader2 size={iconSize} className="shrink-0 text-primary animate-spin-slow" />
   }
   if (status === 'done') {
-    return <Check size={iconSize} className="status-icon status-icon--done" />
+    return <Check size={iconSize} className="shrink-0 text-success" />
   }
   if (status === 'failed') {
-    return <XCircle size={iconSize} className="status-icon status-icon--failed" />
+    return <XCircle size={iconSize} className="shrink-0 text-error" />
   }
   if (status === 'waiting') {
-    return <Clock size={iconSize} className="status-icon status-icon--waiting" />
+    return <Clock size={iconSize} className="shrink-0 text-warning" />
   }
-  return <Circle size={iconSize} className="status-icon status-icon--idle" />
+  return <Circle size={iconSize} className="shrink-0 text-on-surface-muted" />
 }
 
 export function StatusBadge({ status, onChange, size = 'small' }: Props) {
@@ -41,11 +54,11 @@ export function StatusBadge({ status, onChange, size = 'small' }: Props) {
   if (isEditable) {
     return (
       <div
-        className={`status-badge status-badge--${status} status-badge--${size} status-badge--editable`}
+        className={`inline-flex items-center gap-1 font-inherit ${statusColorClasses[status]} ${sizeClasses[size]} relative cursor-pointer p-0.5 px-1 rounded transition-colors duration-150 hover:bg-white/[0.08]`}
       >
         <StatusIcon status={status} size={size} />
         <select
-          className="status-badge__select"
+          className="appearance-none bg-transparent border-none text-inherit text-xs cursor-pointer p-px pr-3 rounded [&>option]:bg-base-200 [&>option]:text-base-content"
           value={status}
           onChange={(e) => onChange(e.target.value as PaneStatus)}
           onClick={(e) => e.stopPropagation()}
@@ -61,9 +74,13 @@ export function StatusBadge({ status, onChange, size = 'small' }: Props) {
   }
 
   return (
-    <div className={`status-badge status-badge--${status} status-badge--${size}`}>
+    <div
+      className={`inline-flex items-center gap-1 font-inherit ${statusColorClasses[status]} ${sizeClasses[size]}`}
+    >
       <StatusIcon status={status} size={size} />
-      {size === 'medium' && <span className="status-badge__label">{statusLabels[status]}</span>}
+      {size === 'medium' && (
+        <span className="font-medium tracking-[0.02em]">{statusLabels[status]}</span>
+      )}
     </div>
   )
 }

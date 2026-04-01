@@ -87,27 +87,27 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
       class="kanban-board__body"
     >
       <div
-        class="task-column "
+        class="flex min-h-0 flex-col overflow-hidden rounded-box border border-base-200 bg-base-300 "
       >
         <div
-          class="task-column__header"
+          class="flex flex-shrink-0 items-center justify-between border-b border-base-200 bg-base-200 rounded-t-box px-3.5 py-2.5"
         >
           <div
-            class="task-column__title-group"
+            class="flex items-center gap-2"
           >
             <h3
-              class="task-column__title"
+              class="m-0 text-sm font-semibold text-base-content"
             >
               Todo
             </h3>
             <span
-              class="task-column__badge"
+              class="badge badge-sm badge-ghost"
             >
               1
             </span>
           </div>
           <button
-            class="task-column__add-btn"
+            class="inline-flex h-6 w-6 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
             title="Add task to Todo"
             type="button"
           >
@@ -134,37 +134,37 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
           </button>
         </div>
         <div
-          class="task-column__body"
+          class="flex min-h-[60px] flex-col gap-2 overflow-y-auto p-2 rounded-b-box"
         >
           <div
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
-            class="task-card "
+            class="task-card bg-base-100 rounded-box border border-base-200 p-3 shadow-sm cursor-grab select-none transition-all duration-150 hover:shadow-md active:cursor-grabbing "
             role="button"
             style="opacity: 1;"
             tabindex="0"
           >
             <div
-              class="task-card__header"
+              class="mb-1.5 flex items-start justify-between gap-2"
             >
               <span
-                class="task-card__title"
+                class="line-clamp-2 break-words text-xs font-medium leading-snug text-base-content overflow-hidden"
               >
                 Set up CI
               </span>
               <span
-                class="task-card__priority task-card__priority--low"
+                class="flex-shrink-0 badge badge-xs badge-success"
                 title="Priority: Low"
               >
                 Low
               </span>
             </div>
             <div
-              class="task-card__tags"
+              class="mb-1.5 flex flex-wrap gap-1"
             >
               <span
-                class="task-card__tag tag--yellow"
+                class="badge badge-sm whitespace-nowrap tag--yellow"
               >
                 devops
               </span>
@@ -173,27 +173,27 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
         </div>
       </div>
       <div
-        class="task-column "
+        class="flex min-h-0 flex-col overflow-hidden rounded-box border border-base-200 bg-base-300 "
       >
         <div
-          class="task-column__header"
+          class="flex flex-shrink-0 items-center justify-between border-b border-base-200 bg-base-200 rounded-t-box px-3.5 py-2.5"
         >
           <div
-            class="task-column__title-group"
+            class="flex items-center gap-2"
           >
             <h3
-              class="task-column__title"
+              class="m-0 text-sm font-semibold text-base-content"
             >
               In Progress
             </h3>
             <span
-              class="task-column__badge"
+              class="badge badge-sm badge-ghost"
             >
               1
             </span>
           </div>
           <button
-            class="task-column__add-btn"
+            class="inline-flex h-6 w-6 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
             title="Add task to In Progress"
             type="button"
           >
@@ -220,46 +220,47 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
           </button>
         </div>
         <div
-          class="task-column__body"
+          class="flex min-h-[60px] flex-col gap-2 overflow-y-auto p-2 rounded-b-box"
         >
           <div
             aria-describedby="DndDescribedBy-0"
             aria-disabled="false"
             aria-roledescription="sortable"
-            class="task-card "
+            class="task-card bg-base-100 rounded-box border border-base-200 p-3 shadow-sm cursor-grab select-none transition-all duration-150 hover:shadow-md active:cursor-grabbing "
             role="button"
             style="opacity: 1;"
             tabindex="0"
           >
             <div
-              class="task-card__header"
+              class="mb-1.5 flex items-start justify-between gap-2"
             >
               <span
-                class="task-card__title"
+                class="line-clamp-2 break-words text-xs font-medium leading-snug text-base-content overflow-hidden"
               >
                 Write tests
               </span>
               <span
-                class="task-card__priority task-card__priority--medium"
+                class="flex-shrink-0 badge badge-xs badge-warning"
                 title="Priority: Med"
               >
                 Med
               </span>
             </div>
             <div
-              class="task-card__tags"
+              class="mb-1.5 flex flex-wrap gap-1"
             >
               <span
-                class="task-card__tag tag--cyan"
+                class="badge badge-sm whitespace-nowrap tag--cyan"
               >
                 testing
               </span>
             </div>
             <div
-              class="task-card__footer"
+              class="flex items-center gap-2"
             >
               <span
-                class="task-card__due task-card__due--overdue"
+                class="flex items-center gap-0.5 text-xs text-base-content/50 text-error"
+                data-testid="task-card-due"
               >
                 <svg
                   aria-hidden="true"
@@ -291,27 +292,27 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
         </div>
       </div>
       <div
-        class="task-column "
+        class="flex min-h-0 flex-col overflow-hidden rounded-box border border-base-200 bg-base-300 "
       >
         <div
-          class="task-column__header"
+          class="flex flex-shrink-0 items-center justify-between border-b border-base-200 bg-base-200 rounded-t-box px-3.5 py-2.5"
         >
           <div
-            class="task-column__title-group"
+            class="flex items-center gap-2"
           >
             <h3
-              class="task-column__title"
+              class="m-0 text-sm font-semibold text-base-content"
             >
               Done
             </h3>
             <span
-              class="task-column__badge"
+              class="badge badge-sm badge-ghost"
             >
               0
             </span>
           </div>
           <button
-            class="task-column__add-btn"
+            class="inline-flex h-6 w-6 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
             title="Add task to Done"
             type="button"
           >
@@ -338,37 +339,37 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
           </button>
         </div>
         <div
-          class="task-column__body"
+          class="flex min-h-[60px] flex-col gap-2 overflow-y-auto p-2 rounded-b-box"
         >
           <div
-            class="task-column__placeholder"
+            class="flex flex-1 min-h-[48px] items-center justify-center rounded-md border-2 border-dashed border-base-300 text-xs text-base-content/50"
           >
             Drop tasks here
           </div>
         </div>
       </div>
       <div
-        class="task-column "
+        class="flex min-h-0 flex-col overflow-hidden rounded-box border border-base-200 bg-base-300 "
       >
         <div
-          class="task-column__header"
+          class="flex flex-shrink-0 items-center justify-between border-b border-base-200 bg-base-200 rounded-t-box px-3.5 py-2.5"
         >
           <div
-            class="task-column__title-group"
+            class="flex items-center gap-2"
           >
             <h3
-              class="task-column__title"
+              class="m-0 text-sm font-semibold text-base-content"
             >
               Archived
             </h3>
             <span
-              class="task-column__badge"
+              class="badge badge-sm badge-ghost"
             >
               0
             </span>
           </div>
           <button
-            class="task-column__add-btn"
+            class="inline-flex h-6 w-6 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
             title="Add task to Archived"
             type="button"
           >
@@ -395,10 +396,10 @@ exports[`KanbanBoard snapshot > renders board with tasks 1`] = `
           </button>
         </div>
         <div
-          class="task-column__body"
+          class="flex min-h-[60px] flex-col gap-2 overflow-y-auto p-2 rounded-b-box"
         >
           <div
-            class="task-column__placeholder"
+            class="flex flex-1 min-h-[48px] items-center justify-center rounded-md border-2 border-dashed border-base-300 text-xs text-base-content/50"
           >
             Drop tasks here
           </div>

@@ -1,0 +1,102 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GroupManager snapshot > renders group list with sessions 1`] = `
+<div>
+  <div
+    class="group-manager"
+  >
+    <div
+      class="group-header"
+    >
+      <span
+        class="group-title"
+      >
+        Groups
+      </span>
+      <button
+        class="group-add-btn"
+        title="Create group"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-plus"
+          fill="none"
+          height="14"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="14"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12h14"
+          />
+          <path
+            d="M12 5v14"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="group-list"
+    >
+      <div
+        class="group-empty"
+      >
+        No groups yet
+      </div>
+    </div>
+    <div
+      class="session-assign-section"
+    >
+      <div
+        class="section-label"
+      >
+        Assign Sessions
+      </div>
+      <div
+        class="session-list"
+      >
+        <div
+          class="session-row"
+        >
+          <span
+            class="session-name"
+          >
+            main
+          </span>
+          <button
+            class="btn-assign"
+            title="Assign to group"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-right"
+              fill="none"
+              height="14"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="14"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5 12h14"
+              />
+              <path
+                d="m12 5 7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

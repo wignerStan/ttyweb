@@ -23,7 +23,13 @@ export function LogAccordion({ title, count, children, icon, defaultOpen = false
           {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </span>
         {icon && (
-          <span style={{ color: 'var(--zinc-500)', display: 'flex', alignItems: 'center' }}>
+          <span
+            style={{
+              color: 'var(--color-on-surface-muted)',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             {icon}
           </span>
         )}

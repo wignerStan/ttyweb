@@ -1,7 +1,6 @@
 import { CheckCircle2, Clock, Loader2, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
-import './TaskStatBadges.css'
 
 interface TaskStatBadgesProps {
   refreshToken?: number
@@ -44,38 +43,38 @@ export function TaskStatBadges({ refreshToken: _refreshToken }: TaskStatBadgesPr
   }, [fetch_])
 
   return (
-    <div className="task-stat-badges">
-      <div className="task-stat-badges-row">
-        <div className="task-stat-badge task-stat-badge--progress">
-          <Loader2 size={11} className={inProgress > 0 ? 'task-stat-spin' : ''} />
-          <span className="task-stat-label">进行中</span>
-          <span className="task-stat-count">{inProgress}</span>
+    <div className="px-2.5 py-2 border-b border-base-200 bg-base-300">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1 py-0.5 px-2 rounded-full text-xs font-medium border border-primary/25 bg-primary/10 text-primary shrink-0">
+          <Loader2 size={11} className={inProgress > 0 ? 'animate-spin' : ''} />
+          <span className="text-2xs opacity-85">进行中</span>
+          <span className="font-bold text-xs font-mono">{inProgress}</span>
         </div>
-        <div className="task-stat-badge task-stat-badge--done">
+        <div className="flex items-center gap-1 py-0.5 px-2 rounded-full text-xs font-medium border border-success/20 bg-success/[0.08] text-success shrink-0">
           <CheckCircle2 size={11} />
-          <span className="task-stat-label">已完成</span>
-          <span className="task-stat-count">{completed}</span>
+          <span className="text-2xs opacity-85">已完成</span>
+          <span className="font-bold text-xs font-mono">{completed}</span>
         </div>
         {failed > 0 && (
-          <div className="task-stat-badge task-stat-badge--failed">
+          <div className="flex items-center gap-1 py-0.5 px-2 rounded-full text-xs font-medium border border-error/20 bg-error/[0.08] text-error shrink-0">
             <XCircle size={11} />
-            <span className="task-stat-count">{failed}</span>
+            <span className="font-bold text-xs font-mono">{failed}</span>
           </div>
         )}
         {waiting > 0 && (
-          <div className="task-stat-badge task-stat-badge--waiting">
+          <div className="flex items-center gap-1 py-0.5 px-2 rounded-full text-xs font-medium border border-warning/20 bg-warning/[0.08] text-warning shrink-0">
             <Clock size={11} />
-            <span className="task-stat-count">{waiting}</span>
+            <span className="font-bold text-xs font-mono">{waiting}</span>
           </div>
         )}
         <button
           type="button"
-          className="task-stat-refresh"
+          className="ml-auto bg-transparent border-none text-on-surface-muted cursor-pointer p-0.5 rounded flex items-center transition-all duration-150 hover:text-on-surface hover:bg-base-200 disabled:opacity-40 disabled:cursor-not-allowed"
           onClick={fetch_}
           disabled={loading}
           title="Refresh"
         >
-          <RefreshCw size={11} className={loading ? 'task-stat-spin' : ''} />
+          <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
     </div>

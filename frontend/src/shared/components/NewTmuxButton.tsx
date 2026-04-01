@@ -2,7 +2,6 @@ import { FolderOpen, LayoutPanelTop, Plus, Terminal } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import type { TmuxSession } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
-import './NewTmuxButton.css'
 
 interface QuickDir {
   name: string

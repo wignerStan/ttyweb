@@ -2,7 +2,6 @@ import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import type { AiRole } from '../../types'
 import { getAuthHeader } from '../../utils/auth'
-import './RoleManagerModal.css'
 
 interface RoleFormData {
   id: string

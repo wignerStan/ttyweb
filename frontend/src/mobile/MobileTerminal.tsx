@@ -765,12 +765,15 @@ export function MobileTerminal({
   }, [])
 
   return (
-    <div className="mobile-terminal-wrapper">
-      <div className="mobile-terminal-area">
-        <div ref={containerRef} className="mobile-terminal-container" />
+    <div className="mobile-terminal-wrapper flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="mobile-terminal-area relative flex-none">
+        <div
+          ref={containerRef}
+          className="mobile-terminal-container h-[calc((var(--app-height,100vh)-48px)/2)] flex-none min-h-0 overflow-hidden bg-term-bg"
+        />
         <button
           type="button"
-          className="mobile-fit-window-btn"
+          className="mobile-fit-window-btn absolute bottom-2 right-2 z-50 flex items-center justify-center gap-0.5 whitespace-nowrap rounded-[14px] border-none bg-white/12 px-2 py-1 text-xs text-white/60 cursor-pointer tap-none"
           onClick={handleFitWindow}
           title="Fit window"
         >
