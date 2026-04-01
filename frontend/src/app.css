@@ -1061,7 +1061,7 @@
 
   .select-mode-copy-btn {
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-primary-content);
   }
 
   .select-mode-copy-btn:active {
@@ -1071,7 +1071,7 @@
 
   .select-mode-copied {
     background: var(--color-success);
-    color: #fff;
+    color: var(--color-success-content);
     pointer-events: none;
   }
 
