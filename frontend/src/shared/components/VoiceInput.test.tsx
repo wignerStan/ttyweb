@@ -124,7 +124,7 @@ describe('VoiceInput', () => {
 
     const btn = screen.getByRole('button')
     expect(btn).toBeInTheDocument()
-    expect(btn.className).toContain('bg-[var(--zinc-800)]')
+    expect(btn.className).toContain('bg-base-200')
   })
 
   it('button is disabled when disabled prop is true', () => {

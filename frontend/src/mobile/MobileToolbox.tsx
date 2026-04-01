@@ -198,7 +198,7 @@ export function MobileToolbox({
         </div>
         <div className="toolbox-key-row toolbox-font-row flex h-8 border-b border-base-200 bg-base-300">
           <div className="toolbox-font-slider flex w-full items-center gap-1.5 px-2.5">
-            <span className="font-slider-label shrink-0 font-mono text-[11px] text-base-content/45">
+            <span className="font-slider-label shrink-0 font-mono text-xs text-base-content/45">
               A
             </span>
             <input
@@ -211,7 +211,7 @@ export function MobileToolbox({
               onMouseDown={preventFocus}
               className="font-slider-input h-1 flex-1 appearance-none rounded bg-base-200 outline-none"
             />
-            <span className="font-slider-value shrink-0 min-w-6 text-right font-mono text-[11px] text-base-content/75">
+            <span className="font-slider-value shrink-0 min-w-6 text-right font-mono text-xs text-base-content/75">
               {fontSize}
             </span>
           </div>
@@ -266,7 +266,7 @@ export function MobileToolbox({
           <Grid3X3 size={18} />
         </button>
         <button
-          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'snippets' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-sm cursor-pointer tap-none select-none ${activeTab === 'snippets' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {
@@ -287,7 +287,7 @@ export function MobileToolbox({
           <VoiceInput ref={effectiveVoiceRef} onText={handleVoiceText} disabled={disabled} />
         </div>
         <button
-          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'config' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-sm cursor-pointer tap-none select-none ${activeTab === 'config' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {
@@ -300,7 +300,7 @@ export function MobileToolbox({
           <span>配置</span>
         </button>
         <button
-          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'upload' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-sm cursor-pointer tap-none select-none ${activeTab === 'upload' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {
@@ -313,7 +313,7 @@ export function MobileToolbox({
           <span>上传</span>
         </button>
         <button
-          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-[13px] cursor-pointer tap-none select-none ${activeTab === 'ai' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
+          className={`toolbox-tab btn btn-ghost min-h-[44px] flex-1 items-center justify-center gap-1 text-sm cursor-pointer tap-none select-none ${activeTab === 'ai' ? 'active font-semibold text-primary' : 'text-base-content/45'}`}
           onMouseDown={preventFocus}
           onTouchStart={preventFocus}
           onTouchEnd={(e) => {

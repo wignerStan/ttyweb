@@ -34,7 +34,7 @@ function TaskColumn({ status, title, tasks, onSelectTask, onAddTask }: TaskColum
     <DroppableColumn status={status}>
       <div className="flex flex-shrink-0 items-center justify-between border-b border-base-200 bg-base-200 rounded-t-box px-3.5 py-2.5">
         <div className="flex items-center gap-2">
-          <h3 className="m-0 text-[13px] font-semibold text-base-content">{title}</h3>
+          <h3 className="m-0 text-sm font-semibold text-base-content">{title}</h3>
           <span className="badge badge-sm badge-ghost">{tasks.length}</span>
         </div>
         <button
@@ -55,7 +55,7 @@ function TaskColumn({ status, title, tasks, onSelectTask, onAddTask }: TaskColum
         </SortableContext>
 
         {tasks.length === 0 && (
-          <div className="flex flex-1 min-h-[48px] items-center justify-center rounded-md border-2 border-dashed border-base-300 text-[11px] text-base-content/50">
+          <div className="flex flex-1 min-h-[48px] items-center justify-center rounded-md border-2 border-dashed border-base-300 text-xs text-base-content/50">
             Drop tasks here
           </div>
         )}

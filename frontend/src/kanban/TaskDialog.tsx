@@ -183,7 +183,7 @@ function TaskDialog({
           >
             <div className="flex flex-col gap-1.5">
               <label
-                className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                className="text-xs font-semibold uppercase tracking-wide text-base-content/50"
                 htmlFor="task-title"
               >
                 Title *
@@ -196,12 +196,12 @@ function TaskDialog({
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder="Task title"
               />
-              {errors.title && <span className="text-[11px] text-error">{errors.title}</span>}
+              {errors.title && <span className="text-xs text-error">{errors.title}</span>}
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label
-                className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                className="text-xs font-semibold uppercase tracking-wide text-base-content/50"
                 htmlFor="task-desc"
               >
                 Description
@@ -219,7 +219,7 @@ function TaskDialog({
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
               <div className="flex flex-col gap-1.5">
                 <label
-                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  className="text-xs font-semibold uppercase tracking-wide text-base-content/50"
                   htmlFor="task-status"
                 >
                   Status
@@ -240,7 +240,7 @@ function TaskDialog({
 
               <div className="flex flex-col gap-1.5">
                 <label
-                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  className="text-xs font-semibold uppercase tracking-wide text-base-content/50"
                   htmlFor="task-priority"
                 >
                   Priority
@@ -263,7 +263,7 @@ function TaskDialog({
             <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
               <div className="flex flex-col gap-1.5">
                 <label
-                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  className="text-xs font-semibold uppercase tracking-wide text-base-content/50"
                   htmlFor="task-tags"
                 >
                   Tags
@@ -280,7 +280,7 @@ function TaskDialog({
 
               <div className="flex flex-col gap-1.5">
                 <label
-                  className="text-[11px] font-semibold uppercase tracking-wide text-base-content/50"
+                  className="text-xs font-semibold uppercase tracking-wide text-base-content/50"
                   htmlFor="task-due"
                 >
                   Due Date

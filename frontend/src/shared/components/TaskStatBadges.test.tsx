@@ -42,7 +42,7 @@ describe('TaskStatBadges', () => {
     await act(async () => {
       renderWithProviders(<TaskStatBadges />)
     })
-    const failedBadge = document.querySelector('.border-red-500\\/20')
+    const failedBadge = document.querySelector('.border-error\\/20')
     expect(failedBadge).toBeInTheDocument()
     expect(failedBadge?.querySelector('.font-mono')?.textContent).toBe('1')
   })
@@ -63,7 +63,7 @@ describe('TaskStatBadges', () => {
     await act(async () => {
       renderWithProviders(<TaskStatBadges />)
     })
-    const waitingBadge = document.querySelector('.border-yellow-500\\/20')
+    const waitingBadge = document.querySelector('.border-warning\\/20')
     expect(waitingBadge).toBeInTheDocument()
     expect(waitingBadge?.querySelector('.font-mono')?.textContent).toBe('1')
   })

@@ -8,11 +8,11 @@ const STATUSES: PaneStatus[] = ['idle', 'in_progress', 'done', 'failed', 'waitin
 describe('StatusBadge', () => {
   it('renders correct CSS class for each status', () => {
     const statusColorMap: Record<PaneStatus, string> = {
-      idle: 'text-[var(--zinc-500)]',
-      in_progress: 'text-[var(--blue-500)]',
-      done: 'text-[var(--green-500)]',
-      failed: 'text-[var(--red-500)]',
-      waiting: 'text-[var(--yellow-500)]',
+      idle: 'text-on-surface-muted',
+      in_progress: 'text-primary',
+      done: 'text-success',
+      failed: 'text-error',
+      waiting: 'text-warning',
     }
     for (const status of STATUSES) {
       const { container } = renderWithProviders(<StatusBadge status={status} />)
@@ -22,11 +22,11 @@ describe('StatusBadge', () => {
 
   it('renders correct icon class for each status', () => {
     const iconColorMap: Record<PaneStatus, string> = {
-      idle: 'text-[var(--zinc-600)]',
-      in_progress: 'text-[var(--blue-500)]',
-      done: 'text-[var(--green-500)]',
-      failed: 'text-[var(--red-500)]',
-      waiting: 'text-[var(--yellow-500)]',
+      idle: 'text-on-surface-muted',
+      in_progress: 'text-primary',
+      done: 'text-success',
+      failed: 'text-error',
+      waiting: 'text-warning',
     }
     for (const status of STATUSES) {
       const { container } = renderWithProviders(<StatusBadge status={status} />)

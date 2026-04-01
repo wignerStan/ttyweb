@@ -74,7 +74,7 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
           ref={setActivatorNodeRef}
           {...listeners}
         >
-          <span className="line-clamp-2 break-words text-xs font-medium leading-snug text-base-content [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box] overflow-hidden">
+          <span className="line-clamp-2 break-words text-xs font-medium leading-snug text-base-content overflow-hidden">
             {task.title}
           </span>
           {priority && (

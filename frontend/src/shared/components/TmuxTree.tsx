@@ -536,7 +536,7 @@ function SortableSession({
         <button type="button" className="expand-btn" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
-        <Terminal size={14} style={{ color: 'var(--blue-500)' }} />
+        <Terminal size={14} style={{ color: 'var(--color-primary)' }} />
         <span className="session-name">{session.sessionName}</span>
         {(sessionStatus.inProgress > 0 ||
           sessionStatus.done > 0 ||
@@ -738,9 +738,9 @@ function SortableGroup({ item, group, children, isOver }: SortableGroupProps) {
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         {expanded ? (
-          <FolderOpen size={14} style={{ color: 'var(--blue-500)' }} />
+          <FolderOpen size={14} style={{ color: 'var(--color-primary)' }} />
         ) : (
-          <Folder size={14} style={{ color: 'var(--blue-500)' }} />
+          <Folder size={14} style={{ color: 'var(--color-primary)' }} />
         )}
         <span className="group-name">{group.group_name}</span>
         <span className="group-count">{group.session_count}</span>
@@ -759,7 +759,7 @@ function DragPreview({ item }: { item: TreeItem | null }) {
       <div className="drag-preview session-preview">
         <DragHandle />
         <ChevronRight size={12} />
-        <Terminal size={14} style={{ color: 'var(--blue-500)' }} />
+        <Terminal size={14} style={{ color: 'var(--color-primary)' }} />
         <span className="session-name">{item.session.sessionName}</span>
       </div>
     )
@@ -770,7 +770,7 @@ function DragPreview({ item }: { item: TreeItem | null }) {
       <div className="drag-preview group-preview">
         <DragHandle />
         <ChevronDown size={12} />
-        <FolderOpen size={14} style={{ color: 'var(--blue-500)' }} />
+        <FolderOpen size={14} style={{ color: 'var(--color-primary)' }} />
         <span className="group-name">{item.group.group_name}</span>
       </div>
     )

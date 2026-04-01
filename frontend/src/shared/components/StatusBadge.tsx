@@ -18,11 +18,11 @@ const statusLabels: Record<PaneStatus, string> = {
 const statusOptions: PaneStatus[] = ['idle', 'in_progress', 'done', 'failed', 'waiting']
 
 const statusColorClasses: Record<PaneStatus, string> = {
-  idle: 'text-[var(--zinc-500)]',
-  in_progress: 'text-[var(--blue-500)]',
-  done: 'text-[var(--green-500)]',
-  failed: 'text-[var(--red-500)]',
-  waiting: 'text-[var(--yellow-500)]',
+  idle: 'text-on-surface-muted',
+  in_progress: 'text-primary',
+  done: 'text-success',
+  failed: 'text-error',
+  waiting: 'text-warning',
 }
 
 const sizeClasses = {
@@ -34,18 +34,18 @@ function StatusIcon({ status, size }: { status: PaneStatus; size: 'small' | 'med
   const iconSize = size === 'small' ? 10 : 12
 
   if (status === 'in_progress') {
-    return <Loader2 size={iconSize} className="shrink-0 text-[var(--blue-500)] animate-spin-slow" />
+    return <Loader2 size={iconSize} className="shrink-0 text-primary animate-spin-slow" />
   }
   if (status === 'done') {
-    return <Check size={iconSize} className="shrink-0 text-[var(--green-500)]" />
+    return <Check size={iconSize} className="shrink-0 text-success" />
   }
   if (status === 'failed') {
-    return <XCircle size={iconSize} className="shrink-0 text-[var(--red-500)]" />
+    return <XCircle size={iconSize} className="shrink-0 text-error" />
   }
   if (status === 'waiting') {
-    return <Clock size={iconSize} className="shrink-0 text-[var(--yellow-500)]" />
+    return <Clock size={iconSize} className="shrink-0 text-warning" />
   }
-  return <Circle size={iconSize} className="shrink-0 text-[var(--zinc-600)]" />
+  return <Circle size={iconSize} className="shrink-0 text-on-surface-muted" />
 }
 
 export function StatusBadge({ status, onChange, size = 'small' }: Props) {
@@ -58,7 +58,7 @@ export function StatusBadge({ status, onChange, size = 'small' }: Props) {
       >
         <StatusIcon status={status} size={size} />
         <select
-          className="appearance-none bg-transparent border-none text-inherit text-xs cursor-pointer p-px pr-3 rounded [&>option]:bg-[var(--zinc-900)] [&>option]:text-[var(--zinc-200)]"
+          className="appearance-none bg-transparent border-none text-inherit text-xs cursor-pointer p-px pr-3 rounded [&>option]:bg-base-200 [&>option]:text-base-content"
           value={status}
           onChange={(e) => onChange(e.target.value as PaneStatus)}
           onClick={(e) => e.stopPropagation()}

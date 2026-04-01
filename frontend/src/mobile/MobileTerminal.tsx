@@ -773,7 +773,7 @@ export function MobileTerminal({
         />
         <button
           type="button"
-          className="mobile-fit-window-btn absolute bottom-2 right-2 z-50 flex items-center justify-center gap-0.5 whitespace-nowrap rounded-[14px] border-none bg-white/12 px-2 py-1 text-[11px] text-white/60 cursor-pointer tap-none"
+          className="mobile-fit-window-btn absolute bottom-2 right-2 z-50 flex items-center justify-center gap-0.5 whitespace-nowrap rounded-[14px] border-none bg-white/12 px-2 py-1 text-xs text-white/60 cursor-pointer tap-none"
           onClick={handleFitWindow}
           title="Fit window"
         >

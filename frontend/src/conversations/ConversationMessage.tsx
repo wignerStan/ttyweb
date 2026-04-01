@@ -43,14 +43,14 @@ export function ConversationMessage({ message }: ConversationMessageProps) {
   return (
     <div
       data-testid={message.role === 'user' ? 'conv-msg-user' : 'conv-msg-assistant'}
-      className={`conv-msg max-w-[85%] rounded-md px-3.5 py-2.5 text-[13px] leading-relaxed font-mono break-words whitespace-pre-wrap ${
+      className={`conv-msg max-w-[85%] rounded-md px-3.5 py-2.5 text-sm leading-relaxed font-mono break-words whitespace-pre-wrap ${
         message.role === 'user'
           ? 'self-end border border-edge bg-surface-2 text-on-surface rounded-br-sm'
           : 'self-start border border-surface-2 bg-surface-3 text-on-surface-2 rounded-bl-sm'
       }`}
     >
       <div
-        className={`mb-1 text-[10px] font-semibold uppercase tracking-wide ${
+        className={`mb-1 text-2xs font-semibold uppercase tracking-wide ${
           message.role === 'user' ? 'text-primary' : 'text-success'
         }`}
       >
@@ -75,7 +75,7 @@ export function ConversationMessage({ message }: ConversationMessageProps) {
               return (
                 <span
                   key={tu.id}
-                  className="mt-1.5 inline-block cursor-default rounded-sm border border-edge bg-surface-2 px-2 py-0.5 font-mono text-[11px] text-purple"
+                  className="mt-1.5 inline-block cursor-default rounded-sm border border-edge bg-surface-2 px-2 py-0.5 font-mono text-xs text-secondary"
                 >
                   {formatToolInputSummary(tu.name, tu.input)}
                 </span>
@@ -90,7 +90,7 @@ export function ConversationMessage({ message }: ConversationMessageProps) {
       {message.timestamp && (
         <div
           data-testid="conv-msg-timestamp"
-          className="mt-1 text-right font-mono text-[10px] text-on-surface-muted"
+          className="mt-1 text-right font-mono text-2xs text-on-surface-muted"
         >
           {formatTimestamp(message.timestamp)}
         </div>

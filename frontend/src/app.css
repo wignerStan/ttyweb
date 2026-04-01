@@ -231,11 +231,11 @@
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 6px var(--blue-500);
+    box-shadow: 0 0 6px var(--color-primary);
   }
   50% {
     opacity: 0.5;
-    box-shadow: 0 0 2px var(--blue-500);
+    box-shadow: 0 0 2px var(--color-primary);
   }
 }
 
@@ -409,19 +409,19 @@
 /* ── TmuxTree drag-and-drop states ── */
 @layer components {
   .session-node.drop-target .session-row {
-    background: var(--blue-900, rgba(30, 58, 138, 0.2));
-    box-shadow: inset 0 -2px 0 0 var(--blue-500);
+    background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+    box-shadow: inset 0 -2px 0 0 var(--color-primary);
   }
 
   .group-node.drop-target-group {
-    border-color: var(--blue-500);
-    background: var(--blue-900, rgba(30, 58, 138, 0.2));
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 20%, transparent);
   }
 
   .group-node.drop-target-group .group-empty-drop {
-    border-color: var(--blue-500);
-    color: var(--blue-500);
-    background: rgba(59, 130, 246, 0.05);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
   }
 
   /* Conversations: selected session badge */
@@ -1099,7 +1099,7 @@
     font-size: 11px;
     line-height: 1.3;
     color: color-mix(in srgb, var(--color-base-content) 75%, transparent);
-    background: oklch(0.11 0.01 260);
+    background: var(--color-term-bg);
     white-space: pre;
     word-break: break-all;
     user-select: text;

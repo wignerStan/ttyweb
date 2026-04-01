@@ -32,12 +32,14 @@ interface TaskHistoryPanelProps {
 
 function StatusIcon({ status }: { status: string }) {
   if (status === 'in_progress')
-    return <Loader2 size={14} className="task-history-spin" style={{ color: 'var(--blue-400)' }} />
+    return (
+      <Loader2 size={14} className="task-history-spin" style={{ color: 'var(--color-primary)' }} />
+    )
   if (status === 'completed')
-    return <CheckCircle2 size={14} style={{ color: 'var(--green-500)' }} />
-  if (status === 'failed') return <XCircle size={14} style={{ color: 'var(--red-500)' }} />
-  if (status === 'waiting') return <Clock size={14} style={{ color: 'var(--yellow-500)' }} />
-  return <Clock size={14} style={{ color: 'var(--zinc-500)' }} />
+    return <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
+  if (status === 'failed') return <XCircle size={14} style={{ color: 'var(--color-error)' }} />
+  if (status === 'waiting') return <Clock size={14} style={{ color: 'var(--color-warning)' }} />
+  return <Clock size={14} style={{ color: 'var(--color-on-surface-muted)' }} />
 }
 
 function formatTime(ts: number): string {
@@ -141,7 +143,7 @@ export function TaskHistoryPanel({
       {/* Pane context */}
       {paneKey && (
         <div className="task-history-context">
-          <Terminal size={12} style={{ color: 'var(--zinc-500)', flexShrink: 0 }} />
+          <Terminal size={12} style={{ color: 'var(--color-on-surface-muted)', flexShrink: 0 }} />
           <span className="task-history-pane-name">{displayName}</span>
         </div>
       )}

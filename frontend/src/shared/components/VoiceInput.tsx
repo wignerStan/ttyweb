@@ -18,10 +18,10 @@ type Status = 'idle' | 'connecting' | 'recording' | 'processing'
 const CONNECT_TIMEOUT_MS = 10000
 
 const buttonStatusClasses: Record<Status, string> = {
-  idle: 'bg-[var(--zinc-800)] text-[var(--zinc-400)] hover:bg-[var(--zinc-700)] hover:text-[var(--zinc-200)]',
-  recording: 'bg-[var(--red-500)] text-white animate-pulse-ring',
-  connecting: 'bg-[var(--blue-600)] text-white',
-  processing: 'bg-[var(--blue-600)] text-white',
+  idle: 'bg-base-200 text-on-surface-muted hover:bg-base-300 hover:text-on-surface',
+  recording: 'bg-error text-white animate-pulse-ring',
+  connecting: 'bg-primary text-white',
+  processing: 'bg-primary text-white',
 }
 
 export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function VoiceInput(
@@ -294,7 +294,7 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
         )}
       </button>
       {partialText && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-2 bg-[var(--zinc-900)] border border-[var(--zinc-700)] rounded-lg text-[var(--zinc-300)] text-[13px] max-h-24 overflow-y-auto whitespace-pre-wrap break-words shadow-lg z-[100]">
+        <div className="absolute bottom-full left-0 right-0 mb-2 px-3 py-2 bg-base-300 border border-base-200 rounded-lg text-on-surface text-sm max-h-24 overflow-y-auto whitespace-pre-wrap break-words shadow-lg z-[100]">
           {partialText}
         </div>
       )}
