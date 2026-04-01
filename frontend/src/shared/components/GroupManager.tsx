@@ -1,7 +1,9 @@
-import { ArrowRight, Check, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { ArrowRight, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SessionGroup, TmuxSession } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
+import { ConfirmDialog } from './ConfirmDialog'
+import { InlineInput } from './InlineInput'
 
 interface Props {
   profileKey: string
@@ -21,9 +23,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
 
   const fetchGroups = useCallback(async () => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, {
         headers,
       })
@@ -46,9 +46,10 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     if (!newGroupName.trim() || loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       const res = await fetch('/api/groups', {
         method: 'POST',
         headers,
@@ -80,9 +81,10 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     if (!editName.trim() || loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       await fetch(`/api/groups/${id}`, {
         method: 'PUT',
         headers,
@@ -97,33 +99,40 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     }
   }
 
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+
   const deleteGroup = async (id: number) => {
-    const group = groups.find((g) => g.id === id)
-    if (!group || loading) return
-    if (!confirm(`Delete group "${group.group_name}"?`)) return
+    if (loading) return
+    setDeleteTarget(id)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (deleteTarget === null) return
+    const group = groups.find((g) => g.id === deleteTarget)
+    if (!group) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
-      await fetch(`/api/groups/${id}`, {
+      const headers = getAuthHeaders()
+      await fetch(`/api/groups/${deleteTarget}`, {
         method: 'DELETE',
         headers,
       })
-      setGroups(groups.filter((g) => g.id !== id))
+      setGroups(groups.filter((g) => g.id !== deleteTarget))
       onGroupsChanged()
     } catch (_err) {
     } finally {
       setLoading(false)
+      setDeleteTarget(null)
     }
   }
 
   const assignSessionToGroup = async (sessionName: string, groupId: number | null) => {
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       await fetch(`/api/sessions/${encodeURIComponent(sessionName)}/group`, {
         method: 'PUT',
         headers,
@@ -138,15 +147,6 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
-    if (e.key === 'Enter') action()
-    if (e.key === 'Escape') {
-      setIsCreating(false)
-      setEditingId(null)
-      setAssigningSession(null)
-    }
-  }
-
   return (
     <div className="group-manager">
       <div className="group-header">
@@ -156,6 +156,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
           className="group-add-btn"
           onClick={() => setIsCreating(true)}
           title="Create group"
+          aria-label="Add group"
         >
           <Plus size={14} />
         </button>
@@ -163,27 +164,21 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
 
       {isCreating && (
         <div className="group-create-row">
-          <input
+          <InlineInput
             ref={inputRef}
-            type="text"
             value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, createGroup)}
+            onChange={setNewGroupName}
+            onSubmit={createGroup}
+            onCancel={() => setIsCreating(false)}
             placeholder="Group name..."
-            className="group-input"
-            disabled={loading}
+            loading={loading}
+            name="group-name"
+            inputClassName="group-input"
+            confirmClassName="btn-sm btn-confirm"
+            cancelClassName="btn-sm btn-cancel"
+            iconSize={12}
+            className="flex gap-1.5 w-full"
           />
-          <button
-            type="button"
-            onClick={createGroup}
-            disabled={loading || !newGroupName.trim()}
-            className="btn-sm btn-confirm"
-          >
-            <Check size={12} />
-          </button>
-          <button type="button" onClick={() => setIsCreating(false)} className="btn-sm btn-cancel">
-            <X size={12} />
-          </button>
         </div>
       )}
 
@@ -193,29 +188,18 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
           <div key={group.id} className="group-item">
             {editingId === group.id ? (
               <div className="group-edit-row">
-                <input
-                  type="text"
+                <InlineInput
                   value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, () => updateGroup(group.id))}
-                  className="group-input"
-                  disabled={loading}
+                  onChange={setEditName}
+                  onSubmit={() => updateGroup(group.id)}
+                  onCancel={() => setEditingId(null)}
+                  loading={loading}
+                  inputClassName="group-input"
+                  confirmClassName="btn-sm btn-confirm"
+                  cancelClassName="btn-sm btn-cancel"
+                  iconSize={12}
+                  className="flex gap-1.5 w-full"
                 />
-                <button
-                  type="button"
-                  onClick={() => updateGroup(group.id)}
-                  disabled={loading || !editName.trim()}
-                  className="btn-sm btn-confirm"
-                >
-                  <Check size={12} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingId(null)}
-                  className="btn-sm btn-cancel"
-                >
-                  <X size={12} />
-                </button>
               </div>
             ) : (
               <div className="group-row">
@@ -230,6 +214,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                       setEditName(group.group_name)
                     }}
                     title="Rename"
+                    aria-label="Rename group"
                   >
                     <Pencil size={12} />
                   </button>
@@ -238,6 +223,7 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
                     className="btn-icon btn-danger"
                     onClick={() => deleteGroup(group.id)}
                     title="Delete"
+                    aria-label="Delete group"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -285,6 +271,20 @@ export function GroupManager({ profileKey, sessions, onGroupsChanged }: Props) {
           {sessions.length === 0 && <div className="session-empty">No sessions available</div>}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Group"
+        message={
+          deleteTarget !== null
+            ? `Delete group "${groups.find((g) => g.id === deleteTarget)?.group_name}"? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }

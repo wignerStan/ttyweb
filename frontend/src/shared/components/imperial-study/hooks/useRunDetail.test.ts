@@ -2,7 +2,10 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useRunDetail } from './useRunDetail'
 
-vi.mock('../../../../utils/auth', () => ({ getAuthHeader: () => '' }))
+vi.mock('../../../../utils/auth', () => ({
+  getAuthHeader: () => '',
+  getAuthHeaders: () => ({}),
+}))
 
 const mockRun = {
   id: 'run-123',

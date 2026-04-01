@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TerminalTab > renders status bar with connected state 1`] = `
+<div>
+  <div
+    style="display: flex; flex-direction: column; height: 100%; width: 100%;"
+  >
+    <div
+      aria-live="polite"
+      role="status"
+      style="height: 20px; font-size: 11px; padding: 0px 8px; display: flex; align-items: center; gap: 8px; background: rgb(22, 22, 30); border-bottom: 1px solid rgb(36, 40, 59); flex-shrink: 0; color: rgb(158, 206, 106);"
+    >
+      ● 
+      connected
+      <span
+        style="color: rgb(86, 95, 137);"
+      >
+        test
+        :0
+      </span>
+    </div>
+    <div
+      style="flex: 1 1 0%; padding: 4px;"
+    />
+  </div>
+</div>
+`;

@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RoutingInfo } from '../types'
 import { useRunPipeline } from './useRunPipeline'
 
-vi.mock('../../../../utils/auth', () => ({ getAuthHeader: () => '' }))
+vi.mock('../../../../utils/auth', () => ({
+  getAuthHeader: () => '',
+  getAuthHeaders: () => ({}),
+}))
 
 const dashboardRuns = [
   {

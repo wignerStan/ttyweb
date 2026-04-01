@@ -48,11 +48,15 @@ export function LoginModal({ onLogin }: Props) {
           <input
             id="username"
             type="text"
+            name="username"
+            autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
             disabled={loading}
             className="input input-bordered w-full"
+            // biome-ignore lint/a11y/noAutofocus: login modal should focus username input
+            autoFocus
           />
         </div>
 
@@ -66,6 +70,8 @@ export function LoginModal({ onLogin }: Props) {
           <input
             id="password"
             type="password"
+            name="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../test-utils'
@@ -197,15 +197,20 @@ describe('BranchPanel', () => {
     await waitFor(() => expect(screen.getByText('feature/login')).toBeInTheDocument())
 
     await userEvent.click(screen.getByTitle('Delete feature/login'))
+    // ConfirmDialog should appear — click the confirm (Delete) button inside the dialog
+    const dialog = screen.getByRole('dialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: /^Delete$/ }))
     await waitFor(() => expect(mockDeleteBranch).toHaveBeenCalledWith('feature/login'))
   })
 
   it('delete branch: does not delete when confirm is cancelled', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderWithProviders(<BranchPanel repoPath="/home/user/repo" />)
     await waitFor(() => expect(screen.getByText('feature/login')).toBeInTheDocument())
 
     await userEvent.click(screen.getByTitle('Delete feature/login'))
+    // ConfirmDialog should appear — click cancel
+    const dialog = screen.getByRole('dialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: /cancel/i }))
     expect(mockDeleteBranch).not.toHaveBeenCalled()
   })
 
@@ -215,6 +220,9 @@ describe('BranchPanel', () => {
     await waitFor(() => expect(screen.getByText('feature/login')).toBeInTheDocument())
 
     await userEvent.click(screen.getByTitle('Delete feature/login'))
+    // ConfirmDialog should appear — click the confirm (Delete) button inside the dialog
+    const dialog = screen.getByRole('dialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: /^Delete$/ }))
     await waitFor(() => expect(screen.getByText('not fully merged')).toBeInTheDocument())
   })
 

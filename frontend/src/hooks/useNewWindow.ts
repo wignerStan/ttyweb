@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../utils/auth'
+import { getAuthHeaders } from '../utils/auth'
 
 export interface QuickDir {
   name: string
@@ -12,9 +12,7 @@ export function useNewWindow(onSuccess?: () => void) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const auth = getAuthHeader()
-    const headers: Record<string, string> = {}
-    if (auth) headers.Authorization = auth
+    const headers = getAuthHeaders()
     fetch('/api/tmux/quick-dirs', { headers })
       .then((r) => r.json())
       .then((data) => setQuickDirs(data.dirs || []))
@@ -26,9 +24,10 @@ export function useNewWindow(onSuccess?: () => void) {
       setLoading(true)
       setError(null)
       try {
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-        if (auth) headers.Authorization = auth
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        }
         const res = await fetch('/api/tmux/new-window', {
           method: 'POST',
           headers,

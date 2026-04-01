@@ -1,6 +1,6 @@
 import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 
 interface ConfigFile {
   content: Record<string, unknown> | null
@@ -39,9 +39,7 @@ export function ConfigViewer({ paneKey }: ConfigViewerProps) {
     const params = new URLSearchParams()
     if (paneKey) params.set('paneKey', paneKey)
 
-    const auth = getAuthHeader()
-    const headers: Record<string, string> = {}
-    if (auth) headers.Authorization = auth
+    const headers = getAuthHeaders()
     fetch(`/api/opencode-config?${params}`, { headers })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)

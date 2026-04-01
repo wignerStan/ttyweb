@@ -6,9 +6,12 @@ export function useAIConversations(paneKey: string | null) {
   const [conversations, setConversations] = useState<AiConversation[]>([])
   const [loading, setLoading] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
+  const fetchInProgressRef = useRef(false)
 
   const fetchConversations = useCallback(async () => {
     if (!paneKey) return
+    if (fetchInProgressRef.current) return
+    fetchInProgressRef.current = true
     setLoading(true)
     try {
       const authHeader = getAuthHeader()
@@ -18,8 +21,10 @@ export function useAIConversations(paneKey: string | null) {
       const data = await res.json()
       setConversations(data.conversations || [])
     } catch (_err) {
+      // Silently handle — the SSE connection will retry
     } finally {
       setLoading(false)
+      fetchInProgressRef.current = false
     }
   }, [paneKey])
 

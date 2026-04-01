@@ -44,11 +44,13 @@ exports[`BranchPanel snapshot > renders branch list with current, ahead/behind b
         class="branch-header-actions"
       >
         <button
+          aria-label="Refresh branches"
           class="btn-icon"
           title="Refresh"
           type="button"
         />
         <button
+          aria-label="Create branch"
           class="branch-add-btn"
           title="Create branch"
           type="button"
@@ -141,6 +143,7 @@ exports[`BranchPanel snapshot > renders branch list with current, ahead/behind b
             class="branch-actions"
           >
             <button
+              aria-label="Delete branch"
               class="btn-icon btn-danger"
               title="Delete feature/login"
               type="button"
@@ -205,6 +208,7 @@ exports[`BranchPanel snapshot > renders branch list with current, ahead/behind b
             class="branch-actions"
           >
             <button
+              aria-label="Delete branch"
               class="btn-icon btn-danger"
               title="Delete fix/header-bug"
               type="button"

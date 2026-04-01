@@ -1,5 +1,6 @@
-import type React from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ConfirmDialog } from '../shared/components/ConfirmDialog'
+import type { ApiResponse } from '../types'
 
 interface Session {
   name: string
@@ -21,12 +22,6 @@ interface SessionDetail {
   panes: Pane[]
 }
 
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  error?: string
-}
-
 interface SidebarProps {
   onSelect: (session: string, pane?: string) => void
 }
@@ -37,6 +32,10 @@ export function Sidebar({ onSelect }: SidebarProps) {
   const [details, setDetails] = useState<Record<string, SessionDetail>>({})
   const [newName, setNewName] = useState('')
   const [error, setError] = useState('')
+  const [killTarget, setKillTarget] = useState<string | null>(null)
+
+  const detailsRef = useRef(details)
+  detailsRef.current = details
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -53,26 +52,32 @@ export function Sidebar({ onSelect }: SidebarProps) {
     }
   }, [])
 
-  const fetchDetail = useCallback(
-    async (name: string) => {
-      if (details[name]) return
-      try {
-        const res = await fetch(`/api/sessions/${encodeURIComponent(name)}`)
-        const json: ApiResponse<SessionDetail> = await res.json()
-        if (json.success) {
-          setDetails((prev) => ({ ...prev, [name]: json.data }))
-        }
-      } catch {
-        // ignore
+  const fetchDetail = useCallback(async (name: string) => {
+    if (detailsRef.current[name]) return
+    try {
+      const res = await fetch(`/api/sessions/${encodeURIComponent(name)}`)
+      const json: ApiResponse<SessionDetail> = await res.json()
+      if (json.success) {
+        setDetails((prev) => ({ ...prev, [name]: json.data }))
       }
-    },
-    [details],
-  )
+    } catch {
+      // ignore
+    }
+  }, [])
 
   useEffect(() => {
     fetchSessions()
     const interval = setInterval(fetchSessions, 3000)
-    return () => clearInterval(interval)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSessions()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [fetchSessions])
 
   const handleToggle = (name: string) => {
@@ -95,78 +100,93 @@ export function Sidebar({ onSelect }: SidebarProps) {
     fetchSessions()
   }
 
-  const handleKill = async (name: string) => {
-    await fetch(`/api/sessions/${encodeURIComponent(name)}`, { method: 'DELETE' })
-    if (expanded === name) setExpanded(null)
+  const handleKill = (name: string) => {
+    setKillTarget(name)
+  }
+
+  const confirmKill = async () => {
+    if (!killTarget) return
+    await fetch(`/api/sessions/${encodeURIComponent(killTarget)}`, { method: 'DELETE' })
+    if (expanded === killTarget) setExpanded(null)
     fetchSessions()
+    setKillTarget(null)
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h3 style={styles.title}>Sessions</h3>
-        <div style={styles.createRow}>
+    <div className="flex flex-col h-full">
+      <div className="p-3 border-b border-base-300">
+        <h3 className="m-0 mb-2 text-sm font-semibold text-base-content">Sessions</h3>
+        <div className="flex gap-1">
           <input
-            style={styles.input}
+            className="input input-bordered input-xs flex-1"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            placeholder="new session"
+            placeholder="New session..."
           />
-          <button type="button" style={styles.createBtn} onClick={handleCreate}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs font-bold"
+            onClick={handleCreate}
+            aria-label="New session"
+          >
             +
           </button>
         </div>
       </div>
 
-      {error && <div style={styles.error}>{error}</div>}
+      {error && <div className="px-3 py-2 text-error text-xs">{error}</div>}
 
-      <div style={styles.list}>
+      <div className="flex-1 overflow-auto py-1">
         {sessions.map((s) => (
           <div key={s.name}>
             <button
               type="button"
-              className="btn-reset"
-              style={styles.sessionRow}
+              className="btn-reset flex items-center px-3 py-1.5 cursor-pointer gap-1.5"
               onClick={() => handleToggle(s.name)}
             >
-              <span style={styles.expandIcon}>{expanded === s.name ? '▼' : '▶'}</span>
-              <span style={styles.sessionName} data-testid="session-name">
+              <span className="text-[10px] text-base-content/40 w-3 text-center">
+                {expanded === s.name ? '▼' : '▶'}
+              </span>
+              <span className="flex-1 text-[13px]" data-testid="session-name">
                 {s.name}
               </span>
-              {s.attached && <span style={styles.badge}>A</span>}
+              {s.attached && <span className="badge badge-xs badge-ghost text-primary">A</span>}
               <button
                 type="button"
-                style={styles.killBtn}
+                className="btn-reset text-base-content/40 text-base cursor-pointer hover:text-error"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleKill(s.name)
                 }}
                 title="Kill session"
+                aria-label="Kill session"
               >
                 ×
               </button>
             </button>
 
             {expanded === s.name && details[s.name] && (
-              <div style={styles.paneList}>
+              <div className="pl-6">
                 {details[s.name]?.panes.map((p) => (
                   <button
                     key={p.id}
                     type="button"
-                    className="btn-reset"
-                    style={styles.paneRow}
+                    className="btn-reset flex items-center px-3 py-1 cursor-pointer gap-2 text-xs"
                     onClick={() => onSelect(s.name, p.id)}
                   >
-                    <span style={styles.paneId}>{p.id}</span>
-                    <span style={styles.paneCmd}>{p.current_command}</span>
-                    {!p.running && <span style={styles.deadBadge}>dead</span>}
+                    <span className="text-primary font-mono min-w-[30px]">{p.id}</span>
+                    <span className="flex-1 text-success">{p.current_command}</span>
+                    {!p.running && (
+                      <span className="text-[10px] bg-base-300 text-error px-1 py-px rounded-sm">
+                        dead
+                      </span>
+                    )}
                   </button>
                 ))}
                 <button
                   type="button"
-                  className="btn-reset"
-                  style={styles.connectAll}
+                  className="btn-reset px-3 py-1 cursor-pointer text-primary text-[11px] italic"
                   onClick={() => onSelect(s.name)}
                 >
                   Connect to session
@@ -175,133 +195,19 @@ export function Sidebar({ onSelect }: SidebarProps) {
             )}
           </div>
         ))}
-        {sessions.length === 0 && !error && <div style={styles.empty}>No sessions found</div>}
+        {sessions.length === 0 && !error && (
+          <div className="p-3 text-base-content/40 text-xs text-center">No sessions found</div>
+        )}
       </div>
+      <ConfirmDialog
+        open={killTarget !== null}
+        title="Kill Session"
+        message={`Are you sure you want to kill session "${killTarget}"? This cannot be undone.`}
+        confirmLabel="Kill"
+        variant="destructive"
+        onConfirm={confirmKill}
+        onCancel={() => setKillTarget(null)}
+      />
     </div>
   )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  header: {
-    padding: '12px',
-    borderBottom: '1px solid #24283b',
-  },
-  title: {
-    margin: '0 0 8px 0',
-    fontSize: '14px',
-    fontWeight: 600,
-    color: '#c0caf5',
-  },
-  createRow: {
-    display: 'flex',
-    gap: '4px',
-  },
-  input: {
-    flex: 1,
-    background: '#1a1b26',
-    border: '1px solid #24283b',
-    color: '#c0caf5',
-    padding: '4px 8px',
-    fontSize: '12px',
-    borderRadius: '2px',
-    outline: 'none',
-  },
-  createBtn: {
-    background: '#24283b',
-    border: '1px solid #3b4261',
-    color: '#c0caf5',
-    padding: '4px 10px',
-    cursor: 'pointer',
-    borderRadius: '2px',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  error: {
-    padding: '8px 12px',
-    color: '#f7768e',
-    fontSize: '12px',
-  },
-  list: {
-    flex: 1,
-    overflow: 'auto',
-    padding: '4px 0',
-  },
-  sessionRow: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '6px 12px',
-    cursor: 'pointer',
-    gap: '6px',
-  },
-  expandIcon: {
-    fontSize: '10px',
-    color: '#565f89',
-    width: '12px',
-    textAlign: 'center' as const,
-  },
-  sessionName: {
-    flex: 1,
-    fontSize: '13px',
-  },
-  badge: {
-    fontSize: '10px',
-    background: '#3b4261',
-    color: '#7aa2f7',
-    padding: '1px 5px',
-    borderRadius: '2px',
-  },
-  killBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#565f89',
-    cursor: 'pointer',
-    fontSize: '16px',
-    padding: '0',
-    lineHeight: '1',
-  },
-  paneList: {
-    paddingLeft: '24px',
-  },
-  paneRow: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '4px 12px',
-    cursor: 'pointer',
-    gap: '8px',
-    fontSize: '12px',
-  },
-  paneId: {
-    color: '#7aa2f7',
-    fontFamily: 'monospace',
-    minWidth: '30px',
-  },
-  paneCmd: {
-    flex: 1,
-    color: '#9ece6a',
-  },
-  deadBadge: {
-    fontSize: '10px',
-    background: '#414868',
-    color: '#f7768e',
-    padding: '1px 4px',
-    borderRadius: '2px',
-  },
-  connectAll: {
-    padding: '4px 12px',
-    cursor: 'pointer',
-    color: '#7aa2f7',
-    fontSize: '11px',
-    fontStyle: 'italic',
-  },
-  empty: {
-    padding: '12px',
-    color: '#565f89',
-    fontSize: '12px',
-    textAlign: 'center' as const,
-  },
 }

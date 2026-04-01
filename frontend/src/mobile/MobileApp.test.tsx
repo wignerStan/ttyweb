@@ -223,7 +223,7 @@ describe('MobileApp', () => {
     const MobileApp = (await import('./MobileApp')).default
     render(<MobileApp />)
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    expect(screen.getByText('Loading…')).toBeInTheDocument()
   })
 
   it('shows loading sessions state when authenticated and loading', async () => {
@@ -239,7 +239,7 @@ describe('MobileApp', () => {
     render(<MobileApp />)
 
     await waitFor(() => {
-      expect(screen.getByText('Loading sessions...')).toBeInTheDocument()
+      expect(screen.getByText('Loading sessions…')).toBeInTheDocument()
     })
   })
 
@@ -633,6 +633,18 @@ describe('MobileApp', () => {
     await waitForApp()
 
     expect(screen.getByText(/to select a terminal/)).toBeInTheDocument()
+  })
+
+  it('matches snapshot with no tabs (placeholder state)', async () => {
+    globalThis.fetch = createFetchMock()
+
+    const MobileApp = (await import('./MobileApp')).default
+    const { container } = render(<MobileApp />)
+
+    await login()
+    await waitForApp()
+
+    expect(container).toMatchSnapshot()
   })
 
   it('renders tab with active class for the active tab', async () => {

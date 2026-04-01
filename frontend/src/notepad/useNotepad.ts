@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ApiResponse } from '../types'
 
 export interface Note {
   id: number
@@ -6,12 +7,6 @@ export interface Note {
   content: string
   project_id: string | null
   order_index: number
-}
-
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  error?: string
 }
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' } as const

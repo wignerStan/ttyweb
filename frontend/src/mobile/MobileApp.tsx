@@ -7,7 +7,7 @@ import { LoginModal } from '../shared/components/LoginModal'
 import { TaskHistoryPanel } from '../shared/components/TaskHistoryPanel'
 import type { VoiceInputHandle } from '../shared/components/VoiceInput'
 import type { OpenTab, Profile, SessionGroup, TmuxSession } from '../types'
-import { checkAuth, getAuthHeader, logout } from '../utils/auth'
+import { checkAuth, getAuthHeaders, logout } from '../utils/auth'
 import { MobileDrawer } from './MobileDrawer'
 import { MobileTerminal } from './MobileTerminal'
 
@@ -85,6 +85,7 @@ export default function MobileApp() {
   const [sessions, setSessions] = useState<TmuxSession[]>([])
   const [tabs, setTabs] = useState<MobileTab[]>(loadTabs)
   const [activeTabId, setActiveTabId] = useState<string | null>(loadActiveTabId)
+  const [prevActiveTabId, setPrevActiveTabId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [rightPanelOpen, setRightPanelOpen] = useState(false)
   const [taskHistoryPaneKey, setTaskHistoryPaneKey] = useState<string | null>(null)
@@ -111,6 +112,17 @@ export default function MobileApp() {
   useEffect(() => {
     setTaskHistoryPaneKey(null)
   }, [])
+
+  useEffect(() => {
+    setPrevActiveTabId(activeTabId)
+  }, [activeTabId])
+
+  const liveTabIds = useMemo(() => {
+    const ids = new Set<string>()
+    if (activeTabId) ids.add(activeTabId)
+    if (prevActiveTabId && prevActiveTabId !== activeTabId) ids.add(prevActiveTabId)
+    return ids
+  }, [activeTabId, prevActiveTabId])
 
   useVisualViewport()
 
@@ -139,9 +151,7 @@ export default function MobileApp() {
     const seq = ++fetchSeqRef.current
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/tmux/tree', { headers })
       if (!res.ok) throw new Error('Failed to fetch tree')
       const data = await res.json()
@@ -174,9 +184,7 @@ export default function MobileApp() {
 
   const fetchGroups = useCallback(async (profileKey: string) => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/groups?profile_key=${encodeURIComponent(profileKey)}`, {
         headers,
       })
@@ -289,7 +297,7 @@ export default function MobileApp() {
   if (isAuthenticated === null) {
     return (
       <div className="flex h-full items-center justify-center bg-base-300 font-sans text-base-content/75">
-        Loading...
+        Loading…
       </div>
     )
   }
@@ -301,7 +309,7 @@ export default function MobileApp() {
   if (loading && sessions.length === 0) {
     return (
       <div className="flex h-full items-center justify-center bg-base-300 font-sans text-base-content/75">
-        Loading sessions...
+        Loading sessions…
       </div>
     )
   }
@@ -318,11 +326,15 @@ export default function MobileApp() {
 
   return (
     <div className="flex h-full w-screen flex-col overflow-hidden bg-base-300 text-base-content/75 text-[clamp(0.875rem,2.5vw,1rem)]">
+      <a href="#mobile-content" className="skip-link">
+        Skip to content
+      </a>
       <header className="mobile-header flex h-12 shrink-0 items-center border-b border-base-200 bg-base-200 pl-3">
         <button
           className="btn btn-ghost btn-sm btn-circle mobile-menu-btn min-h-[44px] min-w-[44px] shrink-0 text-base-content/75"
           onClick={toggleDrawer}
           type="button"
+          aria-label="Open menu"
         >
           <Menu size={24} />
         </button>
@@ -345,6 +357,7 @@ export default function MobileApp() {
                     handleCloseTab(tab.id)
                   }}
                   type="button"
+                  aria-label="Close tab"
                 >
                   <X size={12} />
                 </button>
@@ -363,6 +376,7 @@ export default function MobileApp() {
               onClick={() => setImperialOpen(true)}
               type="button"
               title="Imperial Study"
+              aria-label="Imperial Study"
             >
               <ScrollText size={22} />
             </button>
@@ -371,6 +385,7 @@ export default function MobileApp() {
               onClick={toggleRightPanel}
               type="button"
               title="Task history"
+              aria-label="Task history"
             >
               <History size={22} />
             </button>
@@ -436,29 +451,39 @@ export default function MobileApp() {
         )}
       </aside>
 
-      <main className="mobile-main flex min-h-0 flex-1 flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <main
+        className="mobile-main flex min-h-0 flex-1 flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]"
+        id="mobile-content"
+      >
         {tabs.length > 0 ? (
           <div className="mobile-tabs-content relative flex-1 min-h-0 overflow-hidden">
-            {tabs.map((tab) => (
-              <div
-                key={tab.id}
-                className={`mobile-tab-panel absolute inset-0 ${tab.id === activeTabId ? 'visible' : 'hidden'}`}
-              >
-                <MobileTerminal
-                  session={tab.session}
-                  pane={tab.paneId}
-                  fontSize={fontSize}
-                  onFontSizeChange={handleFontSizeChange}
-                  voiceRef={tab.id === activeTabId ? voiceRef : undefined}
-                  taskHistoryPaneKey={tab.id === activeTabId ? historyPaneKey : null}
-                  onStatusChange={
-                    tab.id === activeTabId
-                      ? () => setStatusRefreshToken((prev) => prev + 1)
-                      : undefined
-                  }
-                />
-              </div>
-            ))}
+            {tabs.map((tab) => {
+              const isActive = tab.id === activeTabId
+              const isLive = liveTabIds.has(tab.id)
+
+              return (
+                <div
+                  key={tab.id}
+                  className={`mobile-tab-panel absolute inset-0 ${isActive ? 'visible' : 'hidden'}`}
+                >
+                  {isLive ? (
+                    <MobileTerminal
+                      session={tab.session}
+                      pane={tab.paneId}
+                      fontSize={fontSize}
+                      onFontSizeChange={handleFontSizeChange}
+                      voiceRef={voiceRef}
+                      taskHistoryPaneKey={historyPaneKey}
+                      onStatusChange={() => setStatusRefreshToken((prev) => prev + 1)}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-base-content/50 text-sm select-none">
+                      Terminal suspended — tap to resume
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="mobile-placeholder flex flex-1 items-center justify-center text-sm font-sans text-base-content/45">

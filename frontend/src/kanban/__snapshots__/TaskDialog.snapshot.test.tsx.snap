@@ -3,8 +3,11 @@
 exports[`TaskDialog snapshot > renders new task dialog 1`] = `
 <div>
   <div
+    aria-labelledby="task-dialog-title"
+    aria-modal="true"
     class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-5 max-md:m-2.5"
     data-testid="task-dialog-overlay"
+    role="dialog"
   >
     <div
       class="flex max-h-[90vh] w-full max-w-[540px] flex-col overflow-hidden rounded-box border border-base-300 bg-base-100 text-base-content shadow-lg max-md:max-w-full"
@@ -15,10 +18,12 @@ exports[`TaskDialog snapshot > renders new task dialog 1`] = `
       >
         <h2
           class="m-0 text-[15px] font-semibold text-base-content"
+          id="task-dialog-title"
         >
           New Task
         </h2>
         <button
+          aria-label="Close dialog"
           class="flex h-7 w-7 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
           type="button"
         >
@@ -58,8 +63,10 @@ exports[`TaskDialog snapshot > renders new task dialog 1`] = `
             Title *
           </label>
           <input
+            autocomplete="off"
             class="input input-bordered input-sm w-full font-mono text-xs"
             id="task-title"
+            name="task-title"
             placeholder="Task title"
             type="text"
             value=""

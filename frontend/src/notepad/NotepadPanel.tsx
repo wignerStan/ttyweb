@@ -1,5 +1,5 @@
 import { Plus, X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { NotepadTab } from './NotepadTab'
 import { type Note, useNotepad } from './useNotepad'
 
@@ -11,7 +11,10 @@ export function NotepadPanel({ projectId = null }: NotepadPanelProps) {
   const { notes, loading, error, createNote, updateNote, deleteNote } = useNotepad(projectId)
   const [activeNoteId, setActiveNoteId] = useState<number | null>(null)
 
-  const sortedNotes = [...notes].sort((a, b) => a.order_index - b.order_index)
+  const sortedNotes = useMemo(
+    () => [...notes].sort((a, b) => a.order_index - b.order_index),
+    [notes],
+  )
 
   const handleCreate = useCallback(async () => {
     const maxOrder = sortedNotes.reduce((max, n) => Math.max(max, n.order_index), -1)

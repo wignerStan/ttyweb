@@ -2,7 +2,10 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useReplyInbox } from './useReplyInbox'
 
-vi.mock('../../../../utils/auth', () => ({ getAuthHeader: () => '' }))
+vi.mock('../../../../utils/auth', () => ({
+  getAuthHeader: () => '',
+  getAuthHeaders: () => ({}),
+}))
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }))

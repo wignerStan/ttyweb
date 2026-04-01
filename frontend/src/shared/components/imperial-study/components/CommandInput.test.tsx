@@ -22,7 +22,10 @@ vi.mock('../../VoiceInput', () => ({
   ),
 }))
 
-vi.mock('../../../../utils/auth', () => ({ getAuthHeader: () => 'Bearer tok' }))
+vi.mock('../../../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer tok',
+  getAuthHeaders: () => ({ Authorization: 'Bearer tok' }),
+}))
 
 beforeEach(() => {
   vi.stubGlobal(

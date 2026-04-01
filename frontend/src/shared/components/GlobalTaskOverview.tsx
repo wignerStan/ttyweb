@@ -1,7 +1,8 @@
 import { CheckCircle2, Clock, Loader2, RefreshCw, TerminalSquare, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Task } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
+import { BUTTON_RESET } from '../styles'
 
 interface GlobalTaskOverviewProps {
   onSelectPane: (paneId: string, paneName: string) => void
@@ -29,9 +30,7 @@ export function GlobalTaskOverview({
     setLoading(true)
     setError(null)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/tasks?limit=100', { headers })
       if (!res.ok) throw new Error('Failed to fetch tasks')
       const data = await res.json()
@@ -104,16 +103,7 @@ export function GlobalTaskOverview({
                 type="button"
                 className={`task-item status-${task.task_status}`}
                 onClick={() => handleTaskClick(task)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'inherit',
-                }}
+                style={BUTTON_RESET}
               >
                 <div className="task-item-title">{task.task_title || 'Untitled Task'}</div>
                 <div className="task-item-meta">

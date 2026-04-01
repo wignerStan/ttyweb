@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockFetchHttpError, mockFetchSuccess } from '../../../../test-helpers'
 import { useActivityEvents } from './useActivityEvents'
 
-vi.mock('../../../../utils/auth', () => ({ getAuthHeader: () => '' }))
+vi.mock('../../../../utils/auth', () => ({
+  getAuthHeader: () => '',
+  getAuthHeaders: () => ({}),
+}))
 
 const events = [
   {

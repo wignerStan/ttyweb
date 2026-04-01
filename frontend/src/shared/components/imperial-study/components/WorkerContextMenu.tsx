@@ -1,8 +1,9 @@
 // WorkerContextMenu.tsx — Right-click context menu for WorkerCard
 
 import { Copy, Pause, Power, Terminal } from 'lucide-react'
-import { useEffect, useRef } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { useEffect, useRef, useState } from 'react'
+import { getAuthHeaders } from '../../../../utils/auth'
+import { ConfirmDialog } from '../../ConfirmDialog'
 import { BUTLER_API_BASE } from '../constants'
 
 interface WorkerContextMenuProps {
@@ -13,11 +14,9 @@ interface WorkerContextMenuProps {
   onClose: () => void
 }
 
-function authHeaders(contentType?: string): Record<string, string> {
-  const authHeader = getAuthHeader()
-  const headers: Record<string, string> = {}
+function buildHeaders(contentType?: string): Record<string, string> {
+  const headers: Record<string, string> = { ...getAuthHeaders() }
   if (contentType) headers['Content-Type'] = contentType
-  if (authHeader) headers.Authorization = authHeader
   return headers
 }
 
@@ -44,6 +43,16 @@ export function WorkerContextMenu({ x, y, workerId, paneTarget, onClose }: Worke
     }
   }, [onClose])
 
+  const [showKillConfirm, setShowKillConfirm] = useState(false)
+
+  const handleKill = () => {
+    fetch(`${BUTLER_API_BASE}/worker_sessions/${workerId}`, {
+      method: 'DELETE',
+      headers: buildHeaders(),
+    }).catch((_err) => {})
+    onClose()
+  }
+
   const handle = (action: 'open' | 'copy' | 'pause' | 'kill') => {
     switch (action) {
       case 'open':
@@ -58,95 +67,109 @@ export function WorkerContextMenu({ x, y, workerId, paneTarget, onClose }: Worke
       case 'pause':
         fetch(`${BUTLER_API_BASE}/worker_sessions/${workerId}`, {
           method: 'PUT',
-          headers: authHeaders('application/json'),
+          headers: buildHeaders('application/json'),
           body: JSON.stringify({ state: 'paused' }),
         }).catch((_err) => {})
         break
       case 'kill':
-        if (!confirm('Kill this worker?')) return
-        fetch(`${BUTLER_API_BASE}/worker_sessions/${workerId}`, {
-          method: 'DELETE',
-          headers: authHeaders(),
-        }).catch((_err) => {})
-        break
+        setShowKillConfirm(true)
+        return // Don't call onClose() — wait for confirm dialog
     }
     onClose()
   }
 
   return (
-    <div ref={menuRef} className="is-ctx-menu" style={{ left: x, top: y }}>
-      <button
-        type="button"
-        className="is-ctx-menu__item"
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
+    <>
+      <div ref={menuRef} className="is-ctx-menu" style={{ left: x, top: y }}>
+        <button
+          type="button"
+          className="is-ctx-menu__item"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            color: 'inherit',
+            cursor: 'pointer',
+            width: '100%',
+            textAlign: 'inherit',
+          }}
+          onClick={() => handle('open')}
+        >
+          <Terminal size={14} />
+          <span>Open Terminal</span>
+        </button>
+        <button
+          type="button"
+          className="is-ctx-menu__item"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            color: 'inherit',
+            cursor: 'pointer',
+            width: '100%',
+            textAlign: 'inherit',
+          }}
+          onClick={() => handle('copy')}
+        >
+          <Copy size={14} />
+          <span>Copy pane target</span>
+        </button>
+        <button
+          type="button"
+          className="is-ctx-menu__item"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            color: 'inherit',
+            cursor: 'pointer',
+            width: '100%',
+            textAlign: 'inherit',
+          }}
+          onClick={() => handle('pause')}
+        >
+          <Pause size={14} />
+          <span>Pause worker</span>
+        </button>
+        <button
+          type="button"
+          className="is-ctx-menu__item danger"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            color: 'inherit',
+            cursor: 'pointer',
+            width: '100%',
+            textAlign: 'inherit',
+          }}
+          onClick={() => handle('kill')}
+        >
+          <Power size={14} />
+          <span>Kill worker</span>
+        </button>
+      </div>
+
+      <ConfirmDialog
+        open={showKillConfirm}
+        title="Kill Worker"
+        message="Kill this worker? This cannot be undone."
+        confirmLabel="Kill"
+        variant="destructive"
+        onConfirm={() => {
+          setShowKillConfirm(false)
+          handleKill()
         }}
-        onClick={() => handle('open')}
-      >
-        <Terminal size={14} />
-        <span>Open Terminal</span>
-      </button>
-      <button
-        type="button"
-        className="is-ctx-menu__item"
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
+        onCancel={() => {
+          setShowKillConfirm(false)
+          onClose()
         }}
-        onClick={() => handle('copy')}
-      >
-        <Copy size={14} />
-        <span>Copy pane target</span>
-      </button>
-      <button
-        type="button"
-        className="is-ctx-menu__item"
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
-        }}
-        onClick={() => handle('pause')}
-      >
-        <Pause size={14} />
-        <span>Pause worker</span>
-      </button>
-      <button
-        type="button"
-        className="is-ctx-menu__item danger"
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
-        }}
-        onClick={() => handle('kill')}
-      >
-        <Power size={14} />
-        <span>Kill worker</span>
-      </button>
-    </div>
+      />
+    </>
   )
 }

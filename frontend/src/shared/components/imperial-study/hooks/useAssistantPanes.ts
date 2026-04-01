@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE } from '../constants'
 
 export interface ChatMessage {
@@ -57,13 +57,12 @@ export function useAssistantPanes() {
 
     ;(async () => {
       try {
-        const authHeader = getAuthHeader()
         const res = await fetch(`${BUTLER_API_BASE}/assistant-panes/quick`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Accept: 'text/event-stream',
-            ...(authHeader ? { Authorization: authHeader } : {}),
+            ...getAuthHeaders(),
           },
           body: JSON.stringify({ assistant_type: assistantType, content }),
           signal: controller.signal,

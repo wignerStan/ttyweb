@@ -1,4 +1,12 @@
-import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 export interface Notification {
   id: string
@@ -9,26 +17,105 @@ export interface Notification {
   timestamp: number
 }
 
-interface NotificationContextValue {
-  notifications: Notification[]
+// Stable context for notify/dismiss actions
+interface NotificationActions {
   notify: (n: Omit<Notification, 'id' | 'timestamp'>) => void
   dismiss: (id: string) => void
 }
 
+// Full context for internal rendering
+interface NotificationContextValue extends NotificationActions {
+  notifications: Notification[]
+}
+
 const NotificationContext = createContext<NotificationContextValue | null>(null)
+const NotificationActionsContext = createContext<NotificationActions | null>(null)
 
-let nextId = 0
-
-export function useNotification(): NotificationContextValue {
-  const ctx = useContext(NotificationContext)
+// Public hook — consumers that only send notifications use this.
+// Gets the stable actions context and never re-renders on notification list changes.
+export function useNotification(): NotificationActions {
+  const ctx = useContext(NotificationActionsContext)
   if (!ctx) throw new Error('useNotification must be used within NotificationProvider')
   return ctx
 }
+
+// Internal hook — only for reading the notification list (rare, rendering only)
+export function useNotificationList(): Notification[] {
+  const ctx = useContext(NotificationContext)
+  if (!ctx) throw new Error('useNotificationList must be used within NotificationProvider')
+  return ctx.notifications
+}
+
+let nextId = 0
 
 interface NotificationProviderProps {
   children: ReactNode
   autoDismissMs?: number
 }
+
+const NOTIFICATION_STYLES: Record<Notification['type'], React.CSSProperties> = {
+  ai_completion: {
+    padding: '12px 16px',
+    borderRadius: 8,
+    border: 'none',
+    background: 'var(--accent-green, #9ece6a)',
+    color: '#1a1b26',
+    maxWidth: 400,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+  },
+  ai_approval: {
+    padding: '12px 16px',
+    borderRadius: 8,
+    border: 'none',
+    background: 'var(--accent-yellow, #e0af68)',
+    color: '#1a1b26',
+    maxWidth: 400,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+  },
+  info: {
+    padding: '12px 16px',
+    borderRadius: 8,
+    border: 'none',
+    background: 'var(--bg-tertiary, #24283b)',
+    color: 'var(--text-primary, #c0caf5)',
+    maxWidth: 400,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+  },
+  error: {
+    padding: '12px 16px',
+    borderRadius: 8,
+    border: 'none',
+    background: 'var(--bg-tertiary, #24283b)',
+    color: 'var(--text-primary, #c0caf5)',
+    maxWidth: 400,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+  },
+}
+
+const CONTAINER_STYLE: React.CSSProperties = {
+  position: 'fixed',
+  top: 16,
+  right: 16,
+  zIndex: 9999,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+}
+
+const TITLE_STYLE: React.CSSProperties = { fontWeight: 600, fontSize: 14 }
+const MESSAGE_STYLE: React.CSSProperties = { fontSize: 12, opacity: 0.9, marginTop: 4 }
 
 export function NotificationProvider({
   children,
@@ -60,52 +147,31 @@ export function NotificationProvider({
     [dismiss, autoDismissMs],
   )
 
+  // Stable actions context — only changes when notify/dismiss identity changes
+  const actions = useMemo(() => ({ notify, dismiss }), [notify, dismiss])
+
+  // Full context for the notification renderer (internal only)
+  const contextValue = useMemo(() => ({ ...actions, notifications }), [actions, notifications])
+
   return (
-    <NotificationContext.Provider value={{ notifications, notify, dismiss }}>
-      {children}
-      <div
-        style={{
-          position: 'fixed',
-          top: 16,
-          right: 16,
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}
-      >
-        {notifications.map((n) => (
-          <button
-            key={n.id}
-            type="button"
-            aria-label={`Dismiss: ${n.title}`}
-            style={{
-              padding: '12px 16px',
-              borderRadius: 8,
-              border: 'none',
-              background:
-                n.type === 'ai_completion'
-                  ? 'var(--accent-green, #9ece6a)'
-                  : n.type === 'ai_approval'
-                    ? 'var(--accent-yellow, #e0af68)'
-                    : 'var(--bg-tertiary, #24283b)',
-              color:
-                n.type === 'ai_completion' || n.type === 'ai_approval'
-                  ? '#1a1b26'
-                  : 'var(--text-primary, #c0caf5)',
-              maxWidth: 400,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              cursor: 'pointer',
-              textAlign: 'left',
-              font: 'inherit',
-            }}
-            onClick={() => dismiss(n.id)}
-          >
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{n.title}</div>
-            <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>{n.message}</div>
-          </button>
-        ))}
-      </div>
-    </NotificationContext.Provider>
+    <NotificationActionsContext.Provider value={actions}>
+      <NotificationContext.Provider value={contextValue}>
+        {children}
+        <div style={CONTAINER_STYLE} aria-live="polite" aria-atomic="false" role="log">
+          {notifications.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              aria-label={`Dismiss: ${n.title}`}
+              style={NOTIFICATION_STYLES[n.type]}
+              onClick={() => dismiss(n.id)}
+            >
+              <div style={TITLE_STYLE}>{n.title}</div>
+              <div style={MESSAGE_STYLE}>{n.message}</div>
+            </button>
+          ))}
+        </div>
+      </NotificationContext.Provider>
+    </NotificationActionsContext.Provider>
   )
 }

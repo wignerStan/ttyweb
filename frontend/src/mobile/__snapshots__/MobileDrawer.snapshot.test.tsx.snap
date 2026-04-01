@@ -12,6 +12,7 @@ exports[`MobileDrawer snapshot > renders drawer panel open with sessions and pro
         class="mobile-drawer-actions ml-0 flex flex-1 gap-1"
       >
         <button
+          aria-label="Settings"
           class="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
           title="Manage groups"
           type="button"
@@ -40,6 +41,7 @@ exports[`MobileDrawer snapshot > renders drawer panel open with sessions and pro
           </svg>
         </button>
         <button
+          aria-label="Refresh sessions"
           class="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
           title="Refresh"
           type="button"
@@ -72,6 +74,7 @@ exports[`MobileDrawer snapshot > renders drawer panel open with sessions and pro
           </svg>
         </button>
         <button
+          aria-label="Logout"
           class="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
           title="Sign out"
           type="button"
@@ -101,6 +104,7 @@ exports[`MobileDrawer snapshot > renders drawer panel open with sessions and pro
           </svg>
         </button>
         <button
+          aria-label="Close drawer"
           class="btn btn-ghost btn-sm btn-circle min-h-[44px] min-w-[44px] text-base-content/45"
           title="Close"
           type="button"

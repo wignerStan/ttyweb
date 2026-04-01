@@ -1,8 +1,10 @@
 import { Bot, Briefcase, ChevronDown, ChevronRight, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAIConversations } from '../../hooks/useAIConversations'
 import type { AiConversation, PaneStatus, Task } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
+import { formatDuration, formatRelativeTime } from '../../utils/format'
+import { BUTTON_RESET } from '../styles'
 import { LogAccordion } from './LogAccordion'
 import { TaskCard } from './TaskCard'
 
@@ -13,25 +15,7 @@ interface Props {
   onStatusChanged?: () => void
 }
 
-function formatRelativeTime(unixSeconds: number): string {
-  const now = Date.now() / 1000
-  const diff = now - unixSeconds
-  if (diff < 60) return 'just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
-  return new Date(unixSeconds * 1000).toLocaleDateString()
-}
-
-function formatDuration(startedAt: number, completedAt: number | null): string {
-  const end = completedAt || Date.now() / 1000
-  const diff = end - startedAt
-  if (diff < 60) return `${Math.floor(diff)}s`
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ${Math.floor(diff % 60)}s`
-  return `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m`
-}
-
-function ConversationCard({ conv }: { conv: AiConversation }) {
+function ConversationCardInner({ conv }: { conv: AiConversation }) {
   const [expanded, setExpanded] = useState(false)
   const hasReply = conv.conv_status === 'completed' && conv.assistant_message
 
@@ -40,16 +24,7 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
       <button
         type="button"
         className="conv-card-header"
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
-        }}
+        style={BUTTON_RESET}
         onClick={() => hasReply && setExpanded(!expanded)}
       >
         <div className="conv-card-left">
@@ -57,7 +32,7 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
           <span className="conv-user-msg">{conv.user_message || '—'}</span>
         </div>
         <div className="conv-card-right">
-          <span className="conv-time">{formatRelativeTime(conv.started_at)}</span>
+          <span className="conv-time">{formatRelativeTime(conv.started_at * 1000)}</span>
           {hasReply &&
             (expanded ? (
               <ChevronDown size={12} className="conv-chevron" />
@@ -77,7 +52,9 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
                 ? 'waiting'
                 : conv.conv_status}
         </span>
-        <span className="conv-duration">{formatDuration(conv.started_at, conv.completed_at)}</span>
+        <span className="conv-duration">
+          {formatDuration((conv.completed_at ?? Date.now() / 1000) - conv.started_at)}
+        </span>
       </div>
 
       {conv.conv_status === 'in_progress' && (
@@ -103,6 +80,8 @@ function ConversationCard({ conv }: { conv: AiConversation }) {
   )
 }
 
+const ConversationCard = memo(ConversationCardInner)
+
 export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [_status, setStatus] = useState<PaneStatus>('idle')
@@ -122,9 +101,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     if (!paneKey) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/panes/${encodeURIComponent(paneKey)}/tasks`, {
         headers,
       })
@@ -139,9 +116,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
   const fetchStatus = useCallback(async () => {
     if (!paneKey || !profileKey) return
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(
         `/api/panes/status?profile_key=${encodeURIComponent(profileKey)}&paneKey=${encodeURIComponent(paneKey)}`,
         { headers },
@@ -163,9 +138,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
 
   const completeTask = async (taskId: number) => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       await fetch(`/api/tasks/${taskId}/complete`, {
         method: 'POST',
         headers,
@@ -174,11 +147,14 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
     } catch (_err) {}
   }
 
+  const sortedConversations = useMemo(
+    () => [...aiConversations].sort((a, b) => b.started_at - a.started_at),
+    [aiConversations],
+  )
+
   if (!paneKey) return null
 
   const { session, window: win, pane } = parsePaneKey(paneKey)
-
-  const sortedConversations = [...aiConversations].sort((a, b) => b.started_at - a.started_at)
   const runningCount = aiConversations.filter((c) => c.conv_status === 'in_progress').length
 
   const allTasks = tasks
@@ -214,7 +190,7 @@ export function PaneDetails({ paneKey, profileKey, onClose }: Props) {
           </div>
 
           {convLoading && aiConversations.length === 0 ? (
-            <div className="drawer-loading">Loading...</div>
+            <div className="drawer-loading">Loading\u2026</div>
           ) : sortedConversations.length === 0 ? (
             <div className="conv-empty">
               <Bot size={24} className="conv-empty-icon" />

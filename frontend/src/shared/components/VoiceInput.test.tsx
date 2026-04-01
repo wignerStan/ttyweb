@@ -4,7 +4,15 @@ import type { Mock } from 'vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { VoiceInput, type VoiceInputHandle } from './VoiceInput'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+const mockNotify = vi.fn()
+vi.mock('./NotificationProvider', () => ({
+  useNotification: () => ({ notify: mockNotify, notifications: [], dismiss: vi.fn() }),
+}))
+
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 interface MockWS extends Record<string, unknown> {
   _open: () => void
@@ -93,7 +101,6 @@ function setupMocks() {
     return mockAudioCtx
   }
   vi.stubGlobal('AudioContext', vi.fn(MockAudioContext))
-  globalThis.alert = vi.fn()
 }
 
 function cleanupMocks() {
@@ -631,7 +638,7 @@ describe('VoiceInput', () => {
       writable: true,
       configurable: true,
     })
-    globalThis.alert = vi.fn()
+    mockNotify.mockClear()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -640,7 +647,9 @@ describe('VoiceInput', () => {
       ref.current?.toggle()
     })
 
-    expect(globalThis.alert).toHaveBeenCalledWith('当前浏览器不支持麦克风功能。')
+    expect(mockNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('当前浏览器不支持麦克风功能。') }),
+    )
   })
 
   it('shows alert when navigator.mediaDevices is undefined (HTTP)', async () => {
@@ -654,7 +663,7 @@ describe('VoiceInput', () => {
       writable: true,
       configurable: true,
     })
-    globalThis.alert = vi.fn()
+    mockNotify.mockClear()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -663,7 +672,9 @@ describe('VoiceInput', () => {
       ref.current?.toggle()
     })
 
-    expect(globalThis.alert).toHaveBeenCalledWith(expect.stringContaining('HTTPS'))
+    expect(mockNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('HTTPS') }),
+    )
   })
 
   it('shows alert on NotAllowedError from getUserMedia', async () => {
@@ -675,7 +686,7 @@ describe('VoiceInput', () => {
       writable: true,
       configurable: true,
     })
-    globalThis.alert = vi.fn()
+    mockNotify.mockClear()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -684,7 +695,9 @@ describe('VoiceInput', () => {
       ref.current?.toggle()
     })
 
-    expect(globalThis.alert).toHaveBeenCalledWith(expect.stringContaining('麦克风权限被拒绝'))
+    expect(mockNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('麦克风权限被拒绝') }),
+    )
   })
 
   it('shows alert on NotFoundError from getUserMedia', async () => {
@@ -696,7 +709,7 @@ describe('VoiceInput', () => {
       writable: true,
       configurable: true,
     })
-    globalThis.alert = vi.fn()
+    mockNotify.mockClear()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -705,7 +718,9 @@ describe('VoiceInput', () => {
       ref.current?.toggle()
     })
 
-    expect(globalThis.alert).toHaveBeenCalledWith(expect.stringContaining('未检测到麦克风'))
+    expect(mockNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('未检测到麦克风') }),
+    )
   })
 
   it('shows alert on generic getUserMedia error (HTTP)', async () => {
@@ -721,7 +736,7 @@ describe('VoiceInput', () => {
       writable: true,
       configurable: true,
     })
-    globalThis.alert = vi.fn()
+    mockNotify.mockClear()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -730,7 +745,9 @@ describe('VoiceInput', () => {
       ref.current?.toggle()
     })
 
-    expect(globalThis.alert).toHaveBeenCalledWith(expect.stringContaining('HTTP'))
+    expect(mockNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('HTTP') }),
+    )
   })
 
   it('returns to idle after getUserMedia error', async () => {
@@ -742,7 +759,7 @@ describe('VoiceInput', () => {
       writable: true,
       configurable: true,
     })
-    globalThis.alert = vi.fn()
+    mockNotify.mockClear()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -830,7 +847,6 @@ describe('VoiceInput', () => {
       }
     }
     vi.stubGlobal('AudioContext', vi.fn(MockAudioContext))
-    globalThis.alert = vi.fn()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -948,7 +964,7 @@ describe('VoiceInput', () => {
       writable: true,
       configurable: true,
     })
-    globalThis.alert = vi.fn()
+    mockNotify.mockClear()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -957,8 +973,8 @@ describe('VoiceInput', () => {
       ref.current?.toggle()
     })
 
-    // Should not have alerted since it's not an Error instance
-    expect(globalThis.alert).not.toHaveBeenCalled()
+    // Should not have notified since it's not an Error instance
+    expect(mockNotify).not.toHaveBeenCalled()
     await waitFor(() => {
       expect(ref.current?.status).toBe('idle')
     })
@@ -1048,7 +1064,6 @@ describe('VoiceInput', () => {
     wsCtor2.CONNECTING = 0
     wsCtor2.CLOSING = 2
     vi.stubGlobal('WebSocket', wsCtor2)
-    globalThis.alert = vi.fn()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)
@@ -1118,7 +1133,6 @@ describe('VoiceInput', () => {
       return mockAudioCtx
     }
     vi.stubGlobal('AudioContext', vi.fn(MockAudioContext))
-    globalThis.alert = vi.fn()
 
     const ref = createRef<VoiceInputHandle | null>()
     render(<VoiceInput ref={ref} onText={onText} />)

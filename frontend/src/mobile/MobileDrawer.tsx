@@ -58,6 +58,7 @@ export function MobileDrawer({
             onClick={() => setShowGroupManager(!showGroupManager)}
             type="button"
             title="Manage groups"
+            aria-label="Settings"
           >
             <Settings size={18} />
           </button>
@@ -66,6 +67,7 @@ export function MobileDrawer({
             onClick={onRefresh}
             type="button"
             title="Refresh"
+            aria-label="Refresh sessions"
           >
             <RefreshCw size={18} />
           </button>
@@ -74,6 +76,7 @@ export function MobileDrawer({
             onClick={onLogout}
             type="button"
             title="Sign out"
+            aria-label="Logout"
           >
             <LogOut size={16} />
           </button>
@@ -82,6 +85,7 @@ export function MobileDrawer({
             onClick={onClose}
             type="button"
             title="Close"
+            aria-label="Close drawer"
           >
             <X size={18} />
           </button>

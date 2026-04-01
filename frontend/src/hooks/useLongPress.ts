@@ -1,13 +1,20 @@
 import { useCallback, useRef } from 'react'
 
-interface UseLongPressOptions {
+interface UseLongPressOptions<T = React.TouchEvent | React.MouseEvent> {
   threshold?: number
-  onLongPress: (e: React.TouchEvent | React.MouseEvent) => void
+  onLongPress: (e: T) => void
+  /** Transform the event before passing to onLongPress */
+  transform?: (e: React.TouchEvent | React.MouseEvent) => T
 }
 
-export function useLongPress({ threshold = 500, onLongPress }: UseLongPressOptions) {
+export function useLongPress<T = React.TouchEvent | React.MouseEvent>({
+  threshold = 500,
+  onLongPress,
+  transform,
+}: UseLongPressOptions<T>) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLongPressRef = useRef(false)
+  const firedRef = useRef(false)
 
   const clear = useCallback(() => {
     if (timerRef.current !== null) {
@@ -24,12 +31,14 @@ export function useLongPress({ threshold = 500, onLongPress }: UseLongPressOptio
       }
 
       isLongPressRef.current = false
+      firedRef.current = false
       timerRef.current = setTimeout(() => {
         isLongPressRef.current = true
-        onLongPress(e)
+        firedRef.current = true
+        onLongPress(transform ? transform(e) : (e as T))
       }, threshold)
     },
-    [threshold, onLongPress],
+    [threshold, onLongPress, transform],
   )
 
   const cancel = useCallback(() => {
@@ -42,7 +51,9 @@ export function useLongPress({ threshold = 500, onLongPress }: UseLongPressOptio
     onTouchMove: cancel,
     onMouseDown: start,
     onMouseUp: cancel,
+    onMouseMove: cancel,
     onMouseLeave: cancel,
     isLongPressRef,
+    firedRef,
   }
 }

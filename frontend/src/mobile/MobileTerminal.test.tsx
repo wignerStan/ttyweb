@@ -529,11 +529,16 @@ describe('MobileTerminal', () => {
       mockWebSocket._open()
     })
 
+    // Verify only one Terminal instance exists (main effect hasn't re-run)
+    expect((Terminal as unknown as Mock).mock.instances.length).toBe(1)
+    const term = getTermInstance(0)
+    expect(term.options.fontSize).toBe(10)
+
     rerender(<MobileTerminal session="s1" pane="%0" fontSize={14} onFontSizeChange={vi.fn()} />)
 
-    // Changing fontSize triggers main effect re-run (cleanup + new setup),
-    // creating a new Terminal instance with the updated fontSize
-    const term = getTermInstance(1)
+    // Changing fontSize should NOT create a new Terminal instance;
+    // the separate fontSize effect updates the existing terminal's options
+    expect((Terminal as unknown as Mock).mock.instances.length).toBe(1)
     expect(term.options.fontSize).toBe(14)
 
     act(() => {
@@ -1820,8 +1825,8 @@ describe('MobileTerminal', () => {
     // Change fontSize - the fontSize effect (lines 96-111) runs
     rerender(<MobileTerminal session="s1" pane="%0" fontSize={14} onFontSizeChange={vi.fn()} />)
 
-    // The new Terminal instance's fit addon
-    const newFit = getFitInstance(1)
+    // Same FitAddon instance (no new Terminal created)
+    const sameFit = getFitInstance(0)
 
     // Advance past the setTimeout delays (100ms and 300ms)
     act(() => {
@@ -1829,7 +1834,7 @@ describe('MobileTerminal', () => {
     })
 
     // fit() should be called multiple times from the fontSize effect's setTimeouts
-    expect(newFit.fit.mock.calls.length).toBeGreaterThanOrEqual(2)
+    expect(sameFit.fit.mock.calls.length).toBeGreaterThanOrEqual(2)
   })
 
   // --- Burst suppression edge cases ---

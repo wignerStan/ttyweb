@@ -4,6 +4,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SessionGroup, TmuxSession } from '../../types'
 import { TmuxTree } from './TmuxTree'
 
+const mockNotify = vi.fn()
+vi.mock('./NotificationProvider', () => ({
+  useNotification: () => ({ notify: mockNotify, notifications: [], dismiss: vi.fn() }),
+}))
+
+// Mock all API functions from the extracted module
+const mockRenameWindow = vi.fn().mockResolvedValue(true)
+const mockSaveOrder = vi.fn().mockResolvedValue(undefined)
+const mockFetchPaneStatuses = vi.fn().mockResolvedValue([])
+const mockFetchProfileOrder = vi.fn().mockResolvedValue(null)
+const mockFetchTaskPaneStatuses = vi.fn().mockResolvedValue({})
+const mockRebuildSession = vi.fn().mockResolvedValue({ ok: true })
+const mockAssignSessionGroup = vi.fn().mockResolvedValue(undefined)
+const mockCreateGroup = vi.fn().mockResolvedValue({})
+
+vi.mock('./tmux/api', () => ({
+  renameWindow: (...args: unknown[]) => mockRenameWindow(...args),
+  saveOrder: (...args: unknown[]) => mockSaveOrder(...args),
+  fetchPaneStatuses: (...args: unknown[]) => mockFetchPaneStatuses(...args),
+  fetchProfileOrder: (...args: unknown[]) => mockFetchProfileOrder(...args),
+  fetchTaskPaneStatuses: (...args: unknown[]) => mockFetchTaskPaneStatuses(...args),
+  rebuildSession: (...args: unknown[]) => mockRebuildSession(...args),
+  assignSessionGroup: (...args: unknown[]) => mockAssignSessionGroup(...args),
+  createGroup: (...args: unknown[]) => mockCreateGroup(...args),
+}))
+
 let mockDndHandlers: {
   onDragStart?: (event: { active: { id: unknown } }) => void
   onDragOver?: (event: { over: { id: unknown } | null }) => void
@@ -110,7 +136,16 @@ describe('TmuxTree', () => {
   beforeEach(() => {
     onSelectPane = vi.fn<(paneId: string, paneName: string) => void>()
     onRefresh = vi.fn<() => void>()
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+    vi.clearAllMocks()
+    // Restore default mock return values
+    mockRenameWindow.mockResolvedValue(true)
+    mockSaveOrder.mockResolvedValue(undefined)
+    mockFetchPaneStatuses.mockResolvedValue([])
+    mockFetchProfileOrder.mockResolvedValue(null)
+    mockFetchTaskPaneStatuses.mockResolvedValue({})
+    mockRebuildSession.mockResolvedValue({ ok: true })
+    mockAssignSessionGroup.mockResolvedValue(undefined)
+    mockCreateGroup.mockResolvedValue({})
   })
 
   afterEach(() => {
@@ -165,13 +200,14 @@ describe('TmuxTree', () => {
     expect(screen.queryByText('0: main')).not.toBeInTheDocument()
 
     // Click expand button
-    const expandBtn = screen.getByRole('button', { name: '' })
+    const expandBtn = screen.getByRole('button', { name: /Expand session/ })
     await user.click(expandBtn)
 
     expect(screen.getByText('0: main')).toBeInTheDocument()
 
     // Collapse again
-    await user.click(expandBtn)
+    const collapseBtn = screen.getByRole('button', { name: /Collapse session/ })
+    await user.click(collapseBtn)
     expect(screen.queryByText('0: main')).not.toBeInTheDocument()
   })
 
@@ -281,11 +317,9 @@ describe('TmuxTree', () => {
   // --- Status fetching and display ---
 
   it('fetches pane statuses when profileKey is provided', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ panes: [{ paneKey: 'my-session:0:%0', status: 'in_progress' }] }),
-    })
-    globalThis.fetch = fetchMock
+    mockFetchPaneStatuses.mockResolvedValue([
+      { paneKey: 'my-session:0:%0', status: 'in_progress', mtime: 0 },
+    ])
 
     render(
       <TmuxTree
@@ -298,19 +332,14 @@ describe('TmuxTree', () => {
     )
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/panes/status'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(mockFetchPaneStatuses).toHaveBeenCalledWith('test-profile', expect.any(Array))
     })
   })
 
   it('fetches task pane statuses on mount', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ tasks: [{ pane_key: 'my-session:0:%0', task_status: 'in_progress' }] }),
+    mockFetchTaskPaneStatuses.mockResolvedValue({
+      'my-session:0:%0': 'in_progress',
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -322,16 +351,12 @@ describe('TmuxTree', () => {
     )
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/tasks'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(mockFetchTaskPaneStatuses).toHaveBeenCalled()
     })
   })
 
   it('handles fetchPaneStatuses returning empty on error', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) })
-    globalThis.fetch = fetchMock
+    mockFetchPaneStatuses.mockResolvedValue([])
 
     render(
       <TmuxTree
@@ -343,18 +368,12 @@ describe('TmuxTree', () => {
     )
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/panes/status'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(mockFetchPaneStatuses).toHaveBeenCalled()
     })
   })
 
   it('handles fetchTaskPaneStatuses returning empty on error', async () => {
-    const fetchMock = vi.fn().mockImplementation(() => {
-      throw new Error('Network error')
-    })
-    globalThis.fetch = fetchMock
+    mockFetchTaskPaneStatuses.mockRejectedValue(new Error('Network error'))
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
@@ -363,16 +382,10 @@ describe('TmuxTree', () => {
   })
 
   it('shows task stats in header when statuses exist', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        tasks: [
-          { pane_key: 'my-session:0:%0', task_status: 'in_progress' },
-          { pane_key: 'my-session:0:%1', task_status: 'done' },
-        ],
-      }),
+    mockFetchTaskPaneStatuses.mockResolvedValue({
+      'my-session:0:%0': 'in_progress',
+      'my-session:0:%1': 'done',
     })
-    globalThis.fetch = fetchMock
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
@@ -384,16 +397,10 @@ describe('TmuxTree', () => {
   // --- Session-level status summary ---
 
   it('shows session-level status summary when panes have statuses', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        tasks: [
-          { pane_key: 'my-session:0:%0', task_status: 'in_progress' },
-          { pane_key: 'my-session:0:%1', task_status: 'done' },
-        ],
-      }),
+    mockFetchTaskPaneStatuses.mockResolvedValue({
+      'my-session:0:%0': 'in_progress',
+      'my-session:0:%1': 'done',
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -444,8 +451,6 @@ describe('TmuxTree', () => {
 
   it('renames window on Enter key in rename input', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -464,10 +469,7 @@ describe('TmuxTree', () => {
     await user.keyboard('{Enter}')
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/tmux/windows'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(mockRenameWindow).toHaveBeenCalledWith('my-session', 0, 'new-name')
     })
   })
 
@@ -529,20 +531,6 @@ describe('TmuxTree', () => {
   })
 
   it('shows confirm dialog on rebuild click', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
-    const user = userEvent.setup()
-
-    render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
-
-    await user.click(screen.getByTitle('Rebuild session'))
-
-    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining('Rebuild session "my-session"'))
-  })
-
-  it('calls rebuild API when confirm is accepted', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
     const user = userEvent.setup()
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
@@ -550,77 +538,98 @@ describe('TmuxTree', () => {
     await user.click(screen.getByTitle('Rebuild session'))
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) =>
-          typeof c[0] === 'string' && c[0].includes('/api/tmux/sessions/my-session/rebuild'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(screen.getByText('Rebuild Session')).toBeInTheDocument()
+      expect(screen.getByText(/Rebuild session "my-session"/)).toBeInTheDocument()
+    })
+  })
+
+  it('calls rebuild API when confirm is accepted', async () => {
+    const user = userEvent.setup()
+
+    render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
+
+    await user.click(screen.getByTitle('Rebuild session'))
+
+    // ConfirmDialog should appear — click Rebuild to confirm
+    await waitFor(() => expect(screen.getByText('Rebuild Session')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await user.click(dialog.querySelector('.btn-error')!)
+
+    await waitFor(() => {
+      expect(mockRebuildSession).toHaveBeenCalledWith('my-session')
     })
   })
 
   it('shows alert on rebuild failure', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      json: async () => ({ message: 'Build error' }),
-    })
-    globalThis.fetch = fetchMock
+    mockNotify.mockClear()
+    mockRebuildSession.mockResolvedValue({ ok: false, message: 'Build error' })
     const user = userEvent.setup()
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
     await user.click(screen.getByTitle('Rebuild session'))
 
+    // ConfirmDialog should appear -- click Rebuild to confirm
+    await waitFor(() => expect(screen.getByText('Rebuild Session')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await user.click(dialog.querySelector('.btn-error')!)
+
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Build error'))
+      expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ message: 'Build error' }))
     })
   })
 
   it('shows network error alert on rebuild exception', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-    const fetchMock = vi.fn().mockRejectedValue(new Error('Network failure'))
-    globalThis.fetch = fetchMock
+    mockNotify.mockClear()
+    mockRebuildSession.mockRejectedValue(new Error('Network failure'))
     const user = userEvent.setup()
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
     await user.click(screen.getByTitle('Rebuild session'))
 
+    // ConfirmDialog should appear -- click Rebuild to confirm
+    await waitFor(() => expect(screen.getByText('Rebuild Session')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await user.click(dialog.querySelector('.btn-error')!)
+
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Network failure'))
+      expect(mockNotify).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Network failure' }),
+      )
     })
   })
 
   it('shows alert with unknown error on rebuild failure with no message', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      json: async () => ({}),
-    })
-    globalThis.fetch = fetchMock
+    mockNotify.mockClear()
+    mockRebuildSession.mockResolvedValue({ ok: false })
     const user = userEvent.setup()
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
     await user.click(screen.getByTitle('Rebuild session'))
 
+    // ConfirmDialog should appear -- click Rebuild to confirm
+    await waitFor(() => expect(screen.getByText('Rebuild Session')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await user.click(dialog.querySelector('.btn-error')!)
+
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown error'))
+      expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ message: 'Unknown error' }))
     })
   })
 
   it('calls onRefresh after successful rebuild', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
     const user = userEvent.setup()
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
     await user.click(screen.getByTitle('Rebuild session'))
+
+    // ConfirmDialog should appear — click Rebuild to confirm
+    await waitFor(() => expect(screen.getByText('Rebuild Session')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await user.click(dialog.querySelector('.btn-error')!)
 
     await waitFor(() => {
       expect(onRefresh).toHaveBeenCalled()
@@ -710,11 +719,10 @@ describe('TmuxTree', () => {
   })
 
   it('shows drop target message for empty groups', () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ groups: [{ id: 1, sort_order: 0, sessions: [] }], ungrouped: [] }),
+    mockFetchProfileOrder.mockResolvedValue({
+      groups: [{ id: 1, sort_order: 0, sessions: [] }],
+      ungrouped: [],
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -759,14 +767,10 @@ describe('TmuxTree', () => {
   // --- Order fetching ---
 
   it('fetches session orders when profileId is provided', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        groups: [],
-        ungrouped: [{ session_name: 'my-session', sort_order: 0 }],
-      }),
+    mockFetchProfileOrder.mockResolvedValue({
+      groups: [],
+      ungrouped: [{ session_name: 'my-session', sort_order: 0 }],
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -778,16 +782,12 @@ describe('TmuxTree', () => {
     )
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/profiles/1/order'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(mockFetchProfileOrder).toHaveBeenCalledWith(1)
     })
   })
 
   it('handles order fetch failure gracefully', async () => {
-    const fetchMock = vi.fn().mockRejectedValue(new Error('Fetch error'))
-    globalThis.fetch = fetchMock
+    mockFetchProfileOrder.mockRejectedValue(new Error('Fetch error'))
 
     render(
       <TmuxTree
@@ -803,8 +803,7 @@ describe('TmuxTree', () => {
   })
 
   it('handles order fetch returning null response', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false })
-    globalThis.fetch = fetchMock
+    mockFetchProfileOrder.mockResolvedValue(null)
 
     render(
       <TmuxTree
@@ -820,9 +819,6 @@ describe('TmuxTree', () => {
   })
 
   it('clears session orders when profileId is undefined', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
-
     // First render with profileId
     const { rerender } = render(
       <TmuxTree
@@ -834,13 +830,10 @@ describe('TmuxTree', () => {
     )
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/profiles/1/order'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(mockFetchProfileOrder).toHaveBeenCalledWith(1)
     })
 
-    fetchMock.mockClear()
+    mockFetchProfileOrder.mockClear()
 
     // Re-render without profileId
     rerender(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
@@ -849,10 +842,7 @@ describe('TmuxTree', () => {
     await act(async () => {
       await new Promise((r) => setTimeout(r, 100))
     })
-    const orderCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/profiles'),
-    )
-    expect(orderCalls).toHaveLength(0)
+    expect(mockFetchProfileOrder).not.toHaveBeenCalled()
   })
 
   // --- Long press for QuickGroupMenu ---
@@ -1118,11 +1108,7 @@ describe('TmuxTree', () => {
   it('creates new group and assigns session via Enter key', async () => {
     vi.useFakeTimers()
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ id: 99 }),
-    })
-    globalThis.fetch = fetchMock
+    mockCreateGroup.mockResolvedValue({ id: 99 })
 
     render(
       <TmuxTree
@@ -1157,10 +1143,8 @@ describe('TmuxTree', () => {
       await vi.advanceTimersByTimeAsync(200)
     })
 
-    const groupCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/groups'),
-    )
-    expect(groupCalls.length).toBeGreaterThan(0)
+    expect(mockCreateGroup).toHaveBeenCalledWith('test-key', 'new-group')
+    expect(mockAssignSessionGroup).toHaveBeenCalledWith('my-session', 'test-key', 99)
 
     vi.useRealTimers()
   })
@@ -1168,11 +1152,7 @@ describe('TmuxTree', () => {
   it('creates new group via confirm button click', async () => {
     vi.useFakeTimers()
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ id: 99 }),
-    })
-    globalThis.fetch = fetchMock
+    mockCreateGroup.mockResolvedValue({ id: 99 })
 
     render(
       <TmuxTree
@@ -1214,18 +1194,13 @@ describe('TmuxTree', () => {
       await vi.advanceTimersByTimeAsync(200)
     })
 
-    const groupCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/groups'),
-    )
-    expect(groupCalls.length).toBeGreaterThan(0)
+    expect(mockCreateGroup).toHaveBeenCalledWith('test-key', 'my-new-group')
 
     vi.useRealTimers()
   })
 
   it('does not create group with empty name', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 99 }) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1261,9 +1236,6 @@ describe('TmuxTree', () => {
   // --- fetchPaneStatuses with no keys ---
 
   it('does not fetch pane statuses when there are no pane keys', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
-
     render(
       <TmuxTree
         sessions={[]}
@@ -1278,22 +1250,13 @@ describe('TmuxTree', () => {
     })
 
     // Should not call pane status endpoint with no keys
-    const paneCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/panes/status'),
-    )
-    expect(paneCalls).toHaveLength(0)
+    expect(mockFetchPaneStatuses).not.toHaveBeenCalled()
   })
 
   // --- fetchTaskPaneStatuses with malformed data ---
 
   it('handles tasks with no pane_key gracefully', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        tasks: [{ pane_key: '', task_status: 'in_progress' }, { task_status: 'done' }],
-      }),
-    })
-    globalThis.fetch = fetchMock
+    mockFetchTaskPaneStatuses.mockResolvedValue({})
 
     render(<TmuxTree sessions={mockSessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
@@ -1302,13 +1265,9 @@ describe('TmuxTree', () => {
   })
 
   it('normalizes completed status to done', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        tasks: [{ pane_key: 'my-session:0:%0', task_status: 'completed' }],
-      }),
+    mockFetchTaskPaneStatuses.mockResolvedValue({
+      'my-session:0:%0': 'done',
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1320,10 +1279,7 @@ describe('TmuxTree', () => {
     )
 
     await waitFor(() => {
-      const calls = fetchMock.mock.calls.filter(
-        (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/tasks'),
-      )
-      expect(calls.length).toBeGreaterThan(0)
+      expect(mockFetchTaskPaneStatuses).toHaveBeenCalled()
     })
   })
 
@@ -1331,11 +1287,6 @@ describe('TmuxTree', () => {
 
   it('polls status map periodically', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ tasks: [], panes: [] }),
-    })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1351,18 +1302,14 @@ describe('TmuxTree', () => {
       await vi.advanceTimersByTimeAsync(100)
     })
 
-    const initialCallCount = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/tasks'),
-    ).length
+    const initialCallCount = mockFetchTaskPaneStatuses.mock.calls.length
 
     // Advance by 10 seconds to trigger poll
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10000)
     })
 
-    const laterCallCount = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/tasks'),
-    ).length
+    const laterCallCount = mockFetchTaskPaneStatuses.mock.calls.length
 
     expect(laterCallCount).toBeGreaterThan(initialCallCount)
 
@@ -1469,8 +1416,6 @@ describe('TmuxTree', () => {
   it('calls assignToGroup API when group item is clicked', async () => {
     vi.useFakeTimers()
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1503,10 +1448,7 @@ describe('TmuxTree', () => {
       await vi.advanceTimersByTimeAsync(200)
     })
 
-    const groupCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/sessions/my-session/group'),
-    )
-    expect(groupCalls.length).toBeGreaterThan(0)
+    expect(mockAssignSessionGroup).toHaveBeenCalledWith('my-session', 'test-key', 2)
 
     vi.useRealTimers()
   })
@@ -1555,8 +1497,6 @@ describe('TmuxTree', () => {
 
   it('does not rename when editWindowName is empty', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1578,16 +1518,11 @@ describe('TmuxTree', () => {
     })
 
     // Should not call the rename API
-    const renameCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/tmux/windows'),
-    )
-    expect(renameCalls).toHaveLength(0)
+    expect(mockRenameWindow).not.toHaveBeenCalled()
   })
 
   it('calls onRefresh when rename succeeds', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1612,8 +1547,7 @@ describe('TmuxTree', () => {
 
   it('does not call onRefresh when rename fails', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) })
-    globalThis.fetch = fetchMock
+    mockRenameWindow.mockResolvedValue(false)
 
     render(
       <TmuxTree
@@ -1640,8 +1574,7 @@ describe('TmuxTree', () => {
 
   it('handles renameWindow network error', async () => {
     const user = userEvent.setup()
-    const fetchMock = vi.fn().mockRejectedValue(new Error('Network error'))
-    globalThis.fetch = fetchMock
+    mockRenameWindow.mockRejectedValue(new Error('Network error'))
 
     render(
       <TmuxTree
@@ -1670,8 +1603,6 @@ describe('TmuxTree', () => {
 
   it('handles drag end saving order when profileId is set', async () => {
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1776,14 +1707,12 @@ describe('TmuxTree', () => {
   // --- Status map overlay logic ---
 
   it('prioritizes in_progress task status over existing pane status', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        panes: [{ paneKey: 'my-session:0:%0', status: 'idle' }],
-        tasks: [{ pane_key: 'my-session:0:%0', task_status: 'in_progress' }],
-      }),
+    mockFetchPaneStatuses.mockResolvedValue([
+      { paneKey: 'my-session:0:%0', status: 'idle', mtime: 0 },
+    ])
+    mockFetchTaskPaneStatuses.mockResolvedValue({
+      'my-session:0:%0': 'in_progress',
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1796,23 +1725,17 @@ describe('TmuxTree', () => {
     )
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalled()
+      expect(mockFetchPaneStatuses).toHaveBeenCalled()
     })
   })
 
   // --- Session status summary with different statuses ---
 
   it('computes session status summary with multiple status types', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        tasks: [
-          { pane_key: 'my-session:0:%0', task_status: 'in_progress' },
-          { pane_key: 'my-session:0:%1', task_status: 'failed' },
-        ],
-      }),
+    mockFetchTaskPaneStatuses.mockResolvedValue({
+      'my-session:0:%0': 'in_progress',
+      'my-session:0:%1': 'failed',
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1833,8 +1756,6 @@ describe('TmuxTree', () => {
 
   it('calls saveOrder and onOrderChange on drag end', async () => {
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -1907,12 +1828,7 @@ describe('TmuxTree', () => {
 
   it('handles createAndAssign error gracefully', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn(() => {
-      const p = Promise.reject(new Error('Server error'))
-      p.catch(() => {}) // prevent unhandled rejection warning
-      return p
-    })
-    globalThis.fetch = fetchMock
+    mockCreateGroup.mockRejectedValue(new Error('Server error'))
 
     render(
       <TmuxTree
@@ -1956,12 +1872,7 @@ describe('TmuxTree', () => {
 
   it('handles assignToGroup error gracefully', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn(() => {
-      const p = Promise.reject(new Error('Server error'))
-      p.catch(() => {}) // prevent unhandled rejection warning
-      return p
-    })
-    globalThis.fetch = fetchMock
+    mockAssignSessionGroup.mockRejectedValue(new Error('Server error'))
 
     render(
       <TmuxTree
@@ -2003,8 +1914,7 @@ describe('TmuxTree', () => {
 
   it('does not assign when create group returns no id', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: null }) })
-    globalThis.fetch = fetchMock
+    mockCreateGroup.mockResolvedValue({ id: undefined })
 
     render(
       <TmuxTree
@@ -2038,15 +1948,9 @@ describe('TmuxTree', () => {
       await vi.advanceTimersByTimeAsync(200)
     })
 
-    // Should have called /api/groups but not /api/sessions/group
-    const groupCreateCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/groups'),
-    )
-    const assignCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/sessions'),
-    )
-    expect(groupCreateCalls.length).toBeGreaterThan(0)
-    expect(assignCalls).toHaveLength(0)
+    // Should have called createGroup but not assignSessionGroup
+    expect(mockCreateGroup).toHaveBeenCalled()
+    expect(mockAssignSessionGroup).not.toHaveBeenCalled()
 
     vi.useRealTimers()
   })
@@ -2076,8 +1980,6 @@ describe('TmuxTree', () => {
 
   it('does not create group with whitespace-only name', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 99 }) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -2112,10 +2014,7 @@ describe('TmuxTree', () => {
     })
 
     // Should not create group with whitespace name
-    const groupCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/groups'),
-    )
-    expect(groupCalls).toHaveLength(0)
+    expect(mockCreateGroup).not.toHaveBeenCalled()
 
     vi.useRealTimers()
   })
@@ -2123,9 +2022,6 @@ describe('TmuxTree', () => {
   // --- Drag and drop via mocked DndContext handlers ---
 
   it('triggers handleDragStart and sets active item', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
-
     render(
       <TmuxTree
         sessions={mockSessions}
@@ -2205,8 +2101,6 @@ describe('TmuxTree', () => {
 
   it('triggers handleDragEnd reordering sessions and saves order', async () => {
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     const sessions: TmuxSession[] = [
       {
@@ -2259,8 +2153,6 @@ describe('TmuxTree', () => {
 
   it('triggers handleDragEnd moving session to group', async () => {
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -2287,8 +2179,6 @@ describe('TmuxTree', () => {
 
   it('triggers handleDragEnd reordering groups', async () => {
     const onOrderChange = vi.fn()
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -2334,9 +2224,6 @@ describe('TmuxTree', () => {
   })
 
   it('does not save order when profileId is undefined on drag end', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
-    globalThis.fetch = fetchMock
-
     const sessions: TmuxSession[] = [
       {
         sessionName: 'session-a',
@@ -2366,7 +2253,7 @@ describe('TmuxTree', () => {
 
     render(<TmuxTree sessions={sessions} onSelectPane={onSelectPane} onRefresh={onRefresh} />)
 
-    fetchMock.mockClear()
+    mockSaveOrder.mockClear()
 
     await act(async () => {
       mockDndHandlers.onDragEnd?.({
@@ -2376,15 +2263,11 @@ describe('TmuxTree', () => {
     })
 
     // Should not call saveOrder (no profileId)
-    const orderCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/profiles'),
-    )
-    expect(orderCalls).toHaveLength(0)
+    expect(mockSaveOrder).not.toHaveBeenCalled()
   })
 
   it('handles handleDragEnd save error gracefully', async () => {
-    const fetchMock = vi.fn().mockRejectedValue(new Error('Save failed'))
-    globalThis.fetch = fetchMock
+    mockSaveOrder.mockRejectedValue(new Error('Save failed'))
 
     const sessions: TmuxSession[] = [
       {
@@ -2473,16 +2356,10 @@ describe('TmuxTree', () => {
 
   it('shows ungroup button when session has a current group', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        groups: [
-          { id: 1, sort_order: 0, sessions: [{ session_name: 'my-session', sort_order: 0 }] },
-        ],
-        ungrouped: [],
-      }),
+    mockFetchProfileOrder.mockResolvedValue({
+      groups: [{ id: 1, sort_order: 0, sessions: [{ session_name: 'my-session', sort_order: 0 }] }],
+      ungrouped: [],
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -2514,16 +2391,10 @@ describe('TmuxTree', () => {
 
   it('calls assignToGroup(null) when ungroup button is clicked', async () => {
     vi.useFakeTimers()
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        groups: [
-          { id: 1, sort_order: 0, sessions: [{ session_name: 'my-session', sort_order: 0 }] },
-        ],
-        ungrouped: [],
-      }),
+    mockFetchProfileOrder.mockResolvedValue({
+      groups: [{ id: 1, sort_order: 0, sessions: [{ session_name: 'my-session', sort_order: 0 }] }],
+      ungrouped: [],
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree
@@ -2556,18 +2427,7 @@ describe('TmuxTree', () => {
       await vi.advanceTimersByTimeAsync(200)
     })
 
-    const groupCalls = fetchMock.mock.calls.filter(
-      (c: unknown[]) => typeof c[0] === 'string' && c[0].includes('/api/sessions/my-session/group'),
-    )
-    expect(groupCalls.length).toBeGreaterThan(0)
-
-    // Verify the body contains group_id: null
-    const call = groupCalls.find(
-      (c: unknown[]) => (c[1] as Record<string, unknown>)?.method === 'PUT',
-    )
-    expect(call).toBeTruthy()
-    const body = JSON.parse((call![1] as Record<string, unknown>).body as string)
-    expect(body.group_id).toBeNull()
+    expect(mockAssignSessionGroup).toHaveBeenCalledWith('my-session', 'test-key', null)
 
     vi.useRealTimers()
   })
@@ -2609,13 +2469,12 @@ describe('TmuxTree', () => {
   it('disables buttons while loading during group creation', async () => {
     vi.useFakeTimers()
     let resolveCreate: () => void
-    const fetchMock = vi.fn().mockImplementation(async () => {
+    mockCreateGroup.mockImplementation(async () => {
       await new Promise<void>((r) => {
         resolveCreate = r
       })
-      return { ok: true, json: async () => ({ id: 99 }) }
+      return { id: 99 }
     })
-    globalThis.fetch = fetchMock
 
     render(
       <TmuxTree

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../utils/auth'
+import { getAuthHeaders } from '../utils/auth'
 
 export interface BranchInfo {
   name: string
@@ -9,11 +9,6 @@ export interface BranchInfo {
   head_hash: string
   ahead: number
   behind: number
-}
-
-function authHeaders(): Record<string, string> | undefined {
-  const auth = getAuthHeader()
-  return auth ? { Authorization: auth } : undefined
 }
 
 async function assertOk(res: Response): Promise<void> {
@@ -34,7 +29,7 @@ export function useBranches(repoPath: string | null) {
     setError(null)
     try {
       const res = await fetch(`/api/branches?repo=${encodeURIComponent(repoPath)}`, {
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
       })
       await assertOk(res)
       const json = await res.json()
@@ -56,7 +51,7 @@ export function useBranches(repoPath: string | null) {
       if (!repoPath) return
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...authHeaders(),
+        ...getAuthHeaders(),
       }
       const res = await fetch(`/api/branches?repo=${encodeURIComponent(repoPath)}`, {
         method: 'POST',
@@ -76,7 +71,7 @@ export function useBranches(repoPath: string | null) {
         `/api/branches/${encodeURIComponent(name)}?repo=${encodeURIComponent(repoPath)}`,
         {
           method: 'DELETE',
-          headers: authHeaders(),
+          headers: getAuthHeaders(),
         },
       )
       await assertOk(res)

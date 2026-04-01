@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockFetchHttpError, mockFetchSuccess } from '../../../../test-helpers'
 import { useImperialStudies } from './useImperialStudies'
 
-vi.mock('../../../../utils/auth', () => ({ getAuthHeader: () => '' }))
+vi.mock('../../../../utils/auth', () => ({
+  getAuthHeader: () => '',
+  getAuthHeaders: () => ({}),
+}))
 
 const studies = [
   {

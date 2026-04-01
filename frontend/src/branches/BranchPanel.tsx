@@ -1,5 +1,6 @@
 import { Check, GitBranch, Loader2, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
+import { ConfirmDialog } from '../shared/components/ConfirmDialog'
 import { useBranches } from './useBranches'
 
 interface BranchPanelProps {
@@ -32,25 +33,33 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
     }
   }, [newBranchName, busy, createBranch])
 
-  const handleDelete = useCallback(
-    async (name: string) => {
+  const [deleteConfirmBranch, setDeleteConfirmBranch] = useState<string | null>(null)
+
+  const handleDeleteClick = useCallback(
+    (name: string) => {
       if (busy) return
-      if (!confirm(`Delete branch "${name}"?`)) return
-      setBusy(true)
-      setDeletingBranch(name)
-      setActionError(null)
-      try {
-        await deleteBranch(name)
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Failed to delete branch'
-        setActionError(msg)
-      } finally {
-        setBusy(false)
-        setDeletingBranch(null)
-      }
+      setDeleteConfirmBranch(name)
     },
-    [busy, deleteBranch],
+    [busy],
   )
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteConfirmBranch) return
+    const name = deleteConfirmBranch
+    setDeleteConfirmBranch(null)
+    setBusy(true)
+    setDeletingBranch(name)
+    setActionError(null)
+    try {
+      await deleteBranch(name)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete branch'
+      setActionError(msg)
+    } finally {
+      setBusy(false)
+      setDeletingBranch(null)
+    }
+  }, [deleteConfirmBranch, deleteBranch])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -81,6 +90,7 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
               onClick={refetch}
               title="Refresh"
               disabled={loading}
+              aria-label="Refresh branches"
             >
               {loading ? <Loader2 size={12} className="spinning" /> : null}
             </button>
@@ -90,6 +100,7 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
             className="branch-add-btn"
             onClick={() => setIsCreating(true)}
             title="Create branch"
+            aria-label="Create branch"
           >
             <Plus size={14} />
           </button>
@@ -106,6 +117,8 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
           <input
             ref={inputRef}
             type="text"
+            name="branch-name"
+            autoComplete="off"
             value={newBranchName}
             onChange={(e) => setNewBranchName(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -181,9 +194,10 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
                 <button
                   type="button"
                   className="btn-icon btn-danger"
-                  onClick={() => handleDelete(branch.name)}
+                  onClick={() => handleDeleteClick(branch.name)}
                   title={`Delete ${branch.name}`}
                   disabled={deletingBranch === branch.name}
+                  aria-label="Delete branch"
                 >
                   {deletingBranch === branch.name ? (
                     <Loader2 size={12} className="spinning" />
@@ -196,6 +210,20 @@ export function BranchPanel({ repoPath }: BranchPanelProps) {
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmBranch !== null}
+        title="Delete Branch"
+        message={
+          deleteConfirmBranch
+            ? `Delete branch "${deleteConfirmBranch}"? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirmBranch(null)}
+      />
     </div>
   )
 }

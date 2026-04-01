@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE, POLL_ACTIVITY_MS } from '../constants'
 import type { ActivityEvent } from '../types'
 
@@ -17,9 +17,8 @@ export function useActivityEvents(studyId?: string, limit = 20) {
     try {
       const params = new URLSearchParams({ limit: String(limit) })
       if (studyId) params.set('study_id', studyId)
-      const authHeader = getAuthHeader()
       const res = await fetch(`${BUTLER_API_BASE}/activity_events?${params}`, {
-        headers: authHeader ? { Authorization: authHeader } : undefined,
+        headers: getAuthHeaders(),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json()

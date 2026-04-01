@@ -152,10 +152,12 @@ function TaskDialog({
 
   return (
     <>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay click-outside-to-close pattern */}
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay click-outside-to-close pattern */}
       <div
         data-testid="task-dialog-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="task-dialog-title"
         className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-5 max-md:m-2.5"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose()
@@ -166,11 +168,14 @@ function TaskDialog({
           className="flex max-h-[90vh] w-full max-w-[540px] flex-col overflow-hidden rounded-box border border-base-300 bg-base-100 text-base-content shadow-lg max-md:max-w-full"
         >
           <div className="flex flex-shrink-0 items-center justify-between border-b border-base-200 px-5 py-4">
-            <h2 className="m-0 text-[15px] font-semibold text-base-content">{title}</h2>
+            <h2 id="task-dialog-title" className="m-0 text-[15px] font-semibold text-base-content">
+              {title}
+            </h2>
             <button
               className="flex h-7 w-7 items-center justify-center rounded text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content"
               onClick={onClose}
               type="button"
+              aria-label="Close dialog"
             >
               <X size={16} />
             </button>
@@ -192,9 +197,13 @@ function TaskDialog({
                 id="task-title"
                 className="input input-bordered input-sm w-full font-mono text-xs"
                 type="text"
+                name="task-title"
+                autoComplete="off"
                 value={form.title}
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder="Task title"
+                // biome-ignore lint/a11y/noAutofocus: dialog should focus title input
+                autoFocus
               />
               {errors.title && <span className="text-xs text-error">{errors.title}</span>}
             </div>
