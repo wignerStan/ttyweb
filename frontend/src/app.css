@@ -196,10 +196,10 @@
 @keyframes pulse-ring {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-error) 40%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 8px transparent;
   }
 }
 
@@ -243,17 +243,17 @@
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 6px #eab308;
+    box-shadow: 0 0 6px var(--color-warning);
   }
   50% {
     opacity: 0.4;
-    box-shadow: 0 0 2px #eab308;
+    box-shadow: 0 0 2px var(--color-warning);
   }
 }
 
 @keyframes worker-flash {
   0% {
-    background: rgba(59, 130, 246, 0.25);
+    background: color-mix(in srgb, var(--color-primary) 25%, transparent);
   }
   100% {
     background: transparent;
@@ -422,11 +422,6 @@
     border-color: var(--color-primary);
     color: var(--color-primary);
     background: color-mix(in srgb, var(--color-primary) 5%, transparent);
-  }
-
-  /* Conversations: selected session badge */
-  .border-l-primary .bg-surface-2.text-primary {
-    background: var(--color-base-200);
   }
 
   /* Conversations: expanded tool result chevron */
@@ -697,18 +692,18 @@
 
   /* Pipeline stage current modifiers */
   .is-pipeline__stage.current {
-    border-color: rgba(6, 182, 212, 0.4);
-    background: rgba(6, 182, 212, 0.08);
+    border-color: color-mix(in srgb, var(--color-info) 40%, transparent);
+    background: color-mix(in srgb, var(--color-info) 8%, transparent);
   }
 
   .is-pipeline__stage.current[data-status="success"] {
-    border-color: rgba(34, 197, 94, 0.4);
-    background: rgba(34, 197, 94, 0.08);
+    border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+    background: color-mix(in srgb, var(--color-success) 8%, transparent);
   }
 
   .is-pipeline__stage.current[data-status="failed"] {
-    border-color: rgba(251, 113, 133, 0.4);
-    background: rgba(251, 113, 133, 0.08);
+    border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+    background: color-mix(in srgb, var(--color-error) 8%, transparent);
   }
 
   .is-pipeline__stage.current .is-pipeline__stage-label {
@@ -722,21 +717,21 @@
 
   /* Pipeline badge data-strategy modifiers */
   .is-pipeline__badge[data-strategy="capability"] {
-    background: rgba(168, 85, 247, 0.15);
-    color: #c084fc;
-    border-color: rgba(168, 85, 247, 0.25);
+    background: color-mix(in srgb, var(--color-secondary) 15%, transparent);
+    color: var(--color-secondary);
+    border-color: color-mix(in srgb, var(--color-secondary) 25%, transparent);
   }
 
   .is-pipeline__badge[data-strategy="sub_butler"] {
-    background: rgba(245, 158, 11, 0.15);
+    background: color-mix(in srgb, var(--color-warning) 15%, transparent);
     color: var(--color-warning);
-    border-color: rgba(245, 158, 11, 0.25);
+    border-color: color-mix(in srgb, var(--color-warning) 25%, transparent);
   }
 
   /* Pipeline event dot data-type modifiers */
   .is-pipeline__event-dot[data-type="task_started"],
   .is-pipeline__event-dot[data-type="worker_launched"] {
-    background: #06b6d4;
+    background: var(--color-info);
   }
 
   .is-pipeline__event-dot[data-type="task_completed"] {
