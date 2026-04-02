@@ -31,15 +31,14 @@ describe('renameWindow', () => {
     vi.clearAllMocks()
   })
 
-  it('returns false when apiPut returns null (void success)', async () => {
+  it('returns false when apiPut resolves null (void success)', async () => {
+    // KNOWN DEFECT: apiPut<void> returns null for json.data on successful void endpoints.
+    // renameWindow checks res !== null, so it returns false even on success.
     vi.mocked(apiPut).mockResolvedValueOnce(null)
 
     const result = await renameWindow('main', 2, 'editor')
 
-    // apiPut returns null for void endpoints that succeed (json.data is null)
-    // but renameWindow checks res !== null — the mock returns exactly what we set
     expect(apiPut).toHaveBeenCalledWith('/api/tmux/windows/main/2/rename', { name: 'editor' })
-    // null !== null is false, so this returns false when apiPut resolves null
     expect(result).toBe(false)
   })
 
@@ -49,14 +48,6 @@ describe('renameWindow', () => {
     const result = await renameWindow('main', 2, 'editor')
 
     expect(result).toBe(true)
-  })
-
-  it('returns false when apiPut returns null', async () => {
-    vi.mocked(apiPut).mockResolvedValueOnce(null)
-
-    const result = await renameWindow('main', 2, 'editor')
-
-    expect(result).toBe(false)
   })
 
   it('encodes special characters in session name', async () => {

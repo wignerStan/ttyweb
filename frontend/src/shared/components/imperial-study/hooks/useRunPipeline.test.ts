@@ -181,15 +181,17 @@ describe('useRunPipeline', () => {
   it('handles non-ok response from dashboard fetch', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
     const { result } = renderHook(() => useRunPipeline())
-    await new Promise((r) => setTimeout(r, 100))
-    expect(result.current.runs).toHaveLength(0)
+    await waitFor(() => {
+      expect(result.current.runs).toHaveLength(0)
+    }, { timeout: 1000 })
   })
 
   it('handles network error during dashboard fetch', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
     const { result } = renderHook(() => useRunPipeline())
-    await new Promise((r) => setTimeout(r, 100))
-    expect(result.current.runs).toHaveLength(0)
+    await waitFor(() => {
+      expect(result.current.runs).toHaveLength(0)
+    }, { timeout: 1000 })
   })
 
   it('handles empty runs array from dashboard', async () => {
@@ -201,7 +203,8 @@ describe('useRunPipeline', () => {
       }),
     )
     const { result } = renderHook(() => useRunPipeline())
-    await new Promise((r) => setTimeout(r, 100))
-    expect(result.current.runs).toHaveLength(0)
+    await waitFor(() => {
+      expect(result.current.runs).toHaveLength(0)
+    }, { timeout: 1000 })
   })
 })
