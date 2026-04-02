@@ -90,7 +90,7 @@ func StreamChatCompletion(
 		req.Header.Set("Authorization", "Bearer "+apiKey)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := streamingClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
