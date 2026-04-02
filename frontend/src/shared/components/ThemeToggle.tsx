@@ -51,6 +51,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
       className="btn btn-ghost btn-xs btn-square text-base-content/75 hover:text-base-content"
+      aria-label="Toggle theme"
     >
       {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
     </button>

@@ -14,6 +14,7 @@ exports[`GroupManager snapshot > renders group list with sessions 1`] = `
         Groups
       </span>
       <button
+        aria-label="Add group"
         class="group-add-btn"
         title="Create group"
         type="button"

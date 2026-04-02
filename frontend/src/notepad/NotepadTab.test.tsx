@@ -21,7 +21,7 @@ describe('NotepadTab', () => {
 
   it('shows textarea for editing', () => {
     renderWithProviders(<NotepadTab note={note} onUpdate={vi.fn()} />)
-    const textarea = screen.getByPlaceholderText('Start typing...')
+    const textarea = screen.getByPlaceholderText('Start typing…')
     expect(textarea).toBeInTheDocument()
     expect(textarea).toHaveValue('Hello world')
   })
@@ -93,7 +93,7 @@ describe('NotepadTab', () => {
     const onUpdate = vi.fn()
     renderWithProviders(<NotepadTab note={note} onUpdate={onUpdate} />)
     const user = userEvent.setup()
-    const textarea = screen.getByPlaceholderText('Start typing...')
+    const textarea = screen.getByPlaceholderText('Start typing…')
     await user.type(textarea, ' more text')
     expect(onUpdate).toHaveBeenCalledWith(1, { content: 'Hello world more text' }, 500)
   })
@@ -102,7 +102,7 @@ describe('NotepadTab', () => {
     const onUpdate = vi.fn()
     renderWithProviders(<NotepadTab note={note} onUpdate={onUpdate} />)
     const user = userEvent.setup()
-    const textarea = screen.getByPlaceholderText('Start typing...')
+    const textarea = screen.getByPlaceholderText('Start typing…')
     await user.type(textarea, ' updated')
     await user.tab()
     expect(onUpdate).toHaveBeenCalledWith(1, { content: 'Hello world updated' })
@@ -121,7 +121,7 @@ describe('NotepadTab', () => {
     const { rerender } = renderWithProviders(<NotepadTab note={note} onUpdate={onUpdate} />)
     const newNote: Note = { ...note, content: 'New content' }
     rerender(<NotepadTab note={newNote} onUpdate={onUpdate} />)
-    const textarea = screen.getByPlaceholderText('Start typing...')
+    const textarea = screen.getByPlaceholderText('Start typing…')
     expect(textarea).toHaveValue('New content')
   })
 

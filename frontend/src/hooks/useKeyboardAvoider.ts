@@ -50,6 +50,8 @@ export function useKeyboardAvoider(
   accessoryHeight: number = 0,
 ): KeyboardAvoiderState {
   const [metrics, setMetrics] = useState<KeyboardMetrics>(() => getKeyboardMetrics())
+  const metricsRef = useRef(metrics)
+  metricsRef.current = metrics
   const debounceRef = useRef<number | null>(null)
   const enabledRef = useRef(enabled && isMobile())
 
@@ -97,9 +99,11 @@ export function useKeyboardAvoider(
     // Expose debug-only window helper for Playwright to read keyboard metrics
     if (isDebugEnabled() && isMobile()) {
       window.__keyboardMetrics = () => ({
-        keyboardVisible: metrics.isKeyboardVisible,
-        keyboardHeightPx: metrics.keyboardHeight,
-        keyboardSpacerHeightPx: metrics.isKeyboardVisible ? metrics.keyboardHeight : 0,
+        keyboardVisible: metricsRef.current.isKeyboardVisible,
+        keyboardHeightPx: metricsRef.current.keyboardHeight,
+        keyboardSpacerHeightPx: metricsRef.current.isKeyboardVisible
+          ? metricsRef.current.keyboardHeight
+          : 0,
         visualViewportHeight: vv?.height ?? window.innerHeight,
         visualViewportWidth: vv?.width ?? window.innerWidth,
         layoutHeight: window.innerHeight,
@@ -120,7 +124,7 @@ export function useKeyboardAvoider(
         delete window.__keyboardMetrics
       }
     }
-  }, [debouncedUpdate, updateMetrics, metrics])
+  }, [debouncedUpdate, updateMetrics])
 
   const containerStyle: React.CSSProperties = enabledRef.current
     ? {

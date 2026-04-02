@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BUTTON_RESET } from '../shared/styles'
 import type { ToolResultBlock, ToolUseBlock } from './types'
 
 interface ToolResultInlineProps {
@@ -51,16 +52,7 @@ export function ToolResultInline({ toolUse, toolResult }: ToolResultInlineProps)
         className="conv-tool-result-header"
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          font: 'inherit',
-          color: 'inherit',
-          cursor: 'pointer',
-          width: '100%',
-          textAlign: 'inherit',
-        }}
+        style={BUTTON_RESET}
       >
         <span className="conv-tool-result-chevron">&#9654;</span>
         <span className="conv-tool-result-name">{toolUse.name}</span>

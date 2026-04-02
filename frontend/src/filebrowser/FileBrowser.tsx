@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { formatSize } from '../utils/format'
 import { type FSEntry, useFileBrowser } from './useFileBrowser'
 
 const styles: Record<string, React.CSSProperties> = {
@@ -102,13 +103,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-}
-
 interface FileBrowserProps {
   initialPath?: string
 }
@@ -154,7 +148,7 @@ export function FileBrowser({ initialPath = '.' }: FileBrowserProps) {
   if (loading && entries.length === 0) {
     return (
       <div style={styles.container}>
-        <div style={styles.loading}>Loading...</div>
+        <div style={styles.loading}>Loading\u2026</div>
       </div>
     )
   }

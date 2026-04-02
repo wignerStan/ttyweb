@@ -5,7 +5,10 @@ import { renderWithProviders } from '../../test-utils'
 import type { AiConversation } from '../../types'
 import { PaneDetails } from './PaneDetails'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 vi.mock('../../hooks/useAIConversations', () => ({
   useAIConversations: () => ({
     conversations: mockConversations,

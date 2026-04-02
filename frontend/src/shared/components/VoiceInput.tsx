@@ -1,11 +1,14 @@
 import { Loader2, Mic, MicOff } from 'lucide-react'
-import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react'
+import type React from 'react'
+import { useCallback, useImperativeHandle, useRef, useState } from 'react'
 import { getAuthHeader } from '../../utils/auth'
+import { useNotification } from './NotificationProvider'
 
 interface Props {
   onText: (text: string) => void
   onPartial?: (text: string) => void
   disabled?: boolean
+  ref?: React.Ref<VoiceInputHandle | null>
 }
 
 export interface VoiceInputHandle {
@@ -24,10 +27,8 @@ const buttonStatusClasses: Record<Status, string> = {
   processing: 'bg-primary text-white',
 }
 
-export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function VoiceInput(
-  { onText, onPartial, disabled },
-  ref,
-) {
+export function VoiceInput({ onText, onPartial, disabled, ref }: Props) {
+  const { notify } = useNotification()
   const [status, setStatus] = useState<Status>('idle')
   const [partialText, setPartialText] = useState('')
   const wsRef = useRef<WebSocket | null>(null)
@@ -121,11 +122,20 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       if (!navigator.mediaDevices?.getUserMedia) {
         const isHTTP = window.location.protocol === 'http:'
         if (isHTTP) {
-          alert(
-            '麦克风需要 HTTPS 才能使用。\n\n当前是 HTTP 连接，iOS/浏览器会阻止麦克风权限。\n\n解决方法：使用 localhost 或 HTTPS 地址访问。',
-          )
+          notify({
+            type: 'error',
+            title: 'Microphone Error',
+            message:
+              '麦克风需要 HTTPS 才能使用。当前是 HTTP 连接，iOS/浏览器会阻止麦克风权限。解决方法：使用 localhost 或 HTTPS 地址访问。',
+            paneKey: '',
+          })
         } else {
-          alert('当前浏览器不支持麦克风功能。')
+          notify({
+            type: 'error',
+            title: 'Microphone Error',
+            message: '当前浏览器不支持麦克风功能。',
+            paneKey: '',
+          })
         }
         return
       }
@@ -147,16 +157,29 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       } catch (permErr) {
         if (permErr instanceof Error) {
           if (permErr.name === 'NotAllowedError') {
-            alert('麦克风权限被拒绝。\n\n请在浏览器设置中允许麦克风权限，然后重试。')
+            notify({
+              type: 'error',
+              title: 'Microphone Error',
+              message: '麦克风权限被拒绝。请在浏览器设置中允许麦克风权限，然后重试。',
+              paneKey: '',
+            })
           } else if (permErr.name === 'NotFoundError') {
-            alert('未检测到麦克风设备。')
+            notify({
+              type: 'error',
+              title: 'Microphone Error',
+              message: '未检测到麦克风设备。',
+              paneKey: '',
+            })
           } else {
             const isHTTP = window.location.protocol === 'http:'
-            alert(
-              isHTTP
-                ? '无法访问麦克风。\n\nHTTP 连接下麦克风被阻止，请使用 HTTPS 或 localhost 访问。'
+            notify({
+              type: 'error',
+              title: 'Microphone Error',
+              message: isHTTP
+                ? '麦克风需要 HTTPS。当前是 HTTP 连接。'
                 : `无法访问麦克风: ${permErr.message}`,
-            )
+              paneKey: '',
+            })
           }
         }
         setStatus('idle')
@@ -233,11 +256,16 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       }
     } catch (err) {
       if (err instanceof Error) {
-        alert(`语音功能出错: ${err.message}`)
+        notify({
+          type: 'error',
+          title: 'Voice Error',
+          message: `语音功能出错: ${err.message}`,
+          paneKey: '',
+        })
       }
       setStatus('idle')
     }
-  }, [onText, onPartial, startAudioCapture, cleanup])
+  }, [onText, onPartial, startAudioCapture, cleanup, notify])
 
   const stopRecording = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -300,4 +328,4 @@ export const VoiceInput = forwardRef<VoiceInputHandle | null, Props>(function Vo
       )}
     </div>
   )
-})
+}

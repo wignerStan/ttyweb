@@ -1,6 +1,7 @@
 import { Check, Copy, File, FileText, TerminalSquare, Upload, X } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
+import { formatSize } from '../../utils/format'
 
 interface UploadResult {
   filename: string
@@ -15,12 +16,6 @@ interface FileUploadProps {
   onUploaded?: (result: UploadResult) => void
   onSend?: (text: string) => void
   compact?: boolean
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
 function isImage(mimetype: string): boolean {
@@ -51,9 +46,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
           const file = fileArray[0]
           if (!file) return
           formData.append('file', file)
-          const auth = getAuthHeader()
-          const headers: Record<string, string> = {}
-          if (auth) headers.Authorization = auth
+          const headers = getAuthHeaders()
           const res = await fetch('/api/upload', {
             method: 'POST',
             headers,
@@ -68,9 +61,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
           onUploaded?.(data)
         } else {
           for (const f of fileArray) formData.append('files', f)
-          const auth = getAuthHeader()
-          const headers: Record<string, string> = {}
-          if (auth) headers.Authorization = auth
+          const headers = getAuthHeaders()
           const res = await fetch('/api/upload/multi', {
             method: 'POST',
             headers,
@@ -163,8 +154,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
 
   return (
     <div className="file-upload">
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: file drop zone with click-to-upload */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: file drop zone with click-to-upload */}
+      {/* biome-ignore lint/a11y/useSemanticElements: drop zone requires div for drag-and-drop */}
       <div
         className={`file-upload-zone${dragging ? ' dragging' : ''}${uploading ? ' uploading' : ''}${compact ? ' compact' : ''}`}
         onDragEnter={handleDragEnter}
@@ -172,6 +162,14 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClick()
+          }
+        }}
+        role="button"
+        tabIndex={0}
       >
         <input
           ref={fileInputRef}
@@ -183,7 +181,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
         {uploading ? (
           <div className="file-upload-status">
             <div className="file-upload-spinner" />
-            <span>Uploading...</span>
+            <span>Uploading\u2026</span>
           </div>
         ) : (
           <div className="file-upload-status">
@@ -196,7 +194,7 @@ export function FileUpload({ onUploaded, onSend, compact }: FileUploadProps) {
       {error && (
         <div className="file-upload-error">
           {error}
-          <button type="button" onClick={() => setError(null)}>
+          <button type="button" onClick={() => setError(null)} aria-label="Dismiss error">
             <X size={12} />
           </button>
         </div>

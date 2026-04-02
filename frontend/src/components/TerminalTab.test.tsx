@@ -1,14 +1,51 @@
-import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { TerminalTab } from './TerminalTab'
 
-describe('TerminalTab metadata handling', () => {
-  it('parses SetMetadata message (opcode 7) correctly', () => {
-    const base64Data = btoa(JSON.stringify({ type: 'ai_state_change', data: { state: 'working' } }))
-    const message = `7${base64Data}`
+vi.mock('../hooks/useWebTTY', () => ({
+  useWebTTY: () => ({
+    status: 'connected' as const,
+    sendText: vi.fn(),
+    sendResize: vi.fn(),
+    wsRef: { current: null },
+  }),
+}))
 
-    // Parse the metadata from the message
-    const metaJSON = atob(message.slice(1))
-    const metadata = JSON.parse(metaJSON)
-    expect(metadata.type).toBe('ai_state_change')
-    expect(metadata.data.state).toBe('working')
+vi.mock('@xterm/xterm', () => ({
+  Terminal: vi.fn().mockImplementation(function () {
+    return {
+      loadAddon: vi.fn(),
+      open: vi.fn(),
+      dispose: vi.fn(),
+      onData: vi.fn(),
+      onResize: vi.fn(),
+      cols: 80,
+      rows: 24,
+    }
+  }),
+}))
+
+vi.mock('@xterm/addon-fit', () => ({
+  FitAddon: vi.fn().mockImplementation(function () {
+    return {
+      fit: vi.fn(),
+      dispose: vi.fn(),
+    }
+  }),
+}))
+
+vi.mock('@xterm/addon-web-links', () => ({
+  WebLinksAddon: vi.fn(),
+}))
+
+describe('TerminalTab', () => {
+  it('renders status bar with connected state', () => {
+    const { container } = render(<TerminalTab session="test" pane="0" />)
+    expect(container).toMatchSnapshot()
+  })
+
+  it('shows session name in status bar', () => {
+    render(<TerminalTab session="mysession" pane="1" />)
+    expect(screen.getByText(/mysession:1/)).toBeInTheDocument()
   })
 })

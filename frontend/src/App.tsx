@@ -1,17 +1,30 @@
 import type React from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { Sidebar } from './components/Sidebar'
 import { TerminalTab } from './components/TerminalTab'
-import { ConversationList } from './conversations/ConversationList'
-import { ConversationViewer } from './conversations/ConversationViewer'
 import type { AISession } from './conversations/types'
-import { KanbanBoard } from './kanban'
 import MobileApp from './mobile/MobileApp'
-import { NotepadPanel } from './notepad/NotepadPanel'
-import { FloatingImperialStudy } from './shared/components/imperial-study/components/FloatingImperialStudy'
+import { LazyFallback } from './shared/components/LazyFallback'
 import { NotificationProvider } from './shared/components/NotificationProvider'
 import { ThemeToggle } from './shared/components/ThemeToggle'
+
+const ConversationList = lazy(() =>
+  import('./conversations/ConversationList').then((m) => ({ default: m.ConversationList })),
+)
+const ConversationViewer = lazy(() =>
+  import('./conversations/ConversationViewer').then((m) => ({ default: m.ConversationViewer })),
+)
+const FloatingImperialStudy = lazy(() =>
+  import('./shared/components/imperial-study/components/FloatingImperialStudy').then((m) => ({
+    default: m.FloatingImperialStudy,
+  })),
+)
+const NotepadPanel = lazy(() =>
+  import('./notepad/NotepadPanel').then((m) => ({ default: m.NotepadPanel })),
+)
+
+const KanbanBoard = lazy(() => import('./kanban').then((m) => ({ default: m.KanbanBoard })))
 
 type AppView = 'terminal' | 'conversations'
 
@@ -74,16 +87,21 @@ function DesktopLayout() {
 
   return (
     <div style={styles.container}>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       {imperialStudyOpen && (
-        <FloatingImperialStudy
-          activePaneKey={activeTab?.id ?? null}
-          onClose={() => setImperialStudyOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <FloatingImperialStudy
+            activePaneKey={activeTab?.id ?? null}
+            onClose={() => setImperialStudyOpen(false)}
+          />
+        </Suspense>
       )}
       {sidebarOpen && (
-        <div style={styles.sidebar}>
+        <nav style={styles.sidebar} aria-label="Session navigation">
           <Sidebar onSelect={openTab} />
-        </div>
+        </nav>
       )}
       <div style={styles.main}>
         <div style={styles.tabBar}>
@@ -91,6 +109,7 @@ function DesktopLayout() {
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             style={styles.toggleBtn}
+            aria-label="Toggle sidebar"
           >
             {sidebarOpen ? '\u25C0' : '\u25B6'}
           </button>
@@ -141,6 +160,7 @@ function DesktopLayout() {
                     }}
                     style={styles.tabClose}
                     title="Close tab"
+                    aria-label="Close tab"
                   >
                     \u00D7
                   </button>
@@ -163,20 +183,25 @@ function DesktopLayout() {
             onClick={openNotepad}
             style={styles.notepadBtn}
             title="Open Notepad"
+            aria-label="Open notepad"
           >
             <span style={{ fontSize: '14px' }}>{'\u270E'}</span>
           </button>
           <ThemeToggle />
         </div>
-        <div style={styles.contentArea}>
+        <div style={styles.contentArea} id="main-content">
           {activeView === 'terminal' && (
             <div style={styles.terminalArea}>
               {viewMode === 'kanban' ? (
-                <KanbanBoard />
+                <Suspense fallback={<LazyFallback />}>
+                  <KanbanBoard />
+                </Suspense>
               ) : (
                 <>
                   {activeTab && activeTab.type === 'notepad' && (
-                    <NotepadPanel key={NOTEPAD_TAB_ID} />
+                    <Suspense fallback={<LazyFallback />}>
+                      <NotepadPanel key={NOTEPAD_TAB_ID} />
+                    </Suspense>
                   )}
                   {activeTab && activeTab.type === 'terminal' && (
                     <TerminalTab
@@ -192,17 +217,21 @@ function DesktopLayout() {
           {activeView === 'conversations' && (
             <div style={styles.conversationsLayout}>
               <div style={styles.conversationsListPane}>
-                <ConversationList
-                  selectedSessionId={selectedSession?.id ?? null}
-                  onSelectSession={setSelectedSession}
-                />
+                <Suspense fallback={<LazyFallback />}>
+                  <ConversationList
+                    selectedSessionId={selectedSession?.id ?? null}
+                    onSelectSession={setSelectedSession}
+                  />
+                </Suspense>
               </div>
               <div style={styles.conversationsViewerPane}>
-                <ConversationViewer
-                  sessionId={selectedSession?.id ?? null}
-                  sessionInfo={selectedSession}
-                  onBack={() => setSelectedSession(null)}
-                />
+                <Suspense fallback={<LazyFallback />}>
+                  <ConversationViewer
+                    sessionId={selectedSession?.id ?? null}
+                    sessionInfo={selectedSession}
+                    onBack={() => setSelectedSession(null)}
+                  />
+                </Suspense>
               </div>
             </div>
           )}

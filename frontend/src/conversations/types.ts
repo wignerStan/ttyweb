@@ -27,8 +27,4 @@ export interface ConversationMessage {
   timestamp: string
 }
 
-export interface ApiResponse<T> {
-  success: boolean
-  data: T
-  error?: string
-}
+export type { ApiResponse } from '../types'

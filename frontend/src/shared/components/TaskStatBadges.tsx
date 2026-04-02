@@ -1,6 +1,6 @@
 import { CheckCircle2, Clock, Loader2, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 
 interface TaskStatBadgesProps {
   refreshToken?: number
@@ -16,9 +16,7 @@ export function TaskStatBadges({ refreshToken: _refreshToken }: TaskStatBadgesPr
   const fetch_ = useCallback(async () => {
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/tasks?limit=200', { headers })
       if (!res.ok) return
       const data = await res.json()

@@ -1,7 +1,7 @@
 import { FolderOpen, LayoutPanelTop, Plus, Terminal } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import type { TmuxSession } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
 
 interface QuickDir {
   name: string
@@ -30,9 +30,7 @@ export function NewTmuxButton({ sessions, onCreated }: NewTmuxButtonProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const auth = getAuthHeader()
-    const headers: Record<string, string> = {}
-    if (auth) headers.Authorization = auth
+    const headers = getAuthHeaders()
     fetch(`/api/tmux/quick-dirs`, { headers })
       .then((r) => r.json())
       .then((d) => setQuickDirs(d.dirs || []))
@@ -64,9 +62,10 @@ export function NewTmuxButton({ sessions, onCreated }: NewTmuxButtonProps) {
   }
 
   const post = async (url: string, body: object) => {
-    const auth = getAuthHeader()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (auth) headers.Authorization = auth
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    }
     const res = await fetch(url, {
       method: 'POST',
       headers,

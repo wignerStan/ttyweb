@@ -1,17 +1,12 @@
 import { useCallback, useState } from 'react'
-import { getAuthHeader } from '../utils/auth'
+import type { ApiResponse } from '../types'
+import { getAuthHeaders } from '../utils/auth'
 
 export interface FSEntry {
   name: string
   is_dir: boolean
   size: number
   mod_time: string
-}
-
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  error?: string
 }
 
 export interface UseFileBrowserReturn {
@@ -23,8 +18,7 @@ export interface UseFileBrowserReturn {
 
 async function fetchEntries(path: string): Promise<FSEntry[]> {
   const params = new URLSearchParams({ path })
-  const auth = getAuthHeader()
-  const headers: Record<string, string> | undefined = auth ? { Authorization: auth } : undefined
+  const headers = getAuthHeaders()
 
   const res = await fetch(`/api/fs?${params.toString()}`, { headers })
   if (!res.ok) {

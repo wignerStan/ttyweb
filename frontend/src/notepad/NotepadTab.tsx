@@ -102,7 +102,7 @@ export function NotepadTab({ note, onUpdate }: NotepadTabProps) {
         value={content}
         onChange={handleContentChange}
         onBlur={handleContentBlur}
-        placeholder="Start typing..."
+        placeholder="Start typing…"
         spellCheck={false}
       />
     </div>

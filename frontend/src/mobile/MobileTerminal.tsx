@@ -1,9 +1,21 @@
+/**
+ * MobileTerminal — Touch-optimized terminal component for mobile devices.
+ *
+ * Split plan (post-Tailwind migration):
+ * - Touch gesture handlers → src/mobile/useTouchGestures.ts
+ * - Burst suppression → src/utils/burstSuppressor.ts (DONE)
+ * - Selection overlay → src/mobile/SelectionOverlay.tsx
+ *
+ * Current size: ~678 lines (target: <800)
+ */
 import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import '@xterm/xterm/css/xterm.css'
 import { Maximize2 } from 'lucide-react'
+import { useWebTTY } from '../hooks/useWebTTY'
 import type { VoiceInputHandle } from '../shared/components/VoiceInput'
+import { createBurstDetector } from '../utils/burstSuppressor'
 import { isAndroid, isIOS } from '../utils/platform'
 import { log as telemetryLog } from '../utils/telemetry'
 import { createTelemetryEmitter, type TelemetryEmitter } from '../utils/telemetryEmitter'
@@ -58,9 +70,6 @@ export function MobileTerminal({
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<number | null>(null)
-  const reconnectAttemptRef = useRef(0)
   const isCleanupRef = useRef(false)
   const lastTransitionRef = useRef<{
     type: 'reconnect' | 'visibility' | 'keyboard'
@@ -69,15 +78,94 @@ export function MobileTerminal({
   const emitterRef = useRef<TelemetryEmitter | null>(null)
   const intentionalCloseRef = useRef(false)
   const manualReconnectDisposable = useRef<{ dispose: () => void } | null>(null)
+  const reconnectTimeoutRef = useRef<number | null>(null)
+  const reconnectAttemptRef = useRef(0)
   const [showKeyboard, setShowKeyboard] = useState(false)
   const selectOverlayRef = useRef<HTMLDivElement | null>(null)
 
-  const sendText = useCallback((text: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      const encoded = btoa(text)
-      wsRef.current.send(`1${encoded}`)
-    }
+  const onOutput = useCallback((text: string) => {
+    termRef.current?.write(text)
   }, [])
+
+  const onWindowTitle = useCallback((title: string) => {
+    document.title = title
+  }, [])
+
+  const onError = useCallback(() => {
+    termRef.current?.write('\r\n\x1b[33m[Connection error]\x1b[0m\r\n')
+  }, [])
+
+  const {
+    status: wsStatus,
+    sendText,
+    sendResize,
+    sendRaw,
+    connect,
+    wsRef,
+  } = useWebTTY({
+    session,
+    pane,
+    onOutput,
+    onWindowTitle,
+    onError,
+    reconnect: false,
+  })
+
+  // Send DEC_1004_DISABLE and initial resize on iOS when connected
+  useEffect(() => {
+    if (wsStatus === 'connected' && isIOS()) {
+      sendRaw(DEC_1004_DISABLE)
+      telemetryLog('dec1004-disable', { trigger: 'hook-status' })
+      const wasReconnect = reconnectAttemptRef.current > 0
+      if (wasReconnect) {
+        lastTransitionRef.current = { type: 'reconnect', time: Date.now() }
+        telemetryLog('reconnect', { timestamp: Date.now() })
+        emitterRef.current?.emit('mobile-transition', { kind: 'reconnect' })
+        termRef.current?.write('\r\x1b[2K\x1b[32m[\u5DF2\u91CD\u8FDE]\x1b[0m\r\n')
+      }
+    }
+  }, [wsStatus, sendRaw])
+
+  // Custom reconnection logic (MobileTerminal-specific behaviors)
+  useEffect(() => {
+    // We need the wsRef to intercept onclose/onerror for reconnect messages
+    // The hook manages the WebSocket lifecycle; we augment with reconnect behavior
+    // by watching wsStatus changes
+    if (wsStatus === 'disconnected' && !isCleanupRef.current && !intentionalCloseRef.current) {
+      reconnectAttemptRef.current += 1
+      const attempt = reconnectAttemptRef.current
+      if (attempt <= MAX_RECONNECT_ATTEMPTS) {
+        const delay = Math.min(1000 * 2 ** (attempt - 1), 16000)
+        termRef.current?.write(
+          `\r\n\x1b[33m[\u8FDE\u63A5\u65AD\u5F00\uFF0C${Math.round(delay / 1000)}s \u540E\u91CD\u8FDE (${attempt}/${MAX_RECONNECT_ATTEMPTS})...]\x1b[0m`,
+        )
+        reconnectTimeoutRef.current = window.setTimeout(() => {
+          if (!isCleanupRef.current && !intentionalCloseRef.current) {
+            connect()
+          }
+        }, delay)
+      } else {
+        termRef.current?.write(
+          '\r\n\x1b[31m[\u91CD\u8FDE\u5931\u8D25]\x1b[0m \x1b[33m\u6309\u4EFB\u610F\u952E\u91CD\u8FDE\uFF0C\u6216\u5173\u95ED\u91CD\u65B0\u6253\u5F00\x1b[0m\r\n',
+        )
+        if (termRef.current) {
+          manualReconnectDisposable.current = termRef.current.onData(() => {
+            manualReconnectDisposable.current?.dispose()
+            manualReconnectDisposable.current = null
+            reconnectAttemptRef.current = 0
+            connect()
+          })
+        }
+      }
+    }
+  }, [wsStatus, connect])
+
+  // Send initial resize on connect
+  useEffect(() => {
+    if (wsStatus === 'connected' && termRef.current) {
+      sendResize(termRef.current.cols, termRef.current.rows)
+    }
+  }, [wsStatus, sendResize])
 
   const toggleKeyboard = useCallback(() => {
     setShowKeyboard((prev) => {
@@ -101,15 +189,12 @@ export function MobileTerminal({
       setTimeout(() => {
         if (!fitRef.current || !termRef.current) return
         fitRef.current.fit()
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-          wsRef.current.send(
-            `3${JSON.stringify({ columns: termRef.current.cols, rows: termRef.current.rows })}`,
-          )
-        }
+        sendResize(termRef.current.cols, termRef.current.rows)
       }, 300)
     }
-  }, [fontSize])
+  }, [fontSize, sendResize])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fontSize handled by separate effect above, wsStatus/sendText/sendRaw/sendResize are stable refs from useWebTTY
   useEffect(() => {
     if (!containerRef.current) return
     isCleanupRef.current = false
@@ -384,189 +469,38 @@ export function MobileTerminal({
       isXtermScreen: !!xtermScreen,
     })
 
-    // --- WebSocket connection (webtty protocol) ---
-    const buildWsUrl = () => {
-      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsUrl = new URL(`${proto}//${location.host}/ws`)
-      if (session) wsUrl.searchParams.set('session', session)
-      if (pane) wsUrl.searchParams.set('pane', pane)
-      return wsUrl
-    }
-
-    const connect = () => {
-      if (isCleanupRef.current) return
-      manualReconnectDisposable.current?.dispose()
-      manualReconnectDisposable.current = null
-
-      const ws = new WebSocket(buildWsUrl().toString())
-      ws.binaryType = 'arraybuffer'
-      ws.onopen = () => {
-        const wasReconnect = reconnectAttemptRef.current > 0
-        reconnectAttemptRef.current = 0
-
-        // webtty handshake: AuthToken + base64 encoding preference
-        const wsUrl = buildWsUrl()
-        const initMsg = JSON.stringify({ AuthToken: '', Arguments: wsUrl.search.slice(1) })
-        ws.send(initMsg)
-        ws.send('4base64')
-
-        if (termRef.current) {
-          ws.send(
-            `3${JSON.stringify({ columns: termRef.current.cols, rows: termRef.current.rows })}`,
-          )
-        }
-
-        if (wasReconnect) {
-          termRef.current?.write('\r\x1b[2K\x1b[32m[\u5DF2\u91CD\u8FDE]\x1b[0m\r\n')
-        }
-
-        if (isIOS()) {
-          ws.send(DEC_1004_DISABLE)
-          telemetryLog('dec1004-disable', { trigger: 'onopen' })
-          if (wasReconnect) {
-            lastTransitionRef.current = { type: 'reconnect', time: Date.now() }
-            telemetryLog('reconnect', { timestamp: Date.now() })
-            emitter.emit('mobile-transition', { kind: 'reconnect' })
-          }
-        }
-      }
-
-      ws.onmessage = (event) => {
-        if (typeof event.data !== 'string') return
-        const msgType = event.data[0]
-        const payload = event.data.slice(1)
-
-        switch (msgType) {
-          case '1': // Output (base64 encoded)
-            try {
-              termRef.current?.write(atob(payload))
-            } catch {
-              termRef.current?.write(payload)
-            }
-            break
-          case '3': // SetWindowTitle
-            try {
-              const title = JSON.parse(payload)
-              if (title) document.title = title
-            } catch {
-              // ignore malformed title
-            }
-            break
-        }
-      }
-
-      ws.onerror = () => {
-        termRef.current?.write('\r\n\x1b[33m[Connection error]\x1b[0m\r\n')
-      }
-
-      // Exponential backoff reconnection
-      ws.onclose = () => {
-        if (isCleanupRef.current || intentionalCloseRef.current) return
-        reconnectAttemptRef.current += 1
-        const attempt = reconnectAttemptRef.current
-        if (attempt <= MAX_RECONNECT_ATTEMPTS) {
-          const delay = Math.min(1000 * 2 ** (attempt - 1), 16000)
-          termRef.current?.write(
-            `\r\n\x1b[33m[\u8FDE\u63A5\u65AD\u5F00\uFF0C${Math.round(delay / 1000)}s \u540E\u91CD\u8FDE (${attempt}/${MAX_RECONNECT_ATTEMPTS})...]\x1b[0m`,
-          )
-          reconnectTimeoutRef.current = window.setTimeout(() => {
-            if (!isCleanupRef.current && !intentionalCloseRef.current) connect()
-          }, delay)
-        } else {
-          termRef.current?.write(
-            '\r\n\x1b[31m[\u91CD\u8FDE\u5931\u8D25]\x1b[0m \x1b[33m\u6309\u4EFB\u610F\u952E\u91CD\u8FDE\uFF0C\u6216\u5173\u95ED\u91CD\u65B0\u6253\u5F00\x1b[0m\r\n',
-          )
-          if (termRef.current) {
-            manualReconnectDisposable.current = termRef.current.onData(() => {
-              manualReconnectDisposable.current?.dispose()
-              manualReconnectDisposable.current = null
-              reconnectAttemptRef.current = 0
-              connect()
-            })
-          }
-        }
-      }
-
-      wsRef.current = ws
-    }
-
-    // Visibility change handler — reconnect on resume
-    const handleVisibilityChange = () => {
-      telemetryLog('visibilitychange', { state: document.visibilityState })
-      emitter.emit('mobile-transition', { kind: 'visibility', state: document.visibilityState })
-
-      if (document.visibilityState === 'visible') {
-        if (isIOS()) {
-          lastTransitionRef.current = { type: 'visibility', time: Date.now() }
-        }
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current)
-          reconnectTimeoutRef.current = null
-        }
-        if (
-          wsRef.current?.readyState !== WebSocket.OPEN &&
-          wsRef.current?.readyState !== WebSocket.CONNECTING
-        ) {
-          termRef.current?.write('\r\n\x1b[36m[Resuming connection...]\x1b[0m\r\n')
-          reconnectAttemptRef.current = 0
-          connect()
-        }
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
     // --- Burst suppression (iOS/Android) ---
-    const spaceTimestamps: number[] = []
-    const enterTimestamps: number[] = []
+    const detectSpaceBurst = createBurstDetector({
+      count: SPACE_BURST_COUNT,
+      windowMs: SPACE_BURST_WINDOW_MS,
+    })
+    const detectEnterBurst = createBurstDetector({
+      count: ENTER_BURST_COUNT,
+      windowMs: ENTER_BURST_WINDOW_MS,
+    })
 
-    const shouldSuppressBurstIOS = (data: string, now: number): boolean => {
-      if (data === ' ') {
-        spaceTimestamps.push(now)
-        while (
-          spaceTimestamps.length > 0 &&
-          now - (spaceTimestamps[0] ?? 0) > SPACE_BURST_WINDOW_MS
-        ) {
-          spaceTimestamps.shift()
+    const logBurst = (reason: string, data: string, count: number) => {
+      telemetryLog('suppressed', { data: JSON.stringify(data), reason, count })
+      emitter.emit('mobile-suppress', { reason, data: JSON.stringify(data), count })
+    }
+
+    const shouldSuppressBurst = (data: string): boolean => {
+      const now = Date.now()
+
+      // Shared space/enter burst detection for iOS and Android
+      if (isIOS() || isAndroid()) {
+        if (data === ' ' && detectSpaceBurst()) {
+          logBurst('space-burst', data, SPACE_BURST_COUNT)
+          return true
         }
-        if (spaceTimestamps.length >= SPACE_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'space-burst',
-            count: spaceTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'space-burst',
-            data: JSON.stringify(data),
-            count: spaceTimestamps.length,
-          })
-          spaceTimestamps.length = 0
+        if ((data === '\r' || data === '\n') && detectEnterBurst()) {
+          logBurst('enter-burst', data, ENTER_BURST_COUNT)
           return true
         }
       }
-      if (data === '\r' || data === '\n') {
-        enterTimestamps.push(now)
-        while (
-          enterTimestamps.length > 0 &&
-          now - (enterTimestamps[0] ?? 0) > ENTER_BURST_WINDOW_MS
-        ) {
-          enterTimestamps.shift()
-        }
-        if (enterTimestamps.length >= ENTER_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'enter-burst',
-            count: enterTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'enter-burst',
-            data: JSON.stringify(data),
-            count: enterTimestamps.length,
-          })
-          enterTimestamps.length = 0
-          return true
-        }
-      }
+
       // iOS: post-transition suppression
+      if (!isIOS()) return false
       if (!SUPPRESSED_INPUTS.has(data)) return false
       const transition = lastTransitionRef.current
       if (!transition) return false
@@ -588,70 +522,11 @@ export function MobileTerminal({
       return false
     }
 
-    const shouldSuppressBurstAndroid = (data: string, now: number): boolean => {
-      if (data === ' ') {
-        spaceTimestamps.push(now)
-        while (
-          spaceTimestamps.length > 0 &&
-          now - (spaceTimestamps[0] ?? 0) > SPACE_BURST_WINDOW_MS
-        ) {
-          spaceTimestamps.shift()
-        }
-        if (spaceTimestamps.length >= SPACE_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'space-burst',
-            count: spaceTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'space-burst',
-            data: JSON.stringify(data),
-            count: spaceTimestamps.length,
-          })
-          spaceTimestamps.length = 0
-          return true
-        }
-      }
-      if (data === '\r' || data === '\n') {
-        enterTimestamps.push(now)
-        while (
-          enterTimestamps.length > 0 &&
-          now - (enterTimestamps[0] ?? 0) > ENTER_BURST_WINDOW_MS
-        ) {
-          enterTimestamps.shift()
-        }
-        if (enterTimestamps.length >= ENTER_BURST_COUNT) {
-          telemetryLog('suppressed', {
-            data: JSON.stringify(data),
-            reason: 'enter-burst',
-            count: enterTimestamps.length,
-          })
-          emitter.emit('mobile-suppress', {
-            reason: 'enter-burst',
-            data: JSON.stringify(data),
-            count: enterTimestamps.length,
-          })
-          enterTimestamps.length = 0
-          return true
-        }
-      }
-      return false
-    }
-
-    const shouldSuppressBurst = (data: string): boolean => {
-      const now = Date.now()
-      if (isIOS()) return shouldSuppressBurstIOS(data, now)
-      if (isAndroid()) return shouldSuppressBurstAndroid(data, now)
-      return false
-    }
-
-    // --- Terminal input → WebSocket (webtty: base64-encoded) ---
+    // --- Terminal input -> WebSocket (webtty: base64-encoded) ---
     let lastInputData = ''
     let lastInputTime = 0
 
     term.onData((data) => {
-      if (wsRef.current?.readyState !== WebSocket.OPEN) return
-
       // Filter out focus reports and device attributes
       if (
         data === '\x1b[I' ||
@@ -677,12 +552,33 @@ export function MobileTerminal({
         wsReadyState: wsRef.current?.readyState,
       })
 
-      // webtty protocol: type '1' (Input) + base64 encoded
-      const encoded = btoa(data)
-      wsRef.current.send(`1${encoded}`)
+      sendText(data)
     })
 
-    connect()
+    // --- Visibility change handler -- reconnect on resume ---
+    const handleVisibilityChange = () => {
+      telemetryLog('visibilitychange', { state: document.visibilityState })
+      emitter.emit('mobile-transition', { kind: 'visibility', state: document.visibilityState })
+
+      if (document.visibilityState === 'visible') {
+        if (isIOS()) {
+          lastTransitionRef.current = { type: 'visibility', time: Date.now() }
+        }
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current)
+          reconnectTimeoutRef.current = null
+        }
+        if (
+          wsRef.current?.readyState !== WebSocket.OPEN &&
+          wsRef.current?.readyState !== WebSocket.CONNECTING
+        ) {
+          termRef.current?.write('\r\n\x1b[36m[Resuming connection...]\x1b[0m\r\n')
+          reconnectAttemptRef.current = 0
+          connect()
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     // --- Visual viewport tracking (iOS keyboard) ---
     let viewportCleanup: (() => void) | undefined
@@ -716,9 +612,7 @@ export function MobileTerminal({
       if (cols !== lastCols || rows !== lastRows) {
         lastCols = cols
         lastRows = rows
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-          wsRef.current.send(`3${JSON.stringify({ columns: cols, rows: rows })}`)
-        }
+        sendResize(cols, rows)
       }
     }
 
@@ -748,21 +642,20 @@ export function MobileTerminal({
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
       if (resizeTimeout) clearTimeout(resizeTimeout)
       resizeObserver.disconnect()
-      wsRef.current?.close()
       term.dispose()
       termRef.current = null
       fitRef.current = null
     }
-  }, [session, pane, fontSize])
+  }, [session, pane, sendText, sendResize, sendRaw, connect])
 
   const handleFitWindow = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN && termRef.current && fitRef.current) {
+    if (termRef.current && fitRef.current) {
       fitRef.current.fit()
       const cols = termRef.current.cols
       const rows = termRef.current.rows
-      wsRef.current.send(`3${JSON.stringify({ columns: cols, rows: rows })}`)
+      sendResize(cols, rows)
     }
-  }, [])
+  }, [sendResize])
 
   return (
     <div className="mobile-terminal-wrapper flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -776,6 +669,7 @@ export function MobileTerminal({
           className="mobile-fit-window-btn absolute bottom-2 right-2 z-50 flex items-center justify-center gap-0.5 whitespace-nowrap rounded-[14px] border-none bg-white/12 px-2 py-1 text-xs text-white/60 cursor-pointer tap-none"
           onClick={handleFitWindow}
           title="Fit window"
+          aria-label="Fit window"
         >
           <Maximize2 size={12} />
           <span>Fit</span>

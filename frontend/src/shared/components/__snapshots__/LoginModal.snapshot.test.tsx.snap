@@ -51,8 +51,10 @@ exports[`LoginModal snapshot > renders login form 1`] = `
           Username
         </label>
         <input
+          autocomplete="username"
           class="input input-bordered w-full"
           id="username"
+          name="username"
           placeholder="Username"
           type="text"
           value=""
@@ -68,8 +70,10 @@ exports[`LoginModal snapshot > renders login form 1`] = `
           Password
         </label>
         <input
+          autocomplete="current-password"
           class="input input-bordered w-full"
           id="password"
+          name="password"
           placeholder="Password"
           type="password"
           value=""

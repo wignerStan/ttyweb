@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../utils/auth'
+import { getAuthHeaders } from '../utils/auth'
 import type { AISession, ApiResponse, ConversationMessage } from './types'
-
-function authHeaders(): Record<string, string> {
-  const auth = getAuthHeader()
-  return auth ? { Authorization: auth } : {}
-}
 
 export function useConversations(projectPath: string | null) {
   const [sessions, setSessions] = useState<AISession[]>([])
@@ -20,7 +15,7 @@ export function useConversations(projectPath: string | null) {
       if (projectPath) params.set('project', projectPath)
       const qs = params.toString()
       const url = `/api/ai/sessions${qs ? `?${qs}` : ''}`
-      const res = await fetch(url, { headers: authHeaders() })
+      const res = await fetch(url, { headers: getAuthHeaders() })
       const json: ApiResponse<AISession[]> = await res.json()
       if (json.success) {
         setSessions(json.data)
@@ -46,7 +41,7 @@ async function fetchMessages(
   endpoint: 'conversation' | 'refresh',
 ): Promise<{ data: ConversationMessage[]; error: string }> {
   const res = await fetch(`/api/ai/sessions/${encodeURIComponent(sessionId)}/${endpoint}`, {
-    headers: authHeaders(),
+    headers: getAuthHeaders(),
   })
   const json: ApiResponse<ConversationMessage[]> = await res.json()
   if (json.success) {

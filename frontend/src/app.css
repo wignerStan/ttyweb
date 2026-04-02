@@ -295,6 +295,16 @@
 
 /* ── Global base styles ── */
 @layer base {
+  html {
+    color-scheme: light dark;
+  }
+  [data-theme="dark"] {
+    color-scheme: dark;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+  }
+
   *,
   *::before,
   *::after {
@@ -862,7 +872,10 @@
     color: var(--tag-color);
     font-size: 12px;
     cursor: pointer;
-    transition: all 150ms;
+    transition:
+      background 150ms,
+      border-color 150ms,
+      color 150ms;
     line-height: 1.5;
     font-family: var(--font-sans);
   }

@@ -1,0 +1,123 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MobileApp > matches snapshot with no tabs (placeholder state) 1`] = `
+<div>
+  <div
+    class="flex h-full w-screen flex-col overflow-hidden bg-base-300 text-base-content/75 text-[clamp(0.875rem,2.5vw,1rem)]"
+  >
+    <a
+      class="skip-link"
+      href="#mobile-content"
+    >
+      Skip to content
+    </a>
+    <header
+      class="mobile-header flex h-12 shrink-0 items-center border-b border-base-200 bg-base-200 pl-3"
+    >
+      <button
+        aria-label="Open menu"
+        class="btn btn-ghost btn-sm btn-circle mobile-menu-btn min-h-[44px] min-w-[44px] shrink-0 text-base-content/75"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-menu"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M4 5h16"
+          />
+          <path
+            d="M4 12h16"
+          />
+          <path
+            d="M4 19h16"
+          />
+        </svg>
+      </button>
+      <span
+        class="mobile-title flex-1 truncate pl-3 text-sm font-medium font-sans"
+      >
+        Select a pane
+      </span>
+    </header>
+    <div
+      data-testid="mobile-drawer"
+    >
+      <button
+        data-testid="drawer-close"
+        type="button"
+      >
+        Close
+      </button>
+      <button
+        data-testid="select-pane"
+        type="button"
+      >
+        Select Pane
+      </button>
+      <button
+        data-testid="drawer-refresh"
+        type="button"
+      >
+        Refresh
+      </button>
+      <button
+        data-testid="drawer-logout"
+        type="button"
+      >
+        Logout
+      </button>
+    </div>
+    <aside
+      class="mobile-right-panel fixed right-0 top-0 bottom-0 z-[var(--z-drawer)] flex w-[85vw] max-w-[360px] flex-col overflow-hidden bg-base-200 transition-transform duration-[250ms] ease-out translate-x-full"
+    />
+    <main
+      class="mobile-main flex min-h-0 flex-1 flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]"
+      id="mobile-content"
+    >
+      <div
+        class="mobile-placeholder flex flex-1 items-center justify-center text-sm font-sans text-base-content/45"
+      >
+        <p
+          class="flex items-center gap-2"
+        >
+          Tap 
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-menu"
+            fill="none"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5h16"
+            />
+            <path
+              d="M4 12h16"
+            />
+            <path
+              d="M4 19h16"
+            />
+          </svg>
+           to select a terminal
+        </p>
+      </div>
+    </main>
+  </div>
+</div>
+`;

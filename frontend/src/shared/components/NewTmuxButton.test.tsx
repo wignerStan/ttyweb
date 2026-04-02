@@ -5,7 +5,10 @@ import { renderWithProviders } from '../../test-utils'
 import type { TmuxSession } from '../../types'
 import { NewTmuxButton } from './NewTmuxButton'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const sessions: TmuxSession[] = [
   { sessionName: 'main', sessionId: '0', windows: [] },

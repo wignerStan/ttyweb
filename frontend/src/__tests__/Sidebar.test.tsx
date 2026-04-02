@@ -40,7 +40,7 @@ describe('Sidebar', () => {
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
     expect(screen.getByText('Sessions')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('new session')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('New session...')).toBeInTheDocument()
   })
 
   it('fetches sessions on mount', async () => {
@@ -50,7 +50,9 @@ describe('Sidebar', () => {
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith('/api/sessions')
+      expect(fetchMock).toHaveBeenCalledWith('/api/sessions', {
+        headers: expect.any(Object),
+      })
     })
   })
 
@@ -95,7 +97,7 @@ describe('Sidebar', () => {
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
-    const input = screen.getByPlaceholderText('new session')
+    const input = screen.getByPlaceholderText('New session...')
     await user.type(input, 'my-new-session')
 
     expect(input).toHaveValue('my-new-session')
@@ -110,7 +112,7 @@ describe('Sidebar', () => {
 
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
-    const input = screen.getByPlaceholderText('new session')
+    const input = screen.getByPlaceholderText('New session...')
     await user.type(input, 'new-session-test')
     await user.keyboard('{Enter}')
 

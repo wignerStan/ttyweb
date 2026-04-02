@@ -372,8 +372,6 @@ describe('useAIConversations', () => {
   })
 
   it('encodes paneKey in URL', async () => {
-    mockGetAuthHeader.mockReturnValue(null)
-
     const mockFetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ conversations: [] }),
     })
@@ -382,9 +380,8 @@ describe('useAIConversations', () => {
     renderHook(() => useAIConversations('pane with spaces'))
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/tasks/events/pane%20with%20spaces', {
-        headers: undefined,
-      })
+      const callUrl = mockFetch.mock.calls[0]?.[0]
+      expect(callUrl).toBe('/api/tasks/events/pane%20with%20spaces')
     })
   })
 })

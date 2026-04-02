@@ -9,8 +9,9 @@ import {
   X,
   XCircle,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../../utils/auth'
+import { memo, useCallback, useEffect, useState } from 'react'
+import { getAuthHeaders } from '../../utils/auth'
+import { formatDuration } from '../../utils/format'
 
 interface Conversation {
   id: number
@@ -30,7 +31,7 @@ interface TaskHistoryPanelProps {
   onStatusChange?: () => void
 }
 
-function StatusIcon({ status }: { status: string }) {
+function StatusIconInner({ status }: { status: string }) {
   if (status === 'in_progress')
     return (
       <Loader2 size={14} className="task-history-spin" style={{ color: 'var(--color-primary)' }} />
@@ -42,15 +43,10 @@ function StatusIcon({ status }: { status: string }) {
   return <Clock size={14} style={{ color: 'var(--color-on-surface-muted)' }} />
 }
 
+const StatusIcon = memo(StatusIconInner)
+
 function formatTime(ts: number): string {
   return new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-function formatDuration(start: number, end: number | null): string {
-  const secs = (end ?? Math.floor(Date.now() / 1000)) - start
-  if (secs < 60) return `${secs}s`
-  if (secs < 3600) return `${Math.floor(secs / 60)}m ${secs % 60}s`
-  return `${Math.floor(secs / 3600)}h ${Math.floor((secs % 3600) / 60)}m`
 }
 
 export function TaskHistoryPanel({
@@ -67,9 +63,7 @@ export function TaskHistoryPanel({
     setLoading(true)
     try {
       const urlKey = paneKey.replace(/:/g, '/')
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch(`/api/tasks/events/${encodeURIComponent(urlKey)}?limit=30`, {
         headers,
       })
@@ -97,9 +91,7 @@ export function TaskHistoryPanel({
         ),
       )
       try {
-        const auth = getAuthHeader()
-        const headers: Record<string, string> = {}
-        if (auth) headers.Authorization = auth
+        const headers = getAuthHeaders()
         await fetch(`/api/tasks/conv/${id}/complete`, {
           method: 'PATCH',
           headers,
@@ -183,7 +175,9 @@ export function TaskHistoryPanel({
               <div className="task-history-item-meta">
                 <span className="task-history-badge">{conv.conv_status}</span>
                 <span className="task-history-badge">
-                  {formatDuration(conv.started_at, conv.completed_at)}
+                  {formatDuration(
+                    (conv.completed_at ?? Math.floor(Date.now() / 1000)) - conv.started_at,
+                  )}
                 </span>
               </div>
             </div>

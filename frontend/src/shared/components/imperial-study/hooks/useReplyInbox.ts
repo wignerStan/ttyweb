@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE } from '../constants'
 import type { ReplyDecision } from '../types'
 
@@ -16,10 +16,9 @@ export function useReplyInbox() {
     setLoading(true)
     setError(null)
     try {
-      const authHeader = getAuthHeader()
       const jsonHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...(authHeader ? { Authorization: authHeader } : {}),
+        ...getAuthHeaders(),
       }
 
       const replyRes = await fetch(`${BUTLER_API_BASE}/approval_replies`, {

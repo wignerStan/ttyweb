@@ -1,7 +1,9 @@
-import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Profile } from '../../types'
-import { getAuthHeader } from '../../utils/auth'
+import { getAuthHeaders } from '../../utils/auth'
+import { ConfirmDialog } from './ConfirmDialog'
+import { InlineInput } from './InlineInput'
 
 interface Props {
   currentProfile: Profile | null
@@ -21,9 +23,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
 
   const fetchProfiles = useCallback(async () => {
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       const res = await fetch('/api/profiles', { headers })
       const data = await res.json()
       setProfiles(data.profiles || [])
@@ -64,9 +64,10 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-|-$/g, '') || `profile-${Date.now()}`
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       const res = await fetch('/api/profiles', {
         method: 'POST',
         headers,
@@ -95,9 +96,10 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     if (!currentProfile || !editName.trim() || loading) return
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (auth) headers.Authorization = auth
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      }
       await fetch(`/api/profiles/${currentProfile.id}`, {
         method: 'PUT',
         headers,
@@ -115,14 +117,19 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     }
   }
 
-  const deleteProfile = async () => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const deleteProfileClick = () => {
     if (!currentProfile || profiles.length <= 1 || loading) return
-    if (!confirm(`Delete profile "${currentProfile.name}"?`)) return
+    setShowDeleteConfirm(true)
+  }
+
+  const deleteProfile = async () => {
+    if (!currentProfile) return
+    setShowDeleteConfirm(false)
     setLoading(true)
     try {
-      const auth = getAuthHeader()
-      const headers: Record<string, string> = {}
-      if (auth) headers.Authorization = auth
+      const headers = getAuthHeaders()
       await fetch(`/api/profiles/${currentProfile.id}`, {
         method: 'DELETE',
         headers,
@@ -135,14 +142,6 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
     } catch (_err) {
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
-    if (e.key === 'Enter') action()
-    if (e.key === 'Escape') {
-      setIsCreating(false)
-      setIsEditing(false)
     }
   }
 
@@ -185,35 +184,18 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
 
           <div className="border-t border-base-300 p-2" data-testid="profile-actions">
             {isCreating ? (
-              <div className="flex gap-1.5">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, createProfile)}
-                  placeholder="Profile name..."
-                  className="input input-bordered input-sm flex-1 text-sm"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={createProfile}
-                  disabled={loading || !newName.trim()}
-                  className="btn btn-primary btn-sm btn-square"
-                  data-testid="btn-confirm"
-                >
-                  <Check size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsCreating(false)}
-                  className="btn btn-ghost btn-sm btn-square"
-                  data-testid="btn-cancel"
-                >
-                  <X size={14} />
-                </button>
-              </div>
+              <InlineInput
+                ref={inputRef}
+                value={newName}
+                onChange={setNewName}
+                onSubmit={createProfile}
+                onCancel={() => setIsCreating(false)}
+                placeholder="Profile name..."
+                loading={loading}
+                name="profile-name"
+                confirmTestId="btn-confirm"
+                cancelTestId="btn-cancel"
+              />
             ) : (
               <button
                 type="button"
@@ -228,34 +210,16 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
           {currentProfile && (
             <div className="border-t border-base-300 p-2" data-testid="profile-edit-section">
               {isEditing ? (
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, updateProfile)}
-                    placeholder="Rename profile..."
-                    className="input input-bordered input-sm flex-1 text-sm"
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={updateProfile}
-                    disabled={loading || !editName.trim()}
-                    className="btn btn-primary btn-sm btn-square"
-                    data-testid="edit-confirm"
-                  >
-                    <Check size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="btn btn-ghost btn-sm btn-square"
-                    data-testid="edit-cancel"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
+                <InlineInput
+                  value={editName}
+                  onChange={setEditName}
+                  onSubmit={updateProfile}
+                  onCancel={() => setIsEditing(false)}
+                  placeholder="Rename profile..."
+                  loading={loading}
+                  confirmTestId="edit-confirm"
+                  cancelTestId="edit-cancel"
+                />
               ) : (
                 <div className="flex gap-2">
                   <button
@@ -271,7 +235,7 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
                   <button
                     type="button"
                     className="btn btn-ghost btn-xs flex-1 text-error hover:bg-error/10"
-                    onClick={deleteProfile}
+                    onClick={deleteProfileClick}
                     disabled={profiles.length <= 1}
                     title={profiles.length <= 1 ? 'Cannot delete last profile' : ''}
                   >
@@ -283,6 +247,18 @@ export function ProfileSelector({ currentProfile, onProfileChange }: Props) {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete Profile"
+        message={
+          currentProfile ? `Delete profile "${currentProfile.name}"? This cannot be undone.` : ''
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={deleteProfile}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   )
 }

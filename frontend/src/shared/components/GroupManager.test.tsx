@@ -5,7 +5,10 @@ import { renderWithProviders } from '../../test-utils'
 import type { SessionGroup, TmuxSession } from '../../types'
 import { GroupManager } from './GroupManager'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const groups: SessionGroup[] = [
   { id: 1, group_name: 'Work', sort_order: 0, session_count: 2 },
@@ -23,7 +26,6 @@ function mockFetchJSON(data: unknown) {
 describe('GroupManager', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', mockFetchJSON({ groups }))
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
   })
   afterEach(() => {
     vi.restoreAllMocks()
@@ -95,6 +97,10 @@ describe('GroupManager', () => {
     const deleteBtns = screen.getAllByTitle('Delete')
     expect(deleteBtns[0]).toBeTruthy()
     await userEvent.click(deleteBtns[0]!)
+    // ConfirmDialog should appear — click Delete to confirm
+    await waitFor(() => expect(screen.getByText('Delete Group')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await userEvent.click(dialog.querySelector('.btn-error')!)
     await waitFor(() => expect(screen.queryByText('Work')).not.toBeInTheDocument())
   })
 })

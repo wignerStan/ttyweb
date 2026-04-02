@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getAuthHeader } from '../../../../utils/auth'
+import { getAuthHeaders } from '../../../../utils/auth'
 import { BUTLER_API_BASE, POLL_WORKERS_MS } from '../constants'
 import type { WorkerSession } from '../types'
 
@@ -16,9 +16,8 @@ export function useWorkerSessions(studyId?: string) {
     setLoading(true)
     try {
       const url = `${BUTLER_API_BASE}/worker_sessions${studyId ? `?study_id=${studyId}` : ''}`
-      const authHeader = getAuthHeader()
       const res = await fetch(url, {
-        headers: authHeader ? { Authorization: authHeader } : undefined,
+        headers: getAuthHeaders(),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json()

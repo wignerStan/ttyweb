@@ -4,7 +4,10 @@ import { vi } from 'vitest'
 import { renderWithProviders } from '../../test-utils'
 import { SnippetsTab } from './SnippetsTab'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const noop = () => {}
 

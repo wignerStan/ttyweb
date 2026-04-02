@@ -5,7 +5,10 @@ import { renderWithProviders } from '../../test-utils'
 import type { Profile } from '../../types'
 import { ProfileSelector } from './ProfileSelector'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const profiles: Profile[] = [
   { id: 1, profile_key: 'default', name: 'Default', sort_order: 0 },
@@ -24,7 +27,6 @@ function mockFetchJSON(data: unknown) {
 describe('ProfileSelector', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', mockFetchJSON({ profiles }))
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
   })
   afterEach(() => {
     vi.restoreAllMocks()
@@ -155,6 +157,10 @@ describe('ProfileSelector', () => {
     await userEvent.click(header)
     await waitFor(() => expect(screen.getByText('Delete')).toBeInTheDocument())
     await userEvent.click(screen.getByText('Delete'))
+    // ConfirmDialog should appear — click Delete to confirm
+    await waitFor(() => expect(screen.getByText('Delete Profile')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await userEvent.click(dialog.querySelector('.btn-error')!)
     await waitFor(() => expect(onChange).toHaveBeenCalled())
   })
 
@@ -172,13 +178,16 @@ describe('ProfileSelector', () => {
   })
 
   it('does not delete when confirm is cancelled', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     const onChange = vi.fn()
     renderWithProviders(<ProfileSelector currentProfile={devProfile} onProfileChange={onChange} />)
     await waitFor(() => expect(screen.getByText('Dev')).toBeInTheDocument())
     const header = screen.getByTestId('profile-current')
     await userEvent.click(header)
     await userEvent.click(screen.getByText('Delete'))
+    // ConfirmDialog should appear — click Cancel to dismiss
+    await waitFor(() => expect(screen.getByText('Delete Profile')).toBeInTheDocument())
+    const dialog = screen.getByRole('dialog')
+    await userEvent.click(dialog.querySelector('.btn:not(.btn-error)')!)
     expect(onChange).not.toHaveBeenCalled()
   })
 

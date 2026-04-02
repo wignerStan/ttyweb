@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AlertTriangle, Calendar } from 'lucide-react'
-import type { CSSProperties } from 'react'
+import { type CSSProperties, memo } from 'react'
 import { getTagColorClass } from './tagColors'
 import type { KanbanTask } from './types'
 
@@ -36,7 +36,7 @@ function isOverdue(dateStr: string): boolean {
   return due < today
 }
 
-function TaskCard({ task, onSelect }: TaskCardProps) {
+function TaskCardInner({ task, onSelect }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -58,8 +58,7 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
 
   return (
     <>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: dnd-kit requires div wrapper */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: dnd-kit requires div wrapper */}
+      {/* biome-ignore lint/a11y/useSemanticElements: dnd-kit requires div wrapper */}
       <div
         ref={setNodeRef}
         style={style}
@@ -67,7 +66,15 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
           isDragging ? 'task-card--dragging rotate-2 opacity-70 shadow-lg' : ''
         }`}
         onClick={() => onSelect(task)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect(task)
+          }
+        }}
         {...attributes}
+        role="button"
+        tabIndex={0}
       >
         <div
           className="mb-1.5 flex items-start justify-between gap-2"
@@ -119,4 +126,4 @@ function TaskCard({ task, onSelect }: TaskCardProps) {
 }
 
 export type { TaskCardProps }
-export { TaskCard }
+export const TaskCard = memo(TaskCardInner)

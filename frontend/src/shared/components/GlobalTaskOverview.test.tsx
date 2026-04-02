@@ -5,7 +5,10 @@ import { mockFetchHttpError } from '../../test-helpers'
 import { renderWithProviders } from '../../test-utils'
 import { GlobalTaskOverview } from './GlobalTaskOverview'
 
-vi.mock('../../utils/auth', () => ({ getAuthHeader: () => 'Bearer test-token' }))
+vi.mock('../../utils/auth', () => ({
+  getAuthHeader: () => 'Bearer test-token',
+  getAuthHeaders: () => ({ Authorization: 'Bearer test-token' }),
+}))
 
 const tasks = [
   {
