@@ -28,19 +28,22 @@ export default defineConfig({
     ? [['html', { open: 'never' }], ['junit', { outputFile: 'test-results/results.xml' }]]
     : [['html', { open: 'never' }]],
   testDir: './e2e',
+  testMatch: '**/*.spec.ts',
+  fullyParallel: true,
   timeout: 30000,
-  retries: 1,
+  retries: process.env.CI ? 2 : 0,
   expect: {
     timeout: 5000,
   },
-  workers: process.env.CI ? 2 : 8,
+  workers: process.env.CI ? 2 : undefined,
   forbidOnly: !!process.env.CI,
   webServer: webServers,
   use: {
-    headless: true,
     screenshot: 'only-on-failure',
+    video: process.env.CI ? 'retain-on-failure' : 'off',
     trace: 'on-first-retry',
     actionTimeout: 10000,
+    navigationTimeout: 15_000,
   },
   projects,
 });

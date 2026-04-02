@@ -129,7 +129,7 @@ export function mobileViewport() {
 export async function openFirstSession(page: Page): Promise<void> {
   const menuBtn = page.locator('.mobile-menu-btn').first();
   await expect(menuBtn).toBeVisible({ timeout: 10000 });
-  await menuBtn.dispatchEvent('click');
+  await menuBtn.click();
 
   await expect
     .poll(
@@ -138,7 +138,7 @@ export async function openFirstSession(page: Page): Promise<void> {
     )
     .toBeGreaterThan(0);
 
-  await page.locator('.session-row').first().dispatchEvent('click');
+  await page.locator('.session-row').first().click();
 
   await expect
     .poll(
@@ -147,7 +147,7 @@ export async function openFirstSession(page: Page): Promise<void> {
     )
     .toBeGreaterThan(0);
 
-  await page.locator('.pane-node').first().dispatchEvent('click');
+  await page.locator('.pane-node').first().click();
 }
 
 // ─── Tree API helpers ─────────────────────────────────────────────────────

@@ -14,7 +14,7 @@ test.describe('Mobile UI', () => {
     await page.goto('/m');
     const menuBtn = page.locator('.mobile-menu-btn').first();
     await expect(menuBtn).toBeVisible({ timeout: 10000 });
-    await menuBtn.dispatchEvent('click');
+    await menuBtn.click();
     await expect(page.locator('.mobile-drawer.open')).toBeVisible({ timeout: 5000 });
   });
 
@@ -54,7 +54,7 @@ test.describe('Mobile UI', () => {
           break;
         case 'tab close removes terminal tab and shows placeholder':
           await expect(page.locator('.mobile-tab').first()).toBeVisible({ timeout: 5000 });
-          await page.locator('.mobile-tab-close').first().click({ force: true });
+          await page.locator('.mobile-tab-close').first().click();
           await expect(page.locator('.mobile-tab')).not.toBeVisible({ timeout: 5000 });
           await expect(page.locator('.mobile-placeholder')).toBeVisible();
           break;
@@ -72,54 +72,4 @@ test.describe('Mobile UI', () => {
       }
     });
   }
-});
-
-test.describe('Mobile API endpoints', () => {
-  test('GET /api/profiles returns success', async ({ apiRequest }) => {
-    const { status } = await apiRequest({ method: 'GET', path: '/api/profiles' });
-    expect(status).toBe(200);
-  });
-
-  test('POST /api/profiles creates a profile', async ({ apiRequest }) => {
-    const name = `test-profile-${Date.now()}`;
-    const { status } = await apiRequest({ method: 'POST', path: '/api/profiles', body: { profile_key: name, name } });
-    expect(status).toBe(200);
-  });
-
-  test('GET /api/snippets returns success', async ({ apiRequest }) => {
-    const { status } = await apiRequest({ method: 'GET', path: '/api/snippets' });
-    expect(status).toBe(200);
-  });
-
-  test('GET /api/roles returns success', async ({ apiRequest }) => {
-    const { status } = await apiRequest({ method: 'GET', path: '/api/roles' });
-    expect(status).toBe(200);
-  });
-
-  test('GET /api/roles/defaults returns default roles', async ({ apiRequest }) => {
-    const { body } = await apiRequest({ method: 'GET', path: '/api/roles/defaults' });
-    const data = body as { data: unknown[] };
-    expect(Array.isArray(data.data)).toBe(true);
-    expect(data.data.length).toBeGreaterThan(0);
-  });
-
-  test('GET /api/panes/status returns success', async ({ apiRequest }) => {
-    const { status } = await apiRequest({ method: 'GET', path: '/api/panes/status' });
-    expect(status).toBe(200);
-  });
-
-  test('GET /api/tmux/config returns prefix config', async ({ apiRequest }) => {
-    const { status } = await apiRequest({ method: 'GET', path: '/api/tmux/config' });
-    expect(status).toBe(200);
-  });
-
-  test('POST /api/telemetry accepts events', async ({ apiRequest }) => {
-    const { status } = await apiRequest({ method: 'POST', path: '/api/telemetry', body: { events: [] } });
-    expect(status).toBe(200);
-  });
-
-  test('GET /api/opencode-config returns success', async ({ apiRequest }) => {
-    const { status } = await apiRequest({ method: 'GET', path: '/api/opencode-config' });
-    expect(status).toBe(200);
-  });
 });

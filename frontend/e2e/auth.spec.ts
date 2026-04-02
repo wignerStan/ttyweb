@@ -1,8 +1,6 @@
 import { test, expect } from './fixtures';
 import { hasSessionManagement } from './helpers';
 
-test.describe.configure({ mode: 'serial' });
-
 test.describe('Basic auth', () => {
   test('API returns expected response structure', async ({ apiRequest }) => {
     const { status, body } = await apiRequest({
