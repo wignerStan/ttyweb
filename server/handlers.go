@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/gorilla/websocket"
@@ -249,9 +250,10 @@ func classifyWSCloseError(err error, backendName string) string {
 	}
 }
 
-func (*Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = w.Write(indexHTML)
+	w.Header().Set("Content-Length", strconv.Itoa(len(s.indexHTML)))
+	_, _ = w.Write(s.indexHTML)
 }
 
 // titleVariables merges maps in a specified order.

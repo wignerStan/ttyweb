@@ -44,10 +44,8 @@ type Server struct {
 	eventBus       *TaskEventBus
 	sseHandler     *SSEHandler
 	statsService   *service.StatsService
+	indexHTML      []byte
 }
-
-// indexHTML holds the SPA index.html content, loaded at init time.
-var indexHTML []byte
 
 // New creates a new instance of Server.
 // Server will use the New() of the factory provided to handle each request.
@@ -63,7 +61,6 @@ func New(factory Factory, options *Options) (*Server, error) {
 			return nil, errors.Wrapf(err, "failed to read custom index file at `%s`", path)
 		}
 	}
-	indexHTML = indexData
 
 	titleTemplate, err := noesctmpl.New("title").Parse(options.TitleFormat)
 	if err != nil {
@@ -105,6 +102,7 @@ func New(factory Factory, options *Options) (*Server, error) {
 		stateMachine:   ai.NewStateMachine(),
 		srvErrCh:       make(chan error, 1),
 		eventBus:       NewTaskEventBus(),
+		indexHTML:      indexData,
 	}
 	server.sseHandler = NewSSEHandler(server.eventBus)
 

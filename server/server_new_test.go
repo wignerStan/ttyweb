@@ -213,8 +213,8 @@ func TestNew_CustomIndexFile(t *testing.T) {
 	}
 
 	// Verify the custom index is loaded.
-	if string(indexHTML) != "<html><body>Custom Index</body></html>" {
-		t.Fatalf("expected custom index HTML, got %q", string(indexHTML))
+	if string(srv.indexHTML) != "<html><body>Custom Index</body></html>" {
+		t.Fatalf("expected custom index HTML, got %q", string(srv.indexHTML))
 	}
 }
 
