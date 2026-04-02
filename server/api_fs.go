@@ -113,7 +113,7 @@ func (*Server) handleFSList(w http.ResponseWriter, r *http.Request) {
 			Name:    e.Name(),
 			IsDir:   e.IsDir(),
 			Size:    size,
-			ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
+			ModTime: info.ModTime().UTC().Format("2006-01-02 15:04:05"),
 		})
 	}
 
