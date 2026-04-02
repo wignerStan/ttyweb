@@ -242,16 +242,18 @@ func TestGenerateHandleWS_OnceOption(t *testing.T) {
 	defer func() { _ = conn1.Close() }()
 	defer func() { _ = resp1.Body.Close() }()
 
-	// Wait for the first handler to process the connection and set the once flag.
-	time.Sleep(100 * time.Millisecond)
-
-	// Second connection should be rejected with 503.
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/ws", nil)
-	handler(rec, req)
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Errorf("expected 503 for second connection, got %d", rec.Code)
+	// Wait for the once handler to set the atomic flag by polling.
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/ws", nil)
+		handler(rec, req)
+		if rec.Code == http.StatusServiceUnavailable {
+			return // Success
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
+	t.Fatal("second connection was never rejected within timeout")
 }
 
 func TestProcessWSConn_InvalidJSON(t *testing.T) {
