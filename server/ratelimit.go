@@ -22,6 +22,7 @@ type visitorLimiter struct {
 	rate     rate.Limit
 	burst    int
 	done     chan struct{}
+	stopOnce sync.Once
 }
 
 func newVisitorLimiter(r rate.Limit, burst int) *visitorLimiter {
@@ -58,7 +59,7 @@ func (vl *visitorLimiter) cleanupLoop() {
 
 // stop signals the cleanup goroutine to exit. Safe to call multiple times.
 func (vl *visitorLimiter) stop() {
-	close(vl.done)
+	vl.stopOnce.Do(func() { close(vl.done) })
 }
 
 func (vl *visitorLimiter) getLimiter(ip string) *rate.Limiter {

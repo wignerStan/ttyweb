@@ -14,13 +14,15 @@ import (
 // defaultTimeout is the maximum time to wait for an LLM API response.
 const defaultTimeout = 60 * time.Second
 
-// streamingTimeout is the maximum time to wait for a streaming LLM API response.
-const streamingTimeout = 120 * time.Second
-
 // streamingClient is a dedicated HTTP client for LLM streaming requests.
-// Avoids http.DefaultClient which has no timeout.
+// Timeout is left at 0 (no wall-clock limit) because SSE streams are
+// long-lived; context cancellation controls lifetime instead.
+// ResponseHeaderTimeout bounds how long we wait for the initial response
+// headers before the streaming body begins.
 var streamingClient = &http.Client{
-	Timeout: streamingTimeout,
+	Transport: &http.Transport{
+		ResponseHeaderTimeout: 30 * time.Second,
+	},
 }
 
 // chatRequest represents the JSON body sent to an OpenAI-compatible API.

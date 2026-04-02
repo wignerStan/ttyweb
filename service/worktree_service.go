@@ -204,30 +204,36 @@ func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktre
 		return err
 	}
 
+	// Phase 1: read and validate under s.mu, then release before repoLock.
 	s.mu.Lock()
 	record, err := s.getWorktreeLocked(worktreeID, projectID)
 	if err != nil {
 		s.mu.Unlock()
 		return err
 	}
-
 	if record.IsMain {
 		s.mu.Unlock()
 		return errors.New("cannot remove main worktree")
 	}
+	path := record.Path
+	s.mu.Unlock()
 
+	// Phase 2: acquire repo-level lock (no s.mu held — avoids ABBA deadlock
+	// with CreateWorktree which takes repoLock first, then s.mu).
 	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
-		s.mu.Unlock()
 		return context.Canceled
 	}
 	defer unlock()
 
-	if err := worktree.RemoveWorktree(ctx, project.Path, record.Path, force); err != nil {
-		s.mu.Unlock()
+	if err := worktree.RemoveWorktree(ctx, project.Path, path, force); err != nil {
 		return fmt.Errorf("RemoveWorktree: git worktree remove: %w", err)
 	}
 
+	// Phase 3: remove from in-memory map. The delete is idempotent so the
+	// TOCTOU window (record deleted between first and second lock acquisition)
+	// is harmless.
+	s.mu.Lock()
 	delete(s.worktrees, worktreeID)
 	s.mu.Unlock()
 	return nil

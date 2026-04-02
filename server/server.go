@@ -44,6 +44,7 @@ type Server struct {
 	eventBus       *TaskEventBus
 	sseHandler     *SSEHandler
 	statsService   *service.StatsService
+	rateLimiter    *visitorLimiter
 	indexHTML      []byte
 }
 
@@ -173,6 +174,11 @@ func (server *Server) Run(ctx context.Context, options ...RunOption) error {
 	}
 	counter.wait()
 
+	// Stop rate limiter cleanup goroutine.
+	if server.rateLimiter != nil {
+		server.rateLimiter.stop()
+	}
+
 	return err
 }
 
@@ -273,8 +279,8 @@ func (server *Server) setupHandlers(ctx context.Context, cancel context.CancelFu
 	}
 
 	// Security middleware (wraps outer, executes before basic auth: csrf → cors → rateLimit → auth → handler)
-	rateLimiter := newVisitorLimiter(10, 20) // 10 req/s per IP, burst 20
-	siteHandler = rateLimitMiddleware(rateLimiter)(siteHandler)
+	server.rateLimiter = newVisitorLimiter(10, 20) // 10 req/s per IP, burst 20
+	siteHandler = rateLimitMiddleware(server.rateLimiter)(siteHandler)
 	siteHandler = corsMiddleware(&CORSConfig{AllowedOrigins: server.options.CORSAllowedOrigins})(siteHandler)
 	siteHandler = csrfMiddleware(siteHandler)
 
