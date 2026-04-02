@@ -4,9 +4,9 @@
   themes:
     dark --default,
     light,
-    nord,
-    cyberpunk,
-    sepia;
+    obsidian,
+    rosepine,
+    silk;
 }
 
 /* ── Tokyo Night Dark Theme (DaisyUI) ── */
@@ -74,106 +74,108 @@
 }
 
 
-/* ── Nord Theme ── */
+
+/* ── Obsidian (Refined Dark Minimalist) ── */
 @plugin "daisyui/theme" {
-  name: "nord";
-  --color-base-100: #2e3440;
-  --color-base-200: #242933;
-  --color-base-300: #3b4252;
-  --color-base-content: #d8dee9;
-  --color-primary: #88c0d0;
-  --color-primary-content: #2e3440;
-  --color-secondary: #81a1c1;
-  --color-secondary-content: #2e3440;
-  --color-accent: #5e81ac;
-  --color-accent-content: #eceff4;
-  --color-neutral: #4c566a;
-  --color-neutral-content: #d8dee9;
-  --color-info: #8fbcbb;
-  --color-info-content: #2e3440;
-  --color-success: #a3be8c;
-  --color-success-content: #2e3440;
-  --color-warning: #ebcb8b;
-  --color-warning-content: #2e3440;
-  --color-error: #bf616a;
-  --color-error-content: #eceff4;
-  --radius-selector: 0.125rem;
-  --radius-field: 0.125rem;
-  --radius-box: 0.25rem;
+  name: "obsidian";
+  --color-base-100: #0a0a0a;  /* Deepest zinc */
+  --color-base-200: #121212;  /* Slightly elevated */
+  --color-base-300: #1a1a1a;  /* Interactive surfaces */
+  --color-base-content: #ededed; /* Soft white for readability */
+  --color-primary: #ffffff; /* Stark contrast */
+  --color-primary-content: #000000;
+  --color-secondary: #3b82f6; /* Subtle blue accent */
+  --color-secondary-content: #ffffff;
+  --color-accent: #a855f7;
+  --color-accent-content: #ffffff;
+  --color-neutral: #262626;
+  --color-neutral-content: #a3a3a3;
+  --color-info: #0ea5e9;
+  --color-info-content: #000000;
+  --color-success: #10b981; /* Calibrated green */
+  --color-success-content: #000000;
+  --color-warning: #f59e0b;
+  --color-warning-content: #000000;
+  --color-error: #ef4444; /* Calibrated red */
+  --color-error-content: #ffffff;
+  --radius-selector: 0.375rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.125rem;
+  --size-field: 0.125rem;
+  --border: 1px;
+  --depth: 0;
+}
+
+/* ── Rose Pine (Soft Pastel Dark) ── */
+@plugin "daisyui/theme" {
+  name: "rosepine";
+  --color-base-100: #191724; /* Surface */
+  --color-base-200: #1f1d2e; /* Overlay */
+  --color-base-300: #26233a; /* Muted */
+  --color-base-content: #e0def4; /* Text */
+  --color-primary: #c4a7e7; /* Iris */
+  --color-primary-content: #191724;
+  --color-secondary: #ebbcba; /* Rose */
+  --color-secondary-content: #191724;
+  --color-accent: #f6c177; /* Gold */
+  --color-accent-content: #191724;
+  --color-neutral: #524f67; /* Highlight Med */
+  --color-neutral-content: #e0def4;
+  --color-info: #9ccfd8; /* Foam */
+  --color-info-content: #191724;
+  --color-success: #31748f; /* Pine */
+  --color-success-content: #e0def4;
+  --color-warning: #f6c177; /* Gold */
+  --color-warning-content: #191724;
+  --color-error: #eb6f92; /* Love */
+  --color-error-content: #e0def4;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+}
+
+/* ── Silk (Elegant Minimalist Light) ── */
+@plugin "daisyui/theme" {
+  name: "silk";
+  --color-base-100: #fcfcfc; /* Off-white */
+  --color-base-200: #f3f4f6; /* Soft gray */
+  --color-base-300: #e5e7eb; /* Borders */
+  --color-base-content: #111827; /* Near black */
+  --color-primary: #0f172a; /* Slate 900 */
+  --color-primary-content: #ffffff;
+  --color-secondary: #64748b; /* Slate 500 */
+  --color-secondary-content: #ffffff;
+  --color-accent: #6366f1; /* Indigo */
+  --color-accent-content: #ffffff;
+  --color-neutral: #9ca3af;
+  --color-neutral-content: #111827;
+  --color-info: #0284c7;
+  --color-info-content: #ffffff;
+  --color-success: #059669;
+  --color-success-content: #ffffff;
+  --color-warning: #d97706;
+  --color-warning-content: #ffffff;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
   --depth: 0;
 }
 
-/* ── Cyberpunk Theme ── */
-@plugin "daisyui/theme" {
-  name: "cyberpunk";
-  --color-base-100: #0d0914;
-  --color-base-200: #050408;
-  --color-base-300: #1a1228;
-  --color-base-content: #e2d1f9;
-  --color-primary: #ff007f;
-  --color-primary-content: #0d0914;
-  --color-secondary: #00f0ff;
-  --color-secondary-content: #0d0914;
-  --color-accent: #fcee0a;
-  --color-accent-content: #0d0914;
-  --color-neutral: #281744;
-  --color-neutral-content: #e2d1f9;
-  --color-info: #00e5ff;
-  --color-info-content: #0d0914;
-  --color-success: #39ff14;
-  --color-success-content: #0d0914;
-  --color-warning: #ffb000;
-  --color-warning-content: #0d0914;
-  --color-error: #ff2a2a;
-  --color-error-content: #ffffff;
-  --radius-selector: 0rem;
-  --radius-field: 0rem;
-  --radius-box: 0rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-  --border: 1px;
-  --depth: 1;
-}
-
-/* ── Sepia Theme ── */
-@plugin "daisyui/theme" {
-  name: "sepia";
-  --color-base-100: #f4ecd8;
-  --color-base-200: #e8dfc7;
-  --color-base-300: #d6cab0;
-  --color-base-content: #433422;
-  --color-primary: #d2691e;
-  --color-primary-content: #ffffff;
-  --color-secondary: #8b4513;
-  --color-secondary-content: #ffffff;
-  --color-accent: #556b2f;
-  --color-accent-content: #ffffff;
-  --color-neutral: #c4b59b;
-  --color-neutral-content: #433422;
-  --color-info: #5f9ea0;
-  --color-info-content: #ffffff;
-  --color-success: #6b8e23;
-  --color-success-content: #ffffff;
-  --color-warning: #b8860b;
-  --color-warning-content: #ffffff;
-  --color-error: #cd5c5c;
-  --color-error-content: #ffffff;
-  --radius-selector: 0.375rem;
-  --radius-field: 0.375rem;
-  --radius-box: 0.5rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-  --border: 1px;
-  --depth: 1;
-}
-
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-@custom-variant nord (&:where([data-theme="nord"], [data-theme="nord"] *));
-@custom-variant cyberpunk (&:where([data-theme="cyberpunk"], [data-theme="cyberpunk"] *));
-@custom-variant sepia (&:where([data-theme="sepia"], [data-theme="sepia"] *));
+@custom-variant obsidian (&:where([data-theme="obsidian"], [data-theme="obsidian"] *));
+@custom-variant rosepine (&:where([data-theme="rosepine"], [data-theme="rosepine"] *));
+@custom-variant silk (&:where([data-theme="silk"], [data-theme="silk"] *));
+
 
 
 @theme {
