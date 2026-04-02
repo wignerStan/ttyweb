@@ -13,12 +13,12 @@ import (
 )
 
 // speechUpgrader is the WebSocket upgrader for the speech proxy endpoint.
+// Uses defaultOriginChecker to validate Origin header and prevent cross-site
+// WebSocket hijacking (S-CRIT-1).
 var speechUpgrader = &websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+	CheckOrigin:     defaultOriginChecker,
 }
 
 // clientMessage is a message received from the browser client.
