@@ -101,8 +101,10 @@ test.describe('i18n', () => {
 
     // Wait for language change to propagate via polling
     await expect
-      .poll(async () =>
-        (window as Record<string, unknown>).i18next?.language,
+      .poll(
+        async () => page.evaluate(() =>
+          (window as Record<string, unknown>).i18next?.language,
+        ),
         { timeout: 3000 },
       )
       .toBe('zh');

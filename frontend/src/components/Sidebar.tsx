@@ -109,7 +109,10 @@ export function Sidebar({ onSelect }: SidebarProps) {
 
   const confirmKill = async () => {
     if (!killTarget) return
-    await fetch(`/api/sessions/${encodeURIComponent(killTarget)}`, { method: 'DELETE', headers: getAuthHeaders() })
+    await fetch(`/api/sessions/${encodeURIComponent(killTarget)}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    })
     if (expanded === killTarget) setExpanded(null)
     fetchSessions()
     setKillTarget(null)

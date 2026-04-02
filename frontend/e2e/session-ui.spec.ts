@@ -66,7 +66,9 @@ test.describe('Session management via UI', () => {
     await page.goto('/');
     await waitForSessionInSidebar(page, name);
 
-    const killBtn = page.getByTitle('Kill session').first();
+    // Scoped to the session row containing our session name
+    const sessionRow = page.locator('[data-testid="session-name"], .session-name', { hasText: name }).locator('..');
+    const killBtn = sessionRow.getByTitle('Kill session');
     await killBtn.click();
 
     // Wait for sidebar to refresh and verify session is gone via API

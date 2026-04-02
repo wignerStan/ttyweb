@@ -44,11 +44,8 @@ test.describe('SPA frontend rendering', () => {
 
     await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 5000 });
 
-    const toggleBtn = page.getByTestId('sidebar-toggle').first();
-    // Fallback: if data-testid not present, locate via accessible name or aria-label
-    const sidebarToggle = (await toggleBtn.count()) > 0
-      ? toggleBtn
-      : page.locator('button').filter({ hasText: /[\u25C0\u25B6]/ }).first();
+    // Deterministic locator — single strategy, no count() race
+    const sidebarToggle = page.locator('button').filter({ hasText: /[\u25C0\u25B6]/ }).first();
     await expect(sidebarToggle).toBeVisible();
 
     // Click to hide sidebar
@@ -68,11 +65,8 @@ test.describe('SPA frontend rendering', () => {
     const tabLabel = page.getByText('ttyweb').first();
     await expect(tabLabel).toBeVisible({ timeout: 5000 });
 
-    // Find close button — prefer data-testid, fallback to sibling
-    const closeBtnByTestId = page.getByTestId('tab-close-btn').first();
-    const closeBtn = (await closeBtnByTestId.count()) > 0
-      ? closeBtnByTestId
-      : tabLabel.locator('xpath=following-sibling::button').first();
+    // Deterministic locator — use sibling button directly, no count() race
+    const closeBtn = tabLabel.locator('xpath=following-sibling::button').first();
     await closeBtn.click();
 
     // The tab should be removed
