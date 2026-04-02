@@ -96,3 +96,11 @@ func TestHandleSpeechWS_Configured_WebSocketUpgrade(t *testing.T) {
 	// Close to trigger read error and exit.
 	_ = conn.Close()
 }
+
+func TestSpeechSession_SendError_NilClientConn(t *testing.T) {
+	t.Parallel()
+	sess := &speechSession{
+		done: make(chan struct{}),
+	}
+	sess.sendError("test error")
+}

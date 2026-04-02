@@ -72,7 +72,13 @@ func (s *speechSession) closeBoth() {
 
 func (s *speechSession) sendError(msg string) {
 	log.Printf("[Speech] Error to client: %s", msg)
-	_ = s.clientConn.WriteJSON(serverMessage{Type: "error", Message: msg})
+	s.mu.Lock()
+	conn := s.clientConn
+	s.mu.Unlock()
+	if conn == nil {
+		return
+	}
+	_ = conn.WriteJSON(serverMessage{Type: "error", Message: msg})
 }
 
 // handleSpeechWS handles WebSocket connections to /ws/speech.
