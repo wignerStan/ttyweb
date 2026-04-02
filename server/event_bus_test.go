@@ -428,3 +428,57 @@ func TestTaskEventBus_Publish_NonBlocking(t *testing.T) {
 		t.Fatal("Publish blocked when subscriber buffer was full")
 	}
 }
+
+// --- Concurrent Close/Publish safety tests ---
+
+// TestTaskEventBusPublishAfterClose verifies that calling Publish after Close
+// does not panic (send on closed channel).
+func TestTaskEventBusPublishAfterClose(t *testing.T) {
+	t.Parallel()
+	bus := NewTaskEventBus()
+	ch := bus.Subscribe("pane1")
+
+	// Close the bus, which closes the subscriber channel.
+	bus.Close()
+
+	// Drain the closed channel so goroutine doesn't leak.
+	<-ch
+
+	// Publish after close must not panic.
+	bus.Publish(BusEvent{Type: "test", PaneKey: "pane1"})
+}
+
+// TestTaskEventBusConcurrentPublishClose hammers Publish and Close from many
+// goroutines to surface the send-on-closed-channel race.
+func TestTaskEventBusConcurrentPublishClose(t *testing.T) {
+	t.Parallel()
+	const goroutines = 50
+	const iterations = 200
+
+	for trial := 0; trial < 10; trial++ {
+		bus := NewTaskEventBus()
+		_ = bus.Subscribe("pane1")
+		_ = bus.SubscribeGlobal()
+
+		var wg sync.WaitGroup
+		wg.Add(goroutines)
+
+		for i := 0; i < goroutines; i++ {
+			go func(id int) {
+				defer wg.Done()
+				for j := 0; j < iterations; j++ {
+					switch id % 3 {
+					case 0:
+						bus.Publish(BusEvent{Type: "tick", PaneKey: "pane1"})
+					case 1:
+						bus.Publish(BusEvent{Type: "tock"})
+					default:
+						bus.Close()
+					}
+				}
+			}(i)
+		}
+
+		wg.Wait()
+	}
+}

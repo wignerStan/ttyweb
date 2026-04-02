@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -13,12 +14,12 @@ import (
 )
 
 // speechUpgrader is the WebSocket upgrader for the speech proxy endpoint.
+// Uses defaultOriginChecker to validate Origin header and prevent cross-site
+// WebSocket hijacking (S-CRIT-1).
 var speechUpgrader = &websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+	CheckOrigin:     defaultOriginChecker,
 }
 
 // clientMessage is a message received from the browser client.
@@ -43,6 +44,7 @@ type serverMessage struct {
 // coordinating the client and Xunfei WebSocket connections.
 type speechSession struct {
 	clientConn *websocket.Conn
+	writeMu    sync.Mutex // protects clientConn for concurrent WriteJSON calls
 	xunfeiConn *websocket.Conn
 	xunfeiCfg  ai.XunfeiConfig
 	params     ai.SpeechParams
@@ -64,15 +66,39 @@ func (s *speechSession) closeBoth() {
 		_ = s.xunfeiConn.Close()
 		s.xunfeiConn = nil
 	}
+	s.writeMu.Lock()
 	if s.clientConn != nil {
 		_ = s.clientConn.Close()
 		s.clientConn = nil
 	}
+	s.writeMu.Unlock()
+}
+
+// writeToClient serializes all WebSocket writes on clientConn, preventing
+// concurrent access from the run loop and relayXunfeiToClient goroutine.
+func (s *speechSession) writeToClient(msg serverMessage) error {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+	if s.clientConn == nil {
+		return fmt.Errorf("client connection closed")
+	}
+	return s.clientConn.WriteJSON(msg)
+}
+
+// writeToXunfei sends a binary message on xunfeiConn under mu protection.
+// Prevents races with closeBoth() setting xunfeiConn to nil.
+func (s *speechSession) writeToXunfei(msgType int, data []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.xunfeiConn == nil {
+		return fmt.Errorf("xunfei connection closed")
+	}
+	return s.xunfeiConn.WriteMessage(msgType, data)
 }
 
 func (s *speechSession) sendError(msg string) {
 	log.Printf("[Speech] Error to client: %s", msg)
-	_ = s.clientConn.WriteJSON(serverMessage{Type: "error", Message: msg})
+	_ = s.writeToClient(serverMessage{Type: "error", Message: msg})
 }
 
 // handleSpeechWS handles WebSocket connections to /ws/speech.
@@ -144,9 +170,6 @@ func (s *speechSession) run() {
 
 // handleAudio processes an audio frame message. Returns false if the session should close.
 func (s *speechSession) handleAudio(audio string) bool {
-	if s.xunfeiConn == nil {
-		return true
-	}
 	s.seq++
 	frame, err := s.buildAudioFrame(audio)
 	if err != nil {
@@ -155,7 +178,7 @@ func (s *speechSession) handleAudio(audio string) bool {
 		s.closeBoth()
 		return false
 	}
-	if err := s.xunfeiConn.WriteMessage(websocket.TextMessage, frame); err != nil {
+	if err := s.writeToXunfei(websocket.TextMessage, frame); err != nil {
 		log.Printf("[Speech] Error sending to Xunfei: %v", err)
 		s.closeBoth()
 		return false
@@ -165,9 +188,6 @@ func (s *speechSession) handleAudio(audio string) bool {
 
 // handleStop processes a stop message, sending the final frame to Xunfei.
 func (s *speechSession) handleStop() {
-	if s.xunfeiConn == nil {
-		return
-	}
 	s.seq++
 	frame, err := ai.BuildLastFrame(s.seq)
 	if err != nil {
@@ -176,7 +196,7 @@ func (s *speechSession) handleStop() {
 		s.closeBoth()
 		return
 	}
-	if err := s.xunfeiConn.WriteMessage(websocket.TextMessage, frame); err != nil {
+	if err := s.writeToXunfei(websocket.TextMessage, frame); err != nil {
 		log.Printf("[Speech] Error sending last frame: %v", err)
 	}
 }
@@ -225,7 +245,7 @@ func (s *speechSession) handleStart() {
 
 	log.Printf("[Speech] Xunfei connected")
 
-	if err := s.clientConn.WriteJSON(serverMessage{Type: "ready"}); err != nil {
+	if err := s.writeToClient(serverMessage{Type: "ready"}); err != nil {
 		log.Printf("[Speech] Error sending ready: %v", err)
 		s.closeBoth()
 		return
@@ -269,7 +289,7 @@ func (s *speechSession) relayXunfeiToClient(xfConn *websocket.Conn) {
 			if result.RG[0] != 0 || result.RG[1] != 0 {
 				out.RG = []int{result.RG[0], result.RG[1]}
 			}
-			if err := s.clientConn.WriteJSON(out); err != nil {
+			if err := s.writeToClient(out); err != nil {
 				log.Printf("[Speech] Error sending result to client: %v", err)
 				return
 			}
@@ -277,7 +297,7 @@ func (s *speechSession) relayXunfeiToClient(xfConn *websocket.Conn) {
 
 		if result.IsComplete {
 			log.Printf("[Speech] Recognition complete")
-			if err := s.clientConn.WriteJSON(serverMessage{Type: "end"}); err != nil {
+			if err := s.writeToClient(serverMessage{Type: "end"}); err != nil {
 				log.Printf("[Speech] Error sending end: %v", err)
 			}
 			return
