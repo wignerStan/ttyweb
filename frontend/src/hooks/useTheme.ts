@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 
-type Theme = 'dark' | 'light'
+export type Theme = 'dark' | 'light' | 'obsidian' | 'rosepine' | 'silk'
+
+export const THEMES: { id: Theme; label: string }[] = [
+  { id: 'dark', label: 'Dark' },
+  { id: 'light', label: 'Light' },
+  { id: 'obsidian', label: 'Obsidian' },
+  { id: 'rosepine', label: 'Rose Pine' },
+  { id: 'silk', label: 'Silk' },
+]
 
 const STORAGE_KEY = 'ttyweb-theme'
 
 function readStoredTheme(): Theme {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'light' || stored === 'dark') {
-      return stored
+    if (stored && THEMES.some(t => t.id === stored)) {
+      return stored as Theme
     }
   } catch {
     // localStorage unavailable
@@ -20,8 +28,8 @@ function applyTheme(theme: Theme): void {
   document.documentElement.setAttribute('data-theme', theme)
 }
 
-export function useTheme(): { theme: Theme; toggleTheme: () => void } {
-  const [theme, setTheme] = useState<Theme>(readStoredTheme)
+export function useTheme(): { theme: Theme; setTheme: (t: Theme) => void; toggleTheme: () => void } {
+  const [theme, setThemeState] = useState<Theme>(readStoredTheme)
 
   useEffect(() => {
     applyTheme(theme)
@@ -32,9 +40,13 @@ export function useTheme(): { theme: Theme; toggleTheme: () => void } {
     }
   }, [theme])
 
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t)
   }, [])
 
-  return { theme, toggleTheme }
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'))
+  }, [])
+
+  return { theme, setTheme, toggleTheme }
 }
