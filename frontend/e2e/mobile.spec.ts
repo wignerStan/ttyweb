@@ -16,14 +16,7 @@ test.describe('Mobile UI', () => {
     await expect(menuBtn).toBeVisible({ timeout: 10000 });
     await menuBtn.click();
     // <aside> has no aria-label — use getByRole('complementary') without name filter
-    await expect(page.locator('.mobile-drawer.open')).toBeVisible({ timeout: 5000 });
-    await menuBtn.click();
-    // <aside> has no aria-label — use getByRole('complementary') without name filter
     await expect(page.getByRole('complementary')).toBeVisible({ timeout: 5000 });
-@chatgpt-codex-connector
-chatgpt-codex-connector bot
-
-  
   });
 
   for (const title of [
