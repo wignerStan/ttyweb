@@ -167,7 +167,8 @@ test.describe('Mobile layout', () => {
     const menuBtn = page.getByRole('banner').getByRole('button').first();
     await expect(menuBtn).toBeVisible({ timeout: 10000 });
     await menuBtn.click();
-    await expect(page.getByRole('complementary', { name: /drawer|navigation/i })).toBeVisible({ timeout: 5000 });
+    // <aside> has no aria-label — use getByRole('complementary') without name filter
+    await expect(page.getByRole('complementary')).toBeVisible({ timeout: 5000 });
   });
 });
 

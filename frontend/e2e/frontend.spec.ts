@@ -65,8 +65,8 @@ test.describe('SPA frontend rendering', () => {
     const tabLabel = page.getByText('ttyweb').first();
     await expect(tabLabel).toBeVisible({ timeout: 5000 });
 
-    // Deterministic locator — use sibling button directly, no count() race
-    const closeBtn = tabLabel.getByRole('button');
+    // Navigate to parent tab button, then find close button (sibling of span)
+    const closeBtn = tabLabel.locator('..').getByRole('button', { name: 'Close tab' });
     await closeBtn.click();
 
     // The tab should be removed

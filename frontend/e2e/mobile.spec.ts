@@ -15,7 +15,8 @@ test.describe('Mobile UI', () => {
     const menuBtn = page.getByRole('banner').getByRole('button').first();
     await expect(menuBtn).toBeVisible({ timeout: 10000 });
     await menuBtn.click();
-    await expect(page.getByRole('complementary', { name: /drawer|navigation/i })).toBeVisible({ timeout: 5000 });
+    // <aside> has no aria-label — use getByRole('complementary') without name filter
+    await expect(page.getByRole('complementary')).toBeVisible({ timeout: 5000 });
   });
 
   for (const title of [
@@ -37,24 +38,27 @@ test.describe('Mobile UI', () => {
 
       switch (title) {
         case 'mobile terminal renders when session is selected':
-          await expect(page.getByRole('tab').first()).toBeVisible({ timeout: 5000 });
+          // mobile-tab is a <button>, not ARIA tab role — use getByTestId or locator
+          await expect(page.locator('.mobile-tab').first()).toBeVisible({ timeout: 5000 });
           await expect(page.locator('.mobile-terminal-container .xterm').first()).toBeVisible({ timeout: 10000 });
           break;
         case 'toolbox quick keys are visible when terminal is active':
-          await expect(page.getByRole('tab').first()).toBeVisible({ timeout: 5000 });
+          await expect(page.locator('.mobile-tab').first()).toBeVisible({ timeout: 5000 });
           await expect(page.getByRole('button', { name: 'esc' })).toBeVisible({ timeout: 10000 });
           await expect(page.getByRole('button', { name: 'tab' })).toBeVisible();
           await expect(page.getByRole('button', { name: '^C' })).toBeVisible();
           break;
         case 'toolbox tab bar shows content tabs':
-          await expect(page.getByRole('tab').first()).toBeVisible({ timeout: 5000 });
-          await expect(page.getByRole('tablist')).toBeVisible({ timeout: 10000 });
+          await expect(page.locator('.mobile-tab').first()).toBeVisible({ timeout: 5000 });
+          // toolbox-tabbar is a <div>, not ARIA tablist — use locator
+          await expect(page.locator('.toolbox-tabbar')).toBeVisible({ timeout: 10000 });
           break;
         case 'tab close removes terminal tab and shows placeholder':
-          await expect(page.getByRole('tab').first()).toBeVisible({ timeout: 5000 });
-          await page.getByRole('button', { name: 'Close' }).first().click();
-          await expect(page.getByRole('tab')).not.toBeVisible({ timeout: 5000 });
-          await expect(page.getByText(/select a terminal/i)).toBeVisible();
+          await expect(page.locator('.mobile-tab').first()).toBeVisible({ timeout: 5000 });
+          // mobile-tab-close has no aria-label — use locator
+          await page.locator('.mobile-tab-close').first().click();
+          await expect(page.locator('.mobile-tab')).not.toBeVisible({ timeout: 5000 });
+          await expect(page.locator('.mobile-placeholder')).toBeVisible();
           break;
         case 'mobile WebSocket connects and terminal receives output':
           await expect(page.locator('.mobile-terminal-container .xterm').first()).toBeVisible({ timeout: 10000 });
