@@ -83,4 +83,128 @@ describe('useRunPipeline', () => {
     await waitFor(() => expect(result.current.runs).toHaveLength(1))
     expect(result.current.activeRun).toBeNull()
   })
+
+  // --- mapState branches via dashboard fetch ---
+
+  it('maps "succeeded" state to return/success', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { runs: [{ ...dashboardRuns[0]!, state: 'succeeded' }] },
+          }),
+      }),
+    )
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => expect(result.current.runs).toHaveLength(1))
+    expect(result.current.runs[0]!.stage).toBe('return')
+    expect(result.current.runs[0]!.status).toBe('success')
+  })
+
+  it('maps "failed" state to return/failed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { runs: [{ ...dashboardRuns[0]!, state: 'failed' }] },
+          }),
+      }),
+    )
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => expect(result.current.runs).toHaveLength(1))
+    expect(result.current.runs[0]!.stage).toBe('return')
+    expect(result.current.runs[0]!.status).toBe('failed')
+  })
+
+  it('maps "cancelled" state to return/failed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { runs: [{ ...dashboardRuns[0]!, state: 'cancelled' }] },
+          }),
+      }),
+    )
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => expect(result.current.runs).toHaveLength(1))
+    expect(result.current.runs[0]!.stage).toBe('return')
+    expect(result.current.runs[0]!.status).toBe('failed')
+  })
+
+  it('maps unknown state to outflow/pending', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { runs: [{ ...dashboardRuns[0]!, state: 'queued' }] },
+          }),
+      }),
+    )
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => expect(result.current.runs).toHaveLength(1))
+    expect(result.current.runs[0]!.stage).toBe('outflow')
+    expect(result.current.runs[0]!.status).toBe('pending')
+  })
+
+  // --- dashboardToPipelineRun null fields ---
+
+  it('handles null assistant and intent in dashboard run', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              runs: [{ ...dashboardRuns[0]!, assistant: null, intent: null, queued_at: null }],
+            },
+          }),
+      }),
+    )
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => expect(result.current.runs).toHaveLength(1))
+    expect(result.current.runs[0]!.intent).toBe('')
+    expect(result.current.runs[0]!.routing.strategy).toBe('unknown')
+    expect(result.current.runs[0]!.routing.executor).toBe('')
+  })
+
+  // --- initial fetch error paths ---
+
+  it('handles non-ok response from dashboard fetch', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => {
+      expect(result.current.runs).toHaveLength(0)
+    }, { timeout: 1000 })
+  })
+
+  it('handles network error during dashboard fetch', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => {
+      expect(result.current.runs).toHaveLength(0)
+    }, { timeout: 1000 })
+  })
+
+  it('handles empty runs array from dashboard', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: { runs: [] } }),
+      }),
+    )
+    const { result } = renderHook(() => useRunPipeline())
+    await waitFor(() => {
+      expect(result.current.runs).toHaveLength(0)
+    }, { timeout: 1000 })
+  })
 })

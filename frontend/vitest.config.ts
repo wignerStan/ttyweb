@@ -14,6 +14,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/types.ts',
+        'src/kanban/types.ts',
+        'src/conversations/types.ts',
+        'src/shared/components/imperial-study/types.ts',
+        'src/shared/components/imperial-study/constants.ts',
+      ],
       thresholds: {
         statements: 80,
         branches: 85,
