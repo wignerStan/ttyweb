@@ -1,4 +1,4 @@
-import { useTheme, Theme } from '../../hooks/useTheme'
+import { useTheme, THEMES } from '../../hooks/useTheme'
 
 function ThemeIcon() {
   return (
@@ -11,6 +11,7 @@ function ThemeIcon() {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
       <path d="M12 2v2" />
       <path d="M12 20v2" />
@@ -28,14 +29,6 @@ function ThemeIcon() {
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
 
-  const themes: { id: Theme; label: string }[] = [
-    { id: 'dark', label: 'Dark' },
-    { id: 'light', label: 'Light' },
-    { id: 'obsidian', label: 'Obsidian' },
-    { id: 'rosepine', label: 'Rose Pine' },
-    { id: 'silk', label: 'Silk' },
-  ]
-
   return (
     <div className="dropdown dropdown-end dropdown-hover ml-auto">
       <div
@@ -48,9 +41,9 @@ export function ThemeToggle() {
       </div>
       <ul
         tabIndex={0}
-        className="dropdown-content z-[100] menu p-2 shadow bg-base-200 rounded-box w-36 mt-1 border border-base-300 right-0 top-full absolute"
+        className="dropdown-content z-[100] menu p-2 shadow bg-base-200 rounded-box w-36 mt-1 border border-base-300"
       >
-        {themes.map((t) => (
+        {THEMES.map((t) => (
           <li key={t.id}>
             <button
               type="button"

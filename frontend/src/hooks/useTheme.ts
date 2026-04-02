@@ -2,14 +2,20 @@ import { useCallback, useEffect, useState } from 'react'
 
 export type Theme = 'dark' | 'light' | 'obsidian' | 'rosepine' | 'silk'
 
-const STORAGE_KEY = 'ttyweb-theme'
+export const THEMES: { id: Theme; label: string }[] = [
+  { id: 'dark', label: 'Dark' },
+  { id: 'light', label: 'Light' },
+  { id: 'obsidian', label: 'Obsidian' },
+  { id: 'rosepine', label: 'Rose Pine' },
+  { id: 'silk', label: 'Silk' },
+]
 
-const validThemes: Theme[] = ['dark', 'light', 'obsidian', 'rosepine', 'silk']
+const STORAGE_KEY = 'ttyweb-theme'
 
 function readStoredTheme(): Theme {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored && validThemes.includes(stored as Theme)) {
+    if (stored && THEMES.some(t => t.id === stored)) {
       return stored as Theme
     }
   } catch {

@@ -73,8 +73,6 @@
   --depth: 1;
 }
 
-
-
 /* ── Obsidian (Refined Dark Minimalist) ── */
 @plugin "daisyui/theme" {
   name: "obsidian";
@@ -175,8 +173,6 @@
 @custom-variant obsidian (&:where([data-theme="obsidian"], [data-theme="obsidian"] *));
 @custom-variant rosepine (&:where([data-theme="rosepine"], [data-theme="rosepine"] *));
 @custom-variant silk (&:where([data-theme="silk"], [data-theme="silk"] *));
-
-
 
 @theme {
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
