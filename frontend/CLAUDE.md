@@ -109,6 +109,16 @@ Playwright tests in `e2e/` run against three backend projects configured in `pla
 
 All 3 servers start via top-level `webServer` array. `reuseExistingServer` is enabled outside CI.
 
+### Playwright Config
+
+Key settings in `playwright.config.ts`:
+- `fullyParallel: true` — tests run in parallel by default
+- `retries: process.env.CI ? 2 : 0` — no local retries (expose flakiness), 2 retries in CI
+- `workers: process.env.CI ? 2 : undefined` — auto-detect locally, 2 in CI
+- `navigationTimeout: 15_000` — faster than default 30s
+- `video: 'retain-on-failure'` in CI, `'off'` locally
+- `trace: 'on-first-retry'` — only captured on retry
+
 ### Test Files
 
 | File | Coverage |
@@ -120,7 +130,13 @@ All 3 servers start via top-level `webServer` array. `reuseExistingServer` is en
 | `auth.spec.ts` | Authentication flows |
 | `session-ui.spec.ts` | Session management UI |
 | `frontend.spec.ts` | General UI rendering |
-| `mobile.spec.ts` | Mobile-specific UI |
+| `mobile.spec.ts` | Mobile-specific UI (requires sessions with panes) |
+| `config-swagger.spec.ts` | Config, auth, pane status, telemetry, health, upload, AI, swagger, log |
+| `theme-i18n-mobile.spec.ts` | Theme toggle, i18n, mobile layout, responsive, accessibility, performance |
+| `branch-api.spec.ts` | Branch and file browser endpoints |
+| `persistence-events.spec.ts` | Profiles, groups, snippets, tasks CRUD lifecycle, SSE, roles |
+| `stress-concurrency.spec.ts` | Rapid sequential, concurrent, large payloads, boundary values, rate limiting |
+| `misc-api.spec.ts` | Miscellaneous API endpoints (profiles, snippets, roles, telemetry, etc.) |
 
 ### Helpers (`e2e/helpers.ts`)
 
@@ -132,6 +148,18 @@ Use `test.skip(!await hasSessionManagement(request), '...')` to skip session-dep
 
 ### Fixtures (`e2e/fixtures.ts`)
 
-Composes `@playwright/test` with `@seontechnologies/playwright-utils`:
+Composes `@playwright/test` with `@seontechnologies/playwright-utils/api-request`:
 - `apiRequest` — auto-retries 5xx
-- `networkErrorMonitor` — auto-fails on 4xx/5xx (causes false positives on zellij where many endpoints return 503)
+
+Note: `networkErrorMonitor` was removed — it auto-failed on 4xx/5xx, conflicting with error-testing specs.
+
+### Locator Conventions
+
+Follow Playwright locator priority: **Role > Label > Text > TestID > CSS/XPath**.
+
+- Use `page.getByRole('heading', { name: 'Sessions' })` not `page.locator('h3:has-text("Sessions")')`
+- Use `page.getByPlaceholder('new session')` not `page.locator('input[placeholder="new session"]')`
+- Use `page.getByText('connected')` not `page.locator('text=connected')`
+- Use `page.getByTitle('Kill session')` for titled buttons
+- Prefer `.click()` over `.dispatchEvent('click')` — regular clicks benefit from Playwright's auto-waiting and actionability checks
+- Avoid `{ force: true }` — it bypasses actionability checks and may hide real issues

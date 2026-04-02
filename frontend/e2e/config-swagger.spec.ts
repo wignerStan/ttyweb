@@ -80,10 +80,11 @@ test.describe('Auth Check', () => {
   })
 })
 
-test.describe.configure({ mode: 'serial' })
-
 test.describe('Pane Status', () => {
-  const testPaneKey = `e2e-pane-${Date.now()}`
+  // Unique key per test run — generated fresh each time to avoid collisions
+  function uniquePaneKey(): string {
+    return `e2e-pane-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  }
 
   test('GET /api/panes/status returns object', async ({ apiRequest }) => {
     const { status, body } = await apiRequest({
@@ -97,24 +98,32 @@ test.describe('Pane Status', () => {
   })
 
   test('PUT /api/panes/status updates pane status', async ({ apiRequest }) => {
+    const paneKey = uniquePaneKey()
     const { status, body } = await apiRequest({
       method: 'PUT',
       path: '/api/panes/status',
-      body: { pane_key: testPaneKey, status: 'running' },
+      body: { pane_key: paneKey, status: 'running' },
     })
     expect(status).toBe(200)
     expect(body.success).toBe(true)
-    expect(body.data.pane_key).toBe(testPaneKey)
+    expect(body.data.pane_key).toBe(paneKey)
     expect(body.data.status).toBe('running')
   })
 
   test('GET /api/panes/status after update shows persisted status', async ({ apiRequest }) => {
+    const paneKey = uniquePaneKey()
+    // First set a status
+    await apiRequest({
+      method: 'PUT',
+      path: '/api/panes/status',
+      body: { pane_key: paneKey, status: 'running' },
+    })
     const { status, body } = await apiRequest({
       method: 'GET',
       path: '/api/panes/status',
     })
     expect(status).toBe(200)
-    expect(body.data[testPaneKey]).toBe('running')
+    expect(body.data[paneKey]).toBe('running')
   })
 
   test('PUT /api/panes/status with missing pane_key returns 400', async ({ apiRequest }) => {

@@ -20,8 +20,7 @@ test.describe('Theme', () => {
   test('theme toggle is visible', async ({ page }) => {
     await page.goto('/');
     // ThemeToggle renders an SVG sun icon in dark mode (moon in light)
-    // It lives inside the tab bar area
-    const toggle = page.locator('button[title="Switch to light theme"]');
+    const toggle = page.getByTitle('Switch to light theme');
     await expect(toggle).toBeVisible({ timeout: 10000 });
   });
 
@@ -29,7 +28,7 @@ test.describe('Theme', () => {
     await page.goto('/');
 
     // Click theme toggle to switch to light
-    const toggleDark = page.locator('button[title="Switch to light theme"]');
+    const toggleDark = page.getByTitle('Switch to light theme');
     await expect(toggleDark).toBeVisible({ timeout: 10000 });
     await toggleDark.click();
 
@@ -49,7 +48,7 @@ test.describe('Theme', () => {
     expect(dataThemeBack).toBe('light');
 
     // Clean up: restore dark theme
-    const toggleLight = page.locator('button[title="Switch to dark theme"]');
+    const toggleLight = page.getByTitle('Switch to dark theme');
     if (await toggleLight.isVisible()) {
       await toggleLight.click();
     }
@@ -59,11 +58,11 @@ test.describe('Theme', () => {
     await page.goto('/');
 
     // Verify dark theme initially
-    await expect(page.locator('button[title="Switch to light theme"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTitle('Switch to light theme')).toBeVisible({ timeout: 10000 });
 
     // Toggle to light
-    await page.locator('button[title="Switch to light theme"]').click();
-    await expect(page.locator('button[title="Switch to dark theme"]')).toBeVisible();
+    await page.getByTitle('Switch to light theme').click();
+    await expect(page.getByTitle('Switch to dark theme')).toBeVisible();
 
     // Verify light theme CSS variable
     const bgColor = await page.evaluate(() =>
@@ -72,8 +71,8 @@ test.describe('Theme', () => {
     expect(bgColor).toBe('#f5f5f5');
 
     // Toggle back to dark
-    await page.locator('button[title="Switch to dark theme"]').click();
-    await expect(page.locator('button[title="Switch to light theme"]')).toBeVisible();
+    await page.getByTitle('Switch to dark theme').click();
+    await expect(page.getByTitle('Switch to light theme')).toBeVisible();
   });
 });
 
@@ -83,9 +82,9 @@ test.describe('i18n', () => {
   test('page renders with English text by default', async ({ page }) => {
     await page.goto('/');
     // Check for English strings visible in the UI
-    await expect(page.locator('h3:has-text("Sessions")')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Terminal').first()).toBeVisible();
-    await expect(page.locator('text=Conversations').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Terminal').first()).toBeVisible();
+    await expect(page.getByText('Conversations').first()).toBeVisible();
   });
 
   test('i18n system is initialized and language can be changed via API', async ({ page }) => {
@@ -100,12 +99,15 @@ test.describe('i18n', () => {
       (window as Record<string, unknown>).i18next?.changeLanguage?.('zh');
     });
 
-    // Wait for language change to propagate
-    await page.waitForTimeout(500);
-
-    // Verify language was changed
-    const newLang = await page.evaluate(() => (window as Record<string, unknown>).i18next?.language);
-    expect(newLang).toBe('zh');
+    // Wait for language change to propagate via polling
+    await expect
+      .poll(
+        async () => page.evaluate(() =>
+          (window as Record<string, unknown>).i18next?.language,
+        ),
+        { timeout: 3000 },
+      )
+      .toBe('zh');
 
     // Verify Chinese text appears where i18n t() is used
     // Note: not all components use t() yet, so we check the i18n store directly
@@ -119,14 +121,14 @@ test.describe('i18n', () => {
     await page.goto('/');
 
     // Sidebar header
-    await expect(page.locator('h3:has-text("Sessions")')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 10000 });
 
     // Tab bar buttons
-    await expect(page.locator('button', { hasText: 'Terminal' }).first()).toBeVisible();
-    await expect(page.locator('button', { hasText: 'Conversations' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Terminal' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Conversations' }).first()).toBeVisible();
 
     // New session input placeholder
-    await expect(page.locator('input[placeholder="new session"]')).toBeVisible();
+    await expect(page.getByPlaceholder('new session')).toBeVisible();
   });
 });
 
@@ -152,24 +154,21 @@ test.describe('Mobile layout', () => {
 
   test('mobile terminal renders', async ({ page }) => {
     await page.goto('/m');
-    // The xterm container should exist even before a session is connected
-    // (it may not have content yet)
-    const mobileHeader = page.locator('.mobile-header');
-    await expect(mobileHeader).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('banner')).toBeVisible({ timeout: 10000 });
   });
 
   test('mobile toolbar renders', async ({ page }) => {
     await page.goto('/m');
-    const mobileHeader = page.locator('.mobile-header');
-    await expect(mobileHeader).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('banner')).toBeVisible({ timeout: 10000 });
   });
 
   test('mobile drawer opens', async ({ page }) => {
     await page.goto('/m');
-    const menuBtn = page.locator('.mobile-menu-btn').first();
+    const menuBtn = page.getByRole('banner').getByRole('button').first();
     await expect(menuBtn).toBeVisible({ timeout: 10000 });
-    await menuBtn.dispatchEvent('click');
-    await expect(page.locator('.mobile-drawer.open')).toBeVisible({ timeout: 5000 });
+    await menuBtn.click();
+    // <aside> has no aria-label — use getByRole('complementary') without name filter
+    await expect(page.getByRole('complementary')).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -178,14 +177,13 @@ test.describe('Mobile layout', () => {
 test.describe('Responsive layout', () => {
   test('desktop layout renders sidebar', async ({ page }) => {
     await page.goto('/');
-    const sidebar = page.locator('h3:has-text("Sessions")');
-    await expect(sidebar).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 10000 });
   });
 
   test('page is responsive at common widths', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('h3:has-text("Sessions")')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 5000 });
 
     // Test common viewport widths — no horizontal overflow
     for (const { width, height } of [
@@ -196,10 +194,8 @@ test.describe('Responsive layout', () => {
       { width: 375, height: 812 },
     ]) {
       await page.setViewportSize({ width, height });
-      // Allow the page to re-render
-      await page.waitForTimeout(100);
 
-      // Verify no horizontal scroll on body
+      // Verify no horizontal scroll on body — viewport change is synchronous
       const hasHorizontalOverflow = await page.evaluate(() => {
         return document.documentElement.scrollWidth > document.documentElement.clientWidth;
       });
@@ -222,10 +218,10 @@ test.describe('Accessibility', () => {
 
   test('interactive elements are focusable', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h3:has-text("Sessions")')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 10000 });
 
     // Find all buttons and verify they can receive focus
-    const buttons = page.locator('button:visible');
+    const buttons = page.getByRole('button');
     const count = await buttons.count();
     expect(count).toBeGreaterThan(0);
 
@@ -244,9 +240,9 @@ test.describe('Accessibility', () => {
 
   test('input elements accept focus and keyboard input', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h3:has-text("Sessions")')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 10000 });
 
-    const input = page.locator('input[placeholder="new session"]');
+    const input = page.getByPlaceholder('new session');
     await expect(input).toBeVisible();
 
     // Focus and type
@@ -317,7 +313,7 @@ test.describe('Performance', () => {
 
     const start = Date.now();
     await page.goto('/m');
-    await expect(page.locator('.mobile-header')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('banner')).toBeVisible({ timeout: 10000 });
     const elapsed = Date.now() - start;
 
     expect(elapsed).toBeLessThan(3000);

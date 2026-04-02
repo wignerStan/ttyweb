@@ -56,7 +56,9 @@ export function Sidebar({ onSelect }: SidebarProps) {
   const fetchDetail = useCallback(async (name: string) => {
     if (detailsRef.current[name]) return
     try {
-      const res = await fetch(`/api/sessions/${encodeURIComponent(name)}`)
+      const res = await fetch(`/api/sessions/${encodeURIComponent(name)}`, {
+        headers: getAuthHeaders(),
+      })
       const json: ApiResponse<SessionDetail> = await res.json()
       if (json.success) {
         setDetails((prev) => ({ ...prev, [name]: json.data }))
@@ -107,7 +109,10 @@ export function Sidebar({ onSelect }: SidebarProps) {
 
   const confirmKill = async () => {
     if (!killTarget) return
-    await fetch(`/api/sessions/${encodeURIComponent(killTarget)}`, { method: 'DELETE', headers: getAuthHeaders() })
+    await fetch(`/api/sessions/${encodeURIComponent(killTarget)}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    })
     if (expanded === killTarget) setExpanded(null)
     fetchSessions()
     setKillTarget(null)

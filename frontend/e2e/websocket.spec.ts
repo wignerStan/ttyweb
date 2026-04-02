@@ -7,7 +7,7 @@ type W = any;
 test.describe('WebSocket terminal connection', () => {
   test('WebSocket connects and terminal shows connected status', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('WebSocket receives terminal output', async ({ page }) => {
@@ -15,7 +15,7 @@ test.describe('WebSocket terminal connection', () => {
     await page.goto('/');
 
     // Wait for WebSocket connection first to avoid race condition
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 15000 });
 
     // Wait for terminal output (type '1' = base64 encoded output, type '3' = title)
     await page.waitForFunction(
@@ -37,14 +37,14 @@ test.describe('WebSocket terminal connection', () => {
     await page.goto('/');
     const xterm = page.locator('.xterm').first();
     await expect(xterm).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('WebSocket sends initial handshake and encoding messages', async ({ page }) => {
     await injectWebSocketMonitor(page);
     await page.goto('/');
 
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 10000 });
 
     const sentMessages = await page.evaluate(() => (window as W).__wsSent || []);
 
@@ -56,7 +56,7 @@ test.describe('WebSocket terminal connection', () => {
 
   test('status bar shows connection status', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 10000 });
 
     const bodyText = await page.evaluate(() => document.body.textContent);
     expect(bodyText).toContain('connected');
@@ -67,7 +67,7 @@ test.describe('WebSocket terminal connection', () => {
     await page.goto('/');
 
     // Wait for connected state
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 10000 });
 
     // Programmatically close the WebSocket instance
     await page.evaluate(() => {
@@ -76,6 +76,6 @@ test.describe('WebSocket terminal connection', () => {
     });
 
     // Verify status transitions to "disconnected"
-    await expect(page.locator('text=disconnected').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('disconnected').first()).toBeVisible({ timeout: 5000 });
   });
 });

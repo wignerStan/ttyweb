@@ -16,11 +16,8 @@ test.describe('Session management via UI', () => {
 
   test('sidebar always shows Sessions header', async ({ page }) => {
     await page.goto('/');
-    const header = page.locator('h3:has-text("Sessions")');
-    await expect(header).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 5000 });
   });
-
-  test.describe.configure({ mode: 'serial' });
 
   test('sidebar displays session list from API', async ({ page, apiRequest, request }) => {
     test.skip(!await hasSessionManagement(request), 'Requires session management');
@@ -46,7 +43,7 @@ test.describe('Session management via UI', () => {
     const name = `ui-create-${Date.now()}`;
     createdSessions.push(name);
 
-    const input = page.locator('input[placeholder="new session"]');
+    const input = page.getByPlaceholder('new session');
     await expect(input).toBeVisible();
     await input.fill(name);
     await input.press('Enter');
@@ -69,10 +66,10 @@ test.describe('Session management via UI', () => {
     await page.goto('/');
     await waitForSessionInSidebar(page, name);
 
-    const sessionEntry = page.locator(`text=${name}`).first();
-    const sessionRow = sessionEntry.locator('..');
-    const killBtn = sessionRow.locator('button[title="Kill session"]');
-    await killBtn.click({ force: true });
+    // Scoped to the session row containing our session name
+    const sessionRow = page.locator('[data-testid="session-name"], .session-name', { hasText: name }).locator('..');
+    const killBtn = sessionRow.getByTitle('Kill session');
+    await killBtn.click();
 
     // Wait for sidebar to refresh and verify session is gone via API
     await expect
@@ -104,14 +101,14 @@ test.describe('Session management via UI', () => {
     await page.goto('/');
     await waitForSessionInSidebar(page, name);
 
-    const sessionEntry = page.locator(`text=${name}`).first();
+    const sessionEntry = page.getByText(name, { exact: true });
     const sessionRow = sessionEntry.locator('..');
-    await sessionRow.click({ force: true });
+    await sessionRow.click();
 
-    const expandedIcon = page.locator('text=\u25BC').first();
+    const expandedIcon = page.getByText('\u25BC').first();
     await expect(expandedIcon).toBeVisible({ timeout: 5000 });
 
-    const connectLink = page.locator('text=Connect to session').first();
+    const connectLink = page.getByText('Connect to session').first();
     await expect(connectLink).toBeVisible({ timeout: 5000 });
   });
 });
