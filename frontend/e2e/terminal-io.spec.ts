@@ -10,7 +10,7 @@ test.describe('Terminal input and output', () => {
     await page.goto('/');
 
     // Wait for WebSocket connected and handshake sent
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 10000 });
 
     // Verify handshake messages were captured
     const sentMessages = await page.evaluate(() => (window as W).__wsSent || []);
@@ -29,7 +29,7 @@ test.describe('Terminal input and output', () => {
     await page.goto('/');
 
     // Wait for WebSocket connected
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 10000 });
 
     // Wait for output messages from the server
     await page.waitForFunction(
@@ -55,7 +55,7 @@ test.describe('Terminal input and output', () => {
     await injectWebSocketMonitor(page);
     await page.goto('/');
 
-    await expect(page.locator('text=connected').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('connected').first()).toBeVisible({ timeout: 10000 });
 
     // Collect all sent and received messages
     const { sent, received } = await page.evaluate(() => ({

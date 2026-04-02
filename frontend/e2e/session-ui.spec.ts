@@ -101,7 +101,7 @@ test.describe('Session management via UI', () => {
     await page.goto('/');
     await waitForSessionInSidebar(page, name);
 
-    const sessionEntry = page.locator(`text=${name}`).first();
+    const sessionEntry = page.getByText(name, { exact: true });
     const sessionRow = sessionEntry.locator('..');
     await sessionRow.click();
 

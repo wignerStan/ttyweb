@@ -7,7 +7,7 @@ test.describe('Mobile UI', () => {
   test('mobile route /m loads mobile layout', async ({ page }) => {
     await page.goto('/m');
     await expect(page.locator('.mobile-header')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('h3:has-text("Sessions")')).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sessions', level: 3 })).not.toBeVisible();
   });
 
   test('mobile drawer opens and shows TmuxTree', async ({ page }) => {
@@ -50,7 +50,7 @@ test.describe('Mobile UI', () => {
         case 'toolbox tab bar shows content tabs':
           await expect(page.locator('.mobile-tab').first()).toBeVisible({ timeout: 5000 });
           await expect(page.locator('.toolbox-tabbar')).toBeVisible({ timeout: 10000 });
-          await expect(page.locator('.toolbox-tab').count()).toBeGreaterThan(0);
+          await expect(page.locator('.toolbox-tab').first()).toBeVisible();
           break;
         case 'tab close removes terminal tab and shows placeholder':
           await expect(page.locator('.mobile-tab').first()).toBeVisible({ timeout: 5000 });
