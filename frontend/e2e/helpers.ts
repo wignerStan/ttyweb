@@ -127,7 +127,7 @@ export function mobileViewport() {
  * then click the first pane to connect to a terminal.
  */
 export async function openFirstSession(page: Page): Promise<void> {
-  const menuBtn = page.locator('.mobile-menu-btn').first();
+  const menuBtn = page.getByRole('banner').getByRole('button').first();
   await expect(menuBtn).toBeVisible({ timeout: 10000 });
   await menuBtn.click();
 

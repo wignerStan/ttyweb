@@ -154,22 +154,20 @@ test.describe('Mobile layout', () => {
 
   test('mobile terminal renders', async ({ page }) => {
     await page.goto('/m');
-    const mobileHeader = page.locator('.mobile-header');
-    await expect(mobileHeader).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('banner')).toBeVisible({ timeout: 10000 });
   });
 
   test('mobile toolbar renders', async ({ page }) => {
     await page.goto('/m');
-    const mobileHeader = page.locator('.mobile-header');
-    await expect(mobileHeader).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('banner')).toBeVisible({ timeout: 10000 });
   });
 
   test('mobile drawer opens', async ({ page }) => {
     await page.goto('/m');
-    const menuBtn = page.locator('.mobile-menu-btn').first();
+    const menuBtn = page.getByRole('banner').getByRole('button').first();
     await expect(menuBtn).toBeVisible({ timeout: 10000 });
     await menuBtn.click();
-    await expect(page.locator('.mobile-drawer.open')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('complementary', { name: /drawer|navigation/i })).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -222,7 +220,7 @@ test.describe('Accessibility', () => {
     await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible({ timeout: 10000 });
 
     // Find all buttons and verify they can receive focus
-    const buttons = page.locator('button:visible');
+    const buttons = page.getByRole('button');
     const count = await buttons.count();
     expect(count).toBeGreaterThan(0);
 
@@ -314,7 +312,7 @@ test.describe('Performance', () => {
 
     const start = Date.now();
     await page.goto('/m');
-    await expect(page.locator('.mobile-header')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('banner')).toBeVisible({ timeout: 10000 });
     const elapsed = Date.now() - start;
 
     expect(elapsed).toBeLessThan(3000);

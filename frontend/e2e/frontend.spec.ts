@@ -66,7 +66,7 @@ test.describe('SPA frontend rendering', () => {
     await expect(tabLabel).toBeVisible({ timeout: 5000 });
 
     // Deterministic locator — use sibling button directly, no count() race
-    const closeBtn = tabLabel.locator('xpath=following-sibling::button').first();
+    const closeBtn = tabLabel.getByRole('button');
     await closeBtn.click();
 
     // The tab should be removed
