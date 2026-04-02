@@ -200,6 +200,7 @@ type mockSlave struct {
 }
 
 func prepareSUT(t *testing.T, wg *sync.WaitGroup, options ...Option) (*mockMaster, *mockSlave, *WebTTY, context.CancelFunc) {
+	t.Helper()
 	mMaster := newMockMaster()
 	mSlave := newMockSlave()
 
@@ -218,6 +219,7 @@ func prepareSUT(t *testing.T, wg *sync.WaitGroup, options ...Option) (*mockMaste
 }
 
 func checkNextMsgType(t *testing.T, reader io.Reader, expected byte) {
+	t.Helper()
 	msgType, _ := nextMsg(t, reader)
 	if msgType != expected {
 		t.Fatalf("Unexpected message type `%c`", msgType)
@@ -225,6 +227,7 @@ func checkNextMsgType(t *testing.T, reader io.Reader, expected byte) {
 }
 
 func nextMsg(t *testing.T, reader io.Reader) (byte, []byte) {
+	t.Helper()
 	buf := make([]byte, 1024)
 	_, err := reader.Read(buf)
 	if err != nil {
