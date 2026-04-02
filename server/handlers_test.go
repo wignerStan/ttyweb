@@ -67,11 +67,9 @@ func (*errorFactory) New(params map[string][]string, headers map[string][]string
 }
 
 func TestHandleIndex(t *testing.T) {
-	// handleIndex writes the global indexHTML.
-	// If indexHTML is empty (not built), it should still return 200.
-	indexHTML = []byte("<html><body>test</body></html>")
-
 	srv := newTestServer()
+	srv.indexHTML = []byte("<html><body>test</body></html>")
+
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	srv.handleIndex(rec, req)
@@ -92,8 +90,8 @@ func TestHandleIndex(t *testing.T) {
 }
 
 func TestHandleIndex_Method(t *testing.T) {
-	indexHTML = []byte("<html></html>")
 	srv := newTestServer()
+	srv.indexHTML = []byte("<html></html>")
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/", nil)
 	srv.handleIndex(rec, req)

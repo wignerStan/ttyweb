@@ -15,7 +15,7 @@ import (
 var (
 	globalDB  *gorm.DB
 	available bool
-	initMu    sync.Mutex
+	initMu    sync.RWMutex
 )
 
 // Init opens (or creates) the SQLite database at the given DSN.
@@ -76,8 +76,8 @@ func Init(dsn string) error {
 // GetDB returns the global *gorm.DB instance.
 // Returns ErrNotInitialized if Init has not been called successfully.
 func GetDB() (*gorm.DB, error) {
-	initMu.Lock()
-	defer initMu.Unlock()
+	initMu.RLock()
+	defer initMu.RUnlock()
 
 	if globalDB == nil {
 		return nil, ErrNotInitialized
@@ -88,8 +88,8 @@ func GetDB() (*gorm.DB, error) {
 
 // IsAvailable reports whether the database connection is active.
 func IsAvailable() bool {
-	initMu.Lock()
-	defer initMu.Unlock()
+	initMu.RLock()
+	defer initMu.RUnlock()
 
 	return available
 }
