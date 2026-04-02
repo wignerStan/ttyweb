@@ -3,10 +3,11 @@ package service
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func BenchmarkSharedCache_Get(b *testing.B) {
-	cache := NewSharedCache[string](0)
+	cache := NewSharedCache[string](5 * time.Minute)
 	cache.Set("key", "value")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -15,7 +16,7 @@ func BenchmarkSharedCache_Get(b *testing.B) {
 }
 
 func BenchmarkSharedCache_Set(b *testing.B) {
-	cache := NewSharedCache[string](0)
+	cache := NewSharedCache[string](5 * time.Minute)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		cache.Set("key", fmt.Sprintf("value-%d", i))
@@ -23,7 +24,7 @@ func BenchmarkSharedCache_Set(b *testing.B) {
 }
 
 func BenchmarkSharedCache_ConcurrentGet(b *testing.B) {
-	cache := NewSharedCache[string](0)
+	cache := NewSharedCache[string](5 * time.Minute)
 	cache.Set("key", "value")
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
