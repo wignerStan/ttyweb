@@ -206,29 +206,30 @@ func (s *WorktreeService) RemoveWorktree(ctx context.Context, projectID, worktre
 
 	s.mu.Lock()
 	record, err := s.getWorktreeLocked(worktreeID, projectID)
-	s.mu.Unlock()
 	if err != nil {
+		s.mu.Unlock()
 		return err
 	}
 
 	if record.IsMain {
+		s.mu.Unlock()
 		return errors.New("cannot remove main worktree")
 	}
 
 	unlock := s.repoLock.Lock(ctx, project.Path)
 	if unlock == nil {
+		s.mu.Unlock()
 		return context.Canceled
 	}
 	defer unlock()
 
 	if err := worktree.RemoveWorktree(ctx, project.Path, record.Path, force); err != nil {
+		s.mu.Unlock()
 		return fmt.Errorf("RemoveWorktree: git worktree remove: %w", err)
 	}
 
-	s.mu.Lock()
 	delete(s.worktrees, worktreeID)
 	s.mu.Unlock()
-
 	return nil
 }
 
