@@ -38,7 +38,7 @@ export async function renameWindow(
   windowIndex: number,
   newName: string,
 ): Promise<boolean> {
-  const res = await apiPost<void>(
+  const res = await apiPut<void>(
     `/api/tmux/windows/${encodeURIComponent(sessionName)}/${windowIndex}/rename`,
     { name: newName },
   )

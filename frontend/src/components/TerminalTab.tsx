@@ -44,6 +44,7 @@ export function TerminalTab({ session, pane, onMetadata, onTabRename }: Terminal
     onWindowTitle,
   })
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: session and pane intentionally trigger full terminal recreation on tab switch
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -105,7 +106,7 @@ export function TerminalTab({ session, pane, onMetadata, onTabRename }: Terminal
       termRef.current = null
       fitRef.current = null
     }
-  }, [sendText, sendResize])
+  }, [session, pane, sendText, sendResize])
 
   const statusColor =
     wsStatus === 'connected' ? '#9ece6a' : wsStatus === 'connecting' ? '#e0af68' : '#f7768e'

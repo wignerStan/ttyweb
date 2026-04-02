@@ -27,7 +27,9 @@ export function ConfirmDialog({
     if (!open) return
     const dialog = dialogRef.current
     if (!dialog) return
-    dialog.showModal()
+    if (!dialog.open) {
+      dialog.showModal()
+    }
     const handleCancel = (e: Event) => {
       e.preventDefault()
       onCancel()
@@ -66,7 +68,7 @@ export function ConfirmDialog({
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button type="button">close</button>
+        <button type="submit">close</button>
       </form>
     </dialog>
   )

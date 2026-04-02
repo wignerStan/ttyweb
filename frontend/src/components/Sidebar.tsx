@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ConfirmDialog } from '../shared/components/ConfirmDialog'
 import type { ApiResponse } from '../types'
+import { getAuthHeaders } from '../utils/auth'
 
 interface Session {
   name: string
@@ -39,7 +40,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch('/api/sessions')
+      const res = await fetch('/api/sessions', { headers: getAuthHeaders() })
       const json: ApiResponse<Session[]> = await res.json()
       if (json.success) {
         setSessions(json.data)
@@ -93,7 +94,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
     if (!newName.trim()) return
     await fetch('/api/sessions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ name: newName.trim() }),
     })
     setNewName('')
@@ -106,7 +107,7 @@ export function Sidebar({ onSelect }: SidebarProps) {
 
   const confirmKill = async () => {
     if (!killTarget) return
-    await fetch(`/api/sessions/${encodeURIComponent(killTarget)}`, { method: 'DELETE' })
+    await fetch(`/api/sessions/${encodeURIComponent(killTarget)}`, { method: 'DELETE', headers: getAuthHeaders() })
     if (expanded === killTarget) setExpanded(null)
     fetchSessions()
     setKillTarget(null)

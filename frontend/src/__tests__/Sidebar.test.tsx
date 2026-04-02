@@ -50,7 +50,9 @@ describe('Sidebar', () => {
     render(<Sidebar onSelect={onSelect as (session: string, pane?: string) => void} />)
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith('/api/sessions')
+      expect(fetchMock).toHaveBeenCalledWith('/api/sessions', {
+        headers: expect.any(Object),
+      })
     })
   })
 
