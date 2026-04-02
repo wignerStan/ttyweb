@@ -39,6 +39,7 @@ func NewTaskEventBus() *TaskEventBus {
 
 // Publish sends an event to pane-specific and global subscribers.
 // Non-blocking: drops events if subscriber buffers are full.
+// Uses safeSend to protect against concurrent Close panics.
 func (b *TaskEventBus) Publish(event BusEvent) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -48,21 +49,31 @@ func (b *TaskEventBus) Publish(event BusEvent) {
 	}
 
 	// Send to pane-specific subscribers.
-	for _, ch := range b.paneSubs[event.PaneKey] {
-		select {
-		case ch <- event:
-		default:
-			// Drop event if buffer is full.
-		}
-	}
+	b.sendToSubscribers(b.paneSubs[event.PaneKey], event)
 
 	// Send to global subscribers.
-	for _, ch := range b.globalSubs {
-		select {
-		case ch <- event:
-		default:
-			// Drop event if buffer is full.
-		}
+	b.sendToSubscribers(b.globalSubs, event)
+}
+
+// sendToSubscribers delivers an event to a slice of subscriber channels.
+// Each send is non-blocking; full buffers cause the event to be dropped.
+func (b *TaskEventBus) sendToSubscribers(subs []chan BusEvent, event BusEvent) {
+	for _, ch := range subs {
+		b.safeSend(ch, event)
+	}
+}
+
+// safeSend performs a non-blocking send on a subscriber channel.
+// It recovers from send-on-closed-channel panics that can occur if Close
+// runs concurrently despite the RLock fast-path check.
+func (*TaskEventBus) safeSend(ch chan BusEvent, event BusEvent) {
+	defer func() {
+		_ = recover() // swallow send-on-closed-channel panic
+	}()
+	select {
+	case ch <- event:
+	default:
+		// Drop event if buffer is full.
 	}
 }
 
