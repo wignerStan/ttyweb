@@ -21,6 +21,7 @@ type visitorLimiter struct {
 	visitors map[string]*visitor
 	rate     rate.Limit
 	burst    int
+	done     chan struct{}
 }
 
 func newVisitorLimiter(r rate.Limit, burst int) *visitorLimiter {
@@ -28,6 +29,7 @@ func newVisitorLimiter(r rate.Limit, burst int) *visitorLimiter {
 		visitors: make(map[string]*visitor),
 		rate:     r,
 		burst:    burst,
+		done:     make(chan struct{}),
 	}
 	go vl.cleanupLoop()
 	return vl
@@ -37,16 +39,26 @@ func newVisitorLimiter(r rate.Limit, burst int) *visitorLimiter {
 func (vl *visitorLimiter) cleanupLoop() {
 	ticker := time.NewTicker(rateLimitCleanupInterval)
 	defer ticker.Stop()
-	for range ticker.C {
-		vl.mu.Lock()
-		now := time.Now().Unix()
-		for ip, v := range vl.visitors {
-			if now-v.lastSeen > int64(rateLimitCleanupInterval.Seconds()) {
-				delete(vl.visitors, ip)
+	for {
+		select {
+		case <-ticker.C:
+			vl.mu.Lock()
+			now := time.Now().Unix()
+			for ip, v := range vl.visitors {
+				if now-v.lastSeen > int64(rateLimitCleanupInterval.Seconds()) {
+					delete(vl.visitors, ip)
+				}
 			}
+			vl.mu.Unlock()
+		case <-vl.done:
+			return
 		}
-		vl.mu.Unlock()
 	}
+}
+
+// stop signals the cleanup goroutine to exit. Safe to call multiple times.
+func (vl *visitorLimiter) stop() {
+	close(vl.done)
 }
 
 func (vl *visitorLimiter) getLimiter(ip string) *rate.Limiter {
