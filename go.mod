@@ -6,7 +6,7 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/charmbracelet/x/ansi v0.11.6
 	github.com/creack/pty v1.1.24
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-git/v5 v5.17.1
 	github.com/gorilla/websocket v1.5.3
